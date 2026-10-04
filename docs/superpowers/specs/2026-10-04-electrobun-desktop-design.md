@@ -1,7 +1,7 @@
 # Electrobun desktop: first working review
 
 Date: 2026-10-04
-Status: Design for review; implementation has not started.
+Status: Approved by the user on 2026-10-04; implementation has not started.
 
 ## Outcome and scope
 
