@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,6 +24,9 @@ if (!inputPath || !outputPath || process.argv.length !== 4) {
 const result = await build({
   alias: {
     "zod/v4": path.join(workspaceRoot, "node_modules/zod/v4/index.js"),
+    "eventsource-parser": createRequire(import.meta.url).resolve(
+      "eventsource-parser",
+    ),
   },
   bundle: true,
   entryPoints: [path.resolve(inputPath)],

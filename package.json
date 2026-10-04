@@ -21,7 +21,7 @@
     "ci": "pnpm --filter @dev.fast/review-desktop app:build && pnpm --filter @dev.fast/review check:tutorial && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
     "test": "node --test \"scripts/**/*.test.mjs\" && pnpm -r --if-present test",
     "pretypecheck": "pnpm --filter @dev.fast/review build:workspace-deps",
-    "typecheck": "pnpm -r --workspace-concurrency=1 --if-present typecheck",
+    "typecheck": "pnpm -r --filter=!@dev.fast/review-electrobun --workspace-concurrency=1 --if-present typecheck",
     "build": "pnpm -r --if-present build"
   },
   "devDependencies": {

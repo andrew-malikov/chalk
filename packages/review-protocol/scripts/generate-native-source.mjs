@@ -38,6 +38,7 @@ if (!isValidArgs) {
 const HEADER = [
   "// GENERATED from @dev.fast/review-protocol. Do not edit.",
   'import { z } from "zod/v4";',
+  'import { createParser } from "eventsource-parser";',
   "",
   "z.config({ jitless: true });",
   "",
@@ -125,6 +126,7 @@ const MODULE_PATHS = [
   path.join(sourceRoot, "contracts.ts"),
   path.join(sourceRoot, "code-peek-diff.ts"),
   path.join(sourceRoot, "review-api-client.ts"),
+  path.join(sourceRoot, "review-event-stream.ts"),
   path.join(sourceRoot, "index.ts"),
 ];
 

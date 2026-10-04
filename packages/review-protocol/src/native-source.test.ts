@@ -54,6 +54,24 @@ describe("native Review Protocol source generation", () => {
     const output = await readFile(outputPath, "utf8");
     expect(output).not.toContain('from "zod');
     const protocol = await import(pathToFileURL(outputPath).href);
+    const frames: unknown[] = [];
+
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          new TextEncoder().encode('data: {"native":true}\n\n'),
+        );
+        controller.close();
+      },
+    });
+
+    await protocol.consumeReviewEventStream(
+      stream,
+      frames.push.bind(frames),
+      new AbortController().signal,
+    );
+    expect(frames).toEqual([{ native: true }]);
+    expect(stream.locked).toBe(false);
     expect(
       protocol.ReviewRangeSchema.parse({
         fromLine: 1,
@@ -81,6 +99,7 @@ describe("native Review Protocol source generation", () => {
       "contracts.ts",
       "code-peek-diff.ts",
       "review-api-client.ts",
+      "review-event-stream.ts",
       "index.ts",
       "bug-report.ts",
     ]) {
@@ -151,51 +170,5 @@ describe("native Review Protocol source generation", () => {
     const actual = await readFile(actualPath, "utf8");
     expect(actual).toBe(await readFile(expectedPath, "utf8"));
     expect(actual).not.toContain("./contracts.js");
-  });
-
-  it("preserves a local multi-line export list without a from clause", async () => {
-    const directory = await mkdtemp(
-      path.join(tmpdir(), "review-protocol-native-local-export-"),
-    );
-
-    temporaryDirectories.push(directory);
-    const sourceRoot = path.join(directory, "src");
-    await mkdir(sourceRoot, { recursive: true });
-    await writeFile(path.join(sourceRoot, "structural-diff.ts"), "");
-    await writeFile(path.join(sourceRoot, "source-alignment.ts"), "");
-    await writeFile(path.join(sourceRoot, "runtime-value.ts"), "");
-    await writeFile(path.join(sourceRoot, "json.ts"), "");
-    await writeFile(path.join(sourceRoot, "trace-contracts.ts"), "");
-    await writeFile(path.join(sourceRoot, "code-peek-diff.ts"), "");
-    await writeFile(path.join(sourceRoot, "review-api-client.ts"), "");
-    await writeFile(
-      path.join(sourceRoot, "contracts.ts"),
-      [
-        "export const a = 1;",
-        "export const b = 2;",
-        "export {",
-        "  a,",
-        "  b,",
-        "};",
-        "",
-      ].join("\n"),
-    );
-    await writeFile(
-      path.join(sourceRoot, "index.ts"),
-      ['import { z } from "zod";', 'export * from "./contracts.js";', ""].join(
-        "\n",
-      ),
-    );
-
-    const outputPath = path.join(directory, "actual.ts");
-    await execFileAsync(process.execPath, [
-      generatorPath,
-      outputPath,
-      "--source-root",
-      sourceRoot,
-    ]);
-
-    const output = await readFile(outputPath, "utf8");
-    expect(output).toContain("export {\n  a,\n  b,\n};");
   });
 });

@@ -26,9 +26,9 @@ export { clearPersistedReviewViewState as clearReviewViewState } from "./review-
 
 export function reviewCanvasThemeClass(theme: "dark" | "light"): string {
   const light = theme === "light";
+
   return stylex.props(themeStyles.vars, light && themeStyles.light).className!;
 }
-
 
 function ReviewCanvas({
   content,
@@ -206,6 +206,9 @@ export function mountReviewCanvas(
     if (content.kind === "api") {
       applyTheme(content.bridge.currentTheme());
       themeSubscription = content.bridge.onDidChangeTheme(applyTheme);
+    } else if (ui?.theme) {
+      applyTheme(ui.theme.current());
+      themeSubscription = ui.theme.subscribe(applyTheme);
     } else {
       applyTheme(workbenchColorTheme(container));
 

@@ -160,10 +160,14 @@ export function reviewInstanceIdentity(
   };
 
   const override = env.DEV_FAST_REVIEW_INSTANCE_KEY?.trim();
+
   if (override) {
     if (!checkout || !override.startsWith("dev-")) {
-      throw new Error("A desktop instance-key override requires a development checkout and dev- key.");
+      throw new Error(
+        "A desktop instance-key override requires a development checkout and dev- key.",
+      );
     }
+
     identity.key = checkedInstanceKey(override);
   }
 

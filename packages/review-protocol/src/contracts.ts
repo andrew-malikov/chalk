@@ -782,6 +782,10 @@ export interface ReviewMenuRequest {
 }
 
 export interface ReviewCanvasUi {
+  theme?: {
+    current(): "dark" | "light";
+    subscribe(listener: (theme: "dark" | "light") => void): ReviewDisposable;
+  };
   confirmDelete?(title: string): Promise<boolean>;
   showMenu(request: ReviewMenuRequest): ReviewDisposable;
 }
