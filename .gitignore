@@ -97,3 +97,6 @@ packages/review/bin/
 apps/review-electrobun/.hutch/
 apps/review-electrobun/build/
 apps/review-electrobun/artifacts/
+
+# Generated Electrobun configuration loader
+apps/review-electrobun/.cottontail-tmp/

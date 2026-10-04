@@ -49,3 +49,5 @@ Reviewer declined additional reruns for its read-only seat; executor performed t
 Final integration: retain the explicitly authorized detached checkout; no push/PR/merge requested. README untouched. Only this plan scratch directory will be removed after final commit; the shared workspace remains.
 
 Final status: all seven tasks complete, all Important review findings fixed, no rereview dispatched. Final clean native build passed; 109 affected tests and app/shared/legacy desktop types passed; scoped lint/format/diff checks passed after whitespace correction. One deferred tutorial-content minor remains. Temporary instrumentation absent from product source; all owned test apps/sidecars exited and discovery removed.
+
+Final fixed clean bundle also launched with authenticated health200, exact instance identity and renderer control attachment; guarded OS Quit exits cleanly. Ignore the SDK-generated .cottontail-tmp configuration-loader cache so native builds keep the checkout clean.
