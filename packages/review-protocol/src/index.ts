@@ -194,3 +194,5 @@ function formatIssuePath(path: PropertyKey[]): string {
 }
 
 export { structuralRows } from "./source-alignment.js";
+
+export * from "./review-event-stream.js";

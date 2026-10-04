@@ -321,7 +321,8 @@ export interface ReviewTooltipOptions {
 export interface ReviewCanvasBridge {
   readonly appSessionId?: string;
   readonly config: ReviewRuntimeConfig;
-  readonly inlineEditors: ReviewInlineEditorFactory;
+  /** Legacy native host hook; React peeks use Pierre directly. */
+  readonly inlineEditors?: ReviewInlineEditorFactory;
   readonly diffView: ReviewDiffViewFactory;
   request(url: string, init?: RequestInit): Promise<Response>;
   post(request: ReviewVerbRequest): Promise<ReviewVerbResponse>;

@@ -245,7 +245,6 @@ export function ApiCanvas({
 
   const nativeSources = useMemo(
     () => ({
-      inlineEditors: { ...content.bridge.inlineEditors },
       diffView: { ...content.bridge.diffView },
     }),
     [content.bridge, sourceVersion],
