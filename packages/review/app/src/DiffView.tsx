@@ -5,7 +5,6 @@ import type {
   ReviewCommitScope,
   ReviewDiffLens,
   ReviewDiffProgress,
-  ReviewDiffViewHandle,
 } from "@dev.fast/review-protocol";
 import {
   type Lens,
@@ -23,7 +22,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -33,6 +31,7 @@ import { AuthoringActivityContext } from "./authoring-activity-context";
 import { scopeLive } from "./authoring-cursor";
 import { Courier, LensCursorContext, lensRowElement } from "./courier";
 import { compactDiffCount, diffCountStyles } from "./diff-count";
+import { PierreDiffView } from "./diff/PierreDiffView";
 import { type MotionPhase, withErasedBlocks } from "./draw-queue";
 import { useMotionPhases } from "./draw-queue-provider";
 import { drawStyles } from "./draw-styles";
@@ -251,7 +250,7 @@ export function ReviewDiffView({
 
   if (scope || !lenses)
     return (
-      <NativeDiffView
+      <PierreDiffView
         scope={scope}
         revealFile={revealFile}
         restoreFile={restoreFile}
@@ -510,7 +509,7 @@ export function ReviewDiffView({
       />
       <div {...stylex.props(styles.editor)}>
         {fullTree && (
-          <NativeDiffView
+          <PierreDiffView
             treeContainer={fullTree}
             progress={fullProgress}
             onToggleViewed={(path) => markFile(path, false)}
@@ -519,7 +518,7 @@ export function ReviewDiffView({
           />
         )}
         {lens && lensTree && (
-          <NativeDiffView
+          <PierreDiffView
             lens={lens}
             treeContainer={lensTree}
             progress={lensProgress}
@@ -534,103 +533,6 @@ export function ReviewDiffView({
         )}
       </div>
     </div>
-  );
-}
-
-function NativeDiffView({
-  scope,
-  revealFile,
-  restoreFile,
-  lens,
-  treeContainer,
-  progress,
-  onToggleViewed,
-  hidden = false,
-  inWorkspace = false,
-}: {
-  scope?: ReviewCommitScope;
-  revealFile?: string;
-  restoreFile?: boolean;
-  lens?: ReviewDiffLens;
-  treeContainer?: HTMLElement;
-  progress?: ReviewDiffProgress;
-  onToggleViewed?(path: string): void;
-  hidden?: boolean;
-  /** Fills the workspace's editor column. */
-  inWorkspace?: boolean;
-}) {
-  const session = useReviewSession();
-  const [container, setContainer] = useState<HTMLDivElement | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const handle = useRef<ReviewDiffViewHandle | null>(null);
-  // A save in a live checkout changes the comparison; a commit's never does.
-  const revision = useReviewDiffFiles().revision;
-  const liveRevision = scope ? undefined : revision;
-
-  const current = useRef({ progress, onToggleViewed });
-
-  current.current = { progress, onToggleViewed };
-  useLayoutEffect(() => {
-    if (!container) return;
-    setError(null);
-
-    try {
-      const view = session.bridge.diffView.create({
-        container,
-        scope,
-        lens,
-        fileTreeContainer: treeContainer,
-        progress: current.current.progress,
-        onToggleViewed: current.current.onToggleViewed
-          ? (path) => current.current.onToggleViewed?.(path)
-          : undefined,
-      });
-
-      handle.current = view;
-      const subscription = view.onDidError(setError);
-
-      return () => {
-        subscription.dispose();
-        view.dispose();
-        handle.current = null;
-      };
-    } catch (error) {
-      setError(String(error));
-    }
-  }, [
-    container,
-    session.bridge.diffView,
-    session.config.reviewId,
-    scope?.commit,
-    lens,
-    treeContainer,
-    liveRevision,
-  ]);
-  useLayoutEffect(() => {
-    if (progress) handle.current?.setProgress?.(progress);
-  }, [progress]);
-  useLayoutEffect(() => {
-    if (revealFile)
-      handle.current?.revealFile?.(revealFile, { restore: restoreFile });
-  }, [revealFile, restoreFile, container, scope?.commit]);
-
-  return (
-    <>
-      <div
-        ref={setContainer}
-        {...withClass(
-          "review-diff-view-host",
-          styles.host,
-          inWorkspace && styles.hostInWorkspace,
-        )}
-        style={hidden ? { display: "none" } : undefined}
-      />
-      {!hidden && error && (
-        <div role="alert" {...stylex.props(styles.viewError)}>
-          {error}
-        </div>
-      )}
-    </>
   );
 }
 

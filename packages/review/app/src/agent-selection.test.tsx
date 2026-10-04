@@ -37,19 +37,22 @@ it("copies only on click or Shift+Cmd+C, reports failures, and clears on revisio
     const select = useAgentSelection();
 
     return (
-      <article className="review-document" data-selection-scroller>
-        <button
-          onClick={(event) =>
-            select({
-              title: "Prose",
-              anchor: { x: 100, y: 120 },
-              anchorElement: event.currentTarget,
-              target: { kind: "text", quote: "selected" },
-            })
-          }
-        >
-          Select
-        </button>
+      <article className="review-document">
+        <div data-selection-scroller>
+          <button
+            onClick={(event) =>
+              select({
+                title: "Prose",
+                anchor: { x: 100, y: 120 },
+                anchorElement: event.currentTarget,
+                anchorContainer: event.currentTarget.parentElement!,
+                target: { kind: "text", quote: "selected" },
+              })
+            }
+          >
+            Select
+          </button>
+        </div>
       </article>
     );
   }

@@ -32,9 +32,6 @@ export function testReviewBridge(
     config: { ...TEST_REVIEW_CONFIG, ...config },
     diffView: {
       files: async () => [],
-      create: () => {
-        throw new Error("unused test diff view");
-      },
     },
     inlineEditors: {
       async find() {

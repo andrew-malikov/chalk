@@ -52,7 +52,7 @@ import {
 	REVIEW_STRUCTURAL_DIFF_SETTING,
 	REVIEW_TELEMETRY_SETTING,
 } from "../../../common/reviewConfigurationDefaults.js";
-import { resolveReviewSourceView, reviewSourceAnchor, type ReviewSourceView, type ReviewSourceSelection } from "../../../common/reviewProtocol.js";
+import { resolveReviewSourceView, reviewSourceAnchor, reviewSourceComparison, type ReviewSourceView, type ReviewSourceSelection } from "../../../common/reviewProtocol.js";
 import type {
 	ReviewCanvasBridge,
 	ReviewCanvasContent,
@@ -449,7 +449,7 @@ export class ReviewCanvasEditorPane extends EditorPane {
 								if (request.name === "reveal") {
 									const range = { startLine: request.args.startLine, endLine: request.args.endLine };
 									await this.apiSource.open(
-										{ view: reviewSourceAnchor(sourceView, request.args.pins), file: request.args.path, side: request.args.side ?? "head" },
+										{ view: reviewSourceAnchor(reviewSourceComparison(sourceView, request.args.commit), request.args.pins), file: request.args.path, side: request.args.side ?? "head" },
 										range,
 									);
 									return { ok: true };

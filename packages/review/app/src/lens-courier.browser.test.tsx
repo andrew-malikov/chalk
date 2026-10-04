@@ -121,11 +121,6 @@ const session = testReviewSession(
       }),
     diffView: {
       files: async () => [],
-      create: () => ({
-        focus() {},
-        onDidError: () => ({ dispose() {} }),
-        dispose() {},
-      }),
     },
   },
 );

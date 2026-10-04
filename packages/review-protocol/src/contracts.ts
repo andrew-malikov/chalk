@@ -290,14 +290,8 @@ export interface ReviewDiffViewport {
   height: number;
 }
 
-/**
- * Mounts the changed-files diff UI — file list and multi-diff widget — into an
- * app-owned container. `create` returns at once and initializes the widget
- * asynchronously; a failed initialization arrives through `onDidError`.
- */
+/** Changed-file metadata for the canvas; diff rendering lives in React. */
 export interface ReviewDiffViewFactory {
-  create(spec: ReviewDiffViewSpec): ReviewDiffViewHandle;
-  /** Returns the parsed full diff that backs the native diff view. */
   files(scope?: ReviewCommitScope): Promise<readonly ReviewDiffFileWire[]>;
 }
 
@@ -1196,6 +1190,7 @@ export const ReviewDesktopStateSchema = z.strictObject({
 const revealArgsSchema = z
   .strictObject({
     path: requiredString,
+    commit: requiredString.optional(),
     startLine: positiveInteger,
     endLine: positiveInteger,
     side: reviewDiffSideSchema.optional(),

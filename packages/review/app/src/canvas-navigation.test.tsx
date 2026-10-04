@@ -92,7 +92,6 @@ it("resumes the view and lens a reader left, on the version they left them", asy
   app.get("/reviews-api/:id/commits", (context) => context.json([]));
 
   const listeners = new Set<Parameters<ReviewCanvasBridge["subscribe"]>[0]>();
-  const diffLenses: (string | undefined)[] = [];
 
   const bridge = testReviewBridge(
     {},
@@ -105,15 +104,6 @@ it("resumes the view and lens a reader left, on the version they left them", asy
       },
       diffView: {
         files: async () => [],
-        create(spec) {
-          diffLenses.push(spec.lens?.id);
-
-          return {
-            focus() {},
-            onDidError: () => ({ dispose() {} }),
-            dispose() {},
-          };
-        },
       },
     },
   );
@@ -123,7 +113,6 @@ it("resumes the view and lens a reader left, on the version they left them", asy
 
   const open = async () => {
     await act(async () => canvas?.dispose());
-    diffLenses.length = 0;
     await act(async () => {
       canvas = mount(container, {
         kind: "api",
@@ -157,7 +146,6 @@ it("resumes the view and lens a reader left, on the version they left them", asy
     await vi.waitFor(() => expect(lensToggle()?.disabled).toBe(false));
   });
   await act(async () => lensToggle()!.click());
-  expect(diffLenses.at(-1)).toBe("api");
 
   // The reader comes back to the Diff with the same lens applied.
   await open();
@@ -167,7 +155,6 @@ it("resumes the view and lens a reader left, on the version they left them", asy
       expect(lensToggle()?.getAttribute("aria-pressed")).toBe("true"),
     );
   });
-  expect(diffLenses.at(-1)).toBe("api");
 
   // A lens chosen on an earlier version does not carry over to a newer one.
   await command({
@@ -184,7 +171,6 @@ it("resumes the view and lens a reader left, on the version they left them", asy
     await vi.waitFor(() => expect(lensToggle()).toBeTruthy());
   });
   expect(lensToggle()?.getAttribute("aria-pressed")).toBe("false");
-  expect(diffLenses).not.toContain("api");
 });
 
 it("reopens a stored fullscreen tour only while its diagram is in the document", async () => {
@@ -530,11 +516,6 @@ function canvasHarness(app: Hono, reviewId: string) {
       },
       diffView: {
         files: async () => [],
-        create: () => ({
-          focus() {},
-          onDidError: () => ({ dispose() {} }),
-          dispose() {},
-        }),
       },
     },
   );

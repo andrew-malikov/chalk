@@ -116,7 +116,9 @@ export function AgentSelectionProvider({
         // Like the old comment chip, live inside the document's positioning
         // context so browser scrolling moves both the text and its action.
         const container =
-          element?.closest<HTMLElement>(".review-document") ?? overlayHost;
+          value.anchorContainer ??
+          element?.closest<HTMLElement>(".review-document") ??
+          overlayHost;
 
         const rect = container?.getBoundingClientRect();
         value = {

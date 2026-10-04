@@ -39,9 +39,6 @@ describe("ReviewDiffFilesProvider", () => {
       {},
       {
         diffView: {
-          create: () => {
-            throw new Error("unused");
-          },
           files,
         },
       },
@@ -132,9 +129,6 @@ describe("ReviewDiffFilesProvider", () => {
       {},
       {
         diffView: {
-          create: () => {
-            throw new Error("unused");
-          },
           files,
         },
       },
@@ -245,9 +239,6 @@ describe("ReviewDiffFilesProvider", () => {
       {},
       {
         diffView: {
-          create: () => {
-            throw new Error("unused");
-          },
           files,
         },
       },

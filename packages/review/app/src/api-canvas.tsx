@@ -248,7 +248,7 @@ export function ApiCanvas({
       inlineEditors: { ...content.bridge.inlineEditors },
       diffView: { ...content.bridge.diffView },
     }),
-    [content.bridge, sourceVersion, content.structuralDiffEnabled],
+    [content.bridge, sourceVersion],
   );
 
   const baseSession = useMemo(() => {
@@ -405,10 +405,7 @@ export function ApiCanvas({
                   (data.snapshot.pins?.base ?? "") !==
                   (data.snapshot.pins?.head ?? ""),
                 version: data.snapshot.version,
-                lensMode:
-                  content.structuralDiffEnabled === false
-                    ? "textual"
-                    : "structural",
+                lensMode: "textual",
                 commits: data.commits,
               })
             }
@@ -418,7 +415,7 @@ export function ApiCanvas({
                 client={client}
                 snapshot={data.snapshot}
                 coverageRevision={coverageRevision}
-                structuralDiffEnabled={content.structuralDiffEnabled}
+                structuralDiffEnabled={false}
               >
                 <TutorialProvider tutorial={content.tutorial}>
                   {error && (

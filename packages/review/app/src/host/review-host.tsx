@@ -1,5 +1,6 @@
 import type {
   ReviewCanvasBridge,
+  ReviewCommitScope,
   ReviewDiffFileWire,
   ReviewDiffSide,
   ReviewRangeWire,
@@ -16,6 +17,7 @@ export interface ReviewSurface {
     range: ReviewRangeWire,
     side?: ReviewDiffSide,
     pins?: ReviewSourcePins,
+    scope?: ReviewCommitScope,
   ): void;
   post(request: ReviewVerbRequest): Promise<void>;
   subscribe(listener: (event: ReviewSurfaceEvent) => void): () => void;
@@ -29,11 +31,12 @@ export function createReviewSurface(bridge: ReviewCanvasBridge): ReviewSurface {
         args: { path: file.path, previousPath: file.previousPath },
       });
     },
-    revealAnchor(path, range, side, pins) {
+    revealAnchor(path, range, side, pins, scope) {
       void bridge.post({
         name: "reveal",
         args: {
           path,
+          ...(scope ? { commit: scope.commit } : {}),
           startLine: range.fromLine,
           endLine: range.toLine,
           side,

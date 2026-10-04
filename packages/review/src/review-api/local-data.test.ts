@@ -3564,6 +3564,63 @@ describe("review_diff", () => {
     );
   });
 
+  it("keeps a deleted-file raw patch separate when that path becomes a directory", async () => {
+    const head = git("rev-parse", "HEAD");
+    const file = "dir/big.ts";
+    git("rm", file);
+    mkdirSync(path.join(repository, file));
+    writeFileSync(path.join(repository, file, "index.ts"), "child file\n");
+    git("add", ".");
+    git(
+      "-c",
+      "commit.gpgsign=false",
+      "commit",
+      "-qm",
+      "File becomes directory",
+    );
+    const current = await local.data.resolvePins(
+      pins.repositoryId,
+      head,
+      "HEAD",
+    );
+    const raw = await local.data.rawFilePatch(current, file);
+    expect(raw).toContain(`diff --git a/${file} b/${file}\n`);
+    expect(raw).not.toContain(`${file}/index.ts`);
+  });
+
+  it("serves an unnumbered single-file patch and preserves both rename paths", async () => {
+    const api = createReviewApi(local.store, local.data);
+    const response = await api.request(
+      `/${reviewId}/diff?format=raw&file=example.ts&maxBytes=500000`,
+    );
+    expect(response.status).toBe(200);
+    const patch = await response.text();
+    expect(patch).toContain("--- a/example.ts\n+++ b/example.ts\n");
+    expect(patch).toContain("-line 6\n+changed line\n");
+    const renamed = await api.request(
+      `/${reviewId}/diff?format=raw&file=dir/moved.ts&maxBytes=500000`,
+    );
+    expect(renamed.status).toBe(200);
+    expect(await renamed.text()).toContain(
+      "rename from literal1.ts\nrename to dir/moved.ts\n",
+    );
+  });
+
+  it("rejects ambiguous raw requests and over-budget patches instead of truncating", async () => {
+    const api = createReviewApi(local.store, local.data);
+    for (const query of ["format=raw", "format=raw&file=example.ts&paths=dir/"])
+      expect((await api.request(`/${reviewId}/diff?${query}`)).status).toBe(
+        400,
+      );
+    const response = await api.request(
+      `/${reviewId}/diff?format=raw&file=example.ts&maxBytes=1`,
+    );
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: expect.stringContaining("byte"),
+    });
+  });
+
   it("returns only the patches a pathspec names, both sides of a rename included", async () => {
     const text = (await call({
       format: "patch",

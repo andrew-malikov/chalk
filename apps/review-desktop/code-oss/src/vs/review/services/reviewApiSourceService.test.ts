@@ -116,13 +116,13 @@ test("diff entries keep rename paths and missing sides, even when the review adv
 		{} as never,
 		{
 			openComparison: () => undefined,
-			create: (_: unknown, input: ReviewDiffViewSource) => {
+			createDocument: (_: unknown, _lens: ReviewDiffLens, input: ReviewDiffViewSource) => {
 				source = input;
 				return {};
 			},
 		} as never,
 	);
-	canvas.diffView.create({} as never);
+	canvas.inlineEditors.create({ path: "new.ts", side: "head", ranges: [{ startLine: 1, endLine: 1 }] } as never);
 	const result = await source.load({ commit: "selected-commit" });
 	assert.equal(result.entries.find(entry => entry.file.path === "new.ts")!.original!.path, "/old.ts");
 	assert.equal(result.entries.find(entry => entry.file.path === "new.ts")!.modified!.path, "/new.ts");

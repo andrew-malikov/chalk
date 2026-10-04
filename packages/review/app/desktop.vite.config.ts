@@ -10,6 +10,7 @@ import { scopeReviewCanvasCss } from "./desktop-css-scope";
 import {
   hardenLibavoidForTrustedTypes,
   isLibavoidBrowserModule,
+  pierreTrustedTypesPlugin,
 } from "./desktop-trusted-types";
 import { stylexOptions } from "./stylex-options";
 
@@ -23,6 +24,7 @@ const decodeNamedCharacterReferenceIndex = path.join(
 export default defineConfig({
   root: __dirname,
   plugins: [
+    pierreTrustedTypesPlugin(),
     // Appends the collected StyleX rules to the canvas CSS asset in its own
     // generateBundle, which runs before the scoping plugin below.
     stylex.vite(stylexOptions),

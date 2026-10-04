@@ -101,9 +101,6 @@ it("exposes JSON section and Markdown headings plus imported PR and stack naviga
       post,
       diffView: {
         files: async () => [],
-        create: () => {
-          throw new Error("Unused");
-        },
       },
     },
   );

@@ -21,9 +21,7 @@ import type { ICodeEditor } from "../../editor/browser/editorBrowser.js";
 import { RunOnceScheduler } from "../../base/common/async.js";
 import { IStorageService } from "../../platform/storage/common/storage.js";
 import { ReviewDiffViewStateStorage } from "./reviewDiffViewState.js";
-import { IConfigurationService } from "../../platform/configuration/common/configuration.js";
 import { IInstantiationService } from "../../platform/instantiation/common/instantiation.js";
-import { REVIEW_STRUCTURAL_DIFF_SETTING } from "../common/reviewConfigurationDefaults.js";
 import type {
 	ReviewCommitScope,
 	ReviewDiffLens,
@@ -80,9 +78,9 @@ export class ReviewDiffViewService extends Disposable {
 		this.diffLayout = this._register(instantiationService.createInstance(ReviewDiffLayoutSetting));
 	}
 
-	get structuralRenderingEnabled(): boolean {
-		return this.instantiationService.invokeFunction(a => a.get(IConfigurationService).getValue<boolean>(REVIEW_STRUCTURAL_DIFF_SETTING) === true);
-	}
+	// Native document peeks share the Pierre viewer's textual coverage mode.
+	// Keep the saved structural preference for a later rendering port.
+	readonly structuralRenderingEnabled = false;
 
 	/** Shared by every view of this comparison; reset/dispose follows the canvas lifetime. */
 	openComparison(key: string, client: StructuralDiffStream, generation: number, revision?: string): StructuralDiffSession | undefined {
@@ -117,7 +115,7 @@ export class ReviewDiffViewService extends Disposable {
 		return handle;
 	}
 
-	/** Document peeks use the same controller, providers and widget as the Diff tab. */
+	/** Document peeks retain the native comparison controller, providers and widget. */
 	createDocument(spec: ReviewInlineEditorSpec, lens: ReviewDiffLens, source: ReviewDiffViewSource): ReviewInlineEditorHandle {
 		const lifetime = new DisposableStore();
 		const heightChanged = lifetime.add(new Emitter<number>());
@@ -299,7 +297,7 @@ class DiffViewController extends Disposable implements ReviewDiffViewHandle {
 			const data = await this.source.load(this.spec.scope, this.spec.lens);
 			const { sourceUri, entries } = data;
 			const session = data.session;
-			const structuralEnabled = session !== undefined && this.instantiationService.invokeFunction(a => a.get(IConfigurationService).getValue<boolean>(REVIEW_STRUCTURAL_DIFF_SETTING) === true);
+			const structuralEnabled = session !== undefined;
 			this.viewStateKey = `${data.stateKey ?? sourceUri.toString()}:${structuralEnabled}:${JSON.stringify(this.spec.lens ?? null)}:${this.spec.document ? "document" : "diff"}`;
 			if (this.disposed) return;
 			const store = this._register(new DisposableStore());

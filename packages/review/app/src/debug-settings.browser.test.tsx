@@ -179,9 +179,6 @@ function createTestSession(): ReviewSession {
     {
       diffView: {
         files: async () => [],
-        create: () => {
-          throw new Error("unused test diff view");
-        },
       },
       inlineEditors: {
         async find() {

@@ -1035,7 +1035,16 @@ export function createReviewApi(
       const paths = context.req.queries("paths");
       const input = readQuerySchemas.diff.parse({ ...query, paths });
 
-      if (input.file !== undefined && (paths || "format" in query))
+      if (input.format === "raw" && (input.file === undefined || paths))
+        throw new ReviewInputError(
+          "raw requires one file and cannot be combined with paths.",
+        );
+
+      if (
+        input.file !== undefined &&
+        input.format !== "raw" &&
+        (paths || "format" in query)
+      )
         throw new ReviewInputError(
           'file cannot be combined with paths or format; use paths:["…"], format:"patch".',
         );
@@ -1045,6 +1054,16 @@ export function createReviewApi(
         input.commit,
         queryAnchor(input),
       );
+
+      if (input.format === "raw") {
+        const patch = await data.rawFilePatch(pins, input.file!, input.context);
+        if (Buffer.byteLength(patch, "utf8") > input.maxBytes)
+          throw new ReviewInputError(
+            `Patch exceeds the ${input.maxBytes}-byte display limit. Open the source file to inspect it.`,
+            409,
+          );
+        return context.text(patch);
+      }
 
       if (input.format === "files" && input.file === undefined)
         return context.json(await data.changedFiles(pins, input.paths));

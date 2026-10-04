@@ -1431,6 +1431,30 @@ export class LocalReviewData {
 
     return this.rawPatch(pins, { paths: [file] });
   }
+
+  /** One complete Git patch for a renderer; never number or truncate its rows. */
+  async rawFilePatch(pins: Pins, file: string, contextLines?: number) {
+    checkRelativePath(file);
+    const summary = (await this.summaries(pins)).find(
+      (entry) => entry.path === file || entry.previousPath === file,
+    );
+    if (!summary) return "";
+    const patch = await this.rawPatch(pins, {
+      paths: summary.previousPath
+        ? [summary.previousPath, summary.path]
+        : [summary.path],
+      contextLines,
+    });
+    // Even a literal Git pathspec includes descendants if a file becomes a directory.
+    return splitGitPatchFiles(patch)
+      .filter(
+        ({ file }) =>
+          file.path === summary.path &&
+          file.previousPath === summary.previousPath,
+      )
+      .map(({ patch }) => patch)
+      .join("");
+  }
   /** Changed files matching a pathspec: exact files or directories, either side of a rename. */
   async changedFiles(pins: Pins, paths?: string[]) {
     const files = await this.summaries(pins);

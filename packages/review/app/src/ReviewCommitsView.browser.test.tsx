@@ -2,14 +2,12 @@ import type {
   ReviewCanvasBridge,
   ReviewCommitSummary,
   ReviewDiffFileWire,
-  ReviewDiffViewHandle,
 } from "@dev.fast/review-protocol";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { TestCanvasQuery } from "./canvas-query-test-utils";
-import { ReviewDiffView } from "./DiffView";
 import { ReviewSessionProvider } from "./host/review-session";
 import { testReviewSession } from "./review-session-test-utils";
 import { ReviewCommitsView } from "./ReviewCommitsView";
@@ -75,7 +73,7 @@ it("opens a commit's diff at the file clicked in its file list", async () => {
       }}
       onOpenDiff={onOpenDiff}
     />,
-    { files: async () => [file], create: () => ({}) as ReviewDiffViewHandle },
+    { files: async () => [file] },
   );
 
   await act(async () =>
@@ -95,23 +93,4 @@ it("opens a commit's diff at the file clicked in its file list", async () => {
   await act(async () => fileButton.click());
 
   expect(onOpenDiff).toHaveBeenCalledWith(commit, "file", file.path);
-});
-
-it("reveals the requested file in a commit-scoped diff", async () => {
-  const revealFile = vi.fn<NonNullable<ReviewDiffViewHandle["revealFile"]>>();
-
-  await mount(
-    <ReviewDiffView scope={{ commit: commit.commit }} revealFile={file.path} />,
-    {
-      files: async () => [],
-      create: () => ({
-        focus() {},
-        revealFile,
-        onDidError: () => ({ dispose() {} }),
-        dispose() {},
-      }),
-    },
-  );
-
-  expect(revealFile.mock.calls[0]?.[0]).toBe(file.path);
 });

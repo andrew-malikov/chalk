@@ -13,7 +13,6 @@ import * as stylex from "@stylexjs/stylex";
 import { type ReactNode, useEffect, useState } from "react";
 
 import { ConnectCard, LegacySkillsRow } from "./connect-card";
-import { DiffrConfigSection } from "./diffr-config-section";
 import { homeStyles } from "./home-styles";
 import { Choice } from "./settings-choice";
 import { settingsStyles as styles } from "./settings-styles";
@@ -81,9 +80,7 @@ export function SettingsPage({
     settings.softwareMapEnabled,
   );
 
-  const [structuralDiffEnabled, setStructuralDiffEnabled] = useState(
-    settings.structuralDiffEnabled,
-  );
+  const structuralDiffEnabled = settings.structuralDiffEnabled;
 
   const [scratchpadEnabled, setScratchpadEnabled] = useState(
     settings.scratchpadEnabled,
@@ -303,7 +300,7 @@ export function SettingsPage({
           <Section label="Experimental Features">
             <Row
               label="Structural Diffs"
-              description="Replace the standard diff view with syntax-aware diffs and linked folds."
+              description="Structural rendering is temporarily unavailable. Your preference is saved."
             >
               <label {...stylex.props(styles.toggle)}>
                 <input
@@ -311,24 +308,10 @@ export function SettingsPage({
                   type="checkbox"
                   aria-label="Structural Diffs"
                   checked={structuralDiffEnabled}
-                  disabled={busy !== null}
-                  onChange={(event) => {
-                    const enabled = event.target.checked;
-                    void run(
-                      "structural-diff",
-                      () => settings.setStructuralDiffEnabled(enabled),
-                      setStructuralDiffEnabled,
-                    );
-                  }}
+                  disabled
                 />
               </label>
             </Row>
-            {structuralDiffEnabled ? (
-              <DiffrConfigSection
-                actions={settings.diffrConfig}
-                reloadWindow={settings.reloadWindow}
-              />
-            ) : null}
             <Row
               label="Software Map"
               description="Show the experimental Software Map view in sessions."

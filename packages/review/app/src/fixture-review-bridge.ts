@@ -118,9 +118,6 @@ export function fixtureReviewBridge(api: FixtureReviewApi): ReviewCanvasBridge {
       },
       diffView: {
         files: async () => [],
-        create: () => {
-          throw new Error("Diff is not mounted by this test.");
-        },
       },
     },
   );

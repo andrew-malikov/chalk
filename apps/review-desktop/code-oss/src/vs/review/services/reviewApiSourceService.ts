@@ -281,7 +281,6 @@ export class ReviewApiSourceService extends Disposable implements IReviewApiSour
 				};
 			},
 		});
-		const diffSource = makeSource(view);
 		const documentScope = (spec: ReviewInlineFindSpec) => {
 			// A source with its own pins is read at them; the review comparison does not apply.
 			const current = spec.pins ? reviewSourceAnchor(view(), spec.pins) : reviewSourceComparison(view());
@@ -299,8 +298,7 @@ export class ReviewApiSourceService extends Disposable implements IReviewApiSour
 				find: async (spec, query) => { const { lens, source } = documentScope(spec); return { matchCount: (await diff.findDocument(lens, source, query)).length }; },
 			} satisfies ReviewInlineEditorFactory,
 			diffView: {
-				create: (spec) => diff.create(spec, diffSource),
-				files: diffSource.files,
+				files: scope => files(reviewSourceComparison(view(), scope?.commit)),
 			} satisfies ReviewDiffViewFactory,
 		};
 	}

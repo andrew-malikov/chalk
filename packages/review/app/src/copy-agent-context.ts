@@ -9,7 +9,7 @@ export async function copyAgentContext(
   session: ReviewSession,
   selection: AgentSelection,
 ): Promise<void> {
-  const response = await session.fetch("/copy-context", {
+  const response = await session.fetch("/copy-context?mode=textual", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(selection),

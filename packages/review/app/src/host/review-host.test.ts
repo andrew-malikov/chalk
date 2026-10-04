@@ -8,6 +8,31 @@ import { describe, expect, it, vi } from "vitest";
 import { createReviewSurface } from "./review-host";
 
 describe("review surface", () => {
+  it("opens a source range in its narrowed commit comparison", () => {
+    const posted: ReviewVerbRequest[] = [];
+    const surface = createReviewSurface(
+      testReviewBridge(
+        {},
+        {
+          post: async (request) => {
+            posted.push(request);
+            return { ok: true };
+          },
+        },
+      ),
+    );
+    surface.revealAnchor(
+      "removed.ts",
+      { fromLine: 1, toLine: 1 },
+      "base",
+      undefined,
+      { commit: "abc" },
+    );
+    expect(posted[0]).toMatchObject({
+      name: "reveal",
+      args: { path: "removed.ts", side: "base", commit: "abc" },
+    });
+  });
   it("calls the typed workbench bridge directly", () => {
     const posted: ReviewVerbRequest[] = [];
     const listeners = new Set<(event: ReviewSurfaceEvent) => void>();
