@@ -92,3 +92,8 @@ scripts/acceptance/evidence/
 
 packages/review/tutorial/pins.json
 packages/review/bin/
+
+# Electrobun generated SDK and native bundles
+apps/review-electrobun/.hutch/
+apps/review-electrobun/build/
+apps/review-electrobun/artifacts/

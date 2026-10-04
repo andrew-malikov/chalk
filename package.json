@@ -11,6 +11,8 @@
     "desktop:build": "pnpm --filter @dev.fast/review-desktop app:build",
     "desktop:run": "pnpm --filter @dev.fast/review-desktop app:run",
     "desktop:watch": "pnpm --filter @dev.fast/review-desktop app:watch",
+    "electrobun:dev": "pnpm --filter @dev.fast/review-electrobun app:dev",
+    "electrobun:build": "pnpm --filter @dev.fast/review-electrobun app:build",
     "desktop:package:linux": "pnpm --filter @dev.fast/review-desktop app:package:linux",
     "review": "pnpm --filter @dev.fast/review review",
     "format": "oxfmt --write \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"!apps/review-desktop/code-oss/**\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!packages/review/app/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",

@@ -3,7 +3,7 @@ import path from "node:path";
 
 import stylex from "@stylexjs/unplugin";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, mergeConfig, type UserConfig } from "vite";
 
 import { sourceAliases } from "../test-config";
 import { scopeReviewCanvasCss } from "./desktop-css-scope";
@@ -21,7 +21,8 @@ const decodeNamedCharacterReferenceIndex = path.join(
   "index.js",
 );
 
-export default defineConfig({
+export function createReviewCanvasConfig(overrides: UserConfig = {}) {
+  return mergeConfig({
   root: __dirname,
   plugins: [
     pierreTrustedTypesPlugin(),
@@ -106,4 +107,7 @@ export default defineConfig({
       },
     },
   },
-});
+  }, overrides);
+}
+
+export default defineConfig(createReviewCanvasConfig());
