@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as fs from 'fs';
-import { exec } from 'child_process';
+import { exec, execFile, spawn } from 'child_process';
 import { app, BrowserWindow, clipboard, contentTracing, Display, Menu, MessageBoxOptions, MessageBoxReturnValue, Notification, OpenDevToolsOptions, OpenDialogOptions, OpenDialogReturnValue, powerMonitor, powerSaveBlocker, SaveDialogOptions, SaveDialogReturnValue, screen, shell, systemPreferences, webContents } from 'electron';
 import { arch, cpus, freemem, loadavg, platform, release, totalmem, type } from 'os';
 import { promisify } from 'util';
@@ -14,11 +14,13 @@ import { Disposable, DisposableMap, DisposableStore, toDisposable } from '../../
 import { matchesSomeScheme, Schemas } from '../../../base/common/network.js';
 import { dirname, join, posix, resolve, win32 } from '../../../base/common/path.js';
 import { isLinux, isMacintosh, isWindows } from '../../../base/common/platform.js';
+import { sanitizeProcessEnvironment } from '../../../base/common/processes.js';
 import { AddFirstParameterToFunctions } from '../../../base/common/types.js';
 import { URI } from '../../../base/common/uri.js';
 import { virtualMachineHint } from '../../../base/node/id.js';
 import { Promises, SymlinkSupport } from '../../../base/node/pfs.js';
 import { findFreePort, isPortFree } from '../../../base/node/ports.js';
+import { findExecutable } from '../../../base/node/processes.js';
 import { localize } from '../../../nls.js';
 import { ISerializableCommandAction } from '../../action/common/action.js';
 import { INativeOpenDialogOptions } from '../../dialogs/common/dialogs.js';
@@ -675,6 +677,25 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 	async setDocumentEdited(windowId: number | undefined, edited: boolean, options?: INativeHostOptions): Promise<void> {
 		const window = this.windowById(options?.targetWindowId, windowId);
 		window?.setDocumentEdited(edited);
+	}
+
+	async openInVSCode(_windowId: number | undefined, args: string[]): Promise<void> {
+		const cli = await findExecutable('code') ?? (isMacintosh ? '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code' : undefined);
+		if (!cli) throw new Error('Install Visual Studio Code and add its code command to PATH to open source files.');
+		const env = { ...process.env };
+		sanitizeProcessEnvironment(env);
+		delete env['VSCODE_PORTABLE'];
+		if (isWindows) {
+			// Launch the executable directly: code.cmd needs a shell, which would interpret file names.
+			const child = spawn(resolve(dirname(cli), '..', 'Code.exe'), args, { env, detached: true, stdio: 'ignore' });
+			await new Promise<void>((resolve, reject) => {
+				child.once('error', reject);
+				child.once('spawn', resolve);
+			});
+			child.unref();
+		} else {
+			await promisify(execFile)(cli, args, { env });
+		}
 	}
 
 	async openExternal(windowId: number | undefined, url: string, defaultApplication?: string): Promise<boolean> {

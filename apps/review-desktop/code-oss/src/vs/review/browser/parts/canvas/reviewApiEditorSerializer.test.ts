@@ -9,8 +9,8 @@ import { ReviewCanvasEditorTabsService } from "../../../services/reviewCanvasEdi
 import { ReviewApiEditorSerializer } from "./reviewApiEditorSerializer.js";
 import { ReviewCanvasEditorInput } from "./reviewCanvasEditorInput.js";
 
-test("opening historical source requests its version and opens a separate native workspace only after success", async (t) => {
-	const opened: unknown[][] = [];
+test("opening historical source requests its version and opens a separate VS Code workspace only after success", async (t) => {
+	const opened: string[][] = [];
 	const requests: string[] = [];
 	let ok = true;
 	t.mock.method(globalThis, "fetch", async (url: string) => {
@@ -24,14 +24,14 @@ test("opening historical source requests its version and opens a separate native
 		{ onDidCloseEditor: Event.None } as never,
 		{} as never,
 		{ async getConnection() { return { serverUrl: "http://localhost", token: "test" }; } } as never,
-		{ async openWindow(...args: unknown[]) { opened.push(args); } } as never,
+		{ async openInVSCode(args: string[]) { opened.push(args); } } as never,
 		{ warn() {} } as never,
 	);
 	t.after(() => tabs.dispose());
 	await tabs.openApiSource({ reviewId: "review-a", kind: "version", version: 7 }, "Historical Review");
 	assert.equal(requests[0], "http://localhost/reviews-api/review-a/navigator?version=7");
 	assert.equal(opened.length, 1);
-	assert.deepEqual(opened[0]![1], { forceNewWindow: true });
+	assert.deepEqual(opened[0], ["--new-window", "/pinned/review.code-workspace"]);
 	ok = false;
 	await assert.rejects(tabs.openApiSource({ reviewId: "review-a", kind: "current" }, "Review"));
 	assert.equal(opened.length, 1);

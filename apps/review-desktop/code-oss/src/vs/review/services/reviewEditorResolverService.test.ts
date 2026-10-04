@@ -3,7 +3,6 @@ import test from "node:test";
 
 import { Event } from "../../base/common/event.js";
 import { URI } from "../../base/common/uri.js";
-import type { IOpenWindowOptions, IWindowOpenable } from "../../platform/window/common/window.js";
 import { EditorResolverService } from "../../workbench/services/editor/browser/editorResolverService.js";
 import { ResolvedStatus } from "../../workbench/services/editor/common/editorResolverService.js";
 import { apiSourceUri } from "../common/reviewSourceView.js";
@@ -13,7 +12,7 @@ import { ReviewEditorResolverService } from "./reviewEditorResolverService.js";
 
 test("source tree, selected code, definitions and diffs hand off before creating a Review editor group", async (t) => {
 	const requests: URL[] = [];
-	const windows: { openables: IWindowOpenable[]; options: IOpenWindowOptions }[] = [];
+	const windows: string[][] = [];
 	let fail = false;
 	t.mock.method(globalThis, "fetch", async (url: string) => {
 		const request = new URL(url);
@@ -26,7 +25,7 @@ test("source tree, selected code, definitions and diffs hand off before creating
 	const tabs = new ReviewCanvasEditorTabsService(
 		{} as never, { onDidCloseEditor: Event.None } as never, {} as never,
 		{ async getConnection() { return { serverUrl: "http://localhost", token: "test" }; } } as never,
-		{ async openWindow(openables: IWindowOpenable[], options: IOpenWindowOptions) { windows.push({ openables, options }); } } as never,
+		{ async openInVSCode(args: string[]) { windows.push(args); } } as never,
 		{ warn() {} } as never,
 	);
 	const resolver = new ReviewEditorResolverService(
@@ -42,32 +41,31 @@ test("source tree, selected code, definitions and diffs hand off before creating
 	const base = apiSourceUri({ view, side: "base", file: "old-name.ts" });
 	assert.equal(await resolver.resolveEditor({ resource: head }, undefined), ResolvedStatus.ABORT);
 	assert.equal(await resolver.resolveEditor({ resource: base, options: { selection: { startLineNumber: 42, startColumn: 3 } } }, undefined), ResolvedStatus.ABORT);
-	assert.deepEqual(windows[1].openables, [
-		{ workspaceUri: URI.file("/navigator/base.code-workspace") },
-		{ fileUri: URI.file("/navigator/base/old-name.ts:42:3") },
+	assert.deepEqual(windows[1], [
+		"--new-window", "/navigator/base.code-workspace", "--goto", "/navigator/base/old-name.ts:42:3",
 	]);
-	assert.deepEqual(windows[1].options, { forceNewWindow: true, gotoLineMode: true, diffMode: false });
 	assert.equal(requests[1].searchParams.get("version"), "7");
 	assert.equal(requests[1].searchParams.get("commit"), "selected-commit");
 	assert.equal(requests[1].searchParams.get("repositoryId"), "other-repository");
 	assert.equal(requests[1].searchParams.get("base"), "base-sha");
 	const dependency = head.with({ scheme: REVIEW_LANGUAGE_SOURCE_SCHEME, path: "/prepared/node_modules/lib/index.d.ts" });
 	assert.equal(await resolver.resolveEditor({ resource: dependency }, undefined), ResolvedStatus.ABORT);
-	assert.deepEqual(windows[2].openables[1], { fileUri: URI.file(dependency.path) });
+	assert.equal(windows[2][3], dependency.path);
 	assert.equal(requests[2].searchParams.has("file"), false);
 	assert.equal(await resolver.resolveEditor({ original: { resource: base }, modified: { resource: head } }, undefined), ResolvedStatus.ABORT);
-	assert.deepEqual(windows[3].openables, [
-		{ workspaceUri: URI.file("/navigator/head.code-workspace") },
-		{ fileUri: URI.file("/navigator/base/old-name.ts") },
-		{ fileUri: URI.file("/navigator/head/nested/source.ts") },
+	assert.deepEqual(windows[3], [
+		"--new-window", "/navigator/head.code-workspace", "--diff",
+		"/navigator/base/old-name.ts", "/navigator/head/nested/source.ts",
 	]);
-	assert.equal(windows[3].options.diffMode, true);
 	const empty = apiSourceUri({ view, side: "base", file: "added.ts" }, true);
 	await resolver.resolveEditor({ original: { resource: empty }, modified: { resource: head } }, undefined);
 	assert.equal(requests[5].searchParams.get("empty"), "true");
 	fail = true;
 	await assert.rejects(resolver.resolveEditor({ resource: head }, undefined), /Checkout unavailable/);
 	assert.equal(windows.length, 5);
+	fail = false;
+	await tabs.openSourceReferences(head, { lineNumber: 9, column: 2 });
+	assert.deepEqual(windows[5], ["--new-window", "/navigator/head.code-workspace", "--goto", "/navigator/head/nested/source.ts:9:2"]);
 	const stock = t.mock.method(EditorResolverService.prototype, "resolveEditor", async () => ResolvedStatus.NONE);
 	const settings = { resource: URI.parse("vscode-settings:/settings") };
 	assert.equal(await resolver.resolveEditor(settings, undefined), ResolvedStatus.NONE);
