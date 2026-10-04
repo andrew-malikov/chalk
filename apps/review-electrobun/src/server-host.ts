@@ -14,6 +14,7 @@ export interface ServerOptions {
   startupTimeoutMs?: number;
   shutdownTimeoutMs?: number;
   signal?: AbortSignal;
+  appSessionId?: string;
   onState?(state:{status:"starting"|"error"|"disconnected";message:string}):void;
 }
 
@@ -48,7 +49,7 @@ export async function startServer(options: ServerOptions):Promise<{discovery:Rev
       DEV_FAST_REVIEW_SERVER_TOKEN:token,DEV_FAST_REVIEW_INSTANCE_ID:instanceId,
       DEV_FAST_REVIEW_DESKTOP_HOST_AUTOSTART:"1",DEV_FAST_REVIEW_TELEMETRY_DISABLED:"1",
       DEV_FAST_REVIEW_CLI_RUNTIME:options.nodePath,DEV_FAST_REVIEW_RELEASE_CHANNEL:"dev",
-      DEV_FAST_REVIEW_APP_SESSION_ID:randomUUID(),DEV_FAST_REVIEW_APP_VERSION:"0.2.0",
+      DEV_FAST_REVIEW_APP_SESSION_ID:options.appSessionId??randomUUID(),DEV_FAST_REVIEW_APP_VERSION:"0.2.0",
     },
   });
   let stopping=false;
@@ -61,7 +62,7 @@ export async function startServer(options: ServerOptions):Promise<{discovery:Rev
     return stopPromise??=(async()=>{
       if(child.exitCode===null && child.signalCode===null) {
         child.kill("SIGTERM");
-        const timer=setTimeout(()=>child.kill("SIGKILL"),options.shutdownTimeoutMs??2000);
+        const timer=setTimeout(()=>child.kill("SIGKILL"),options.shutdownTimeoutMs??5000);
         await exited;clearTimeout(timer);
       }
       const record=await readRecord();
@@ -72,7 +73,7 @@ export async function startServer(options: ServerOptions):Promise<{discovery:Rev
   try {
     const discovery=await new Promise<ReviewDesktopDiscovery>((resolve,reject)=>{
       let pending="";
-      const timer=setTimeout(()=>reject(new Error("Review server startup timed out.")),options.startupTimeoutMs??60000);
+      const timer=setTimeout(()=>reject(new Error("Review server startup timed out.")),options.startupTimeoutMs??120000);
       function fail(error:Error) { clearTimeout(timer);reject(error); }
       abortListener=()=>fail(new Error("Review server startup cancelled."));
       options.signal?.addEventListener("abort",abortListener,{once:true});

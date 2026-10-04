@@ -22,7 +22,7 @@ const decodeNamedCharacterReferenceIndex = path.join(
 );
 
 export function createReviewCanvasConfig(overrides: UserConfig = {}) {
-  return mergeConfig({
+  return mergeConfig(defineConfig({
   root: __dirname,
   plugins: [
     pierreTrustedTypesPlugin(),
@@ -107,7 +107,7 @@ export function createReviewCanvasConfig(overrides: UserConfig = {}) {
       },
     },
   },
-  }, overrides);
+  }), overrides);
 }
 
 export default defineConfig(createReviewCanvasConfig());

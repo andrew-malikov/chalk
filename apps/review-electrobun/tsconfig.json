@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2025", "DOM", "DOM.Iterable"],
+    "types": ["node", "bun", "vite/client"],
+    "paths": {
+      "electrobun": ["./.hutch/devkit/api/sdks/main/index.ts"],
+      "electrobun/main": ["./.hutch/devkit/api/sdks/main/index.ts"],
+      "electrobun/view": ["./.hutch/devkit/api/browser/index.ts"],
+      "@dev.fast/trace-core": ["../../packages/trace-core/src/index.ts"],
+      "@dev.fast/*": ["../../packages/*/src"],
+      "@review/*": ["../../packages/review/src/*"],
+      "@canvas/*": ["../../packages/review/app/src/*"]
+    }
+  },
+  "include": ["src/**/*", "*.ts"]
+}

@@ -1,27 +1,70 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import path from "node:path";
-import Electrobun, { BrowserWindow, Utils } from "electrobun/main";
+import Electrobun, { ApplicationMenu, BrowserView, BrowserWindow, Utils } from "electrobun/main";
+import { z } from "zod";
 import { startServer } from "./server-host";
+import { createPreferencesStore } from "./preferences";
+import { openVSCode, createQuitGate, externalURL } from "./native";
+import type { AppRPC, HostState, ShellCommand } from "./rpc";
 
-const window = new BrowserWindow({title:"Review",url:"views://mainview/index.html",frame:{width:1200,height:850}});
-window.webview.setNavigationRules(["^*", "views://mainview/*"]);
-const profile=process.env.DEV_REVIEW_HOME??path.join(homedir(),".dev-fast/review-electrobun");
-const checkout=process.env.DEV_FAST_REVIEW_CHECKOUT!;
+const profile=path.resolve(process.env.DEV_REVIEW_HOME??path.join(homedir(),".dev-fast/review-electrobun"));
+const checkout=process.env.DEV_FAST_REVIEW_CHECKOUT;
 const key=`dev-electrobun-${createHash("sha256").update(checkout??"").digest("hex").slice(0,12)}`;
+const appSessionId=randomUUID();
 const abort=new AbortController();
-const server=startServer({
-  profile,key,checkout,nodePath:process.env.REVIEW_ELECTROBUN_NODE!,entry:process.env.DEV_FAST_REVIEW_SERVER_ENTRY!,signal:abort.signal,
-  onState:state=>console.log("Review server",state.status,state.message),
-});
-void server.then(({discovery})=>console.log(`Review server: ${discovery.url}; DEV_REVIEW_HOME=${profile}; DEV_REVIEW_INSTANCE=${key}`)).catch(error=>console.error(String(error)));
-let quitComplete=false;
-let cleanup:Promise<void>|undefined;
-Electrobun.events.on("before-quit",event=>{
- if(quitComplete) return;
- event.response={allow:false};
- cleanup??=(async()=>{
-   abort.abort();await server.then(host=>host.stop(),()=>{});
-   quitComplete=true;Utils.quit();
- })();
-});
+let state:HostState={status:"starting",message:"Starting Review…"};
+let preferences:Awaited<ReturnType<typeof createPreferencesStore>>|undefined;
+let server:ReturnType<typeof startServer>|undefined;
+Electrobun.events.on("before-quit",createQuitGate(async()=>{
+ abort.abort();
+ const results=await Promise.allSettled([server?.then(host=>host.stop()),preferences?.flush()]);
+ for(const result of results) if(result.status==="rejected") console.error("Review shutdown",String(result.reason));
+},()=>Utils.quit()));
+async function run() {
+ try {preferences=await createPreferencesStore(path.join(profile,"preferences.json"));}
+ catch(error) {state={status:"error",message:String(error)};}
+ if(abort.signal.aborted) return;
+ const rpc=BrowserView.defineRPC<AppRPC>({handlers:{
+  requests:{
+   getState:()=>state,
+   setPreferences:async patch=>{
+    if(!preferences) throw new Error("Preferences are inaccessible.");
+    const value=await preferences.update(patch);
+    if(state.status==="ready") setState({...state,preferences:value});
+    return value;
+   },
+   openSource:openVSCode,
+   openExternal:async request=>{if(!Utils.openExternal(externalURL(request))) throw new Error("The system could not open this URL.");},
+   focusWindow:():void=>{window.activate();},
+  },
+  messages:{diagnostic:input=>{
+   const value=z.strictObject({level:z.enum(["error","warning"]),message:z.string().max(10000)}).parse(input);
+   console.error(`Review renderer ${value.level}: ${value.message}`);
+  }},
+ }});
+ const window=new BrowserWindow({title:"Review",url:"views://mainview/index.html",rpc,frame:{width:1200,height:850}});
+ window.webview.setNavigationRules(["^*","views://mainview/*"]);
+ function setState(next:HostState) {state=next;if(!abort.signal.aborted) rpc.send.hostState(next);}
+ ApplicationMenu.setApplicationMenu([
+  {label:"Review",submenu:[{label:"Settings…",action:"settings",accelerator:"CmdOrCtrl+,"},{type:"divider"},{role:"quit",label:"Quit Review"}]},
+  {label:"File",submenu:[{label:"Home",action:"home",accelerator:"CmdOrCtrl+Shift+H"},{label:"Close Tab",action:"closeTab",accelerator:"CmdOrCtrl+W"}]},
+  {label:"Edit",submenu:[{role:"undo"},{role:"redo"},{type:"divider"},{role:"cut"},{role:"copy"},{role:"paste"},{role:"selectAll"},{type:"divider"},{label:"Find",action:"find",accelerator:"CmdOrCtrl+F"}]},
+ ]);
+ ApplicationMenu.on("application-menu-clicked",event=>{
+  const action=(event as {data?:{action?:string}}).data?.action;
+  if(action && ["find","home","settings","closeTab"].includes(action)) rpc.send.command(action as ShellCommand);
+ });
+ if(state.status==="error") return;
+ if(!checkout || !process.env.REVIEW_ELECTROBUN_NODE || !process.env.DEV_FAST_REVIEW_SERVER_ENTRY) {
+  setState({status:"error",message:"Launch this development app with Node 24: pnpm electrobun:dev"});return;
+ }
+ console.log(`Review profile: ${profile}; DEV_REVIEW_INSTANCE=${key}`);
+ server=startServer({profile,key,checkout,nodePath:process.env.REVIEW_ELECTROBUN_NODE,entry:process.env.DEV_FAST_REVIEW_SERVER_ENTRY,signal:abort.signal,appSessionId,onState:setState});
+ try {
+  const host=await server;
+  setState({status:"ready",discovery:host.discovery,preferences:preferences!.get(),appSessionId});
+  console.log(`Review server: ${host.discovery.url}`);
+ } catch(error) {setState({status:"error",message:String(error)});}
+}
+void run().catch(error=>console.error("Review startup",String(error)));
