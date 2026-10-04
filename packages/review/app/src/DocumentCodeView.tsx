@@ -10,8 +10,9 @@ import type {
 } from "@dev.fast/review-protocol";
 import { coverageProgress, coverageSources } from "@review/viewed-coverage";
 import * as stylex from "@stylexjs/stylex";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
+import { createPierreInlineEditors } from "./diff/pierre-inline-editors";
 import { useReviewSession } from "./host/review-session";
 import { useReviewFindRegistration } from "./review-find";
 import { emitReviewInteraction } from "./review-interaction-event";
@@ -125,7 +126,12 @@ export function DocumentCodeView({
   const handleOpen = useCallback(() => onOpenRef.current?.(), []);
   const collapsedRef = useRef(collapsed);
   collapsedRef.current = collapsed;
-  const inlineEditorFactory = session.bridge.inlineEditors;
+
+  const inlineEditorFactory = useMemo(
+    () => createPierreInlineEditors(session),
+    [session.apiUrl, session.bridge, session.review?.updatedAtMs],
+  );
+
   const inlineEditorSessionId = session.config.reviewId;
   const reviewFind = useReviewFindRegistration();
 

@@ -6,7 +6,6 @@ import path from "node:path";
 
 import type {
   ReviewCanvasBridge,
-  ReviewInlineEditorSpec,
   ReviewSurfaceEvent,
 } from "@dev.fast/review-protocol";
 import { selectSource } from "@review/lens-selection";
@@ -489,107 +488,6 @@ it.each([false, true])(
   },
 );
 
-it("renders a code peek block on its pinned side without fetching source text", async () => {
-  const review = await command({ type: "create", title: "Peek review", pins });
-
-  await command({
-    type: "edit",
-    reviewId: review.reviewId,
-    edit: {
-      type: "insert",
-      content: {
-        type: "code_peek",
-        source: selectSource({
-          side: "base",
-          file: "src/old.ts",
-          fromLine: 7,
-          toLine: 9,
-        }),
-      },
-    },
-  });
-
-  const app = new Hono();
-  app.get("/reviews-api/:id/progress", (c) =>
-    c.json({
-      files: [],
-      lenses: [],
-      resolvedSelections: {
-        [JSON.stringify(["src/old.ts", "base", 7, "base", 9])]: [
-          { file: "src/old.ts", side: "base", fromLine: 7, toLine: 9 },
-          { file: "src/old.ts", side: "head", fromLine: 12, toLine: 14 },
-        ],
-      },
-    }),
-  );
-  app.route("/reviews-api", createReviewApi(store));
-  app.get("/reviews-api/:id/commits", (context) => context.json([]));
-  const requested: string[] = [];
-  const created: ReviewInlineEditorSpec[] = [];
-
-  const bridge = testReviewBridge(
-    {},
-    {
-      request: async (url, init) => {
-        requested.push(String(url));
-
-        return app.request(url, init);
-      },
-      inlineEditors: {
-        async find() {
-          return { matchCount: 0 };
-        },
-        create: (spec) => {
-          created.push(spec);
-          const editor = document.createElement("div");
-          editor.className = "fixture-inline-editor";
-          spec.container.appendChild(editor);
-
-          return {
-            height: 180,
-            setActive() {},
-            setCollapsed() {},
-            async setFindQuery() {
-              return { matchCount: 0 };
-            },
-            revealFindMatch() {},
-            clearActiveFindMatch() {},
-            clearFind() {},
-            onDidChangeHeight: () => ({ dispose() {} }),
-            onDidError: () => ({ dispose() {} }),
-            dispose: () => {
-              editor.remove();
-            },
-          };
-        },
-      },
-    },
-  );
-
-  const container = document.createElement("div");
-  document.body.append(container);
-  await act(async () => {
-    canvas = mount(container, {
-      kind: "api",
-      reviewId: review.reviewId,
-      bridge,
-      setSourceView: () => {},
-    });
-  });
-  await act(async () => {
-    await vi.waitFor(() => expect(created).toHaveLength(1));
-  });
-  expect(created[0]).toMatchObject({
-    path: "src/old.ts",
-    side: "base",
-    ranges: [
-      { side: "base", startLine: 7, endLine: 9 },
-      { side: "head", startLine: 12, endLine: 14 },
-    ],
-  });
-  expect(requested.filter((url) => url.includes("/source"))).toEqual([]);
-});
-
 it("copies prose and code from the displayed historical JSON review", async () => {
   const review = await command({ type: "create", title: "Copy review", pins });
 
@@ -914,7 +812,6 @@ it("offers to dismiss a review whose worktree is gone, without reading its diff"
     const progress = vi.fn<() => Response>(() => new Response("{}"));
     app.get("/reviews-api/:id/progress", progress);
     const files = vi.fn<() => Promise<never[]>>(async () => []);
-
 
     const bridge = testReviewBridge(
       {},

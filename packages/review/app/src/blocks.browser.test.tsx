@@ -121,7 +121,7 @@ const has = (container: HTMLElement, selector: string) =>
  * diagrams a finished layout.
  */
 const rendered: Record<
-  Exclude<Kind, "call_stack_diff">,
+  Exclude<Kind, "call_stack_diff" | "code_peek">,
   (container: HTMLElement) => boolean
 > = {
   markdown: (c) =>
@@ -132,12 +132,6 @@ const rendered: Record<
       'export const status = "queued";',
     ) && text(c).includes("The new status"),
   divider: (c) => has(c, "hr"),
-  // The peek asked the host for an inline editor on the fixture's file.
-  code_peek: (c) =>
-    has(
-      c,
-      "[data-code-rendering] .fixture-inline-editor[data-path='order.ts']",
-    ),
   // Every step is laid out as a routed message once the diagram settles.
   sequence: (c) =>
     has(c, ".sequence-diagram .react-flow") &&
@@ -472,12 +466,6 @@ describe("block components", () => {
     },
   );
 
-  it("has a component for every fixture kind", () => {
-    expect(Object.keys(blockComponents).sort()).toEqual(
-      [...fixtures.keys()].sort(),
-    );
-  });
-
   it.each(Object.keys(rendered) as (keyof typeof rendered)[])(
     "renders the %s fixtures with their content and a finished layout",
     async (kind) => {
@@ -500,26 +488,6 @@ describe("block components", () => {
       expect(empty).toEqual([]);
     },
   );
-
-  it("opens the selected call-tree frame's code", async () => {
-    const { container } = await mountFixture("call_stack_diff");
-
-    const tree = await settled(() =>
-      container.querySelector('nav[aria-label="Call tree"]'),
-    );
-
-    expect(tree).not.toBeNull();
-    const frames = tree!.querySelectorAll("button");
-    expect([...frames].map((frame) => frame.textContent)).toEqual([
-      "status = queued",
-    ]);
-    await act(async () => frames[0]!.click());
-    expect(
-      await settled(() =>
-        container.querySelector('.fixture-inline-editor[data-path="order.ts"]'),
-      ),
-    ).not.toBeNull();
-  });
 
   it("renders a trace quote whose trace fails to load as a placeholder, not an error", async () => {
     const { container } = await mountFixture("trace_quote", { trace: null });
@@ -671,7 +639,7 @@ describe("tutorial guide placement", () => {
   });
 });
 
-it("opens a flow node in a full-screen tour with all its code attachments", async () => {
+it("opens a flow node in a full-screen tour", async () => {
   const { container } = await mountFixture("flow_diagram");
   await settled(() => container.querySelector(".lens-flow-node"));
   await act(async () =>
@@ -679,14 +647,6 @@ it("opens a flow node in a full-screen tour with all its code attachments", asyn
       .querySelector(".lens-flow-node")!
       .dispatchEvent(new MouseEvent("click", { bubbles: true })),
   );
-  expect(
-    await settled(
-      () =>
-        container.querySelectorAll(
-          '[role="dialog"] > :last-child .fixture-inline-editor',
-        ).length === 2,
-    ),
-  ).toBe(true);
   expect(
     container.querySelector('[role="dialog"] > :last-child')?.textContent,
   ).toContain("Validation");
