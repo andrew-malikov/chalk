@@ -6,7 +6,7 @@
   "scripts": {
     "app:dev": "node scripts/dev.mjs dev",
     "app:build": "node scripts/dev.mjs build",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.main.json",
     "test": "vitest run"
   },
   "dependencies": {
@@ -28,5 +28,7 @@
     "vite": "8.0.16",
     "vitest": "4.1.11"
   },
-  "engines": { "node": ">=24 <25" }
+  "engines": {
+    "node": ">=24 <25"
+  }
 }

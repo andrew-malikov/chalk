@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "node",
+      "bun"
+    ]
+  },
+  "include": [
+    "src/main.ts",
+    "src/server-host*.ts",
+    "src/native*.ts",
+    "src/preferences*.ts",
+    "src/rpc.ts",
+    "electrobun.config.ts",
+    "hutch.config.ts"
+  ]
+}

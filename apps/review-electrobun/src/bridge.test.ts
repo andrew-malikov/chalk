@@ -1,6 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { ReviewApiClient, REVIEW_DESKTOP_DISCOVERY_VERSION } from "@dev.fast/review-protocol";
-import { createAuthenticatedRequest, openSourceFile, openSourceDiff, connectControl } from "./bridge";
+import { createAuthenticatedRequest, openSourceFile, openSourceDiff, connectControl, createCanvasBridge } from "./bridge";
+import { defaultPreferences } from "./rpc";
 import { createServer } from "node:http";
 afterEach(()=>vi.unstubAllGlobals());
 const discovery={version:REVIEW_DESKTOP_DISCOVERY_VERSION,instanceId:"instance",url:"http://127.0.0.1:5570",appPid:1,serverPid:2,startedAt:1,token:"private-token"} as const;
@@ -68,4 +69,12 @@ test.each(["malformed","ack"])("control surfaces %s failures and unlocks its rea
 test("navigator failure never launches an unpinned local substitute",async()=>{
  const api=new ReviewApiClient({serverUrl:discovery.url,token:discovery.token},async()=>Response.json({error:"Pinned bytes missing"},{status:404}));const open=vi.fn(async()=>{});
  await expect(openSourceFile(api,open,{view:{reviewId:"r",version:2},file:"missing.ts",side:"head"})).rejects.toThrow("Pinned bytes missing");expect(open).not.toHaveBeenCalled();
+});
+test("theme and layout subscribers ignore unrelated tab preferences",()=>{
+ let preferences={...defaultPreferences};let theme:"dark"|"light"="dark";const listeners=new Set<()=>void>();
+ const bridge=createCanvasBridge({state:{status:"ready",discovery,appSessionId:"a",preferences},reviewId:"r",wasmUrl:"https://example.test/libavoid.wasm",request:async()=>new Response(),post:async()=>({ok:true}),view:()=>({reviewId:"r",version:0}),theme:()=>theme,notify:()=>{},preferences:{current:()=>preferences,set:async()=>{},subscribe:listener=>{listeners.add(listener);return{dispose:()=>{listeners.delete(listener);}};}}});
+ const themes:string[]=[],layouts:string[]=[];const a=bridge.onDidChangeTheme(value=>themes.push(value)),b=bridge.onDidChangeDiffLayout(value=>layouts.push(value));
+ preferences={...preferences,reviewIds:["r"]};for(const listener of listeners)listener();expect(themes).toEqual([]);expect(layouts).toEqual([]);
+ preferences={...preferences,diffLayout:"unified"};for(const listener of listeners)listener();expect(layouts).toEqual(["unified"]);
+ theme="light";for(const listener of listeners)listener();expect(themes).toEqual(["light"]);a.dispose();b.dispose();expect(listeners.size).toBe(0);
 });

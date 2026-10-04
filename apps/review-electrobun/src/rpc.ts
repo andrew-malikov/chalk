@@ -1,4 +1,3 @@
-import type { RPCSchema } from "electrobun/main";
 import type { ReviewDesktopDiscovery, ReviewInlineEditorRange, ReviewDiffLayout } from "@dev.fast/review-protocol";
 import { z } from "zod";
 
@@ -9,7 +8,8 @@ export type HostState={status:"starting";message?:string}|{status:"ready";discov
 export type NativeOpenRequest={kind:"workspace";workspacePath:string}|{kind:"file";workspacePath:string;filePath:string;range?:ReviewInlineEditorRange}|{kind:"diff";workspacePath:string;originalPath:string;modifiedPath:string};
 export type ShellCommand="find"|"home"|"settings"|"closeTab";
 export type AppRPC={
- bun:RPCSchema<{requests:{getState:{params:void;response:HostState};setPreferences:{params:Partial<ShellPreferences>;response:ShellPreferences};openSource:{params:NativeOpenRequest;response:void};openExternal:{params:{url:string};response:void};focusWindow:{params:void;response:void}};messages:{diagnostic:{level:"error"|"warning";message:string}}}>;
- webview:RPCSchema<{requests:{};messages:{hostState:HostState;command:ShellCommand}}>
+ bun:{requests:{getState:{params:void;response:HostState};setPreferences:{params:Partial<ShellPreferences>;response:ShellPreferences};openSource:{params:NativeOpenRequest;response:void};openExternal:{params:{url:string};response:void};focusWindow:{params:void;response:void}};messages:{diagnostic:{level:"error"|"warning";message:string}}};
+ webview:{requests:{};messages:{hostState:HostState;command:ShellCommand}}
 };
+export type AppRPCClient={request:{[K in keyof AppRPC["bun"]["requests"]]:(params:AppRPC["bun"]["requests"][K]["params"])=>Promise<AppRPC["bun"]["requests"][K]["response"]>};send:{diagnostic:(message:AppRPC["bun"]["messages"]["diagnostic"])=>void}};
 export type DiffLayout=ReviewDiffLayout;

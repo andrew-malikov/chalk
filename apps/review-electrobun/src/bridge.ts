@@ -63,6 +63,7 @@ export function createCanvasBridge(options:CanvasBridgeOptions):ReviewCanvasBrid
  const {state,reviewId,preferences}=options;
  const api=new ReviewApiClient({serverUrl:state.discovery.url,token:state.discovery.token},options.request);
  const listeners=new Set<(event:ReviewSurfaceEvent)=>void>();
+ function watch<T>(read:()=>T,listener:(value:T)=>void){let previous=read();return preferences.subscribe(()=>{const next=read();if(next!==previous){previous=next;listener(next);}});}
  return {
   appSessionId:state.appSessionId,
   config:ReviewRuntimeConfigSchema.parse({serverUrl:state.discovery.url,token:state.discovery.token,reviewId,wasmUrl:options.wasmUrl,appVersion:"0.2.0",theme:options.theme(),host:"desktop"}),
@@ -76,9 +77,9 @@ export function createCanvasBridge(options:CanvasBridgeOptions):ReviewCanvasBrid
    }catch(error){const text=error instanceof Error?error.message:String(error);options.notify({kind:"error",text});return{ok:false,error:text};}
   },
   subscribe:listener=>{listeners.add(listener);return{dispose:()=>{listeners.delete(listener);}};},
-  currentTheme:options.theme,onDidChangeTheme:listener=>preferences.subscribe(()=>listener(options.theme())),
+  currentTheme:options.theme,onDidChangeTheme:listener=>watch(options.theme,listener),
   currentDiffLayout:()=>preferences.current().diffLayout,setDiffLayout:layout=>preferences.set({diffLayout:layout}),
-  onDidChangeDiffLayout:listener=>preferences.subscribe(()=>listener(preferences.current().diffLayout)),
+  onDidChangeDiffLayout:listener=>watch(()=>preferences.current().diffLayout,listener),
   notify:options.notify,ready:()=>{},
  };
 }

@@ -24,6 +24,12 @@ import "./styles.css";
 
 export { clearPersistedReviewViewState as clearReviewViewState } from "./review-view-state";
 
+export function reviewCanvasThemeClass(theme: "dark" | "light"): string {
+  const light = theme === "light";
+  return stylex.props(themeStyles.vars, light && themeStyles.light).className!;
+}
+
+
 function ReviewCanvas({
   content,
   findHost,

@@ -31,7 +31,7 @@ async function run() {
    setPreferences:async patch=>{
     if(!preferences) throw new Error("Preferences are inaccessible.");
     const value=await preferences.update(patch);
-    if(state.status==="ready") setState({...state,preferences:value});
+    if(state.status==="ready") state={...state,preferences:value};
     return value;
    },
    openSource:openVSCode,
