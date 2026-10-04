@@ -9,7 +9,12 @@ import events from "electrobun/main/events";
 import * as Utils from "electrobun/main/utils";
 import { z } from "zod";
 
-import { createQuitGate, externalURL, openVSCode } from "./native";
+import {
+  createQuitGate,
+  externalURL,
+  newWindowURL,
+  openVSCode,
+} from "./native";
 import { createPreferencesStore } from "./preferences";
 import type { AppRPC, HostState } from "./rpc";
 import { startServer } from "./server-host";
@@ -111,6 +116,18 @@ async function run() {
   });
 
   window.webview.setNavigationRules(["^*", "views://mainview/*"]);
+  events.on(`new-window-open-${window.webview.id}`, (event) => {
+    try {
+      // SAFETY: the SDK emits data.detail on this per-view event; newWindowURL decodes and validates it.
+      const { data } = event as {
+        data: { detail: import("./native").NewWindowDetail };
+      };
+
+      Utils.openExternal(newWindowURL(data.detail));
+    } catch (cause) {
+      console.error("Cannot open external review link:", cause);
+    }
+  });
 
   function setState(next: HostState) {
     state = next;

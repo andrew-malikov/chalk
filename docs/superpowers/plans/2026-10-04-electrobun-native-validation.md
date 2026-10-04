@@ -43,4 +43,17 @@ Development build: `pnpm electrobun:build` with Node 24 on PATH and Hutch availa
 
 Run: `pnpm electrobun:dev` with Node 24 and Hutch on PATH. The default profile is `~/.dev-fast/review-electrobun`; existing desktop defaults remain unchanged. Packaging/signing, updates, CLI shim installation, Ask configuration, extension/keymap settings, and multiple windows remain deferred.
 
-Final clean bundle launched with authenticated health 200, matching instance identity and desktop attachment. OS Quit exercised the native gate: the first AppleEvent was canceled while cleanup ran, then the app exited 0 and removed its discovery. Current checks: 27 host tests, 65 protocol tests, and 12 shell/browser tests passed; app main/renderer, protocol and canvas types passed; scoped lint reported zero warnings/errors and formatting/diff checks passed. Existing desktop typecheck and overlay checks also passed during compatibility validation.
+Final clean bundle launched with authenticated health 200, matching instance identity and desktop attachment. OS Quit exercised the native gate: the first AppleEvent was canceled while cleanup ran, then the app exited 0 and removed its discovery. Pre-review checks: 27 host tests, 65 protocol tests, and 12 shell/browser tests passed; app main/renderer, protocol and canvas types passed; scoped lint reported zero warnings/errors and formatting/diff checks passed. Existing desktop typecheck and overlay checks also passed during compatibility validation.
+
+
+## Completion review
+
+A fresh reviewer audited the whole implementation from `83a228cd` through `9e10141b`. All three Important findings were reproduced and fixed in one pass:
+
+- External anchors route through native RPC. The SDK's scoped new-window event also routes Cmd/Ctrl-click through the same validated URL policy. Internal anchors remain local and privileged-view/JavaScript URLs are rejected.
+- Full-snapshot `origin.tutorial` metadata distinguishes managed hidden tutorials from deleted reviews. Saved tutorial tabs restore, incoming tutorials survive catalog refresh, and missing reviews are dropped.
+- A live sidecar's transient control/health failure displays reconnect status, disables dependent UI and closes transient menus/dialogs. Abortable retries validate health identity before reattaching and restore agent-open delivery.
+
+Each finding has a failing regression followed by a passing run. Whole affected suites now pass: **28 host + 65 protocol + 16 browser = 109 tests**. App main/renderer, shared protocol/canvas and legacy desktop typechecks pass. Native acceptance additionally confirms ordinary, modified-click and mail links reach a controlled native opener with the exact URLs; the real hidden tutorial remains active after quit/restart with no alerts. The installed external browser/editor UI remains outside this controlled acceptance.
+
+One minor remains deferred: the shared tutorial's optional Code OSS keymap/language-service lessons need copy adaptation for the native host. The other development-scope and OS-validation limits above remain explicit.

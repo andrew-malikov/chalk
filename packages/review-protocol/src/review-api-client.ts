@@ -22,8 +22,9 @@ export interface ReviewApiSummary {
   createdAt: string;
   /** Timestamp of the earliest retained review version, when known. */
   firstCreatedAt?: string;
-  /** Present on reviews imported from the legacy MDX store. */
+  /** Import and managed-document metadata retained on full snapshots. */
   origin?: {
+    tutorial?: boolean;
     branch?: string;
     baseRef?: string;
     pullRequestNumber?: number;

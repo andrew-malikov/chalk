@@ -145,11 +145,13 @@ export async function connectControl(
   dispatch: ReviewCanvasBridge["post"],
   serverUrl: string,
   signal: AbortSignal,
+  onConnected?: () => void,
 ) {
   const response = await request(`${serverUrl}/control`, { signal });
 
   if (!response.ok || !response.body)
     throw new Error(`Cannot attach desktop control (${response.status}).`);
+  onConnected?.();
   await consumeReviewEventStream(
     response.body,
     async (value) => {

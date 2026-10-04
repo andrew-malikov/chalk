@@ -79,6 +79,32 @@ fixtures.set(
   }),
 );
 
+const tutorial = "44444444-4444-4444-8444-444444444444";
+
+fixtures.set(
+  tutorial,
+  fixtureReviewBridge({
+    snapshot: {
+      reviewId: tutorial,
+      title: "Hidden tutorial",
+      version: 0,
+      createdAt: "2026-10-04T00:00:00.000Z",
+      origin: { tutorial: true },
+      document: [
+        { id: "tour", type: "markdown", markdown: "Managed tutorial document" },
+      ],
+    },
+  }),
+);
+
+let catalogUpdates: Array<() => void> = [];
+
+let closeControl: () => void;
+
+let healthFailures = 0;
+
+let controlAttachments = 0;
+
 let mounted: ReturnType<typeof mountElectrobunShell> | undefined;
 
 let container: HTMLDivElement;
@@ -101,6 +127,9 @@ async function setup(
 ) {
   activeStreams = 0;
   controlResults = [];
+  catalogUpdates = [];
+  healthFailures = 0;
+  controlAttachments = 0;
   let catalogValues = [...summaries];
   let preferences = { ...defaultPreferences, reviewIds, activeReviewId };
 
@@ -155,6 +184,16 @@ async function setup(
     )
       return Response.json("Numbered document inspection");
 
+    if (url.pathname === "/health") {
+      if (healthFailures > 0) {
+        healthFailures--;
+
+        return Response.json({}, { status: 503 });
+      }
+
+      return Response.json({ instanceId: "test" });
+    }
+
     if (url.pathname === "/control/result") {
       controlResults.push(JSON.parse(String(init?.body)));
 
@@ -179,11 +218,18 @@ async function setup(
         cancel: end,
       });
 
-      if (url.pathname === "/control")
+      if (url.pathname === "/control") {
+        controlAttachments++;
+        closeControl = () => {
+          controller.close();
+          end();
+        };
+
         controlFrame = (frame) =>
           controller.enqueue(
             new TextEncoder().encode(`data: ${JSON.stringify(frame)}\n\n`),
           );
+      }
 
       if (url.pathname.endsWith("/watch")) {
         const subscriptions = JSON.parse(
@@ -210,6 +256,25 @@ async function setup(
         controller.enqueue(
           new TextEncoder().encode(JSON.stringify(results) + "\n"),
         );
+        catalogUpdates.push(() => {
+          if (!ended)
+            controller.enqueue(
+              new TextEncoder().encode(
+                JSON.stringify(
+                  results.map((result, index) =>
+                    subscriptions[index]?.reviewId === null
+                      ? {
+                          value: catalogValues.map((item) => ({
+                            ...item,
+                            title: item.title + " refreshed",
+                          })),
+                        }
+                      : result,
+                  ),
+                ) + "\n",
+              ),
+            );
+        });
       }
 
       init?.signal?.addEventListener(
@@ -287,7 +352,7 @@ test("opens singleton review tabs and closes to Home", async () => {
   expect(rpc.request.setPreferences).toHaveBeenCalled();
 });
 
-test("restores only catalog-present tabs and their active selection", async () => {
+test("restores catalog tabs and drops missing review IDs", async () => {
   await setup([a, "missing", b], b);
   await expect
     .poll(() =>
@@ -597,4 +662,108 @@ test("agent open resolves a full snapshot before the catalog contains the review
   await vi.waitFor(() =>
     expect(container.textContent).toContain("Incoming full document"),
   );
+});
+
+test("ordinary external links reach the native opener while internal anchors stay local", async () => {
+  const rpc = await setup([a], a);
+  await vi.waitFor(() =>
+    expect(container.textContent).toContain("Alpha document"),
+  );
+
+  const section = container.querySelector(
+    '[role="tabpanel"][aria-label="Alpha"]',
+  )!;
+
+  const external = document.createElement("a");
+  external.href = "https://example.com/review";
+  external.target = "_blank";
+  section.append(external);
+  await act(async () =>
+    external.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true }),
+    ),
+  );
+  expect(rpc.request.openExternal).toHaveBeenCalledWith({
+    url: "https://example.com/review",
+  });
+  external.href = "#paragraph";
+  external.removeAttribute("target");
+  await act(async () =>
+    external.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true }),
+    ),
+  );
+  expect(rpc.request.openExternal).toHaveBeenCalledTimes(1);
+});
+
+test("restores a managed tutorial absent from the catalog and keeps it through refresh", async () => {
+  await setup([tutorial, "deleted-review"], tutorial);
+  await vi.waitFor(() =>
+    expect(container.textContent).toContain("Managed tutorial document"),
+  );
+  expect(
+    container
+      .querySelector('[role="tab"][aria-label="Hidden tutorial"]')
+      ?.getAttribute("aria-selected"),
+  ).toBe("true");
+  await act(async () => catalogUpdates.forEach((push) => push()));
+  await vi.waitFor(() =>
+    expect(
+      container.querySelector('[role="tab"][aria-label="Hidden tutorial"]'),
+    ).not.toBeNull(),
+  );
+  expect(
+    container.querySelector('[role="tab"][aria-label="deleted-review"]'),
+  ).toBeNull();
+});
+
+test("incoming tutorial survives the next catalog snapshot", async () => {
+  await setup();
+  await vi.waitFor(() => expect(activeStreams).toBe(2));
+  await act(async () =>
+    controlFrame({
+      event: "desktop-verb",
+      id: "11111111-1111-4111-8111-111111111117",
+      request: {
+        name: "openApiReview",
+        args: { reviewId: tutorial, title: "Hidden tutorial" },
+      },
+    }),
+  );
+  await vi.waitFor(() => expect(controlResults).toHaveLength(1));
+  await act(async () => catalogUpdates.forEach((push) => push()));
+  await vi.waitFor(() =>
+    expect(container.textContent).toContain("Managed tutorial document"),
+  );
+});
+
+test("transient health loss disables the shell and retries the live control connection", async () => {
+  await setup();
+  await vi.waitFor(() => expect(activeStreams).toBe(2));
+  healthFailures = 1;
+  await act(async () => closeControl());
+  await vi.waitFor(() =>
+    expect(
+      container.querySelector('[aria-label="Open tutorial"]'),
+    ).toHaveProperty("disabled", true),
+  );
+  await vi.waitFor(() => expect(controlAttachments).toBe(2), { timeout: 4000 });
+  expect(
+    container.querySelector('[aria-label="Open tutorial"]'),
+  ).toHaveProperty("disabled", false);
+  await act(async () =>
+    controlFrame({
+      event: "desktop-verb",
+      id: "11111111-1111-4111-8111-111111111116",
+      request: { name: "openApiReview", args: { reviewId: a, title: "Alpha" } },
+    }),
+  );
+  await vi.waitFor(() =>
+    expect(controlResults[0]).toMatchObject({ response: { ok: true } }),
+  );
+  expect(
+    container
+      .querySelector('[role="tab"][aria-label="Alpha"]')
+      ?.getAttribute("aria-selected"),
+  ).toBe("true");
 });

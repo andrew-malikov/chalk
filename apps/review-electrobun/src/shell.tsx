@@ -7,6 +7,7 @@ import {
   REVIEW_CANVAS_RESUME_EVENT,
   REVIEW_DISCORD_URL,
   ReviewApiClient,
+  ReviewApiError,
   reviewSourceAnchor,
   reviewSourceComparison,
 } from "@dev.fast/review-protocol";
@@ -37,6 +38,7 @@ import {
   openSourceWorkspace,
 } from "./bridge";
 import { createCanvasUi } from "./canvas-ui";
+import { mountExternalLinks } from "./external-links";
 import type {
   AppRPCClient,
   HostState,
@@ -140,6 +142,9 @@ function Shell(
   const homeHandle = useRef<ReviewCanvasHandle>(undefined);
   const prefs = useRef(options.state.preferences);
   const listeners = useRef(new Set<() => void>());
+  const [connected, setConnected] = useState(true);
+  const connectedRef = useRef(true);
+  const tutorialIds = useRef(new Set<string>());
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string>();
   const [settings, setSettings] = useState(false);
@@ -268,6 +273,7 @@ function Shell(
 
   function close(id: string) {
     tabs.current.delete(id);
+    tutorialIds.current.delete(id);
 
     if (active.current === id) active.current = null;
     render();
@@ -326,7 +332,13 @@ function Shell(
     return tab;
   }
 
+  function requireConnected() {
+    if (!connectedRef.current)
+      throw new Error("Review control is reconnecting. Try again shortly.");
+  }
+
   async function command(operation: CatalogMutation) {
+    requireConnected();
     await api.post("/commands", {
       commandId: createReviewAppSessionId(),
       operation,
@@ -337,10 +349,11 @@ function Shell(
     if (!tabs.current.has(id)) {
       const summary =
         catalog.current.find((item) => item.reviewId === id) ??
-        (await api.read<{ title: string; version: number }>(
+        (await api.read<Pick<ReviewApiSummary, "title" | "version" | "origin">>(
           `/${encodeURIComponent(id)}?full=true`,
         ));
 
+      if (summary.origin?.tutorial) tutorialIds.current.add(id);
       add({
         reviewId: id,
         title: title ?? summary.title,
@@ -362,6 +375,8 @@ function Shell(
     tab = tabs.current.get(active.current ?? ""),
   ): Promise<ReviewVerbResponse> {
     try {
+      requireConnected();
+
       switch (value.name) {
         case "authoringCapabilities":
           return { ok: true, result: { softwareMapEnabled: true } };
@@ -488,9 +503,19 @@ function Shell(
     return () => document.removeEventListener("keydown", keyboard);
   }, []);
   useEffect(() => {
+    const element = shellElement.current;
+
+    if (element)
+      return mountExternalLinks(
+        element,
+        options.rpc.request.openExternal,
+        fail,
+      );
+  }, []);
+  useEffect(() => {
     let restored = false;
 
-    const accept = (summaries: ReviewApiSummary[]) => {
+    const accept = async (summaries: ReviewApiSummary[]) => {
       catalog.current = summaries;
 
       if (!restored) {
@@ -500,8 +525,30 @@ function Shell(
           const summary = summaries.find((item) => item.reviewId === id);
 
           if (summary) add(summary);
+          else {
+            try {
+              const snapshot = await api.read<
+                Pick<ReviewApiSummary, "title" | "version" | "origin">
+              >(`/${encodeURIComponent(id)}?full=true`, abort.signal);
+
+              if (snapshot.origin?.tutorial) {
+                tutorialIds.current.add(id);
+
+                if (!abort.signal.aborted)
+                  add({
+                    reviewId: id,
+                    title: snapshot.title,
+                    version: snapshot.version,
+                  });
+              }
+            } catch (cause) {
+              if (!(cause instanceof ReviewApiError && cause.status === 404))
+                throw cause;
+            }
+          }
         }
 
+        if (abort.signal.aborted) return;
         active.current = tabs.current.has(prefs.current.activeReviewId ?? "")
           ? prefs.current.activeReviewId
           : null;
@@ -511,7 +558,7 @@ function Shell(
         for (const [id] of tabs.current)
           if (
             !summaries.some((item) => item.reviewId === id) &&
-            id !== tutorialId.current
+            !tutorialIds.current.has(id)
           )
             close(id);
         render();
@@ -520,9 +567,11 @@ function Shell(
 
     void api
       .read<ReviewApiSummary[]>("?mode=textual", abort.signal)
-      .then((values) => {
+      .then(async (values) => {
         if (!abort.signal.aborted) {
-          accept(values);
+          await accept(values);
+
+          if (abort.signal.aborted) return;
           void api.follow<ReviewApiSummary[]>(
             null,
             abort.signal,
@@ -534,37 +583,44 @@ function Shell(
       })
       .catch(fail);
 
+    const connection = (value: boolean) => {
+      if (abort.signal.aborted || connectedRef.current === value) return;
+      connectedRef.current = value;
+      setConnected(value);
+
+      if (!value) ui.dispose();
+    };
+
     const runControl = async () => {
       while (!abort.signal.aborted) {
         try {
-          await connectControl(
-            request,
-            (value) => dispatch(value),
-            options.state.discovery.url,
-            abort.signal,
-          );
-        } catch (cause) {
-          if (abort.signal.aborted) return;
-          fail(cause);
-        }
-
-        try {
           const health = await request(
             options.state.discovery.url + "/health",
-            { signal: abort.signal },
+            {
+              signal: AbortSignal.any([
+                abort.signal,
+                AbortSignal.timeout(5000),
+              ]),
+            },
           );
 
           if (!health.ok) throw new Error("Review server disconnected.");
           const value = await health.json();
 
           if (value.instanceId !== options.state.discovery.instanceId)
-            throw new Error("Review server disconnected.");
-        } catch (cause) {
-          fail(cause);
-
-          return;
+            throw new Error("Review server identity changed.");
+          await connectControl(
+            request,
+            (value) => dispatch(value),
+            options.state.discovery.url,
+            abort.signal,
+            () => connection(true),
+          );
+        } catch {
+          if (abort.signal.aborted) return;
         }
 
+        connection(false);
         await new Promise<void>((resolve) => {
           const finish = () => {
             clearTimeout(timer);
@@ -589,9 +645,10 @@ function Shell(
       listeners.current.clear();
     };
   }, []);
-  const tutorialId = useRef<string | undefined>(undefined);
 
   async function openTutorial() {
+    requireConnected();
+
     const response = await request(
       options.state.discovery.url + "/tutorial/prepare",
       { method: "POST" },
@@ -599,7 +656,7 @@ function Shell(
 
     if (!response.ok) throw new Error("Cannot prepare the tutorial.");
     const result = await response.json();
-    tutorialId.current = result.reviewUuid;
+    tutorialIds.current.add(result.reviewUuid);
     await open(result.reviewUuid, "Tutorial");
   }
 
@@ -701,7 +758,11 @@ function Shell(
           ))}
         </div>
         {active.current === null && (
-          <button aria-label="Open tutorial" onClick={home.openTutorial}>
+          <button
+            aria-label="Open tutorial"
+            disabled={!connected}
+            onClick={home.openTutorial}
+          >
             Tutorial
           </button>
         )}
@@ -709,6 +770,11 @@ function Shell(
           Settings
         </button>
       </header>
+      {!connected && (
+        <div className="review-shell-notice" role="status">
+          Reconnecting to review server…
+        </div>
+      )}
       {error && (
         <div className="review-shell-notice" role="alert">
           {error}
@@ -729,6 +795,7 @@ function Shell(
       ) : (
         <>
           <section
+            inert={!connected}
             role="tabpanel"
             aria-label="Home"
             hidden={active.current !== null}
@@ -744,6 +811,7 @@ function Shell(
           </section>
           {[...tabs.current.values()].map((tab) => (
             <section
+              inert={!connected}
               role="tabpanel"
               aria-label={tab.title}
               key={tab.id}

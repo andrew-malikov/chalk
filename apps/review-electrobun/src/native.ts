@@ -101,3 +101,23 @@ export async function openVSCode(request: NativeOpenRequest): Promise<void> {
     await run(["--new-window", request.workspacePath]);
   await run(args);
 }
+
+export type NewWindowDetail = string | { url: string; isCmdClick?: boolean };
+
+export function newWindowURL(input: NewWindowDetail): string {
+  const { url } = z
+    .union([
+      z.string().transform((detail) => {
+        try {
+          return JSON.parse(detail);
+        } catch {
+          return { url: detail };
+        }
+      }),
+      z.object({ url: z.string() }),
+    ])
+    .pipe(z.object({ url: z.string() }))
+    .parse(input);
+
+  return externalURL({ url });
+}

@@ -7,6 +7,7 @@ import { expect, test, vi } from "vitest";
 import {
   createQuitGate,
   externalURL,
+  newWindowURL,
   openVSCode,
   sourceArguments,
 } from "./native";
@@ -120,4 +121,21 @@ test("synchronous quit cancellation awaits one cleanup and permits the retry", a
   const last: Parameters<ReturnType<typeof createQuitGate>>[0] = {};
   gate(last);
   expect(last.response).toBeUndefined();
+});
+
+test("native new-window payloads retain allowed URLs and reject privileged navigation", () => {
+  expect(
+    newWindowURL({ url: "https://example.com/review", isCmdClick: true }),
+  ).toBe("https://example.com/review");
+  expect(
+    newWindowURL(
+      JSON.stringify({ url: "mailto:review@example.com", isCmdClick: true }),
+    ),
+  ).toBe("mailto:review@example.com");
+  expect(() =>
+    newWindowURL({ url: "javascript:alert(1)", isCmdClick: true }),
+  ).toThrow("Unsupported external URL scheme");
+  expect(() =>
+    newWindowURL({ url: "views://mainview/index.html", isCmdClick: true }),
+  ).toThrow("Unsupported external URL scheme");
 });
