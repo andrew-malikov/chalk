@@ -26,6 +26,15 @@ import type {
   TutorialProgressV1,
 } from "@dev.fast/review-protocol";
 import {
+  BookOpenIcon,
+  HomeIcon,
+  PanelsTopLeftIcon,
+  SearchIcon,
+  Settings2Icon,
+  SquareArrowOutUpRightIcon,
+  XIcon,
+} from "lucide-react";
+import {
   useEffect,
   useLayoutEffect,
   useReducer,
@@ -43,6 +52,16 @@ import {
   openSourceWorkspace,
 } from "./bridge";
 import { createCanvasUi } from "./canvas-ui";
+import { Button } from "./components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./components/ui/dialog";
+import { NativeSelect } from "./components/ui/native-select";
 import { mountExternalLinks } from "./external-links";
 import type {
   AppRPCClient,
@@ -51,12 +70,14 @@ import type {
   ShellPreferences,
 } from "./rpc";
 
+import "./ui.css";
 import "./shell.css";
 
 type Options = {
   state: Extract<HostState, { status: "ready" }>;
   rpc: AppRPCClient;
   wasmUrl: string;
+  nativeTitlebar?: boolean;
 };
 
 type CatalogMutation =
@@ -563,6 +584,12 @@ function Shell(
       return;
     }
 
+    if (shellElement.current?.querySelector('[data-slot="dialog-content"]')) {
+      if (command === "closeTab") setSettings(false);
+
+      return;
+    }
+
     switch (command) {
       case "home":
         activate(null);
@@ -813,6 +840,11 @@ function Shell(
 
   const resolvedTheme = theme();
   const themeClass = reviewCanvasThemeClass(resolvedTheme);
+  const currentTab = tabs.current.get(active.current ?? "");
+
+  const currentReview = catalog.current.find(
+    (review) => review.reviewId === active.current,
+  );
 
   return (
     <div
@@ -820,7 +852,102 @@ function Shell(
       className={["review-shell", themeClass].join(" ")}
       data-theme={resolvedTheme}
     >
-      <header className="review-shell-bar">
+      <header
+        className="review-shell-titlebar electrobun-webkit-app-region-drag"
+        data-native-titlebar={options.nativeTitlebar || undefined}
+      >
+        <Button
+          variant="ghost"
+          className="review-shell-brand"
+          aria-label="Go Home"
+          title="Home (⌘⇧H)"
+          onClick={() => activate(null)}
+        >
+          <span className="review-shell-brand-mark">
+            <PanelsTopLeftIcon aria-hidden="true" />
+          </span>
+          <span className="review-shell-brand-name">Blackboard</span>
+        </Button>
+        <div className="review-shell-context" aria-label="Current review">
+          {currentTab && (
+            <>
+              <span
+                className="review-shell-repository"
+                title={currentReview?.repositoryName}
+              >
+                {currentReview?.repositoryName || "Reviews"}
+              </span>
+              <span
+                className="review-shell-context-separator"
+                aria-hidden="true"
+              >
+                /
+              </span>
+            </>
+          )}
+          <span
+            className="review-shell-current-title"
+            title={currentTab?.title || "Home"}
+          >
+            {currentTab?.title || "Home"}
+          </span>
+        </div>
+        <div className="review-shell-actions">
+          {currentTab && (
+            <Button
+              variant="outline"
+              className="review-shell-editor"
+              aria-label="Open in VS Code"
+              title="Open review workspace in VS Code"
+              disabled={!connected}
+              onClick={() =>
+                void dispatch({ name: "openSourceTree", args: {} })
+              }
+            >
+              <SquareArrowOutUpRightIcon aria-hidden="true" />
+              <span>Open in VS Code</span>
+            </Button>
+          )}
+          {!currentTab && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="review-shell-tutorial"
+              aria-label="Open tutorial"
+              title="Take the tour"
+              disabled={!connected}
+              onClick={home.openTutorial}
+            >
+              <BookOpenIcon aria-hidden="true" />
+              <span>Tutorial</span>
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Find"
+            title="Find (⌘F)"
+            disabled={!loaded || !connected}
+            onClick={() => invoke("find")}
+          >
+            <SearchIcon aria-hidden="true" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Settings"
+            title="Settings (⌘,)"
+            onClick={() => setSettings(true)}
+          >
+            <Settings2Icon aria-hidden="true" />
+          </Button>
+        </div>
+      </header>
+      <nav
+        className="review-shell-tabs"
+        aria-label="Review navigation"
+        hidden={tabs.current.size === 0}
+      >
         <div
           role="tablist"
           tabIndex={-1}
@@ -854,48 +981,51 @@ function Shell(
             buttons[next]?.focus();
           }}
         >
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             role="tab"
             aria-label="Home"
             tabIndex={active.current === null ? 0 : -1}
             aria-selected={active.current === null}
             onClick={() => activate(null)}
           >
+            <HomeIcon aria-hidden="true" />
             Home
-          </button>
+          </Button>
           {[...tabs.current.values()].map((tab) => (
-            <div className="review-shell-tab" key={tab.id}>
-              <button
+            <div
+              className="review-shell-tab"
+              data-active={active.current === tab.id}
+              key={tab.id}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
                 role="tab"
                 aria-label={tab.title}
                 tabIndex={active.current === tab.id ? 0 : -1}
                 aria-selected={active.current === tab.id}
                 onClick={() => activate(tab.id)}
               >
-                {tab.title}
-              </button>
-              <button
+                <span className="review-shell-tab-label" title={tab.title}>
+                  {tab.title}
+                </span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="review-shell-tab-close"
                 aria-label={`Close ${tab.title}`}
+                title={`Close ${tab.title}`}
                 onClick={() => close(tab.id)}
               >
-                ×
-              </button>
+                <XIcon aria-hidden="true" />
+              </Button>
             </div>
           ))}
         </div>
-        {active.current === null && (
-          <button
-            aria-label="Open tutorial"
-            disabled={!connected}
-            onClick={home.openTutorial}
-          >
-            Tutorial
-          </button>
-        )}
-        <button aria-label="Settings" onClick={() => setSettings(true)}>
-          Settings
-        </button>
-      </header>
+      </nav>
       {!connected && (
         <div className="review-shell-notice" role="status">
           Reconnecting to review server…
@@ -904,12 +1034,14 @@ function Shell(
       {error && (
         <div className="review-shell-notice" role="alert">
           {error}
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
             aria-label="Dismiss notification"
             onClick={() => setError(undefined)}
           >
-            ×
-          </button>
+            <XIcon aria-hidden="true" />
+          </Button>
         </div>
       )}
       {!loaded ? (
@@ -957,6 +1089,7 @@ function Shell(
       )}
       {settings && (
         <SettingsDialog
+          container={shellElement.current}
           preferences={prefs.current}
           save={(patch) => {
             void save(patch).catch(fail);
@@ -969,72 +1102,82 @@ function Shell(
 }
 
 function SettingsDialog({
+  container,
   preferences,
   save,
   close,
 }: {
+  container: HTMLElement | null;
   preferences: ShellPreferences;
   save: (patch: Partial<ShellPreferences>) => void;
   close: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useLayoutEffect(() => {
-    const previous = document.activeElement;
-    const dialog = ref.current!;
-    dialog.showModal();
-
-    return () => {
-      dialog.close();
-
-      if (previous instanceof HTMLElement && previous.isConnected)
-        previous.focus();
-    };
-  }, []);
+  const previousFocus = useRef(document.activeElement);
 
   return (
-    <dialog
-      ref={ref}
-      className="review-shell-dialog"
-      role="dialog"
-      aria-label="Settings"
-      onCancel={(event) => {
-        event.preventDefault();
-        close();
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) close();
       }}
     >
-      <h2>Settings</h2>
-      <label>
-        Appearance
-        <select
-          value={preferences.theme}
-          onChange={(event) => {
-            // SAFETY: the select options are authored from the theme enum below.
-            void save({
-              theme: event.target.value as ShellPreferences["theme"],
-            });
-          }}
-        >
-          <option value="system">System</option>
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-      </label>
-      <label>
-        Diff layout
-        <select
-          value={preferences.diffLayout}
-          onChange={(event) => {
-            // SAFETY: the select options below contain only supported layouts.
-            void save({
-              diffLayout: event.target.value as ShellPreferences["diffLayout"],
-            });
-          }}
-        >
-          <option value="split">Split</option>
-          <option value="unified">Unified</option>
-        </select>
-      </label>
-      <button onClick={close}>Done</button>
-    </dialog>
+      <DialogContent
+        container={container}
+        className="review-shell-settings"
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          const previous = previousFocus.current;
+
+          if (previous instanceof HTMLElement && previous.isConnected)
+            previous.focus();
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle>Settings</DialogTitle>
+          <DialogDescription>Make Blackboard feel at home.</DialogDescription>
+        </DialogHeader>
+        <div className="review-shell-settings-fields">
+          <label htmlFor="shell-appearance">
+            <span>Appearance</span>
+            <NativeSelect
+              id="shell-appearance"
+              aria-label="Appearance"
+              value={preferences.theme}
+              onChange={(event) => {
+                // SAFETY: the options below contain only supported themes.
+                save({
+                  theme: event.target.value as ShellPreferences["theme"],
+                });
+              }}
+            >
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </NativeSelect>
+          </label>
+          <label htmlFor="shell-diff-layout">
+            <span>Diff layout</span>
+            <NativeSelect
+              id="shell-diff-layout"
+              aria-label="Diff layout"
+              value={preferences.diffLayout}
+              onChange={(event) => {
+                // SAFETY: the options below contain only supported layouts.
+                save({
+                  diffLayout: event.target
+                    .value as ShellPreferences["diffLayout"],
+                });
+              }}
+            >
+              <option value="split">Split</option>
+              <option value="unified">Unified</option>
+            </NativeSelect>
+          </label>
+        </div>
+        <DialogFooter>
+          <Button onClick={close}>Done</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

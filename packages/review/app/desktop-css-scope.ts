@@ -2,22 +2,19 @@ const REVIEW_CANVAS_SCOPE = ".review-canvas-root";
 
 const REVIEW_CANVAS_ROOT_RULE = /\.review-canvas-root\s*\{/g;
 
-// `@font-face` is not valid inside `@scope`, and the faces must be visible to
-// the whole document anyway: the workbench chrome (tab pills, the changed-files
-// tree) sets the same families as the canvas. Lift every face out of the
-// scoped block and emit it first.
-const FONT_FACE_RULE = /@font-face\s*\{[^}]*\}/g;
+// Font faces and property registrations must be outside @scope. Tailwind
+// uses @property to initialize its prefixed shadow and focus-ring variables.
+const GLOBAL_RULE = /@(?:font-face|property\s+[\w-]+)\s*\{[^}]*\}/g;
 
 export function scopeReviewCanvasCss(source: string): string {
-  const fontFaces = source.match(FONT_FACE_RULE) ?? [];
-  const withoutFontFaces = source.replace(FONT_FACE_RULE, "");
+  const globalRules = source.match(GLOBAL_RULE) ?? [];
+  const withoutGlobalRules = source.replace(GLOBAL_RULE, "");
 
-  const scopedSource = withoutFontFaces.replace(
-    REVIEW_CANVAS_ROOT_RULE,
-    ":scope{",
-  );
+  const scopedSource = withoutGlobalRules
+    .replace(REVIEW_CANVAS_ROOT_RULE, ":scope{")
+    .replaceAll(/:root\b|:host\b/g, ":scope");
 
-  const fontFaceBlock = fontFaces.length ? `${fontFaces.join("\n")}\n` : "";
+  const globalBlock = globalRules.length ? `${globalRules.join("\n")}\n` : "";
 
-  return `${fontFaceBlock}@scope (${REVIEW_CANVAS_SCOPE}) {\n${scopedSource}\n}\n`;
+  return `${globalBlock}@scope (${REVIEW_CANVAS_SCOPE}) {\n${scopedSource}\n}\n`;
 }

@@ -20,8 +20,22 @@ Report security vulnerabilities privately as described in
 ## Setup
 
 Blackboard uses Bun 1.4.2 or newer and Hutch 0.27.1. The native desktop
-build currently requires macOS on Apple Silicon. Install Hutch, then run
-from the repository root:
+build currently requires macOS on Apple Silicon. With [mise](https://mise.jdx.dev/)
+installed, run from the repository root:
+
+```sh
+mise run install
+open ~/Applications/Blackboard-dev.app
+```
+
+Mise installs the pinned Bun version, Hutch, and workspace dependencies before
+building. The installed development app uses this checkout and mise's Bun;
+keep both in place and rerun `mise run install` after changing the code or moving
+the checkout. Quit the app before reinstalling.
+
+Use `mise run dev` to build and launch directly from the checkout, or
+`mise run build` to build without installing. To set up without mise, install
+Bun 1.4.2 or newer and Hutch, then run:
 
 ```sh
 curl -fsSL https://hutch.blackboard.sh/hutch/install.sh | bash -s -- --version 0.27.1

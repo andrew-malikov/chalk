@@ -1,0 +1,47 @@
+/* Prefixed shadcn utilities; the canvas keeps its own reset and theme. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme) prefix(tw);
+@import "tailwindcss/utilities.css" layer(utilities) prefix(tw) source(none);
+@source "./components";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-primary: var(--ink);
+  --color-primary-foreground: var(--bg);
+  --color-secondary: var(--well);
+  --color-secondary-foreground: var(--ink);
+  --color-muted-foreground: var(--ink-muted);
+  --color-accent: var(--well);
+  --color-accent-foreground: var(--ink);
+  --color-destructive: var(--diff-removed);
+  --color-border: var(--rule);
+  --color-input: var(--rule-soft);
+  --color-ring: var(--accent);
+}
+
+@layer base {
+  .review-shell [data-slot] {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+  }
+  .review-shell button[data-slot],
+  .review-shell select[data-slot] {
+    font-family: inherit;
+    color: inherit;
+    background-color: transparent;
+    cursor: pointer;
+  }
+  .review-shell button[data-slot] {
+    padding: 0;
+  }
+  .review-shell button[data-slot]:disabled {
+    cursor: default;
+  }
+  .review-shell [data-slot="dialog-title"],
+  .review-shell [data-slot="dialog-description"] {
+    margin: 0;
+  }
+}

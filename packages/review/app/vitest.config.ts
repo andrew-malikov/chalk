@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 import stylex from "@stylexjs/unplugin";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
 import type { Plugin } from "vite";
@@ -87,7 +88,7 @@ export default defineConfig({
         },
       },
       {
-        plugins: [stylexDevCss(), react()],
+        plugins: [stylexDevCss(), react(), tailwindcss()],
         resolve: { alias, dedupe: ["react", "react-dom"] },
         test: {
           server: {

@@ -9,46 +9,170 @@
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
-.review-shell-bar {
+.review-shell-titlebar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 8px;
+  flex: none;
+  gap: 16px;
+  height: 56px;
+  padding: 0 16px;
   background: var(--tray);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--rule);
+  user-select: none;
+  -webkit-app-region: drag;
 }
-.review-shell-bar [role="tablist"] {
+.review-shell-titlebar[data-native-titlebar] {
+  padding-left: 88px;
+}
+.review-shell-titlebar button,
+.review-shell-tabs {
+  -webkit-app-region: no-drag;
+}
+.review-shell-brand {
+  flex: none;
+  gap: 8px;
+  padding: 0 8px;
+  font-size: 14px;
+  letter-spacing: -0.04em;
+}
+.review-shell-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--accent-outline);
+  border-radius: 8px;
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.review-shell-context {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  padding-left: 16px;
+  border-left: 1px solid var(--rule);
+}
+.review-shell-repository {
+  max-width: 180px;
+  color: var(--ink-muted);
+}
+.review-shell-repository,
+.review-shell-current-title,
+.review-shell-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.review-shell-current-title {
+  font-weight: 500;
+}
+.review-shell-context-separator {
+  color: var(--ink-faint);
+}
+.review-shell-actions {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 4px;
+  color: var(--ink-muted);
+}
+.review-shell-editor {
+  margin-right: 8px;
+  border-color: var(--rule);
+  font-size: 12px;
+}
+.review-shell-tabs {
+  flex: none;
+  padding: 4px 16px;
+  background: var(--tray);
+  border-bottom: 1px solid var(--rule);
+}
+.review-shell-tabs[hidden] {
+  display: none;
+}
+.review-shell-tabs [role="tablist"] {
   display: flex;
   align-items: center;
   overflow-x: auto;
-  min-width: 0;
-  gap: 4px;
+  gap: 8px;
+  padding: 2px;
+  scrollbar-width: thin;
+}
+.review-shell-tabs [role="tab"] {
+  flex: none;
+  color: var(--ink-muted);
+  font-size: 12px;
 }
 .review-shell-tab {
   display: flex;
   align-items: center;
   flex: none;
+  border-radius: 6px;
 }
-.review-shell button,
-.review-shell select {
-  font: inherit;
-  color: inherit;
-  background: transparent;
-  border: 0;
-  border-radius: 4px;
-  cursor: pointer;
-  min-height: 36px;
-  padding: 8px;
+.review-shell-tabs [role="tab"][aria-selected="true"],
+.review-shell-tab[data-active="true"] {
+  background: var(--well);
+  color: var(--ink);
 }
-.review-shell button:hover,
-.review-shell button[aria-selected="true"] {
-  background: var(--surface);
+.review-shell-tab-label {
+  max-width: 200px;
 }
-.review-shell :focus-visible {
+.review-shell-tab-close {
+  color: var(--ink-muted);
+}
+.review-shell :focus-visible:not([data-slot]) {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+.review-shell-settings {
+  max-width: min(420px, calc(100% - 32px));
+  font-family: var(--chrome-font);
+  font-size: 14px;
+}
+.review-shell-settings-fields {
+  display: grid;
+  gap: 16px;
+  padding: 12px 0;
+}
+.review-shell-settings-fields label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.review-shell-settings-fields select {
+  min-width: 132px;
+}
+@media (max-width: 760px) {
+  .review-shell-titlebar {
+    gap: 8px;
+    padding-right: 8px;
+  }
+  .review-shell-brand-name,
+  .review-shell-editor span,
+  .review-shell-tutorial span {
+    display: none;
+  }
+  .review-shell-editor {
+    width: 36px;
+    padding: 0;
+    margin-right: 0;
+  }
+  .review-shell-context {
+    padding-left: 8px;
+    gap: 8px;
+  }
+  .review-shell-repository {
+    max-width: 96px;
+  }
+}
+@media (max-width: 480px) {
+  .review-shell-repository,
+  .review-shell-context-separator {
+    display: none;
+  }
 }
 .review-shell [role="tabpanel"] {
   flex: 1;
@@ -74,7 +198,7 @@
   justify-content: space-between;
   padding: 8px 16px;
   background: var(--tray);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--rule);
 }
 .review-shell-dialog {
   color: var(--ink);
@@ -84,12 +208,27 @@
   max-width: calc(100% - 32px);
   padding: 24px;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--rule);
   border-radius: 12px;
   box-shadow: 0 12px 48px var(--backdrop);
 }
 .review-shell-dialog::backdrop {
   background: var(--backdrop);
+}
+.review-shell-dialog button,
+.review-shell-menu button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  min-height: 36px;
+  padding: 8px;
+}
+.review-shell-dialog button:hover,
+.review-shell-menu button:hover {
+  background: var(--well);
 }
 .review-shell-dialog label {
   display: flex;
@@ -108,7 +247,7 @@
   padding: 4px;
   background: var(--surface);
   color: var(--ink);
-  border: 1px solid var(--line);
+  border: 1px solid var(--rule);
   border-radius: 8px;
   box-shadow: 0 8px 32px var(--backdrop);
 }

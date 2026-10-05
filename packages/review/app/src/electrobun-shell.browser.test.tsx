@@ -12,6 +12,7 @@ import {
 import { defineSoftwareMap } from "@review/software-map-model";
 import { act } from "react";
 import { afterEach, expect, test, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 
 // oxlint-disable no-restricted-imports -- Integration test imports the native app adapter alongside the canvas.
 import { createCanvasUi } from "../../../../apps/review-electrobun/src/canvas-ui";
@@ -390,6 +391,12 @@ async function setup(
 
     if (url.pathname === "/reviews-api" || url.pathname === "/reviews-api/")
       return Response.json(catalogValues);
+
+    if (url.pathname.endsWith("/navigator"))
+      return Response.json({
+        workspacePath: `/tmp/${url.pathname.split("/")[2]}`,
+      });
+
     const id = url.pathname.split("/")[2];
     const fixture = fixtures.get(id ?? "");
 
@@ -456,6 +463,35 @@ test("restores catalog tabs and drops missing review IDs", async () => {
   expect(container.textContent).not.toContain("missing");
 });
 
+test("title bar opens the selected workspace and closing Settings preserves its review", async () => {
+  const rpc = await setup([a, b], a);
+  await expect.poll(() => container.textContent).toContain("Alpha document");
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Beta"]')!
+      .click(),
+  );
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>('[aria-label="Open in VS Code"]')!
+      .click(),
+  );
+  await vi.waitFor(() =>
+    expect(rpc.request.openSource).toHaveBeenCalledWith({
+      kind: "workspace",
+      workspacePath: `/tmp/${b}`,
+    }),
+  );
+  await act(async () => mounted!.command("settings"));
+  await act(async () => mounted!.command("closeTab"));
+  expect(container.querySelector('[role="dialog"]')).toBeNull();
+  expect(
+    container
+      .querySelector('[role="tab"][aria-label="Beta"]')
+      ?.getAttribute("aria-selected"),
+  ).toBe("true");
+});
+
 test("disposing the shell cancels application and canvas streams", async () => {
   await setup([a], a);
   await expect.poll(() => activeStreams).toBeGreaterThan(0);
@@ -490,9 +526,7 @@ test("appearance reaches Home and modal Escape restores trigger focus", async ()
         ?.getAttribute("data-review-theme"),
     )
     .toBe("light");
-  await act(async () =>
-    dialog.dispatchEvent(new Event("cancel", { cancelable: true })),
-  );
+  await act(async () => userEvent.keyboard("{Escape}"));
   expect(container.querySelector('[role="dialog"]')).toBeNull();
   expect(document.activeElement).toBe(trigger);
 });

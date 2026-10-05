@@ -18,7 +18,12 @@ function render(state: HostState) {
   if (state.status === "ready") {
     if (!shell) {
       container.replaceChildren();
-      shell = mountElectrobunShell(container, { state, rpc, wasmUrl });
+      shell = mountElectrobunShell(container, {
+        state,
+        rpc,
+        wasmUrl,
+        nativeTitlebar: navigator.platform.startsWith("Mac"),
+      });
     }
 
     return;

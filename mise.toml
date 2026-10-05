@@ -1,0 +1,54 @@
+[settings]
+# Keep pinned tools ahead of versions added by shell startup files.
+activate_aggressive = true
+
+[tools]
+bun = "1.4.2"
+
+[tasks.setup]
+description = "Install dependencies and Hutch for the Apple Silicon desktop"
+run = '''
+set -eu
+if [ "$(uname -sm)" != "Darwin arm64" ]; then
+  echo "The desktop build requires macOS on Apple Silicon." >&2
+  exit 1
+fi
+if [ "$("$HOME/.hutch/bin/hutch" --version 2>/dev/null || true)" != "0.27.1" ]; then
+  installer=$(mktemp)
+  trap 'rm -f "$installer"' EXIT
+  curl -fsSL https://hutch.blackboard.sh/hutch/install.sh -o "$installer"
+  bash "$installer" --version 0.27.1 --no-modify-path
+fi
+bun install --frozen-lockfile
+'''
+
+[tasks.dev]
+description = "Build and run Blackboard from this checkout"
+depends = ["setup"]
+run = "bun dev"
+
+[tasks.build]
+description = "Build Blackboard-dev.app"
+depends = ["setup"]
+run = "bun run desktop:build"
+
+[tasks.install]
+description = "Build and install Blackboard-dev.app into ~/Applications"
+depends = ["build"]
+run = '''
+set -eu
+app="$HOME/Applications/Blackboard-dev.app"
+runtime_tmp="$HOME/Library/Caches/Blackboard-dev/cottontail"
+mkdir -p "$HOME/Applications" "$runtime_tmp"
+# Replace the bundle rather than retaining files created by earlier launches.
+rm -rf "$app"
+ditto apps/review-electrobun/build/dev-macos-arm64/Blackboard-dev.app "$app"
+plist="$app/Contents/Info.plist"
+plutil -insert LSEnvironment -json '{}' "$plist"
+plutil -insert LSEnvironment.DEV_FAST_REVIEW_CHECKOUT -string "$PWD" "$plist"
+plutil -insert LSEnvironment.REVIEW_ELECTROBUN_BUN -string "$(command -v bun)" "$plist"
+plutil -insert LSEnvironment.DEV_FAST_REVIEW_SERVER_ENTRY -string "$PWD/packages/review/dist/server/desktop-host.js" "$plist"
+plutil -insert LSEnvironment.COTTONTAIL_TMP_DIR -string "$runtime_tmp" "$plist"
+codesign --force --deep --sign - "$app"
+echo "Installed $app. Open it from Finder or run: open \"$app\""
+'''

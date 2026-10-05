@@ -113,6 +113,7 @@ async function run() {
     url: "views://mainview/index.html",
     rpc,
     frame: { width: 1200, height: 850 },
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
   });
 
   window.webview.setNavigationRules(["^*", "views://mainview/*"]);
