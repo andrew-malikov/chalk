@@ -49,7 +49,7 @@ interface SharingHostOptions extends SharingHostEvents {
   readRepository?: typeof readShareRepository;
   login?: typeof runStoreLogin;
   openUrl?: typeof openUrlInBrowser;
-  fetch?: typeof fetch;
+  fetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 /** Mounted behind local host authentication. Account credentials never enter the renderer. */

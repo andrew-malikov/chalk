@@ -5,20 +5,12 @@ import { fileURLToPath } from "node:url";
 
 const monorepoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-export function cleanTargets({
-  root = monorepoRoot,
-  reviewHome = process.env.DEV_REVIEW_HOME ?? resolve(process.env.HOME, ".dev"),
-} = {}) {
-  const checkout = resolve(root, "apps/review-desktop/code-oss");
+export function cleanTargets({ root = monorepoRoot } = {}) {
+  const app = resolve(root, "apps/review-electrobun");
 
-  return [
-    resolve(checkout, ".build"),
-    resolve(checkout, "out"),
-    resolve(checkout, "node_modules"),
-    resolve(checkout, "extensions/node_modules"),
-    resolve(checkout, "src/vs/review/common/reviewProtocol.ts"),
-    resolve(reviewHome, "review-desktop/state"),
-  ];
+  return ["dist", "build", "artifacts", ".cottontail-tmp"].map((directory) =>
+    resolve(app, directory),
+  );
 }
 
 export async function cleanReviewDesktop(options) {

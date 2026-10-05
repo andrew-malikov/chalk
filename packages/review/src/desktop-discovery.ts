@@ -87,7 +87,10 @@ export async function readReviewDesktopDiscoveryFile(
 
 export async function isHealthyReviewDesktop(
   discovery: ReviewDesktopDiscovery,
-  fetch = globalThis.fetch,
+  fetch: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response> = globalThis.fetch,
 ): Promise<boolean> {
   try {
     const response = await fetch(`${discovery.url}/health`, {
@@ -116,7 +119,10 @@ export function healthyReviewInstance(
 }
 
 export async function requireHealthyReviewDesktop(
-  fetch = globalThis.fetch,
+  fetch: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response> = globalThis.fetch,
 ): Promise<ReviewDesktopDiscovery> {
   const selection = await selectReviewInstance({ fetch });
   const discovery = healthyReviewInstance(selection);
@@ -191,7 +197,7 @@ export interface ReviewInstance {
 
 export interface ReviewInstanceDependencies {
   env?: NodeJS.ProcessEnv;
-  fetch?: typeof globalThis.fetch;
+  fetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
   warn?: (message: string) => void;
 }
 
@@ -357,6 +363,6 @@ export function reviewInstanceStartHint(
   const checkout = selection.instance?.discovery.checkout;
 
   return checkout
-    ? `Start it with \`pnpm dev\` in ${checkout}`
-    : "Start it with `pnpm dev` in its checkout";
+    ? `Start it with \`bun dev\` in ${checkout}`
+    : "Start it with `bun dev` in its checkout";
 }

@@ -5,16 +5,16 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "vite build --config desktop.vite.config.ts",
-    "pretest": "pnpm --filter @dev.fast/review ensure:tutorial-assets",
-    "test": "vitest run --config vitest.config.ts",
-    "test:node": "vitest run --config vitest.config.ts --project canvas-node",
-    "test:browser": "vitest run --config vitest.config.ts --project browser",
-    "test:browser:watch": "vitest --config vitest.config.ts --project browser --browser.headless=false",
-    "typecheck": "pnpm -w exec tsc --noEmit -p packages/review/app",
-    "pretest:node": "pnpm --filter @dev.fast/review ensure:tutorial-assets",
-    "pretest:browser": "pnpm --filter @dev.fast/review ensure:tutorial-assets",
-    "pretypecheck": "pnpm --filter @dev.fast/review ensure:tutorial-assets"
+    "build": "BUN_JSC_useFTLJIT=0 bun --bun run vite build --config desktop.vite.config.ts",
+    "pretest": "bun run --filter @dev.fast/review ensure:tutorial-assets",
+    "test": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts",
+    "test:node": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts --project canvas-node",
+    "test:browser": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts --project browser",
+    "test:browser:watch": "BUN_JSC_useFTLJIT=0 bun --bun run vitest --config vitest.config.ts --project browser --browser.headless=false",
+    "typecheck": "bun --bun run tsc --noEmit -p .",
+    "pretest:node": "bun run --filter @dev.fast/review ensure:tutorial-assets",
+    "pretest:browser": "bun run --filter @dev.fast/review ensure:tutorial-assets",
+    "pretypecheck": "bun run --filter @dev.fast/review ensure:tutorial-assets"
   },
   "dependencies": {
     "@dev.fast/review": "workspace:*",
@@ -50,6 +50,6 @@
     "vitest": "4.1.11"
   },
   "engines": {
-    "node": ">=24 <25"
+    "bun": ">=1.4.2"
   }
 }

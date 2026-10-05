@@ -15,13 +15,13 @@
     }
   },
   "scripts": {
-    "build": "pnpm -w exec tsc -p packages/json/tsconfig.build.json",
-    "typecheck": "pnpm -w exec tsc -p packages/json/tsconfig.json --noEmit"
+    "build": "bun --bun run tsc -p ../json/tsconfig.build.json",
+    "typecheck": "bun --bun run tsc -p ../json/tsconfig.json --noEmit"
   },
   "dependencies": {
     "zod": "catalog:"
   },
   "engines": {
-    "node": ">=22"
+    "bun": ">=1.4.2"
   }
 }

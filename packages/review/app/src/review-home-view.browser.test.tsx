@@ -538,7 +538,7 @@ describe("ReviewHome", () => {
       find: { ctrlKey: true },
       other: { metaKey: true },
     },
-  ])(
+  ] as const)(
     "focuses the search box on the $platform find shortcut",
     async ({ platform, find, other }) => {
       vi.spyOn(navigator, "platform", "get").mockReturnValue(platform);

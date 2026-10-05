@@ -184,49 +184,38 @@ async function catFileBatch(
   if (blobShas.length === 0) return result;
   const args = await gitArgs(rootPath, ["cat-file", "--batch"]);
 
-  return new Promise((resolve, reject) => {
-    const child = spawn("git", args, { stdio: ["pipe", "pipe", "pipe"] });
-    const chunks: Buffer[] = [];
-    child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
-    let stderr = "";
-    child.stderr.on("data", (chunk: Buffer) => {
-      stderr += chunk.toString();
-    });
-    child.once("error", reject);
-    // EPIPE on stdin (cat-file exiting early) must reject, not crash the
-    // process via an unhandled stream error.
-    child.stdin.on("error", (error) =>
-      reject(new Error(`git cat-file --batch stdin failed: ${String(error)}`)),
-    );
-    child.once("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(`git cat-file --batch failed: ${stderr}`));
-
-        return;
-      }
-
-      const buffer = Buffer.concat(chunks);
-      let offset = 0;
-
-      for (const sha of blobShas) {
-        const headerEnd = buffer.indexOf(0x0a, offset);
-
-        if (headerEnd === -1) break;
-        const header = buffer.slice(offset, headerEnd).toString();
-        offset = headerEnd + 1;
-        const parts = header.split(" ");
-
-        if (parts[1] === "missing") continue;
-        const size = Number.parseInt(parts[2] ?? "0", 10);
-        result.set(sha, buffer.slice(offset, offset + size).toString("utf8"));
-        offset += size + 1; // trailing LF after each object
-      }
-
-      resolve(result);
-    });
-    child.stdin.write(`${blobShas.join("\n")}\n`);
-    child.stdin.end();
+  const child = Bun.spawn(["git", ...args], {
+    stdin: new TextEncoder().encode(`${blobShas.join("\n")}\n`),
+    stdout: "pipe",
+    stderr: "pipe",
   });
+
+  const [output, stderr, code] = await Promise.all([
+    new Response(child.stdout).arrayBuffer(),
+    new Response(child.stderr).text(),
+    child.exited,
+  ]);
+
+  if (code !== 0) throw new Error(`git cat-file --batch failed: ${stderr}`);
+
+  const buffer = Buffer.from(output);
+  let offset = 0;
+
+  for (const sha of blobShas) {
+    const headerEnd = buffer.indexOf(0x0a, offset);
+
+    if (headerEnd === -1) break;
+    const header = buffer.subarray(offset, headerEnd).toString();
+    offset = headerEnd + 1;
+    const parts = header.split(" ");
+
+    if (parts[1] === "missing") continue;
+    const size = Number.parseInt(parts[2] ?? "0", 10);
+    result.set(sha, buffer.subarray(offset, offset + size).toString("utf8"));
+    offset += size + 1;
+  }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------

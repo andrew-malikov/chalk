@@ -1,8 +1,8 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
 
 import { afterEach, beforeEach, expect, it } from "vitest";
 
@@ -67,7 +67,7 @@ it("lets the first of two hosts on one store choose the id", () => {
 it("gives a store made before the id existed an id", async () => {
   const file = path.join(root, "review-api.db");
   await close(open(file));
-  const db = new DatabaseSync(file);
+  const db = new Database(file);
   db.exec("DROP TABLE server_identity");
   db.close();
 

@@ -50,6 +50,7 @@ describe("runTraceGitHook", () => {
     stderrText = "";
     vi.stubEnv("DEV_REVIEW_HOME", devHome);
     vi.stubEnv("HOME", repo);
+    vi.stubEnv("CODEX_HOME", path.join(repo, ".codex"));
     await git(repo, ["init", "-b", "main"]);
     await git(repo, ["config", "user.name", "Test"]);
     await git(repo, ["config", "user.email", "test@example.test"]);

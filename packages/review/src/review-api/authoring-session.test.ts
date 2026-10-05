@@ -161,9 +161,6 @@ it("keeps a lease across restart and enforces it in an independent process witho
 
   const child = async (id: string) => {
     const { stdout } = await promisify(execFile)(process.execPath, [
-      "--import",
-      "tsx",
-      "--input-type=module",
       "-e",
       script,
       database,

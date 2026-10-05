@@ -966,7 +966,7 @@ it("releases ownership after a port bind failure so startup can be retried", asy
       signal: new AbortController().signal,
       onReady: () => {},
     }),
-  ).rejects.toThrow(/EADDRINUSE/);
+  ).rejects.toMatchObject({ code: "EADDRINUSE" });
   const retried = await start(stateDir);
   expect(await reviewServerIsHealthy(retried.discovery)).toBe(true);
 });

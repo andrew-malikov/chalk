@@ -356,9 +356,9 @@ describe("Whiteboard CLI", () => {
     const queueDir = path.join(rootPath, "queue");
     let queueId = 0;
 
-    const fetchMock = vi.fn<typeof fetch>(
-      async () => new Response(null, { status: 200 }),
-    );
+    const fetchMock = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => new Response(null, { status: 200 }));
 
     const captureClient = new PostHogCaptureClient({
       apiKey: "test-key",

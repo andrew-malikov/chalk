@@ -82,7 +82,9 @@ describe("submitReviewBugReport", () => {
   it.each([503, 422])(
     "reports an upstream %s as a service failure without retrying",
     async (status) => {
-      const fetchImpl = vi.fn<typeof fetch>(async () =>
+      const fetchImpl = vi.fn<
+        (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+      >(async () =>
         Response.json({ ok: false, error: "Rejected." }, { status }),
       );
 
@@ -135,7 +137,10 @@ type CapturedPart =
   | { name: string; file: CapturedFile };
 
 interface CapturedFetch {
-  fetchImpl: typeof fetch;
+  fetchImpl: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response>;
   url: () => string;
   headers: () => Headers;
   parts: () => CapturedPart[];
@@ -148,14 +153,20 @@ function captureFetch(): CapturedFetch {
   let headers: Headers | undefined;
   const capturedParts: CapturedPart[] = [];
 
-  const fetchImpl: typeof fetch = async (input, init) => {
+  const fetchImpl: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response> = async (input, init) => {
     url = input.toString();
     headers = new Headers(init?.headers);
     const form = init?.body;
 
     if (!(form instanceof FormData)) throw new Error("Expected FormData.");
 
-    for (const [name, value] of form.entries()) {
+    // Bun types narrow entries to strings, but multipart entries include Files.
+    for (const [name, value] of form.entries() as IterableIterator<
+      [string, string | File]
+    >) {
       capturedParts.push(
         value instanceof File
           ? {

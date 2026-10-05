@@ -1,8 +1,6 @@
 import crypto from "node:crypto";
 import { existsSync } from "node:fs";
 import { readFile, rm } from "node:fs/promises";
-import { type Server, createServer } from "node:http";
-import type { AddressInfo } from "node:net";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -73,7 +71,7 @@ import {
   GlobalReviewDesktopVerbRelay,
   type ReviewDesktopVerbRelay,
 } from "./global-verb-relay";
-import { createNodeRequestListener, readBoundedRequestJson } from "./hono-http";
+import { readBoundedRequestJson } from "./hono-http";
 import { ReviewServerError } from "./http-json";
 import { createJsonReviewReporting } from "./json-review-reporting";
 import { reviewLifecycleTelemetry } from "./review-lifecycle-telemetry";
@@ -546,7 +544,7 @@ export function createGlobalReviewServer(
     return serverJson(200, { ok: true });
   });
 
-  const httpServer = createServer(createNodeRequestListener(app));
+  let httpServer: Bun.Server<undefined> | undefined;
 
   async function prepareTutorialLocked() {
     return tutorial.prepare();
@@ -597,7 +595,14 @@ export function createGlobalReviewServer(
     },
     listen: async () => {
       scratchpadEnabled = await readScratchpadEnabled();
-      boundPort = await listen(httpServer, input.port);
+      httpServer = Bun.serve({
+        hostname: "127.0.0.1",
+        port: input.port,
+        fetch: app.fetch,
+        idleTimeout: 0,
+        maxRequestBodySize: 64 * 1024 * 1024,
+      });
+      boundPort = httpServer.port!;
       discovery.url = urlForBoundPort();
 
       for (const discoveryPath of discoveryPaths)
@@ -613,7 +618,7 @@ export function createGlobalReviewServer(
       relay.close();
       openWatchdog.dispose();
 
-      await closeHttpServer(httpServer);
+      await httpServer?.stop(true);
       await telemetry.shutdown(1_500);
     },
   };
@@ -661,36 +666,6 @@ export function sessionStartedSourceKind(
   }
 }
 
-function listen(server: Server, port: number): Promise<number> {
-  return new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(port, "127.0.0.1", () => {
-      server.off("error", reject);
-      const address = server.address();
-
-      if (!isTcpAddress(address)) {
-        reject(new Error("The Whiteboard server did not bind a TCP port."));
-
-        return;
-      }
-
-      resolve(address.port);
-    });
-  });
-}
-
-function closeHttpServer(server: Server): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (!server.listening) {
-      resolve();
-
-      return;
-    }
-
-    server.close((error) => (error ? reject(error) : resolve()));
-  });
-}
-
 async function removeMatchingDiscovery(
   filePath: string,
   discovery: ReviewDesktopDiscovery,
@@ -709,11 +684,4 @@ async function removeMatchingDiscovery(
     // SAFETY: fs/promises rejects with a Node ErrnoException carrying `code`.
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
   }
-}
-
-/** `server.address()` is a string for pipe and socket listeners. */
-function isTcpAddress(
-  address: string | AddressInfo | null,
-): address is AddressInfo {
-  return isObjectValue(address);
 }

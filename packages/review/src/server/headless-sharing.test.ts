@@ -44,7 +44,12 @@ it("commits and uploads through a real headless server and CLI without Desktop, 
   const link = `https://sharing.test/s/${shareId}#${"x".repeat(43)}`;
   vi.stubGlobal(
     "fetch",
-    async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+    async (
+      input: Parameters<
+        (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+      >[0],
+      init?: RequestInit,
+    ) => {
       const url = new URL(String(input));
 
       if (url.hostname !== "sharing.test" && url.hostname !== "objects.test")

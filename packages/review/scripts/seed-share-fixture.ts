@@ -13,7 +13,7 @@ import { createShareFixture } from "../test/fixtures/share/create.js";
 const [root, home] = process.argv.slice(2).map((arg) => path.resolve(arg));
 
 if (!root || !home)
-  throw new Error("Usage: tsx scripts/seed-share-fixture.ts <root> <home>");
+  throw new Error("Usage: bun scripts/seed-share-fixture.ts <root> <home>");
 
 await mkdir(home, { recursive: true });
 

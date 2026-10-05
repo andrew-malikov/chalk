@@ -386,7 +386,7 @@ describe("block components", () => {
     },
   );
 
-  it("keeps shipped tutorial keybindings and view buttons interactive in the JSON canvas", async () => {
+  it("keeps shipped tutorial view buttons interactive in the JSON canvas", async () => {
     const selectKeymap = vi.fn<ReviewCanvasTutorialBridge["selectKeymap"]>(
       async () => {},
     );
@@ -406,22 +406,10 @@ describe("block components", () => {
 
     const { container } = await mountFixture("tutorial", {}, tutorial, true);
     expect(
-      await settled(
-        () =>
-          has(container, ".tutorial-keymap-picker") &&
-          text(container).includes("Representative authoring conversation"),
+      await settled(() =>
+        text(container).includes("Representative authoring conversation"),
       ),
     ).toBe(true);
-
-    const vim = [
-      ...container.querySelectorAll<HTMLButtonElement>(
-        ".tutorial-keymap-picker button",
-      ),
-    ].find((button) => button.textContent === "Vim")!;
-
-    expect(vim.disabled).toBe(false);
-    await act(async () => vim.click());
-    expect(selectKeymap).toHaveBeenCalledWith("vim");
 
     const commits = container.querySelector<HTMLButtonElement>(
       '[data-tutorial-view="commits"]',

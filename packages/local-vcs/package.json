@@ -16,10 +16,10 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsdown",
-    "prepack": "pnpm run build",
-    "test": "vitest run --config vitest.config.ts",
-    "typecheck": "pnpm -w exec tsc -p packages/local-vcs/tsconfig.json --noEmit"
+    "build": "bun --bun run tsdown",
+    "prepack": "bun run build",
+    "test": "bun --bun run vitest run --config vitest.config.ts",
+    "typecheck": "bun --bun run tsc -p ../local-vcs/tsconfig.json --noEmit"
   },
   "dependencies": {
     "git-url-parse": "16.1.0",
@@ -33,6 +33,6 @@
     "vitest": "4.1.11"
   },
   "engines": {
-    "node": ">=22"
+    "bun": ">=1.4.2"
   }
 }

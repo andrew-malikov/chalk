@@ -138,7 +138,10 @@ export async function runStoreLogin(input: {
   stderr: Writable;
   openUrl?: (url: string) => Promise<void>;
   sleep?: (ms: number) => Promise<void>;
-  fetch?: typeof fetch;
+  fetch?: (
+    input: Request | string | URL,
+    init?: RequestInit,
+  ) => Promise<Response>;
   env?: NodeJS.ProcessEnv;
 }): Promise<number> {
   const output: CliJsonOutput = {
@@ -284,7 +287,10 @@ export async function runStoreWhoami(input: {
   json?: boolean;
   stdout: Writable;
   stderr: Writable;
-  fetch?: typeof fetch;
+  fetch?: (
+    input: Request | string | URL,
+    init?: RequestInit,
+  ) => Promise<Response>;
   env?: NodeJS.ProcessEnv;
 }): Promise<number> {
   const output: CliJsonOutput = {

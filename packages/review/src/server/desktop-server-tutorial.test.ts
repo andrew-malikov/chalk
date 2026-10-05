@@ -69,9 +69,7 @@ describe("Review Desktop tutorial preparation", () => {
       const blocks = elements(snapshot.document);
       expect(
         blocks.filter((b) => b.type === "tutorial").map((b) => b.kind),
-      ).toEqual(
-        expect.arrayContaining(["conversation", "keymap", "view", "feature"]),
-      );
+      ).toEqual(expect.arrayContaining(["conversation", "view", "feature"]));
       expect(blocks.some((b) => b.type === "code_peek")).toBe(true);
       expect(blocks.some((b) => b.type === "sequence")).toBe(true);
       expect(blocks.some((b) => b.type === "database_lens")).toBe(true);

@@ -1,5 +1,5 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
-import { DatabaseSync } from "node:sqlite";
 
 import { afterEach, expect, it, vi } from "vitest";
 import type { z } from "zod";
@@ -22,10 +22,10 @@ type WithoutLease = ActivityInput extends infer Input
     : never
   : never;
 
-const databases: DatabaseSync[] = [];
+const databases: Database[] = [];
 
 const newActivity = () => {
-  const db = new DatabaseSync(":memory:");
+  const db = new Database(":memory:");
   databases.push(db);
 
   return new ReviewActivity(db);

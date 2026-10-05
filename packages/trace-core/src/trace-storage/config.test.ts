@@ -131,15 +131,11 @@ describe("trace config file", () => {
     `;
 
     const children = ["hosted", "s3"].map((selection) => {
-      const child = spawn(
-        process.execPath,
-        ["--import", "tsx", "--input-type=module", "--eval", script, selection],
-        {
-          cwd: fileURLToPath(new URL("../..", import.meta.url)),
-          env: { ...process.env, ...env },
-          stdio: ["pipe", "pipe", "pipe"],
-        },
-      );
+      const child = spawn(process.execPath, ["--eval", script, selection], {
+        cwd: fileURLToPath(new URL("../..", import.meta.url)),
+        env: { ...process.env, ...env },
+        stdio: ["pipe", "pipe", "pipe"],
+      });
 
       let stderr = "";
       child.stderr.on("data", (chunk) => {

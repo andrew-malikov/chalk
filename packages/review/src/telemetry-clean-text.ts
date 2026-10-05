@@ -3,7 +3,7 @@
 //
 // PROVENANCE. This is a port of Microsoft's implementation in VS Code, which
 // this product is a fork of. Source:
-//   apps/review-desktop/code-oss/src/vs/platform/telemetry/common/telemetryUtils.ts
+//   https://github.com/microsoft/vscode/blob/8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8/src/vs/platform/telemetry/common/telemetryUtils.ts
 //   (`anonymizeFilePaths`, `userDataRegexes`, `redactIfPossibleUserInfo`,
 //    `removePropertiesWithPossibleUserInfo`)
 // Licensed under the MIT License, Copyright (c) Microsoft Corporation.

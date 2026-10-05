@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "app:dev": "node scripts/dev.mjs dev",
-    "app:build": "node scripts/dev.mjs build",
+    "app:dev": "bun scripts/dev.mjs dev",
+    "app:build": "bun scripts/dev.mjs build",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.main.json",
-    "test": "vitest run"
+    "test": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run"
   },
   "dependencies": {
     "@dev.fast/review": "workspace:*",
@@ -29,6 +29,6 @@
     "vitest": "4.1.11"
   },
   "engines": {
-    "node": ">=24 <25"
+    "bun": ">=1.4.2"
   }
 }

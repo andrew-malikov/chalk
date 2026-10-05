@@ -1,3 +1,4 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import {
   access,
@@ -11,7 +12,6 @@ import {
   rm,
 } from "node:fs/promises";
 import path from "node:path";
-import { DatabaseSync, backup } from "node:sqlite";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
 import {
@@ -117,20 +117,21 @@ export async function migrateJsonReviews(input: {
         }
       }
 
-      // SQLite's backup API includes committed WAL data; copying only the main
+      // VACUUM INTO takes a standalone snapshot including committed WAL data.
+      // Copying only the main
       // database file can silently lose the most recent authored reviews.
-      let source: DatabaseSync | undefined;
+      let source: Database | undefined;
 
       try {
         await access(database);
-        source = new DatabaseSync(database, { readOnly: true });
+        source = new Database(database, { readonly: true });
         const backupDir = path.join(input.home, "backups");
         await mkdir(backupDir, { recursive: true, mode: 0o700 });
         report.backup = path.join(
           backupDir,
           `before-json-cutover-${randomUUID()}.db`,
         );
-        await backup(source, report.backup);
+        source.query("VACUUM INTO ?").run(report.backup);
         await chmod(report.backup, 0o600);
         await copyFile(report.backup, candidate);
       } catch (error) {
@@ -223,7 +224,7 @@ export async function migrateJsonReviews(input: {
       // No process has opened the live store yet. Retire its checkpointed WAL
       // alongside the main file, then install the fully verified candidate.
       if (report.backup) {
-        const previous = new DatabaseSync(database);
+        const previous = new Database(database);
 
         try {
           previous.exec("PRAGMA wal_checkpoint(TRUNCATE)");

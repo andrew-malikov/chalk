@@ -1,7 +1,4 @@
 // One `git cat-file --batch` per object store; this module owns the process lifecycle and framing.
-import type { ChildProcessByStdio } from "node:child_process";
-import type { Socket } from "node:net";
-
 import { spawnObserved } from "./exec";
 
 const DEFAULT_IDLE_TIMEOUT_MS = 30_000;
@@ -34,8 +31,9 @@ interface PendingRead {
 }
 
 interface BatchSession {
-  child: ChildProcessByStdio<Socket, Socket, null>;
+  child: Bun.Subprocess<"pipe", "pipe", "ignore">;
   pending: PendingRead[];
+  reading: boolean;
   buffered: Buffer;
   expected: number | null;
   collected: Buffer[] | null;
@@ -93,6 +91,7 @@ export class BlobBatchReader {
 
     session.tail = answer.catch(() => null);
     this.holdEventLoop(session);
+    void this.readOutput(session);
     this.armIdleTimer(session);
 
     return answer;
@@ -154,29 +153,22 @@ export class BlobBatchReader {
     this.objectStoreArgs = args;
 
     const child = spawnObserved("git", [...args, "cat-file", "--batch"], {
-      stdio: ["pipe", "pipe", "ignore"],
       env: this.input.env,
     });
 
     const session: BatchSession = {
       child,
       pending: [],
+      reading: false,
       buffered: Buffer.alloc(0),
       expected: null,
       collected: null,
       writes: Promise.resolve(),
       tail: Promise.resolve(),
-      exit: new Promise((resolve) => {
-        child.once("close", () => resolve());
-      }),
+      exit: child.exited.then(() => {}),
     };
 
-    child.stdin.on("error", () => {});
-    child.stdout.on("data", (chunk: Buffer) => this.consume(session, chunk));
-    child.once("error", (cause: Error) =>
-      this.fail(session, "git cat-file --batch could not start.", cause),
-    );
-    child.once("exit", () =>
+    void session.exit.then(() =>
       this.fail(session, "git cat-file --batch stopped before answering."),
     );
     this.session = session;
@@ -247,13 +239,33 @@ export class BlobBatchReader {
   }
 
   private setEventLoopHold(session: BatchSession, hold: boolean): void {
-    for (const handle of [
-      session.child,
-      session.child.stdin,
-      session.child.stdout,
-    ]) {
-      if (hold) handle.ref();
-      else handle.unref();
+    if (hold) session.child.ref();
+    else session.child.unref();
+  }
+
+  private async readOutput(session: BatchSession): Promise<void> {
+    if (session.reading) return;
+    session.reading = true;
+    const reader = session.child.stdout.getReader();
+
+    try {
+      // A pending stream read holds Bun's event loop even after child.unref().
+      // Read only while git owes an answer, preserving an idle reusable child.
+      while (session.pending.length > 0) {
+        const { value, done } = await reader.read();
+
+        if (done) break;
+        this.consume(session, Buffer.from(value));
+      }
+    } catch (cause) {
+      this.fail(
+        session,
+        "git cat-file --batch could not read output.",
+        cause instanceof Error ? cause : new Error(String(cause)),
+      );
+    } finally {
+      reader.releaseLock();
+      session.reading = false;
     }
   }
 
@@ -270,27 +282,17 @@ export class BlobBatchReader {
     this.holdEventLoop(session);
   }
 
-  private write(session: BatchSession, request: string): Promise<void> {
-    const stdin = session.child.stdin;
-
-    // Closed pipe: the child's exit rejects the queued read.
-    if (!stdin.writable) return Promise.resolve();
-
-    return new Promise((resolve) => {
-      if (stdin.write(request)) {
-        resolve();
-
-        return;
-      }
-
-      const proceed = () => {
-        stdin.off("drain", proceed);
-        resolve();
-      };
-
-      stdin.once("drain", proceed);
-      void session.exit.then(proceed);
-    });
+  private async write(session: BatchSession, request: string): Promise<void> {
+    try {
+      session.child.stdin.write(request);
+      await session.child.stdin.flush();
+    } catch (cause) {
+      this.fail(
+        session,
+        "git cat-file --batch could not accept a request.",
+        cause instanceof Error ? cause : new Error(String(cause)),
+      );
+    }
   }
 
   private get maxBlobBytes(): number {

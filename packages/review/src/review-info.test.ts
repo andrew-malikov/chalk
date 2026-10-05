@@ -63,7 +63,9 @@ it("lists the catalog at the mounted route, not a trailing-slash child", async (
   };
 
   // Hono matches the "/reviews-api" mount strictly, so "/reviews-api/" 404s.
-  const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
+  const fetch = vi.fn<
+    (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+  >(async (url) =>
     String(url) === "http://127.0.0.1:5570/reviews-api"
       ? Response.json([review])
       : Response.json({ error: "Not found." }, { status: 404 }),

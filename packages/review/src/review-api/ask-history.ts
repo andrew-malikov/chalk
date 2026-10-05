@@ -1,4 +1,4 @@
-import type { DatabaseSync } from "node:sqlite";
+import type { Database, SQLQueryBindings } from "bun:sqlite";
 
 import {
   type AskAgentId,
@@ -64,7 +64,7 @@ const rowSchema = z
 /** Saved Ask conversations, per review. Shared reviews are not in
  * `reviews`, so there is no foreign key; deleting a review deletes its rows. */
 export class AskHistory {
-  constructor(private readonly db: DatabaseSync) {
+  constructor(private readonly db: Database) {
     db.exec(`CREATE TABLE IF NOT EXISTS ask_conversations(
       id TEXT PRIMARY KEY,
       review_id TEXT NOT NULL,
@@ -85,7 +85,9 @@ export class AskHistory {
     // Conversations saved before bypassing permissions lack the column.
     if (
       !db
-        .prepare("PRAGMA table_info(ask_conversations)")
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "PRAGMA table_info(ask_conversations)",
+        )
         .all()
         .some((column) => String(column.name) === "bypass")
     )
@@ -106,7 +108,7 @@ export class AskHistory {
 
   save(record: AskRecord) {
     this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         `INSERT OR REPLACE INTO ask_conversations(id,review_id,agent,session_id,version,head,cwd,selection,title,created_at,updated_at,bypass)
         VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`,
       )
@@ -129,7 +131,9 @@ export class AskHistory {
   /** Whether reopening the conversation bypasses permissions. */
   setBypass(id: string, bypass: boolean) {
     this.db
-      .prepare("UPDATE ask_conversations SET bypass=? WHERE id=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "UPDATE ask_conversations SET bypass=? WHERE id=?",
+      )
       .run(bypass ? 1 : 0, id);
   }
 
@@ -137,27 +141,33 @@ export class AskHistory {
    * reopen the one it had. */
   updateSession(id: string, sessionId: string) {
     this.db
-      .prepare("UPDATE ask_conversations SET session_id=? WHERE id=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "UPDATE ask_conversations SET session_id=? WHERE id=?",
+      )
       .run(sessionId, id);
   }
 
   /** Keeps what the panel shows, so a reopen need not wait on the agent. */
   saveEntries(id: string, entries: AskEntry[]) {
     this.db
-      .prepare("UPDATE ask_conversations SET entries=? WHERE id=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "UPDATE ask_conversations SET entries=? WHERE id=?",
+      )
       .run(JSON.stringify(entries), id);
   }
 
   /** The agent's name for the conversation, which the list shows. */
   rename(id: string, title: string) {
     this.db
-      .prepare("UPDATE ask_conversations SET title=? WHERE id=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "UPDATE ask_conversations SET title=? WHERE id=?",
+      )
       .run(title.slice(0, 200), id);
   }
 
   saveOffer(agent: AskAgentId, offer: AskOffer) {
     this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "INSERT OR REPLACE INTO ask_agent_offers(agent, offer) VALUES(?, ?)",
       )
       .run(agent, JSON.stringify(offer));
@@ -171,7 +181,7 @@ export class AskHistory {
 
     if (!model) return;
     this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "INSERT OR REPLACE INTO ask_agent_model_offers(agent, model, offer) VALUES(?, ?, ?)",
       )
       .run(agent, model, JSON.stringify(offer));
@@ -184,10 +194,12 @@ export class AskHistory {
       .safeParse(
         model === undefined
           ? this.db
-              .prepare("SELECT offer FROM ask_agent_offers WHERE agent=?")
+              .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+                "SELECT offer FROM ask_agent_offers WHERE agent=?",
+              )
               .get(agent)
           : this.db
-              .prepare(
+              .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
                 "SELECT offer FROM ask_agent_model_offers WHERE agent=? AND model=?",
               )
               .get(agent, model),
@@ -198,14 +210,16 @@ export class AskHistory {
 
   touch(id: string, at = new Date().toISOString()) {
     this.db
-      .prepare("UPDATE ask_conversations SET updated_at=? WHERE id=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "UPDATE ask_conversations SET updated_at=? WHERE id=?",
+      )
       .run(at, id);
   }
 
   /** Newest first. */
   list(reviewId: string): AskHistoryEntry[] {
     return this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "SELECT * FROM ask_conversations WHERE review_id=? ORDER BY updated_at DESC",
       )
       .all(reviewId)
@@ -230,13 +244,19 @@ export class AskHistory {
 
   get(id: string): AskRecord | undefined {
     const row = this.db
-      .prepare("SELECT * FROM ask_conversations WHERE id=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "SELECT * FROM ask_conversations WHERE id=?",
+      )
       .get(id);
 
     return row ? rowSchema.parse(row) : undefined;
   }
 
   delete(id: string) {
-    this.db.prepare("DELETE FROM ask_conversations WHERE id=?").run(id);
+    this.db
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "DELETE FROM ask_conversations WHERE id=?",
+      )
+      .run(id);
   }
 }

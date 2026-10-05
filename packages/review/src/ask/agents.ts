@@ -18,7 +18,7 @@ import { type AskAgentId, askAgentIds } from "@review/ask/thread-state.js";
 
 /** How Whiteboard runs an agent that speaks ACP on stdio. */
 type AskAgentLaunch =
-  /** An ACP adapter's executable entry, run with this server's Node, which
+  /** An ACP adapter's executable entry, run with this server's Bun, which
    * drives the user's CLI with the user's login. */
   | {
       adapter: string;
@@ -275,8 +275,7 @@ export async function detectAskAgents(
 
 const STDERR_LIMIT = 8_000;
 
-/** Runs an adapter with this server's runtime, Desktop's being Electron, or
- * the user's CLI itself. */
+/** Runs an adapter with this server's Bun runtime, or the user's CLI itself. */
 export const launchAskAgent: AskAgentLauncher = async (
   agent,
   cwd,
@@ -330,10 +329,12 @@ export const launchAskAgent: AskAgentLauncher = async (
     child.once("error", reject);
   });
 
+  const stdout = Readable.toWeb(child.stdout);
+
   const stream = ndJsonStream(
     Writable.toWeb(child.stdin),
     // SAFETY: stdout has no encoding set, so it yields Buffers (Uint8Arrays).
-    Readable.toWeb(child.stdout) as ReadableStream<Uint8Array>,
+    stdout as typeof stdout & ReadableStream<Uint8Array>,
   );
 
   return {

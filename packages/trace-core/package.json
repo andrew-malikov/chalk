@@ -16,11 +16,11 @@
     }
   },
   "scripts": {
-    "build:workspace-deps": "pnpm --filter @dev.fast/json --filter @dev.fast/local-vcs --filter @dev.fast/trace-protocol build",
-    "prebuild": "pnpm run build:workspace-deps",
-    "build": "tsdown",
-    "test": "vitest run --config vitest.config.ts",
-    "typecheck": "pnpm -w exec tsc --noEmit -p packages/trace-core"
+    "build:workspace-deps": "bun run --filter @dev.fast/json --filter @dev.fast/local-vcs --filter @dev.fast/trace-protocol build",
+    "prebuild": "bun run build:workspace-deps",
+    "build": "bun --bun run tsdown",
+    "test": "bun --bun run vitest run --config vitest.config.ts",
+    "typecheck": "bun --bun run tsc --noEmit -p ../trace-core"
   },
   "dependencies": {
     "@dev.fast/json": "workspace:*",
@@ -32,11 +32,10 @@
   "devDependencies": {
     "@types/node": "24.12.2",
     "tsdown": "0.22.14",
-    "tsx": "4.21.0",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
   },
   "engines": {
-    "node": ">=22"
+    "bun": ">=1.4.2"
   }
 }

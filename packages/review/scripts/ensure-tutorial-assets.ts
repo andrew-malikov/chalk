@@ -12,7 +12,7 @@ const inputRoots = [
   path.join(packageRoot, "tutorial"),
   path.join(packageRoot, "scripts", "build-tutorial-assets.ts"),
   import.meta.filename,
-  path.resolve(packageRoot, "..", "..", "pnpm-lock.yaml"),
+  path.resolve(packageRoot, "..", "..", "bun.lock"),
 ];
 
 const outputModifiedAt = await modifiedAt(output);

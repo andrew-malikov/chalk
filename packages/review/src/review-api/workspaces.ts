@@ -1,8 +1,8 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
 
 import { git, gitCommonDir } from "@dev.fast/local-vcs";
 import { errorMessage, processIsAlive } from "@dev.fast/trace-core";
@@ -57,7 +57,7 @@ const OWNED_ELSEWHERE =
  * and per-review managed checkout layout instead of a new settings system.
  */
 export class ReviewWorkspaces {
-  private readonly db: DatabaseSync;
+  private readonly db: Database;
   private readonly requests = new Map<string, Promise<WorkspaceStatus>>();
   private readonly jobs = new Map<
     string,
@@ -72,7 +72,8 @@ export class ReviewWorkspaces {
     databasePath: string,
     private readonly store: ReviewStore,
   ) {
-    this.db = new DatabaseSync(databasePath, { timeout: 5000 });
+    this.db = new Database(databasePath);
+    this.db.exec("PRAGMA busy_timeout=5000");
     this.db.exec(
       "PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS pinned_environments(id TEXT PRIMARY KEY, value TEXT NOT NULL)",
     );
@@ -215,10 +216,12 @@ export class ReviewWorkspaces {
         this.save(environment);
       } else
         this.db
-          .prepare("DELETE FROM pinned_environments WHERE id=?")
+          .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+            "DELETE FROM pinned_environments WHERE id=?",
+          )
           .run(environment.id);
     this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "DELETE FROM workspace_leases WHERE review_id=? AND owner=? AND NOT EXISTS(SELECT 1 FROM pinned_environments WHERE value->>'reviewId'=?)",
       )
       .run(reviewId, this.ownerId, reviewId);
@@ -270,7 +273,9 @@ export class ReviewWorkspaces {
 
   private lease(reviewId: string) {
     return this.db
-      .prepare("SELECT owner,pid FROM workspace_leases WHERE review_id=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "SELECT owner,pid FROM workspace_leases WHERE review_id=?",
+      )
       .get(reviewId);
   }
 
@@ -295,7 +300,9 @@ export class ReviewWorkspaces {
 
       if (free)
         this.db
-          .prepare("INSERT OR REPLACE INTO workspace_leases VALUES(?,?,?)")
+          .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+            "INSERT OR REPLACE INTO workspace_leases VALUES(?,?,?)",
+          )
           .run(reviewId, this.ownerId, process.pid);
       this.db.exec("COMMIT");
 
@@ -308,14 +315,18 @@ export class ReviewWorkspaces {
 
   private all(): Environment[] {
     return this.db
-      .prepare("SELECT value FROM pinned_environments")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "SELECT value FROM pinned_environments",
+      )
       .all()
       .map((row) => JSON.parse(String(row.value)));
   }
 
   private get(id: string): Environment | undefined {
     const row = this.db
-      .prepare("SELECT value FROM pinned_environments WHERE id=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "SELECT value FROM pinned_environments WHERE id=?",
+      )
       .get(id);
 
     return row ? JSON.parse(String(row.value)) : undefined;
@@ -323,7 +334,7 @@ export class ReviewWorkspaces {
 
   private save(environment: Environment) {
     this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "INSERT INTO pinned_environments VALUES(?,?) ON CONFLICT(id) DO UPDATE SET value=excluded.value",
       )
       .run(environment.id, JSON.stringify(environment));
@@ -649,10 +660,12 @@ export class ReviewWorkspaces {
             await removeReviewPrepareArtifacts(environment.rootPath);
 
           this.db
-            .prepare("DELETE FROM pinned_environments WHERE id=?")
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+              "DELETE FROM pinned_environments WHERE id=?",
+            )
             .run(environment.id);
           this.db
-            .prepare(
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
               "DELETE FROM workspace_leases WHERE review_id=? AND owner=? AND NOT EXISTS(SELECT 1 FROM pinned_environments WHERE value->>'reviewId'=?)",
             )
             .run(environment.reviewId, this.ownerId, environment.reviewId);
@@ -686,7 +699,9 @@ export class ReviewWorkspaces {
     for (const job of this.jobs.values()) job.abort.abort();
     await this.idle();
     this.db
-      .prepare("DELETE FROM workspace_leases WHERE owner=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "DELETE FROM workspace_leases WHERE owner=?",
+      )
       .run(this.ownerId);
     this.db.close();
   }

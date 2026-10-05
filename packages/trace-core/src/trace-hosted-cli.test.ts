@@ -108,9 +108,9 @@ describe("hosted trace commands", () => {
     return new StoreClient({
       origin: ORIGIN,
       token: "token",
-      fetch: vi.fn<typeof fetch>(async (input, init) =>
-        handler(String(input), init),
-      ),
+      fetch: vi.fn<
+        (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+      >(async (input, init) => handler(String(input), init)),
     });
   }
 

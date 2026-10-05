@@ -2,12 +2,12 @@
 
 This file records third-party license considerations for
 `@dev.fast/review`. Before publishing to npm, distributing as source, or
-shipping as a built app, refresh this file from the current lockfile:
+shipping as a built app, inspect the installed manifests and refresh this file from the current Bun lockfile:
 
 ```sh
-pnpm --filter @dev.fast/review licenses list --json
-pnpm --filter @dev.fast/review audit --json
-pnpm --filter @dev.fast/review audit signatures --json
+bun pm ls --all
+bun audit --json
+bunx --bun npm@12.2.0 audit signatures
 ```
 
 ## License Summary

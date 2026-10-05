@@ -15,9 +15,9 @@
     }
   },
   "scripts": {
-    "build": "pnpm -w exec tsc -p packages/review-protocol/tsconfig.build.json",
-    "test": "vitest run --config vitest.config.ts",
-    "typecheck": "pnpm -w exec tsc -p packages/review-protocol/tsconfig.json --noEmit"
+    "build": "bun --bun run tsc -p ../review-protocol/tsconfig.build.json",
+    "test": "bun --bun run vitest run --config vitest.config.ts",
+    "typecheck": "bun --bun run tsc -p ../review-protocol/tsconfig.json --noEmit"
   },
   "dependencies": {
     "@dev.fast/diffr": "0.1.10",
@@ -27,10 +27,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "esbuild": "0.28.1",
     "vitest": "4.1.11"
   },
   "engines": {
-    "node": ">=24 <25"
+    "bun": ">=1.4.2"
   }
 }

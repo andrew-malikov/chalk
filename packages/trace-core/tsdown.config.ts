@@ -5,7 +5,7 @@ export default defineConfig({
     index: "src/index.ts",
   },
   platform: "node",
-  target: "node22",
+  target: "esnext",
   format: "esm",
   outDir: "dist",
   fixedExtension: false,

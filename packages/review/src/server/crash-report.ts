@@ -128,7 +128,10 @@ export async function uploadCrashDump(input: {
   covered: boolean;
   distinctId: string;
   envelope: PostHogCaptureProperties;
-  fetchImpl?: typeof fetch;
+  fetchImpl?: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response>;
   maxDumpBytes?: number;
 }): Promise<CrashUploadResult> {
   const maxDumpBytes = input.maxDumpBytes ?? DEFAULT_MAX_DUMP_BYTES;
@@ -198,7 +201,10 @@ export async function reportCrashDump(
   >,
   request: CrashReportRequest,
   crashDumpsDir: string | undefined,
-  fetchImpl?: typeof fetch,
+  fetchImpl?: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response>,
 ): Promise<{
   status: number;
   body: CrashUploadResult & { counted?: boolean; skipped?: string };

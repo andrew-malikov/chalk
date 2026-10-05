@@ -198,7 +198,7 @@ export async function createLegacyReviewDir(binding: {
 /** A selection over one record read; health still comes from `fetch`, as in production. */
 export function selectingDesktop(
   read: () => Promise<ReviewDesktopDiscovery | null>,
-  fetch: typeof globalThis.fetch,
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>,
   base: Pick<ReviewInstanceSelection, "key" | "source"> = {
     key: "stable",
     source: "fallback",

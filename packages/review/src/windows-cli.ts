@@ -20,7 +20,6 @@ export function windowsCliShim(
     "@echo off",
     "rem Managed by Whiteboard Desktop. Do not edit.",
     "setlocal DisableDelayedExpansion",
-    'set "ELECTRON_RUN_AS_NODE=1"',
   ];
 
   if (devHome)

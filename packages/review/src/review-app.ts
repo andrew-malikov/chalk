@@ -20,7 +20,7 @@ interface ReviewAppRuntime {
   selectInstance: () => Promise<ReviewInstanceSelection>;
   resolveReviewRoot: typeof resolveReviewRoot;
   pickReview: typeof pickReview;
-  fetch: typeof globalThis.fetch;
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 export interface RunReviewAppInput {

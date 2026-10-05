@@ -16,7 +16,7 @@ export type RunCommand = (
 
 export interface PullRequestDeps {
   run: RunCommand;
-  fetch: typeof fetch;
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 /** What GitHub says about a PR; the commits are fetched separately. */

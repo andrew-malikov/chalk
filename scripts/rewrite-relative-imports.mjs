@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Rewrites `../` import specifiers in packages/review and its canvas app to the
 // `@review/*` and `@canvas/*` aliases from tsconfig.base.json. Run it after
 // rebasing a branch that predates the aliases; it only touches specifiers that

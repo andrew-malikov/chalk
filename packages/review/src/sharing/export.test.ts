@@ -1,9 +1,9 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, rename, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
 
 import { type JsonObject, isJsonObject } from "@dev.fast/review-protocol";
 import { selectSource } from "@review/lens-selection";
@@ -222,8 +222,8 @@ it("exports a review saved with the retired section status and imports a bundle 
         },
       });
 
-      const db = new DatabaseSync(path.join(root, "review.db"));
-      db.prepare(
+      const db = new Database(path.join(root, "review.db"));
+      db.query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         `UPDATE versions SET snapshot=json_set(snapshot,'$.document[3].status','in_progress') WHERE review_id=? AND version=?`,
       ).run(reviewId, version);
       db.close();

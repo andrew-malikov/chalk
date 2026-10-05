@@ -67,7 +67,10 @@ export class StoreApiError extends Error {
 export interface StoreClientOptions {
   origin: string;
   token?: string;
-  fetch?: typeof fetch;
+  fetch?: (
+    input: Request | string | URL,
+    init?: RequestInit,
+  ) => Promise<Response>;
   timeoutMs?: number;
 }
 
@@ -90,7 +93,10 @@ interface SessionResponse {
 export class StoreClient {
   private readonly origin: string;
   private token: string | undefined;
-  private readonly fetchImpl: typeof fetch;
+  private readonly fetchImpl: (
+    input: Request | string | URL,
+    init?: RequestInit,
+  ) => Promise<Response>;
   private readonly timeoutMs: number;
 
   constructor(options: StoreClientOptions) {

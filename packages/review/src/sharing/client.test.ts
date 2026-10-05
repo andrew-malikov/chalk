@@ -42,7 +42,10 @@ it("uploads concurrently, retries without overwriting stored bytes, and keeps ac
   const requests: Array<{ url: URL; headers: Headers; method?: string }> = [];
   const creationIds: string[] = [];
 
-  const network: typeof fetch = async (input, init) => {
+  const network: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response> = async (input, init) => {
     const url = new URL(String(input)),
       headers = new Headers(init?.headers);
 
@@ -274,7 +277,10 @@ it("bounds concurrent downloads and still rejects corrupt objects", async () => 
   let peak = 0;
   let corrupt = false;
 
-  const network: typeof fetch = async (input) => {
+  const network: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response> = async (input) => {
     const url = new URL(String(input));
 
     if (url.hostname !== "objects.test") {

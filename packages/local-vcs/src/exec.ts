@@ -3,16 +3,11 @@
 // without this package depending on any tracing library. Without an observer
 // they are plain `execFile` / `execFileSync` / `spawn`.
 import {
-  type ChildProcessByStdio,
   type ExecFileOptions,
   type ExecFileSyncOptions,
-  type SpawnOptionsWithStdioTuple,
-  type StdioPipe,
   execFile,
   execFileSync,
-  spawn,
 } from "node:child_process";
-import type { Socket } from "node:net";
 import { promisify } from "node:util";
 
 export interface LocalVcsCommandObserver {
@@ -86,37 +81,23 @@ export function execFileSyncObserved(
 export function spawnObserved(
   file: string,
   args: string[],
-  options: SpawnOptionsWithStdioTuple<StdioPipe, StdioPipe, "ignore">,
-): ChildProcessByStdio<Socket, Socket, null> {
-  const finish = observer?.start({
-    file,
-    args,
-    cwd: options.cwd === undefined ? undefined : String(options.cwd),
-  });
+  options: { cwd?: string; env?: NodeJS.ProcessEnv },
+): Bun.Subprocess<"pipe", "pipe", "ignore"> {
+  const finish = observer?.start({ file, args, cwd: options.cwd });
 
   try {
-    // SAFETY: piped stdin/stdout are net.Sockets.
-    const child = spawn(file, args, options) as ChildProcessByStdio<
-      Socket,
-      Socket,
-      null
-    >;
+    const child = Bun.spawn([file, ...args], {
+      ...options,
+      stdin: "pipe",
+      stdout: "pipe",
+      stderr: "ignore",
+    });
 
-    let finished = false;
-
-    const complete = (ok: boolean) => {
-      if (finished) return;
-      finished = true;
-      finish?.({ ok });
-    };
-
-    child.once("spawn", () => complete(true));
-    child.once("error", () => complete(false));
+    finish?.({ ok: true });
 
     return child;
   } catch (error) {
     finish?.({ ok: false });
-
     throw error;
   }
 }

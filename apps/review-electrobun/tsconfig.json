@@ -4,7 +4,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "lib": ["ES2025", "DOM", "DOM.Iterable"],
-    "types": ["node", "vite/client"],
+    "types": ["node", "bun", "vite/client"],
     "paths": {
       "electrobun": ["./.hutch/devkit/api/config/ElectrobunConfig.ts"],
       "electrobun/main/*": ["./.hutch/devkit/api/sdks/main/entries/*.ts"],

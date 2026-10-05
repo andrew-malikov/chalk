@@ -1,46 +1,41 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { cleanReviewDesktop, cleanTargets } from "./clean-review-desktop.mjs";
+import { cleanReviewDesktop } from "./clean-review-desktop.mjs";
 
-test("cleans generated Desktop artifacts but preserves authored Reviews", async () => {
-  const root = await mkdtemp(path.join(tmpdir(), "review-desktop-clean-"));
-  const reviewHome = path.join(root, "review-home");
-  const targets = cleanTargets({ root, reviewHome });
+test("cleans Electrobun outputs while preserving the SDK, source and user data", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "whiteboard-clean-"));
+  const generated = ["dist", "build", "artifacts", ".cottontail-tmp"];
 
-  const authoredReview = path.join(
-    reviewHome,
-    "reviews",
-    "example",
-    "review.mdx",
-  );
+  const retained = [
+    ".hutch/devkit/api.ts",
+    "src/main.ts",
+    "profile/review-api.db",
+  ];
 
-  for (const target of targets) {
-    await mkdir(target, { recursive: true });
-    await writeFile(path.join(target, "generated"), "generated");
-  }
+  const app = path.join(root, "apps/review-electrobun");
 
-  await mkdir(path.dirname(authoredReview), { recursive: true });
-  await writeFile(authoredReview, "# Review");
-
-  await cleanReviewDesktop({ root, reviewHome });
-
-  for (const target of targets) {
-    assert.equal(await exists(target), false, `${target} should be removed`);
-  }
-
-  assert.equal(await exists(authoredReview), true);
-});
-
-async function exists(target) {
   try {
-    await import("node:fs/promises").then(({ access }) => access(target));
+    for (const directory of generated) {
+      await mkdir(path.join(app, directory), { recursive: true });
+      await writeFile(path.join(app, directory, "output"), "generated");
+    }
 
-    return true;
-  } catch {
-    return false;
+    for (const file of retained) {
+      await mkdir(path.dirname(path.join(app, file)), { recursive: true });
+      await writeFile(path.join(app, file), "keep");
+    }
+
+    await cleanReviewDesktop({ root, reviewHome: path.join(root, "profile") });
+
+    for (const directory of generated)
+      await assert.rejects(access(path.join(app, directory)), /ENOENT/);
+
+    for (const file of retained) await access(path.join(app, file));
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
-}
+});

@@ -52,6 +52,9 @@ function stylexDevCss(): Plugin {
 
 export default defineConfig({
   test: {
+    server: {
+      deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
+    },
     env: {
       DEV_REVIEW_HOME: path.join(
         os.tmpdir(),
@@ -63,8 +66,16 @@ export default defineConfig({
     projects: [
       {
         plugins: [stylex.rollup(stylexOptions)],
-        resolve: { alias },
+        resolve: {
+          alias: {
+            ...alias,
+            "bun:sqlite": path.join(__dirname, "test-bun-sqlite.ts"),
+          },
+        },
         test: {
+          server: {
+            deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
+          },
           name: "canvas-node",
           environment: "node",
           isolate: false,
@@ -79,6 +90,9 @@ export default defineConfig({
         plugins: [stylexDevCss(), react()],
         resolve: { alias, dedupe: ["react", "react-dom"] },
         test: {
+          server: {
+            deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
+          },
           name: "browser",
           include: ["src/**/*.browser.test.{ts,tsx}"],
           isolate: process.env.CI === "true",

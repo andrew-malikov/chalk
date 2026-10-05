@@ -396,7 +396,7 @@ these with a marker that names what it removed, such as
 So `ENOENT: no such file or directory, open '/Users/you/work/notes.md'` is sent
 as `ENOENT: no such file or directory, open '<REDACTED: user-file-path>'`.
 
-The cleaner is Microsoft's, taken from VS Code, which Whiteboard is built on.
+The message cleaner was adapted from Microsoft's VS Code source.
 Whiteboard uses it rather than a rule of its own so that you can check it against a known
 implementation. The copy is in
 `packages/review/src/telemetry-clean-text.ts`, and its header lists

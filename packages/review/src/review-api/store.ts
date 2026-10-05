@@ -1,6 +1,6 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 
 import { resolveRepoContextSync } from "@dev.fast/local-vcs";
@@ -266,7 +266,7 @@ export interface ReviewProviders {
 export class ReviewStore {
   readonly activity: ReviewActivity;
   readonly askHistory: AskHistory;
-  private readonly db: DatabaseSync;
+  private readonly db: Database;
   private pending: Promise<unknown> = Promise.resolve();
   private closing = false;
   private readonly liveSources = new Map<string, Snapshot>();
@@ -422,7 +422,8 @@ export class ReviewStore {
     private readonly providers: ReviewProviders,
   ) {
     // WAL plus a busy timeout: another host on the same home waits instead of failing.
-    this.db = new DatabaseSync(databasePath, { timeout: 5000 });
+    this.db = new Database(databasePath);
+    this.db.exec("PRAGMA busy_timeout=5000");
     this.db.exec(`PRAGMA journal_mode=WAL;
       PRAGMA foreign_keys=ON;
       CREATE TABLE IF NOT EXISTS reviews(id TEXT PRIMARY KEY, version INTEGER NOT NULL, next_id INTEGER NOT NULL);
@@ -465,7 +466,9 @@ export class ReviewStore {
     // Homes written before map resumption lack the column.
     if (
       !this.db
-        .prepare("PRAGMA table_info(legacy_imports)")
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "PRAGMA table_info(legacy_imports)",
+        )
         .all()
         .some((column) => String(column.name) === "map_revision")
     )
@@ -481,13 +484,21 @@ export class ReviewStore {
   }
 
   private dataVersion() {
-    return Number(this.db.prepare("PRAGMA data_version").get()!.data_version);
+    return Number(
+      this.db
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "PRAGMA data_version",
+        )
+        .get()!.data_version,
+    );
   }
 
   private currentVersions() {
     return new Map(
       this.db
-        .prepare("SELECT id,version FROM reviews")
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "SELECT id,version FROM reviews",
+        )
         .all()
         .map((row) => [String(row.id), Number(row.version)]),
     );
@@ -531,7 +542,7 @@ export class ReviewStore {
 
     return new Map(
       this.db
-        .prepare(
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
           "SELECT file,fingerprint,coverage FROM review_coverage WHERE review_id=?",
         )
         .all(reviewId)
@@ -567,7 +578,7 @@ export class ReviewStore {
         );
 
         this.db
-          .prepare(
+          .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
             "INSERT OR REPLACE INTO review_coverage(review_id,file,fingerprint,coverage) VALUES(?,?,?,?)",
           )
           .run(reviewId, file.path, file.fingerprint, JSON.stringify(coverage));
@@ -582,7 +593,7 @@ export class ReviewStore {
   /** The last legacy revisions imported for a review, kept after deletion. */
   legacyImport(reviewId: string): LegacyImportProgress | null {
     const row = this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "SELECT revision,map_revision,imported_at FROM legacy_imports WHERE review_id=?",
       )
       .get(reviewId);
@@ -601,7 +612,7 @@ export class ReviewStore {
     progress: Omit<LegacyImportProgress, "importedAt">,
   ) {
     this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "INSERT INTO legacy_imports(review_id,revision,map_revision,imported_at) VALUES(?,?,?,?) ON CONFLICT(review_id) DO UPDATE SET revision=excluded.revision,map_revision=excluded.map_revision,imported_at=excluded.imported_at",
       )
       .run(
@@ -640,11 +651,15 @@ export class ReviewStore {
 
   registerRepository(root: string) {
     this.db
-      .prepare("INSERT OR IGNORE INTO repositories(id,path,name) VALUES(?,?,?)")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "INSERT OR IGNORE INTO repositories(id,path,name) VALUES(?,?,?)",
+      )
       .run(randomUUID(), root, root.split(/[\\/]/).at(-1)!);
 
     const row = this.db
-      .prepare("SELECT id,name FROM repositories WHERE path=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "SELECT id,name FROM repositories WHERE path=?",
+      )
       .get(root)!;
 
     return { id: String(row.id), name: String(row.name) };
@@ -652,7 +667,10 @@ export class ReviewStore {
   unregisterRepository(id: string) {
     this.db
       // Document pins and per-reference pins both spell the id in the snapshot.
-      .prepare(`DELETE FROM repositories WHERE id=?
+      .query<
+        Record<string, SQLQueryBindings>,
+        SQLQueryBindings[]
+      >(`DELETE FROM repositories WHERE id=?
       AND NOT EXISTS (SELECT 1 FROM versions WHERE instr(snapshot, ?) > 0)
       AND NOT EXISTS (SELECT 1 FROM resources WHERE repository_id=?)`)
       .run(id, `"repositoryId":${JSON.stringify(id)}`, id);
@@ -660,13 +678,17 @@ export class ReviewStore {
   /** Registered checkouts, oldest registration first. */
   repositories() {
     return this.db
-      .prepare("SELECT id,path FROM repositories ORDER BY rowid")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "SELECT id,path FROM repositories ORDER BY rowid",
+      )
       .all()
       .map((row) => ({ id: String(row.id), path: String(row.path) }));
   }
   repositoryPath(id: string) {
     const row = this.db
-      .prepare("SELECT path FROM repositories WHERE id=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "SELECT path FROM repositories WHERE id=?",
+      )
       .get(id);
 
     if (!row) throw new ReviewInputError("Repository is not registered.", 404);
@@ -681,7 +703,7 @@ export class ReviewStore {
     data: Uint8Array,
   ) {
     this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "INSERT OR IGNORE INTO resources(id,repository_id,kind,mime_type,data) VALUES(?,?,?,?,?)",
       )
       .run(id, repositoryId, kind, mimeType, data);
@@ -701,7 +723,11 @@ export class ReviewStore {
     return { id, kind, mimeType };
   }
   resource(id: string) {
-    const row = this.db.prepare("SELECT * FROM resources WHERE id=?").get(id);
+    const row = this.db
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "SELECT * FROM resources WHERE id=?",
+      )
+      .get(id);
 
     if (!row) throw new ReviewInputError("Resource not found.", 404);
 
@@ -710,7 +736,7 @@ export class ReviewStore {
       repositoryId: String(row.repository_id),
       kind: String(row.kind),
       mimeType: String(row.mime_type),
-      // SAFETY: resources.data is a BLOB written by putResource; node:sqlite returns Uint8Array.
+      // SAFETY: resources.data is a BLOB written by putResource; bun:sqlite returns Uint8Array.
       data: row.data as Uint8Array,
     };
   }
@@ -727,14 +753,20 @@ export class ReviewStore {
   /** Stable across restarts; the first host on a new store chooses it. */
   serverId(): string {
     const read = () =>
-      this.db.prepare("SELECT id FROM server_identity").get()?.id;
+      this.db
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "SELECT id FROM server_identity",
+        )
+        .get()?.id;
 
     let id = read();
 
     if (id === undefined) {
       // Another host may insert first; its id wins.
       this.db
-        .prepare("INSERT OR IGNORE INTO server_identity(one,id) VALUES(1,?)")
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "INSERT OR IGNORE INTO server_identity(one,id) VALUES(1,?)",
+        )
         .run(randomUUID());
       id = read();
     }
@@ -744,26 +776,34 @@ export class ReviewStore {
   resetServerId(): string {
     const id = randomUUID();
     this.db
-      .prepare("INSERT OR REPLACE INTO server_identity(one,id) VALUES(1,?)")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "INSERT OR REPLACE INTO server_identity(one,id) VALUES(1,?)",
+      )
       .run(id);
 
     return id;
   }
   /** The 404 check alone, without loading a snapshot. */
   assertExists(id: string) {
-    if (!this.db.prepare("SELECT 1 FROM reviews WHERE id=?").get(id))
+    if (
+      !this.db
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "SELECT 1 FROM reviews WHERE id=?",
+        )
+        .get(id)
+    )
       throw new ReviewInputError("Review not found.", 404);
   }
   read(id: string, version?: number): Snapshot {
     const row =
       version === undefined
         ? this.db
-            .prepare(
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
               "SELECT snapshot FROM versions JOIN reviews ON reviews.id=review_id AND reviews.version=versions.version WHERE reviews.id=?",
             )
             .get(id)
         : this.db
-            .prepare(
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
               "SELECT snapshot FROM versions WHERE review_id=? AND version=?",
             )
             .get(id, version);
@@ -808,7 +848,7 @@ export class ReviewStore {
   ) {
     if (this.closing) return;
     this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "INSERT OR REPLACE INTO comparison_stats(identity, stats) VALUES (?, ?)",
       )
       .run(JSON.stringify([pins, mode]), JSON.stringify(stats));
@@ -825,7 +865,7 @@ export class ReviewStore {
   /** Managed records are discoverable even if their preparation stamp was lost. */
   tutorialIds(): string[] {
     return this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         `SELECT reviews.id FROM reviews JOIN versions ON versions.review_id=reviews.id AND versions.version=reviews.version WHERE json_extract(versions.snapshot,'$.origin.tutorial') = 1`,
       )
       .all()
@@ -847,7 +887,7 @@ export class ReviewStore {
     // re-lists on every command.
 
     const reviews = this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         `SELECT json_remove(versions.snapshot,'$.document') AS summary,
           (SELECT json_extract(first.snapshot,'$.createdAt') FROM versions AS first WHERE first.review_id=reviews.id ORDER BY first.version LIMIT 1) AS first_created_at,
           review_attention.viewed_at, review_attention.dismissed_at, repositories.name AS repository_name, repositories.path AS repository_path
@@ -918,7 +958,9 @@ export class ReviewStore {
   ): T[] {
     const stats = new Map(
       this.db
-        .prepare("SELECT identity, stats FROM comparison_stats")
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "SELECT identity, stats FROM comparison_stats",
+        )
         .all()
         .map((row) => [
           String(row.identity),
@@ -968,7 +1010,7 @@ export class ReviewStore {
   }
   history(id: string) {
     return this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "SELECT version,json_extract(snapshot,'$.title') AS title,json_extract(snapshot,'$.createdAt') AS created_at FROM versions WHERE review_id=? ORDER BY version",
       )
       .all(id)
@@ -1005,7 +1047,9 @@ export class ReviewStore {
 
     const run = this.pending.then(async () => {
       const receipt = this.db
-        .prepare("SELECT request,response FROM receipts WHERE command_id=?")
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "SELECT request,response FROM receipts WHERE command_id=?",
+        )
         .get(command.commandId);
 
       if (receipt) {
@@ -1107,7 +1151,7 @@ export class ReviewStore {
           // Nothing is written but the receipt: a retry replays this answer,
           // and deleting the review erases it like any other command's.
           this.db
-            .prepare(
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
               "INSERT INTO receipts(command_id,request,response) VALUES(?,?,?)",
             )
             .run(command.commandId, request, JSON.stringify(result));
@@ -1136,13 +1180,19 @@ export class ReviewStore {
               "versions",
             ])
               this.db
-                .prepare(`DELETE FROM ${table} WHERE review_id=?`)
+                .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+                  `DELETE FROM ${table} WHERE review_id=?`,
+                )
                 .run(op.reviewId);
-            this.db.prepare("DELETE FROM reviews WHERE id=?").run(op.reviewId);
+            this.db
+              .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+                "DELETE FROM reviews WHERE id=?",
+              )
+              .run(op.reviewId);
             // Keep command IDs so a delayed retry cannot recreate deleted content.
             // Erase their saved inputs while retaining the retry record.
             this.db
-              .prepare(
+              .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
                 "UPDATE receipts SET request='null',response=? WHERE json_extract(response,'$.reviewId')=?",
               )
               .run(JSON.stringify(result), op.reviewId);
@@ -1163,20 +1213,20 @@ export class ReviewStore {
 
         this.commitCommand(command.commandId, request, result, () => {
           this.db
-            .prepare(
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
               "INSERT OR IGNORE INTO review_attention(review_id) VALUES(?)",
             )
             .run(op.reviewId);
 
           if (op.action === "view")
             this.db
-              .prepare(
+              .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
                 "UPDATE review_attention SET viewed_at=? WHERE review_id=?",
               )
               .run(new Date().toISOString(), op.reviewId);
           else
             this.db
-              .prepare(
+              .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
                 "UPDATE review_attention SET dismissed_at=? WHERE review_id=?",
               )
               .run(
@@ -1209,8 +1259,11 @@ export class ReviewStore {
 
       let nextId = previous
         ? Number(
-            this.db.prepare("SELECT next_id FROM reviews WHERE id=?").get(id)!
-              .next_id,
+            this.db
+              .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+                "SELECT next_id FROM reviews WHERE id=?",
+              )
+              .get(id)!.next_id,
           )
         : 0;
 
@@ -1401,12 +1454,12 @@ export class ReviewStore {
         result,
         () => {
           this.db
-            .prepare(
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
               "INSERT INTO reviews(id,version,next_id) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,next_id=excluded.next_id",
             )
             .run(id, snapshot.version, nextId);
           this.db
-            .prepare(
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
               "INSERT INTO versions(review_id,version,snapshot) VALUES(?,?,?)",
             )
             .run(id, snapshot.version, JSON.stringify(snapshot));
@@ -1444,7 +1497,9 @@ export class ReviewStore {
       op.target ||
       !op.pullRequestUrl ||
       this.db
-        .prepare("SELECT 1 FROM receipts WHERE command_id=?")
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "SELECT 1 FROM receipts WHERE command_id=?",
+        )
         .get(command.commandId)
     )
       return undefined;
@@ -1468,7 +1523,7 @@ export class ReviewStore {
   /** Reviews whose PR is this one, newest version first. Summaries only. */
   private reviewsForPullRequest(url: string): string[] {
     return this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         `SELECT reviews.id FROM reviews
         JOIN versions ON versions.review_id=reviews.id AND versions.version=reviews.version
         WHERE lower(json_extract(versions.snapshot,'$.origin.pullRequestUrl'))=?
@@ -1531,7 +1586,7 @@ export class ReviewStore {
       guard?.();
       apply();
       this.db
-        .prepare(
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
           "INSERT INTO receipts(command_id,request,response) VALUES(?,?,?)",
         )
         .run(commandId, request, JSON.stringify(result));
@@ -1556,7 +1611,9 @@ export class ReviewStore {
     this.activity.assertWrite(reviewId, leaseId, scope);
 
     const current = this.db
-      .prepare("SELECT version FROM reviews WHERE id=?")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "SELECT version FROM reviews WHERE id=?",
+      )
       .get(reviewId);
 
     if ((current ? Number(current.version) : undefined) !== version)
@@ -1589,7 +1646,7 @@ export class ReviewStore {
   /** Dismissed reviews, as Home lists them; only a restore clears it, not a view. */
   dismissedIds(): string[] {
     return this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "SELECT review_id FROM review_attention WHERE dismissed_at IS NOT NULL",
       )
       .all()
@@ -1597,8 +1654,11 @@ export class ReviewStore {
   }
   has(reviewId: string): boolean {
     return (
-      this.db.prepare("SELECT 1 FROM reviews WHERE id=?").get(reviewId) !==
-      undefined
+      this.db
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "SELECT 1 FROM reviews WHERE id=?",
+        )
+        .get(reviewId) !== null
     );
   }
   /** Legacy import of one version. See `importVersions`. */
@@ -1632,7 +1692,9 @@ export class ReviewStore {
       this.activity.assertWrite(reviewId);
 
       const existing = this.db
-        .prepare("SELECT version,next_id FROM reviews WHERE id=?")
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "SELECT version,next_id FROM reviews WHERE id=?",
+        )
         .get(reviewId);
 
       let nextId = existing ? Number(existing.next_id) : 0;
@@ -1716,21 +1778,21 @@ export class ReviewStore {
           existing ? Number(existing.version) : undefined,
         );
         this.db
-          .prepare(
+          .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
             "INSERT INTO reviews(id,version,next_id) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,next_id=excluded.next_id",
           )
           .run(reviewId, version, nextId);
 
         for (const snapshot of snapshots)
           this.db
-            .prepare(
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
               "INSERT INTO versions(review_id,version,snapshot) VALUES(?,?,?)",
             )
             .run(reviewId, snapshot.version, JSON.stringify(snapshot));
 
         if (!existing && attention)
           this.db
-            .prepare(
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
               "INSERT INTO review_attention(review_id,viewed_at,dismissed_at) VALUES(?,?,?)",
             )
             .run(

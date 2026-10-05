@@ -19,9 +19,9 @@ describe("PostHogCaptureClient", () => {
   });
 
   it("sends the PostHog batch payload shape", async () => {
-    const fetchMock = vi.fn<typeof fetch>(
-      async () => new Response(null, { status: 200 }),
-    );
+    const fetchMock = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => new Response(null, { status: 200 }));
 
     const client = new PostHogCaptureClient({
       apiKey: "test-key",
@@ -59,9 +59,9 @@ describe("PostHogCaptureClient", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "review-queue-"));
     roots.push(root);
 
-    const fetchMock = vi.fn<typeof fetch>(
-      async () => new Response(null, { status: 200 }),
-    );
+    const fetchMock = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => new Response(null, { status: 200 }));
 
     const client = PostHogCaptureClient.fromEnv(
       {
@@ -84,9 +84,9 @@ describe("PostHogCaptureClient", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "review-queue-"));
     roots.push(root);
 
-    const fetchMock = vi.fn<typeof fetch>(
-      async () => new Response(null, { status: 200 }),
-    );
+    const fetchMock = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => new Response(null, { status: 200 }));
 
     const client = PostHogCaptureClient.fromEnv(
       { DEV_REVIEW_HOME: root },
@@ -105,7 +105,7 @@ describe("PostHogCaptureClient", () => {
     let now = Date.parse("2026-08-05T12:00:00.000Z");
 
     const fetchMock = vi
-      .fn<typeof fetch>()
+      .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
       .mockResolvedValueOnce(new Response(null, { status: 503 }))
       .mockResolvedValueOnce(new Response(null, { status: 200 }));
 
@@ -144,7 +144,7 @@ describe("PostHogCaptureClient", () => {
 
     // The first POST may have landed although its response was lost.
     const fetchMock = vi
-      .fn<typeof fetch>()
+      .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
       .mockRejectedValueOnce(new Error("socket hang up"))
       .mockResolvedValueOnce(new Response(null, { status: 200 }));
 
@@ -188,7 +188,7 @@ describe("PostHogCaptureClient", () => {
 
     // The first POST may have landed although its response was lost.
     const fetchMock = vi
-      .fn<typeof fetch>()
+      .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
       .mockRejectedValueOnce(new Error("socket hang up"))
       .mockResolvedValue(new Response(null, { status: 200 }));
 
@@ -234,9 +234,9 @@ describe("PostHogCaptureClient", () => {
   });
 
   it("sends the time an event happened, not the time it was queued", async () => {
-    const fetchMock = vi.fn<typeof fetch>(
-      async () => new Response(null, { status: 200 }),
-    );
+    const fetchMock = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => new Response(null, { status: 200 }));
 
     const client = new PostHogCaptureClient({
       apiKey: "test-key",
@@ -259,9 +259,9 @@ describe("PostHogCaptureClient", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "review-queue-"));
     roots.push(root);
 
-    const fetchMock = vi.fn<typeof fetch>(
-      async () => new Response(null, { status: 200 }),
-    );
+    const fetchMock = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => new Response(null, { status: 200 }));
 
     let now = Date.parse("2026-08-05T12:00:00.000Z");
 
@@ -305,9 +305,9 @@ describe("PostHogCaptureClient", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "review-queue-"));
     roots.push(root);
 
-    const fetchMock = vi.fn<typeof fetch>(
-      async () => new Response(null, { status: 200 }),
-    );
+    const fetchMock = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => new Response(null, { status: 200 }));
 
     const client = new PostHogCaptureClient({
       apiKey: "test-key",
@@ -341,7 +341,9 @@ describe("PostHogCaptureClient", () => {
   });
 
   it("does not send without a key and swallows network errors", async () => {
-    const fetchMock = vi.fn<typeof fetch>(async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => {
       throw new Error("network down");
     });
 

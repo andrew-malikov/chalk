@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
@@ -6,7 +6,6 @@ import path from "node:path";
 import { reviewInstanceIdentity } from "@review/desktop-discovery";
 import { findReviewPackageRoot } from "@review/package-paths";
 import { openReviewProfile } from "@review/review-api/profile";
-import { ensureBundledRustAnalyzer } from "@review/review-bundled-tools";
 import { devReviewHome } from "@review/review-home-paths";
 import { ReviewTelemetry } from "@review/review-telemetry";
 import { SharedReviewStore } from "@review/sharing/import.js";
@@ -119,16 +118,6 @@ export async function runDesktopHost(
     `${JSON.stringify({ event: "ready", ...server.discovery, installationId })}\n`,
   );
 
-  const stageRustAnalyzer = () =>
-    ensureBundledRustAnalyzer({ env }).catch((error) => {
-      const reason = error instanceof Error ? error.message : String(error);
-      process.stderr.write(
-        `[Review tools] Could not stage bundled rust-analyzer: ${reason}\n`,
-      );
-    });
-
-  void stageRustAnalyzer();
-
   let stopping: Promise<void> | null = null;
 
   const stop = () => {
@@ -150,10 +139,6 @@ export async function runDesktopHost(
     },
     (enabled) => {
       void telemetry.setEnabled(enabled).catch(() => undefined);
-    },
-    (sourcePath) => {
-      env.DEV_FAST_REVIEW_RUST_ANALYZER = sourcePath;
-      void stageRustAnalyzer();
     },
   );
   process.once("SIGINT", () => {

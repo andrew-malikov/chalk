@@ -46,7 +46,7 @@ export function diffrExecutable(
 
 export function diffrMissingError(): Error {
   return new Error(
-    `Cannot find diffr at ${diffrExecutable()}. Whiteboard Desktop bundles it at bin/diffr under its runtime; in a checkout, run \`pnpm --filter @dev.fast/review ensure:diffr\` or install diffr on PATH, or set REVIEW_DIFFR_BINARY to its executable.`,
+    `Cannot find diffr at ${diffrExecutable()}. Whiteboard Desktop bundles it at bin/diffr under its runtime; in a checkout, run \`bun run --filter @dev.fast/review ensure:diffr\` or install diffr on PATH, or set REVIEW_DIFFR_BINARY to its executable.`,
   );
 }
 
@@ -122,6 +122,8 @@ export async function* structuralDiff(
   let failed = 0;
   let annotationFailed = false;
   const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
+  // Bun does not end stdout when spawning a missing executable.
+  void exited.catch(() => lines.close());
 
   try {
     for await (const line of lines) {

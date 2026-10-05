@@ -1,7 +1,7 @@
 # dev.fast Whiteboard
 
 The `@dev.fast/review` package provides the `whiteboard` CLI for headless review
-authoring, sharing, and agent trace capture. It requires Node 24. An npm install
+authoring, sharing, and agent trace capture. It requires Bun 1.4.2 or newer. An npm install
 also provides `review` as an alias for `whiteboard`.
 `whiteboard server` and `whiteboard trace` run without installing or starting Desktop.
 Whiteboard Desktop displays the review canvas; its server owns review
@@ -12,20 +12,19 @@ store when Home lists them or when they are opened.
 
 ## Workspace packages
 
-- `@dev.fast/review`: Node runtime, CLI, and authoring tools. Its
-  production dependencies are the external libraries used by the compiled Node
+- `@dev.fast/review`: Bun runtime, CLI, and authoring tools. Its
+  production dependencies are the external libraries used by the compiled Bun
   code; workspace libraries bundled by tsdown are development dependencies.
 - `@dev.fast/review-canvas` ([app](app/README.md)): private browser UI, layout
   libraries, and browser tests. It builds separately and is not included in npm.
-- `@dev.fast/review-desktop`: installs the Node runtime and copies the built canvas.
+- `@dev.fast/review-electrobun`: packages the native desktop, Bun backend, and built canvas.
 
 ### Imports
 
 Import through `@review/*` (`src`) and `@canvas/*` (`app/src`) instead of
-`../` paths; keep `./` for siblings. `pnpm lint` enforces this. tsx reads the
-aliases from its working directory's tsconfig, so run it from this package or
-set `TSX_TSCONFIG_PATH`. `node scripts/rewrite-relative-imports.mjs` (from the
-repository root) converts a branch that predates the aliases.
+`../` paths; keep `./` for siblings. `bun run lint` enforces this. Bun reads the aliases from tsconfig.
+`bun scripts/rewrite-relative-imports.mjs` (from the repository root) converts
+a branch that predates the aliases.
 
 ## Migration
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
@@ -15,9 +15,8 @@ import {
 
 // A standalone build (npx/global install) defers to the CLI bundled with a
 // running Review Desktop so the CLI can never skew from the server it talks
-// to. Checkout runs execute src/cli.ts via tsx and therefore never delegate.
-// Delegation runs before the Node floor check on purpose: the app's
-// Electron-as-Node runtime can rescue a machine whose system Node is too old.
+// to. Checkout runs execute src/cli.ts with Bun and therefore never delegate.
+// Delegation runs before the runtime check so the app can provide its Bun.
 const argv = process.argv.slice(2);
 
 const ownCliPath = fileURLToPath(import.meta.url);
@@ -27,10 +26,10 @@ const delegatedExitCode = await maybeDelegateToDesktopCli(argv);
 process.exitCode = delegatedExitCode ?? (await runCli(ownCliPath));
 
 async function runCli(effectivePath: string): Promise<number> {
-  if (!supportedNodeRuntime()) {
+  if (!supportedBunRuntime()) {
     process.stderr.write(
-      `Whiteboard needs Node.js 24 or newer; found ${process.versions.node}. ` +
-        "Update Node, or use the whiteboard command installed by Whiteboard Desktop.\n",
+      `Whiteboard needs Bun 1.4.2 or newer; found ${process.versions.bun ?? "a different runtime"}. ` +
+        "Install Bun, or use the whiteboard command installed by Whiteboard Desktop.\n",
     );
 
     return 1;
@@ -47,14 +46,14 @@ async function runCli(effectivePath: string): Promise<number> {
   });
 }
 
-// An Electron-as-Node runtime (the app's) is trusted as-is: it is the same
-// runtime the Review server runs on. Only a system Node gets the floor check,
-// so an old `node` fails with an instruction instead of a syntax or
-// missing-builtin crash deeper in.
-function supportedNodeRuntime(): boolean {
-  if (process.versions.electron) return true;
+function supportedBunRuntime(): boolean {
+  const [major = 0, minor = 0, patch = 0] = (process.versions.bun ?? "")
+    .split(".")
+    .map(Number);
 
-  return Number(process.versions.node.split(".")[0]) >= 24;
+  return (
+    major > 1 || (major === 1 && (minor > 4 || (minor === 4 && patch >= 2)))
+  );
 }
 
 async function maybeDelegateToDesktopCli(
@@ -81,9 +80,8 @@ async function maybeDelegateToDesktopCli(
 
   if (!/[\\/]dist[\\/]cli\.js$/.test(ownPath)) return null;
 
-  // This bootstrap runs before the Node floor check, so it cannot import
-  // devReviewHome() from @dev.fast/trace-core: that module graph needs a modern
-  // Node. Keep this copy in step with devReviewHome().
+  // Keep bootstrap independent of the server module graph until runtime validation.
+  // Keep this selection in step with devReviewHome().
   const devHome = env.DEV_REVIEW_HOME?.trim()
     ? path.resolve(env.DEV_REVIEW_HOME.trim())
     : path.join(os.homedir(), ".dev");
@@ -118,12 +116,14 @@ async function maybeDelegateToDesktopCli(
     return null;
   }
 
-  // Prefer the app's Electron-as-Node runtime: it matches the server exactly
-  // and works even when this process runs on an older system Node.
+  // Prefer the app runtime so the CLI matches the selected server.
   const childEnv: NodeJS.ProcessEnv = {
     ...env,
     DEV_FAST_REVIEW_CLI_DELEGATED: "1",
   };
+
+  // Older desktops advertise Electron as their CLI runtime; Bun ignores this flag.
+  if (runtimePath) childEnv.ELECTRON_RUN_AS_NODE = "1";
 
   // The current parser owns verbose diagnostics, including usage errors and
   // help, even when the selected Desktop CLI predates this option.
@@ -132,8 +132,6 @@ async function maybeDelegateToDesktopCli(
   if (command[0] === "version" && command.includes("--verbose")) {
     return runCli(cliPath);
   }
-
-  if (runtimePath) childEnv.ELECTRON_RUN_AS_NODE = "1";
 
   const result = spawnSync(
     runtimePath ?? process.execPath,

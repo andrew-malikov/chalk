@@ -1057,12 +1057,16 @@ export function createReviewApi(
 
       if (input.format === "raw") {
         const patch = await data.rawFilePatch(pins, input.file!, input.context);
+
         if (Buffer.byteLength(patch, "utf8") > input.maxBytes)
           throw new ReviewInputError(
             `Patch exceeds the ${input.maxBytes}-byte display limit. Open the source file to inspect it.`,
             409,
           );
-        return context.text(patch);
+
+        return context.text(patch, 200, {
+          "content-type": "text/plain; charset=utf-8",
+        });
       }
 
       if (input.format === "files" && input.file === undefined)
@@ -1074,6 +1078,8 @@ export function createReviewApi(
           contextLines: input.context,
           maxBytes: input.maxBytes,
         }),
+        200,
+        { "content-type": "text/plain; charset=utf-8" },
       );
     });
     app.get("/:id/commits", async (context) => {

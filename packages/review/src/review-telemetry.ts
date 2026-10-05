@@ -211,7 +211,7 @@ export interface ReviewTelemetryOptions {
   idFactory?: () => string;
   randomUUID?: () => string;
   now?: () => Date;
-  fetch?: typeof fetch;
+  fetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
   timeoutMs?: number;
   openSessionMarkersPath?: string;
   /** The process recorded as owning open sessions; defaults to the parent. */
@@ -1010,7 +1010,10 @@ function opaqueCorrelationId(
 
 function directCaptureClient(
   env: NodeJS.ProcessEnv,
-  fetchImpl: typeof fetch,
+  fetchImpl: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response>,
   timeoutMs: number | undefined,
 ): PostHogCaptureClient {
   return new PostHogCaptureClient({

@@ -362,11 +362,10 @@ command = "review trace hook SessionStart"
           }
           console.log("harness survived");`;
 
-        const child = spawnSync(
-          process.execPath,
-          ["--input-type=module", "-e", runner],
-          { encoding: "utf8", timeout: 10000 },
-        );
+        const child = spawnSync(process.execPath, ["-e", runner], {
+          encoding: "utf8",
+          timeout: 10000,
+        });
 
         expect(child.stderr).toBe("");
         expect(child.status).toBe(0);

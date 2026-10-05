@@ -84,7 +84,6 @@ export function installFullDiffr(
     process.execPath,
     [installer, "--full", "--required", "--into", directory],
     {
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
       timeout: 180_000,
     },
   )

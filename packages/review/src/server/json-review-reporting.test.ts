@@ -62,7 +62,10 @@ it("routes sanitized telemetry and uploads only opted-in JSON context from the d
 
   const payloads: BugReportPayload[] = [];
 
-  const fetchImpl: typeof fetch = async (_url, init) => {
+  const fetchImpl: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response> = async (_url, init) => {
     if (!(init?.body instanceof FormData))
       throw new Error("Expected multipart report");
     const part = init.body.get("payload");

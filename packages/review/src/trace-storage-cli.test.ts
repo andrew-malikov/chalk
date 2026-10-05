@@ -415,7 +415,9 @@ describe("trace storage commands", () => {
         return new StoreClient({
           origin,
           token: "token",
-          fetch: vi.fn<typeof fetch>(
+          fetch: vi.fn<
+            (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+          >(
             async () =>
               new Response(JSON.stringify(body), {
                 status: 200,

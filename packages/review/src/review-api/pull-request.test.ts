@@ -45,7 +45,9 @@ describe("reading a pull request", () => {
 
         return gh();
       },
-      fetch: vi.fn<typeof fetch>(async (input) => {
+      fetch: vi.fn<
+        (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+      >(async (input) => {
         calls.push(["fetch", String(input)]);
 
         if (!api) throw new Error("unexpected API call");

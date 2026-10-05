@@ -1,9 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { once } from "node:events";
 import { mkdir, realpath, rm } from "node:fs/promises";
-import { createServer } from "node:http";
 
-import { isObjectValue } from "@dev.fast/json";
 import {
   traceMachineEnabled,
   withFileLock,
@@ -19,7 +16,6 @@ import {
 import { mountSharingPublisher } from "@review/sharing/host.js";
 
 import { GlobalReviewDesktopVerbRelay } from "./global-verb-relay.js";
-import { createNodeRequestListener } from "./hono-http.js";
 import {
   drainServerCrashReport,
   installProcessErrorTelemetry,
@@ -121,18 +117,18 @@ async function serve(input: HeadlessServerInput) {
   mountSharingPublisher(api, local.store, local.data);
   app.route("/reviews-api", api);
 
-  const server = createServer(createNodeRequestListener(app));
+  let server: Bun.Server<undefined> | undefined;
   let published = false;
 
   try {
-    const listening = once(server, "listening");
-    server.listen(input.port ?? 0, "127.0.0.1");
-    await listening;
-    const address = server.address();
-
-    if (!isObjectValue(address))
-      throw new Error("Whiteboard server did not bind a TCP port.");
-    discovery.url = `http://127.0.0.1:${address.port}`;
+    server = Bun.serve({
+      hostname: "127.0.0.1",
+      port: input.port ?? 0,
+      fetch: app.fetch,
+      idleTimeout: 0,
+      maxRequestBodySize: 64 * 1024 * 1024,
+    });
+    discovery.url = `http://127.0.0.1:${server.port}`;
     await writePrivateJsonAtomic(
       reviewServerDiscoveryPath(input.stateDir),
       discovery,
@@ -146,18 +142,13 @@ async function serve(input: HeadlessServerInput) {
         input.signal.addEventListener("abort", () => resolve(), { once: true });
     });
   } finally {
-    // Watch streams may live forever. Drain ordinary requests, then bound shutdown.
-    const forceClose = setTimeout(() => server.closeAllConnections(), 5_000);
-    forceClose.unref();
-
     try {
       if (published)
         await rm(reviewServerDiscoveryPath(input.stateDir), { force: true });
     } finally {
       // An attached Desktop's stream would otherwise hold the close open.
       relay.close();
-      await new Promise<void>((resolve) => server.close(() => resolve()));
-      clearTimeout(forceClose);
+      await server?.stop(true);
 
       try {
         await local.data.close();

@@ -19,6 +19,9 @@ export default defineConfig({
     },
   },
   test: {
+    server: {
+      deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
+    },
     environment: "node",
     maxWorkers: 1,
     isolate: false,

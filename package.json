@@ -2,39 +2,61 @@
   "name": "@dev.fast/review-workspace",
   "version": "0.0.0",
   "private": true,
-  "description": "Review Desktop monorepo",
+  "description": "Whiteboard desktop and CLI monorepo",
   "license": "MIT",
+  "workspaces": {
+    "packages": [
+      "packages/*",
+      "packages/agent-plugins/pi",
+      "packages/review/app",
+      "apps/*"
+    ],
+    "catalog": {
+      "zod": "4.6.5"
+    }
+  },
   "scripts": {
-    "dev": "REVIEW_DESKTOP_DEV_FAST=1 pnpm desktop:build && pnpm desktop:run",
-    "dev:background": "DEV_FAST_REVIEW_DESKTOP_BACKGROUND=1 pnpm dev",
-    "clean": "node scripts/clean-review-desktop.mjs",
-    "desktop:build": "pnpm --filter @dev.fast/review-desktop app:build",
-    "desktop:run": "pnpm --filter @dev.fast/review-desktop app:run",
-    "desktop:watch": "pnpm --filter @dev.fast/review-desktop app:watch",
-    "electrobun:dev": "pnpm --filter @dev.fast/review-electrobun app:dev",
-    "electrobun:build": "pnpm --filter @dev.fast/review-electrobun app:build",
-    "desktop:package:linux": "pnpm --filter @dev.fast/review-desktop app:package:linux",
-    "review": "pnpm --filter @dev.fast/review review",
-    "format": "oxfmt --write \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"!apps/review-desktop/code-oss/**\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!packages/review/app/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
-    "format:check": "oxfmt --check \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"!apps/review-desktop/code-oss/**\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!packages/review/app/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
+    "dev": "bun run desktop:dev",
+    "clean": "bun scripts/clean-review-desktop.mjs",
+    "desktop:build": "bun run --filter @dev.fast/review-electrobun app:build",
+    "electrobun:dev": "bun run desktop:dev",
+    "electrobun:build": "bun run desktop:build",
+    "review": "bun run --filter @dev.fast/review review",
+    "format": "oxfmt --write \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!packages/review/app/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
+    "format:check": "oxfmt --check \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!packages/review/app/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
     "lint": "oxlint --disable-nested-config .",
-    "ci": "pnpm --filter @dev.fast/review-desktop app:build && pnpm --filter @dev.fast/review check:tutorial && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
-    "test": "node --test \"scripts/**/*.test.mjs\" && pnpm -r --if-present test",
-    "pretypecheck": "pnpm --filter @dev.fast/review build:workspace-deps",
-    "typecheck": "pnpm -r --filter=!@dev.fast/review-electrobun --workspace-concurrency=1 --if-present typecheck",
-    "build": "pnpm -r --if-present build"
+    "ci": "bun run desktop:build && bun run --filter @dev.fast/review check:tutorial && bun run lint && bun run format:check && bun run typecheck && bun run test",
+    "test": "bun test scripts && bun run --bun --filter '*' --filter '!@dev.fast/review-workspace' --if-present test",
+    "pretypecheck": "bun run --filter @dev.fast/review build:workspace-deps",
+    "typecheck": "bun run --bun --filter '*' --filter '!@dev.fast/review-workspace' --if-present typecheck",
+    "build": "bun run desktop:build",
+    "desktop:dev": "bun run --filter @dev.fast/review-electrobun app:dev"
   },
   "devDependencies": {
     "@oxlint/plugins": "1.63.0",
+    "@types/bun": "1.3.10",
     "@types/node": "24.12.2",
     "oxfmt": "0.48.0",
     "oxlint": "1.63.0",
     "typescript": "npm:typescript@7.0.2",
     "zod": "catalog:"
   },
-  "engines": {
-    "node": ">=24 <25",
-    "pnpm": ">=11 <12"
+  "overrides": {
+    "@dev.fast/local-vcs": "workspace:0.1.0",
+    "esbuild": "0.28.1",
+    "hono": "4.13.5",
+    "postcss": "8.5.23",
+    "undici": "7.29.0",
+    "vite": "8.0.16"
   },
-  "packageManager": "pnpm@11.1.2"
+  "engines": {
+    "bun": ">=1.4.2"
+  },
+  "packageManager": "bun@1.4.2",
+  "patchedDependencies": {
+    "elkjs@0.11.1": "patches/elkjs@0.11.1.patch"
+  },
+  "trustedDependencies": [
+    "esbuild"
+  ]
 }

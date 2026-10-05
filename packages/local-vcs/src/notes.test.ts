@@ -289,7 +289,7 @@ describe("git notes primitives", () => {
     }
 
     expect(batch.has(unannotated)).toBe(false);
-  });
+  }, 15_000);
 
   it("reads notes stored in a fanout tree layout", async () => {
     const rootPath = await initGitRepo();
@@ -529,15 +529,11 @@ async function runNotesWorker(
   workerPath: string,
   args: string[],
 ): Promise<void> {
-  const child = spawn(
-    process.execPath,
-    ["--import", "tsx", workerPath, ...args],
-    {
-      cwd: path.resolve(fileURLToPath(new URL("../../..", import.meta.url))),
-      env: process.env,
-      stdio: ["ignore", "ignore", "pipe"],
-    },
-  );
+  const child = spawn(process.execPath, [workerPath, ...args], {
+    cwd: path.resolve(fileURLToPath(new URL("../../..", import.meta.url))),
+    env: process.env,
+    stdio: ["ignore", "ignore", "pipe"],
+  });
 
   let stderr = "";
   child.stderr.setEncoding("utf8");

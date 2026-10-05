@@ -73,7 +73,13 @@ describe("store-auth", () => {
       origin: "http://store.example.com",
       stdout,
       stderr,
-      fetch: vi.fn<typeof globalThis.fetch>(),
+      fetch:
+        vi.fn<
+          (
+            input: Request | string | URL,
+            init?: RequestInit,
+          ) => Promise<Response>
+        >(),
       sleep: async () => {},
     });
 
@@ -113,9 +119,9 @@ describe("store-auth", () => {
         json({ user: { id: "user-1", name: "dev" } }),
       ];
 
-      const fetch = vi.fn<typeof globalThis.fetch>(
-        async () => responses.shift()!,
-      );
+      const fetch = vi.fn<
+        (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+      >(async () => responses.shift()!);
 
       const opened: string[] = [];
 

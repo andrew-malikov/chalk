@@ -812,10 +812,8 @@ export const ReviewDesktopDiscoverySchema = z.object({
   startedAt: positiveInteger,
   cliPath: requiredString.optional(),
   cliVersion: requiredString.optional(),
-  // An executable that behaves as Node.js when ELECTRON_RUN_AS_NODE=1 is set
-  // (the app's Electron binary). Consumers run cliPath with it so the CLI
-  // uses the exact runtime the app ships instead of whatever `node` is on
-  // PATH.
+  // The executable used to launch the desktop backend and CLI (Bun for the
+  // native host). Older installed desktops may advertise their own runtime.
   cliRuntimePath: requiredString.optional(),
   // Instance identity. Desktops that predate instance selection omit these
   // and wrote the shared review-desktop/server.json instead.

@@ -48,7 +48,7 @@ interface DesktopLaunchProcess {
 
 interface ReviewAppLauncherRuntime {
   selectInstance: () => Promise<ReviewInstanceSelection>;
-  fetch: typeof globalThis.fetch;
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
   focusDesktop: (discovery: ReviewDesktopDiscovery) => Promise<void>;
   launchDesktop: typeof launchDesktopApplication;
   now: () => number;
@@ -208,7 +208,7 @@ export async function runReviewAppLaunch(
 
 export async function focusReviewDesktop(
   discovery: ReviewDesktopDiscovery,
-  fetch: typeof globalThis.fetch,
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>,
 ): Promise<void> {
   const response = await fetch(`${discovery.url}/app/focus`, {
     method: "POST",

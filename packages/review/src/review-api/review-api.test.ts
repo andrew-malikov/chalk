@@ -1,8 +1,8 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 
 import { selectSource } from "@review/lens-selection.js";
@@ -1944,8 +1944,8 @@ it("reads, updates and restores a section saved with the retired status field, a
 
   await store.close();
   // A version saved while sections still carried a status.
-  const db = new DatabaseSync(database);
-  db.prepare(
+  const db = new Database(database);
+  db.query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
     `UPDATE versions SET snapshot=json_set(snapshot,'$.document[0].status','in_progress') WHERE review_id=?`,
   ).run(reviewId);
   db.close();

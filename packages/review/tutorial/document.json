@@ -33,15 +33,7 @@
         },
         {
           "type": "markdown",
-          "markdown": "### Your keybindings\n\nChoose your editor keys. Whiteboard highlights the active choice and uses its\nexisting extension and reload flow for Vim, Emacs, and Sublime Text.\n"
-        },
-        {
-          "type": "tutorial",
-          "kind": "keymap"
-        },
-        {
-          "type": "markdown",
-          "markdown": "### Put the keybindings to work\n\nThe editor below is live. Try hover, **Go to Definition**, or **Go to\nReferences** with the same commands you use in VS Code.\n"
+          "markdown": "### Explore the code\n\nThe code below shows the pinned source range. Open a source link in VS Code\nto use your editor's keybindings and language services.\n"
         },
         {
           "type": "code_peek",
@@ -339,7 +331,7 @@
       "children": [
         {
           "type": "markdown",
-          "markdown": "To connect Whiteboard to your agents, open **Preferences \u2192\nSettings**. To revisit setup or take this tour again, open **Preferences \u2192\nGetting Started**.\n"
+          "markdown": "To connect Whiteboard to your agents, open **Preferences \u2192\nSettings**. To take this tour again, open the tutorial from Home.\n"
         }
       ]
     },

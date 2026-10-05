@@ -53,7 +53,9 @@ describe("Review Desktop launcher", () => {
       );
 
       const fetch = vi
-        .fn<typeof globalThis.fetch>()
+        .fn<
+          (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+        >()
         .mockResolvedValueOnce(healthyResponse())
         .mockResolvedValueOnce(Response.json({ ok: true }));
 
@@ -146,7 +148,7 @@ describe("Review Desktop launcher", () => {
           source: "default",
         }),
       ),
-    ).rejects.toThrow("Start it with `pnpm dev` in its checkout");
+    ).rejects.toThrow("Start it with `bun dev` in its checkout");
     expect(launchDesktop).not.toHaveBeenCalled();
   });
 
@@ -173,7 +175,7 @@ describe("Review Desktop launcher", () => {
     let readCount = 0;
 
     const fetch = vi
-      .fn<typeof globalThis.fetch>()
+      .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
       .mockResolvedValueOnce(Response.json({ ok: false }))
       .mockResolvedValueOnce(
         Response.json({
@@ -205,7 +207,7 @@ describe("Review Desktop launcher", () => {
 
   it("polls through delayed server and Desktop attachment", async () => {
     const fetch = vi
-      .fn<typeof globalThis.fetch>()
+      .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
       .mockRejectedValueOnce(new Error("connection refused"))
       .mockResolvedValueOnce(
         Response.json({
@@ -240,7 +242,11 @@ describe("Review Desktop launcher", () => {
   });
 
   it("reports the launch method and recovery after an early exit", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>();
+    const fetch =
+      vi.fn<
+        (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+      >();
+
     await expect(
       runReviewAppLaunch(
         { timeoutMs: 1_000 },
@@ -293,7 +299,12 @@ describe("Review Desktop launcher", () => {
 
   it("reports a successful Electron exit before Desktop becomes ready", async () => {
     let now = 0;
-    const fetch = vi.fn<typeof globalThis.fetch>();
+
+    const fetch =
+      vi.fn<
+        (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+      >();
+
     await expect(
       runReviewAppLaunch(
         { timeoutMs: 1_000 },
@@ -604,9 +615,6 @@ describe("Review Desktop launcher", () => {
 
     try {
       const captured = promisify(execFile)(process.execPath, [
-        "--import",
-        import.meta.resolve("tsx"),
-        "--input-type=module",
         "--eval",
         script,
       ]);
@@ -707,7 +715,10 @@ function launcherRuntime(
   read: () => Promise<ReviewDesktopDiscovery | null> = async () => discovery,
   selection?: Pick<ReviewInstanceSelection, "key" | "source">,
 ) {
-  const fetch = vi.fn<typeof globalThis.fetch>();
+  const fetch =
+    vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >();
 
   for (const response of responses) fetch.mockResolvedValueOnce(response);
 

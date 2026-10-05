@@ -43,7 +43,10 @@ async function writeDump(dir: string, name = "x.dmp"): Promise<string> {
 function captureForm() {
   const forms: FormData[] = [];
 
-  const fetchImpl: typeof fetch = async (_url, init) => {
+  const fetchImpl: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response> = async (_url, init) => {
     if (init?.body instanceof FormData) forms.push(init.body);
 
     return Response.json({ ok: true, report_id: "r" });

@@ -1,8 +1,8 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -180,12 +180,12 @@ describe("importVersion", () => {
 
   it("adds map progress to a database written before it existed", async () => {
     const file = path.join(directory, "legacy.db");
-    const legacy = new DatabaseSync(file);
+    const legacy = new Database(file);
     legacy.exec(
       "CREATE TABLE legacy_imports(review_id TEXT PRIMARY KEY, revision TEXT NOT NULL, imported_at TEXT NOT NULL)",
     );
     legacy
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "INSERT INTO legacy_imports(review_id,revision,imported_at) VALUES(?,?,?)",
       )
       .run(id, "rev-1", "2026-01-01T00:00:00.000Z");

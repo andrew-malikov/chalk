@@ -183,12 +183,12 @@ async function run() {
 
   if (
     !checkout ||
-    !process.env.REVIEW_ELECTROBUN_NODE ||
+    !process.env.REVIEW_ELECTROBUN_BUN ||
     !process.env.DEV_FAST_REVIEW_SERVER_ENTRY
   ) {
     setState({
       status: "error",
-      message: "Launch this development app with Node 24: pnpm electrobun:dev",
+      message: "Launch this development app with Bun: bun dev",
     });
 
     return;
@@ -199,7 +199,7 @@ async function run() {
     profile,
     key,
     checkout,
-    nodePath: process.env.REVIEW_ELECTROBUN_NODE,
+    runtimePath: process.env.REVIEW_ELECTROBUN_BUN,
     entry: process.env.DEV_FAST_REVIEW_SERVER_ENTRY,
     signal: abort.signal,
     appSessionId,

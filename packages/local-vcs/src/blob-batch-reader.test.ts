@@ -367,8 +367,6 @@ async function runWorker(fixture: string, rootPath: string, commit: string) {
   const worker = spawn(
     process.execPath,
     [
-      "--import",
-      "tsx",
       fileURLToPath(new URL(`./test-fixtures/${fixture}`, import.meta.url)),
       rootPath,
       commit,

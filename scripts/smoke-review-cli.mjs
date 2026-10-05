@@ -14,7 +14,10 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { checkProductionDependencies } from "./review-cli-dependencies.mjs";
+import {
+  checkProductionDependencies,
+  readInstalledDependencies,
+} from "./review-cli-dependencies.mjs";
 
 const exec = promisify(execFile);
 
@@ -33,19 +36,12 @@ try {
   const prefix = path.join(root, "install");
   await mkdir(prefix);
   await copyFile(tarball, path.join(prefix, "review.tgz"));
-  await exec("npm", ["install", "--no-audit", "--no-fund", "./review.tgz"], {
+  await exec(process.execPath, ["add", "--production", "./review.tgz"], {
     cwd: prefix,
     maxBuffer: 16 * 1024 * 1024,
   });
 
-  const dependencyTree = JSON.parse(
-    (
-      await exec("npm", ["ls", "--all", "--omit=dev", "--json"], {
-        cwd: prefix,
-        maxBuffer: 16 * 1024 * 1024,
-      })
-    ).stdout,
-  );
+  const dependencyTree = await readInstalledDependencies(prefix);
 
   const dependencyCount = checkProductionDependencies(dependencyTree);
   console.log(

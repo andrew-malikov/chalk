@@ -1,8 +1,8 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
 
 import { selectSource } from "@review/lens-selection.js";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -310,11 +310,13 @@ it("reads lenses saved as document blocks as the snapshot's lenses", async () =>
     },
   ];
 
-  const db = new DatabaseSync(database);
-  db.prepare(
+  const db = new Database(database);
+  db.query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
     "UPDATE versions SET snapshot=json_set(snapshot,'$.document',json(?)) WHERE review_id=? AND version=?",
   ).run(JSON.stringify(legacy), reviewId, version);
-  db.prepare("UPDATE reviews SET next_id=5 WHERE id=?").run(reviewId);
+  db.query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+    "UPDATE reviews SET next_id=5 WHERE id=?",
+  ).run(reviewId);
   db.close();
 
   const read = store.read(reviewId);
@@ -334,12 +336,12 @@ it("reads lenses saved as document blocks as the snapshot's lenses", async () =>
     targetId: "files-4",
     targets: files("src/api/**", "src/server/**"),
   });
-  const raw = new DatabaseSync(database);
+  const raw = new Database(database);
 
   const saved = JSON.parse(
     String(
       raw
-        .prepare(
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
           "SELECT snapshot FROM versions WHERE review_id=? ORDER BY version DESC LIMIT 1",
         )
         .get(reviewId)!.snapshot,
@@ -357,13 +359,15 @@ it("reads lenses saved as document blocks as the snapshot's lenses", async () =>
 it("keeps a live lease from before scopes as the document's", async () => {
   await store.close();
   const legacyPath = path.join(directory, "legacy.db");
-  const db = new DatabaseSync(legacyPath);
+  const db = new Database(legacyPath);
   db.exec(`CREATE TABLE authoring_sessions(
       review_id TEXT PRIMARY KEY, lease_id TEXT NOT NULL,
       expires_at INTEGER NOT NULL, focus TEXT
     )`);
   const leaseId = randomUUID();
-  db.prepare("INSERT INTO authoring_sessions VALUES(?,?,?,?)").run(
+  db.query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+    "INSERT INTO authoring_sessions VALUES(?,?,?,?)",
+  ).run(
     "review",
     leaseId,
     Date.now() + 60_000,

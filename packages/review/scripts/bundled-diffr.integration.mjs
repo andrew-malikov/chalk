@@ -6,10 +6,9 @@ import { createServer } from "node:http";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { build } from "tsdown";
 import { afterAll, beforeAll, describe, test } from "vitest";
 
-import { stageDiffrBinary } from "../../../apps/review-desktop/scripts/stage-review-runtime.mjs";
+import { stageDiffrBinary } from "../../../scripts/stage-review-assets.mjs";
 import {
   cleanupTempDirs,
   gitRepository,
@@ -101,8 +100,8 @@ describe("Relocated runtime diffr integrates with Review streams and settings", 
     git("commit", "-qm", "head");
     head = git("rev-parse", "HEAD");
     await stageDiffrBinary(runtime, source);
-    await build({
-      config: false,
+
+    const buildConfig = {
       entry: {
         "structural-diff": path.resolve(
           import.meta.dirname,
@@ -117,8 +116,23 @@ describe("Relocated runtime diffr integrates with Review streams and settings", 
       platform: "node",
       format: "esm",
       dts: false,
-      deps: { alwaysBundle: [/^@dev\.fast\//] },
-    });
+    };
+
+    const configPath = path.join(root, "bundle.config.mjs");
+    await writeFile(
+      configPath,
+      `export default { ...${JSON.stringify(buildConfig)}, deps: { alwaysBundle: [/^@dev\\.fast\\//] } };`,
+    );
+    // Run the bundler in Bun's normal module loader, outside Vitest's VM.
+    execFileSync(
+      process.execPath,
+      ["--bun", "run", "tsdown", "--config", configPath],
+      {
+        cwd: path.resolve(import.meta.dirname, ".."),
+        stdio: "inherit",
+        timeout: 60_000,
+      },
+    );
 
     const load = (name) =>
       import(

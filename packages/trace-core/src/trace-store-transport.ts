@@ -191,7 +191,10 @@ export async function gzipToTemp(sourcePath: string): Promise<GzippedFile> {
 /** The transport used at run time. */
 export function createHttpTraceStoreTransport(
   client: StoreClient,
-  fetchImpl: typeof fetch = globalThis.fetch,
+  fetchImpl: (
+    input: Request | string | URL,
+    init?: RequestInit,
+  ) => Promise<Response> = globalThis.fetch,
   options: TraceStoreTransportOptions = {},
 ): TraceStoreTransport {
   const limits = { ...DEFAULT_LIMITS, ...options.limits };
@@ -207,16 +210,13 @@ export function createHttpTraceStoreTransport(
     async putObject(upload, filePath) {
       // The signed headers carry the content length, so the body streams
       // with a fixed length instead of chunked encoding, which S3 rejects.
-      // SAFETY: the DOM lib omits `duplex` and types the body stream
-      // differently, but Node's fetch accepts both. The assertion only
-      // widens the init type; every field keeps its runtime value.
+      // Bun.file streams the fixed-length upload directly.
       const init = {
         method: "PUT",
         headers: upload.headers,
-        body: Readable.toWeb(createReadStream(filePath)),
-        duplex: "half",
+        body: Bun.file(filePath),
         signal: AbortSignal.timeout(limits.timeoutMs),
-      } as RequestInit;
+      } satisfies RequestInit;
 
       const response = await fetchImpl(upload.url, init);
 
@@ -260,11 +260,14 @@ export function createHttpTraceStoreTransport(
         );
       }
 
-      // SAFETY: Node's fetch returns its own web stream; the DOM type only
-      // names the same object.
-      const compressed = Readable.fromWeb(response.body as WebReadableStream, {
-        signal,
-      });
+      // SAFETY: fetch's byte stream implements the web stream interface; the
+      // Node and DOM declarations differ in their optional reader overloads.
+      const compressed = Readable.fromWeb(
+        response.body as typeof response.body & WebReadableStream,
+        {
+          signal,
+        },
+      );
 
       await writeVerifiedObject(compressed, object, destinationPath, limits);
     },

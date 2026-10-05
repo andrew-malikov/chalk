@@ -72,7 +72,8 @@ it("fetches both pinned histories independently and reads them after the sender 
     (await sharedGit(checkout, ["show", `${pins.head}:answer.ts`])).stdout,
   ).toContain("answer = 2");
   expect(
-    (await sharedGit(checkout, ["diff", pins.base, pins.head])).stdout,
+    (await sharedGit(checkout, ["diff", "--no-ext-diff", pins.base, pins.head]))
+      .stdout,
   ).toContain("+export const answer = 2");
   await rm(checkout, { recursive: true });
   expect(await repositoryReady(checkout, pins)).toBe(false);

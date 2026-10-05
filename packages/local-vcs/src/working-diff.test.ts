@@ -135,11 +135,13 @@ it.each([false, true])(
       expect(await readFile(path.join(root, ".git/index"))).toEqual(index);
       expect(git("show-ref")).toBe(refs);
       expect(
-        await readdir(path.join(root, ".git/objects"), { recursive: true }),
-      ).toEqual(objects);
+        (
+          await readdir(path.join(root, ".git/objects"), { recursive: true })
+        ).sort(),
+      ).toEqual(objects.sort());
       expect(
-        await readdir(path.join(root, ".git"), { recursive: true }),
-      ).toEqual(gitFiles);
+        (await readdir(path.join(root, ".git"), { recursive: true })).sort(),
+      ).toEqual(gitFiles.sort());
       await mkdir(path.join(root, "linked"));
       git("worktree", "add", "--detach", path.join(root, "linked"), baseRef);
       await writeFile(path.join(root, "linked", "extra.ts"), "linked\n");

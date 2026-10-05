@@ -107,7 +107,10 @@ export class ShareClient {
   constructor(
     origin: string,
     private readonly token?: string,
-    private readonly send: typeof fetch = fetch,
+    private readonly send: (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => Promise<Response> = fetch,
   ) {
     const url = new URL(origin);
 

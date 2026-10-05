@@ -359,7 +359,7 @@ it("refuses to reset the id while a paused headless server holds the store", asy
   const child = processes.headless(root, stateDir);
   const exited = once(child, "exit");
 
-  onTestFinished(async () => {
+  stops.push(async () => {
     if (child.exitCode === null && child.signalCode === null) {
       child.kill("SIGCONT");
       child.kill("SIGKILL");
@@ -399,7 +399,7 @@ it("refuses to reset the id while a paused headless server holds the store", asy
   expect(await serverId()).toBe(before);
 
   const local = openLocalReviewStore(path.join(stateDir, "review-api.db"));
-  onTestFinished(async () => {
+  stops.push(async () => {
     await local.data.close();
     await local.store.close();
   });
@@ -411,7 +411,7 @@ function spawnSource(
   args: string[],
   env: Record<string, string>,
 ): ChildProcess {
-  return spawn(process.execPath, ["--import", "tsx", entry, ...args], {
+  return spawn(process.execPath, [entry, ...args], {
     cwd: packageRoot,
     env: {
       ...process.env,

@@ -34,7 +34,7 @@ export interface ReviewTabDwellTrackerInput {
 
 export interface ReviewTabTelemetryTransportOptions {
   endpoint: string;
-  fetch?: typeof fetch;
+  fetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
   navigator?: Pick<Navigator, "sendBeacon">;
 }
 

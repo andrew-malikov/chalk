@@ -125,7 +125,9 @@ describe("Review instance selection", () => {
         `${extra.defaultInstance}\n`,
       );
 
-    const fetch = vi.fn<typeof globalThis.fetch>(async (url) => {
+    const fetch = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async (url) => {
       const instanceId = healthy.get(new URL(String(url)).origin);
 
       return instanceId

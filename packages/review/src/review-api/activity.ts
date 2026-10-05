@@ -1,5 +1,5 @@
+import type { Database, SQLQueryBindings } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
-import type { DatabaseSync } from "node:sqlite";
 
 import { z } from "zod";
 
@@ -78,13 +78,13 @@ export class ReviewActivity {
   private readonly workingListeners = new Set<() => void>();
 
   constructor(
-    private readonly db: DatabaseSync,
+    private readonly db: Database,
     private readonly assertReview?: (reviewId: string) => void,
   ) {
     migrateLeaseScopes(db);
 
     for (const row of db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "SELECT DISTINCT review_id FROM authoring_sessions WHERE expires_at>?",
       )
       .all(Date.now())) {
@@ -114,10 +114,10 @@ export class ReviewActivity {
   private changed(reviewId: string) {
     const working =
       this.db
-        .prepare(
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
           "SELECT 1 FROM authoring_sessions WHERE review_id=? AND expires_at>? LIMIT 1",
         )
-        .get(reviewId, Date.now()) !== undefined;
+        .get(reviewId, Date.now()) !== null;
 
     if (working !== this.working.has(reviewId)) {
       if (working) this.working.add(reviewId);
@@ -130,7 +130,7 @@ export class ReviewActivity {
   }
   private active(reviewId: string, scope: LeaseScope) {
     return this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "SELECT lease_id,expires_at,focus FROM authoring_sessions WHERE review_id=? AND scope=? AND expires_at>?",
       )
       .get(reviewId, scope, Date.now());
@@ -176,7 +176,7 @@ export class ReviewActivity {
   ): string | undefined {
     const active = this.active(reviewId, scope);
 
-    return active && String(active.lease_id);
+    return active ? String(active.lease_id) : undefined;
   }
 
   /** Recheck inside the write transaction as validation may outlive the lease. */
@@ -218,7 +218,7 @@ export class ReviewActivity {
 
     return (
       this.db
-        .prepare(
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
           "UPDATE authoring_sessions SET expires_at=? WHERE review_id=? AND scope=? AND lease_id=? AND expires_at>?",
         )
         .run(now + ACTIVITY_TTL_MS, reviewId, scope, leaseId, now).changes > 0
@@ -248,7 +248,7 @@ export class ReviewActivity {
       if (action === "end") {
         // Repeated end and attempts to end somebody else's session are harmless.
         this.db
-          .prepare(
+          .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
             "DELETE FROM authoring_sessions WHERE review_id=? AND scope=? AND lease_id=?",
           )
           .run(reviewId, scope, leaseId);
@@ -270,7 +270,10 @@ export class ReviewActivity {
               : JSON.stringify(focus);
 
         this.db
-          .prepare(`INSERT INTO authoring_sessions(review_id,scope,lease_id,expires_at,focus) VALUES(?,?,?,?,?)
+          .query<
+            Record<string, SQLQueryBindings>,
+            SQLQueryBindings[]
+          >(`INSERT INTO authoring_sessions(review_id,scope,lease_id,expires_at,focus) VALUES(?,?,?,?,?)
           ON CONFLICT(review_id,scope) DO UPDATE SET lease_id=excluded.lease_id,expires_at=excluded.expires_at,focus=excluded.focus`)
           .run(
             reviewId,
@@ -304,7 +307,7 @@ export class ReviewActivity {
     this.timers.delete(reviewId);
 
     const next = this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "SELECT MIN(expires_at) AS expires_at FROM authoring_sessions WHERE review_id=? AND expires_at>?",
       )
       .get(reviewId, Date.now());
@@ -328,7 +331,7 @@ export class ReviewActivity {
     const ids = new Set(this.timers.keys());
 
     for (const row of this.db
-      .prepare(
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
         "SELECT DISTINCT review_id FROM authoring_sessions WHERE expires_at>?",
       )
       .all(Date.now()))
@@ -357,10 +360,12 @@ export class ReviewActivity {
 
 /** Leases were once one per review. Rebuild the table keyed by (review,
  * scope), keeping any live lease as the document's. */
-function migrateLeaseScopes(db: DatabaseSync) {
+function migrateLeaseScopes(db: Database) {
   const columns = () =>
     db
-      .prepare("PRAGMA table_info(authoring_sessions)")
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "PRAGMA table_info(authoring_sessions)",
+      )
       .all()
       .map((column) => String(column.name));
 

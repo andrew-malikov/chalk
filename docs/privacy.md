@@ -19,7 +19,9 @@ For the exact event schemas and implementation references, see the full
 
 Whiteboard stores authored whiteboards in `~/.dev/review-api.db`, whiteboards
 opened from share links under `~/.dev/shared-reviews/`, and desktop discovery
-and state under `~/.dev/review-desktop/` by default. These names predate the
+under `~/.dev/review-desktop/`. The native desktop uses
+`~/.dev-fast/review-electrobun` as its default profile; `DEV_REVIEW_HOME`
+selects another profile. These names predate the
 Whiteboard rename.
 
 Passive product telemetry never includes:
@@ -64,7 +66,7 @@ message, a one-way fingerprint, and up to ten stack frames from Whiteboard's
 shipped program. A repeating error is reported at most five times per session.
 
 When a Whiteboard process crashes, Whiteboard records which process died and
-its exit code. Electron also writes a local crash dump, which can contain
+its exit code. Older Electron builds also wrote local crash dumps, which can contain
 process memory, including open source text. The next launch uploads it to the
 bug-report service, which keeps it for 30 days, and deletes the local copy.
 With telemetry off, dumps are deleted without upload.

@@ -24,7 +24,7 @@ export interface PostHogCaptureClientOptions {
   apiKey?: string;
   host?: string;
   timeoutMs?: number;
-  fetch?: typeof fetch;
+  fetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
   timeoutSignal?: (timeoutMs: number) => AbortSignal;
   queueDir?: string;
   now?: () => number;
@@ -88,7 +88,9 @@ type FlushBatchResult =
 export class PostHogCaptureClient {
   private readonly apiKey: string | undefined;
   private readonly batchUrl: string;
-  private readonly fetchImpl: typeof fetch | undefined;
+  private readonly fetchImpl:
+    | ((input: RequestInfo | URL, init?: RequestInit) => Promise<Response>)
+    | undefined;
   private readonly timeoutMs: number;
   private readonly timeoutSignal: (timeoutMs: number) => AbortSignal;
   private readonly queueDir: string | undefined;

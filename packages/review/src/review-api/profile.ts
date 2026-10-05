@@ -1,6 +1,6 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { access, mkdir } from "node:fs/promises";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
 
 import { withFileLock } from "@dev.fast/trace-core";
 import { ensureJsonCutover } from "@review/review-import/json-cutover.js";
@@ -55,9 +55,8 @@ async function importHeadlessStore(home: string, source: string) {
     throw error;
   }
 
-  const database = new DatabaseSync(path.join(home, "review-api.db"), {
-    timeout: 5000,
-  });
+  const database = new Database(path.join(home, "review-api.db"));
+  database.exec("PRAGMA busy_timeout=5000");
 
   try {
     database.exec(
@@ -66,7 +65,9 @@ async function importHeadlessStore(home: string, source: string) {
 
     if (
       database
-        .prepare("SELECT 1 FROM headless_imports WHERE path=?")
+        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+          "SELECT 1 FROM headless_imports WHERE path=?",
+        )
         .get(source)
     )
       return;
@@ -75,13 +76,17 @@ async function importHeadlessStore(home: string, source: string) {
       path.join(path.dirname(source), "server.lock"),
       { ...lockOptions, timeoutMs: 0 },
       async () => {
-        database.prepare("ATTACH DATABASE ? AS headless").run(source);
+        database
+          .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+            "ATTACH DATABASE ? AS headless",
+          )
+          .run(source);
         database.exec("BEGIN IMMEDIATE");
 
         try {
           if (
             database
-              .prepare(
+              .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
                 "SELECT 1 FROM headless.reviews s JOIN reviews t ON s.id=t.id LIMIT 1",
               )
               .get()
@@ -96,7 +101,7 @@ async function importHeadlessStore(home: string, source: string) {
 
           if (
             database
-              .prepare(
+              .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
                 `SELECT 1 FROM headless.versions s LEFT JOIN repository_ids r ON json_extract(s.snapshot,'$.pins.repositoryId')=r.old_id WHERE r.old_id IS NULL LIMIT 1`,
               )
               .get()
@@ -107,7 +112,10 @@ async function importHeadlessStore(home: string, source: string) {
 
           if (
             database
-              .prepare(`SELECT 1 FROM headless.resources s JOIN resources t ON s.id=t.id JOIN repository_ids r ON s.repository_id=r.old_id
+              .query<
+                Record<string, SQLQueryBindings>,
+                SQLQueryBindings[]
+              >(`SELECT 1 FROM headless.resources s JOIN resources t ON s.id=t.id JOIN repository_ids r ON s.repository_id=r.old_id
           WHERE t.repository_id!=r.new_id OR t.kind!=s.kind OR t.mime_type!=s.mime_type OR t.data IS NOT s.data LIMIT 1`)
               .get()
           )
@@ -117,7 +125,10 @@ async function importHeadlessStore(home: string, source: string) {
 
           if (
             database
-              .prepare(`SELECT 1 FROM headless.receipts s JOIN receipts t ON s.command_id=t.command_id
+              .query<
+                Record<string, SQLQueryBindings>,
+                SQLQueryBindings[]
+              >(`SELECT 1 FROM headless.receipts s JOIN receipts t ON s.command_id=t.command_id
           WHERE s.request!=t.request OR s.response!=t.response LIMIT 1`)
               .get()
           )
@@ -139,7 +150,7 @@ async function importHeadlessStore(home: string, source: string) {
 
           if (
             database
-              .prepare(
+              .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
                 "SELECT 1 FROM headless.sqlite_master WHERE name='authoring_sessions'",
               )
               .get()
@@ -152,7 +163,9 @@ async function importHeadlessStore(home: string, source: string) {
 
             const scoped = (schema: string) =>
               database
-                .prepare(`PRAGMA ${schema}.table_info(authoring_sessions)`)
+                .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+                  `PRAGMA ${schema}.table_info(authoring_sessions)`,
+                )
                 .all()
                 .some((column) => String(column.name) === "scope");
 
@@ -166,7 +179,9 @@ async function importHeadlessStore(home: string, source: string) {
           }
 
           database
-            .prepare("INSERT INTO headless_imports VALUES(?)")
+            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+              "INSERT INTO headless_imports VALUES(?)",
+            )
             .run(source);
           database.exec("COMMIT");
         } catch (error) {

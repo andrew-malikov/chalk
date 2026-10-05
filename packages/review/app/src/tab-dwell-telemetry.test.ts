@@ -108,7 +108,10 @@ describe("createReviewTabDwellTracker", () => {
           fetchCalls.push(args);
 
           return new Response(null, { status: 200 });
-        }) as typeof fetch,
+        }) as (
+          input: RequestInfo | URL,
+          init?: RequestInit,
+        ) => Promise<Response>,
       }),
     });
 
@@ -130,7 +133,11 @@ describe("createReviewTabDwellTracker", () => {
   });
 
   it("falls back to keepalive fetch when sendBeacon rejects the document origin", () => {
-    const fetchCalls: Array<Parameters<typeof fetch>> = [];
+    const fetchCalls: Array<
+      Parameters<
+        (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+      >
+    > = [];
 
     const delivery = sendReviewTabTelemetryPayload(
       {
@@ -151,7 +158,10 @@ describe("createReviewTabDwellTracker", () => {
           fetchCalls.push(args);
 
           return new Response(null, { status: 200 });
-        }) as typeof fetch,
+        }) as (
+          input: RequestInfo | URL,
+          init?: RequestInit,
+        ) => Promise<Response>,
       },
     );
 

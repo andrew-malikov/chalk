@@ -41,7 +41,7 @@ async function fixture(mode = "ready"): Promise<ServerOptions> {
   );
 
   return {
-    nodePath: process.execPath,
+    runtimePath: process.execPath,
     entry,
     checkout: root,
     profile: root,

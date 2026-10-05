@@ -1,5 +1,5 @@
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
-import { DatabaseSync } from "node:sqlite";
 
 import { AskHistory, type AskRecord } from "@review/review-api/ask-history.js";
 import { ReviewStore } from "@review/review-api/store.js";
@@ -84,7 +84,7 @@ it("keeps each review's conversations, newest first, until the review is deleted
 });
 
 it("keeps what the panel showed, and what each agent offered", () => {
-  const db = new DatabaseSync(":memory:");
+  const db = new Database(":memory:");
 
   try {
     const history = new AskHistory(db);

@@ -21,7 +21,10 @@ describe("review host client", () => {
   it("adds the desktop bearer token to API requests", async () => {
     let requestInit: RequestInit | undefined;
 
-    const fetchMock: typeof fetch = async (_input, init) => {
+    const fetchMock: (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => Promise<Response> = async (_input, init) => {
       requestInit = init;
 
       return new Response(null, { status: 204 });

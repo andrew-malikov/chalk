@@ -16,7 +16,7 @@ import {
 } from "@dev.fast/review-protocol";
 
 export interface ServerOptions {
-  nodePath: string;
+  runtimePath: string;
   entry: string;
   checkout: string;
   profile: string;
@@ -91,7 +91,7 @@ export async function startServer(
   if (options.signal?.aborted)
     throw new Error("Review server startup cancelled.");
 
-  const child = spawn(options.nodePath, [options.entry], {
+  const child = spawn(options.runtimePath, [options.entry], {
     stdio: ["ignore", "pipe", "pipe"],
     env: {
       ...process.env,
@@ -105,7 +105,7 @@ export async function startServer(
       DEV_FAST_REVIEW_INSTANCE_ID: instanceId,
       DEV_FAST_REVIEW_DESKTOP_HOST_AUTOSTART: "1",
       DEV_FAST_REVIEW_TELEMETRY_DISABLED: "1",
-      DEV_FAST_REVIEW_CLI_RUNTIME: options.nodePath,
+      DEV_FAST_REVIEW_CLI_RUNTIME: options.runtimePath,
       DEV_FAST_REVIEW_RELEASE_CHANNEL: "dev",
       DEV_FAST_REVIEW_APP_SESSION_ID: options.appSessionId ?? randomUUID(),
       DEV_FAST_REVIEW_APP_VERSION: "0.2.0",
@@ -168,7 +168,7 @@ export async function startServer(
           once: true,
         });
         child.once("error", (error) =>
-          fail(new Error(`Cannot start Node sidecar: ${error.message}`)),
+          fail(new Error(`Cannot start Bun sidecar: ${error.message}`)),
         );
         child.once("exit", (code, signal) => {
           const message =

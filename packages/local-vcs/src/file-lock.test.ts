@@ -200,15 +200,11 @@ async function runWorker(workerPath: string, args: string[]): Promise<void> {
 }
 
 function spawnWorker(workerPath: string, args: string[]) {
-  const child = spawn(
-    process.execPath,
-    ["--import", "tsx", workerPath, ...args],
-    {
-      cwd: path.resolve(fileURLToPath(new URL("../../..", import.meta.url))),
-      env: process.env,
-      stdio: ["ignore", "ignore", "pipe"],
-    },
-  );
+  const child = spawn(process.execPath, [workerPath, ...args], {
+    cwd: path.resolve(fileURLToPath(new URL("../../..", import.meta.url))),
+    env: process.env,
+    stdio: ["ignore", "ignore", "pipe"],
+  });
 
   let stderr = "";
   child.stderr.setEncoding("utf8");

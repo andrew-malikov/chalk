@@ -3,6 +3,7 @@ import {
   isJsonObject,
   jsonString,
 } from "@dev.fast/review-protocol";
+import type { ViteHotContext } from "vite/types/hot.d.ts";
 
 import type { ReviewSession } from "./host/review-session";
 
@@ -64,5 +65,11 @@ export function reportReviewDocumentRenderError(
   session.reportDiagnostic(diagnostic);
   // `import.meta.hot` exists only in the Vite dev client, which is the only
   // place a componentDidCatch runs for this app; it is undefined under SSR.
-  import.meta.hot?.send(REVIEW_DOCUMENT_ERROR_EVENT, report);
+  const hot = import.meta.hot;
+
+  // SAFETY: this module runs in the Vite client, whose HMR context has send().
+  (hot as typeof hot & ViteHotContext)?.send(
+    REVIEW_DOCUMENT_ERROR_EVENT,
+    report,
+  );
 }

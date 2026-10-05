@@ -21,7 +21,7 @@ const NODE_PROCESSES = new Set(["main", "server"]);
 
 export type ChunkIds = ReadonlyMap<string, string>;
 
-/** Written by apps/review-desktop/scripts/upload-source-maps.mjs. */
+/** Source-map publication metadata from older desktop releases. */
 const CHUNK_ID_MANIFEST = "review-chunk-ids.json";
 
 const CHUNK_ID_PATTERN = /^[0-9a-f-]{36}$/;

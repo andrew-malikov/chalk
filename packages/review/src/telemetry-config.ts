@@ -240,7 +240,7 @@ function isEnabledEnvValue(value: string | undefined): boolean {
 
 let cachedWorkspaceCheckout: boolean | undefined;
 
-// Running from a workspace checkout (the dev.fast monorepo or any pnpm
+// Running from a workspace checkout (the dev.fast monorepo or any Bun
 // workspace clone) means the traffic is ours, not a customer's. A published
 // npm install always lives under node_modules and has no workspace manifest
 // above it.
@@ -259,7 +259,10 @@ function isWorkspaceCheckout(): boolean {
     let dir = packageRoot;
 
     while (true) {
-      if (existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
+      if (
+        existsSync(path.join(dir, "bun.lock")) ||
+        existsSync(path.join(dir, "pnpm-workspace.yaml"))
+      ) {
         cachedWorkspaceCheckout = true;
 
         return cachedWorkspaceCheckout;

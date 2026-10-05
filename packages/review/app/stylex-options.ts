@@ -14,6 +14,6 @@ export const stylexOptions = {
   // The `@canvas/*` path, so modules in src/ subfolders can import tokens and
   // markers without a relative parent path.
   aliases: { "@canvas/*": [path.join(__dirname, "src/*")] },
-  // Chromium 140 (Electron 42) is the runtime floor: nothing to lower.
-  lightningcssOptions: { targets: { chrome: 140 << 16 }, minify: true },
+  // The native host uses WKWebView on macOS 14 or newer.
+  lightningcssOptions: { targets: { safari: 17 << 16 }, minify: true },
 } satisfies Partial<UserOptions>;

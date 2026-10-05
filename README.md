@@ -63,7 +63,7 @@ If you see anything you don't like, highlight it in your clipboard and give it y
 
 ### Diagrams that lead to code
 
-Pure HTML tools didn’t provide easy affordances to connect a spec or diagram to code; this is especially tricky since tradeoffs are often only discovered after a first pass at implementation. In Whiteboard, when you click on visualizations like a sequence diagram, an entity relationship diagram, or a quote from the agent’s trace, you can jump to the underlying code directly. When navigating code, you get keybindings and LSP support from VSCode out of the box.
+Pure HTML tools didn’t provide easy affordances to connect a spec or diagram to code; this is especially tricky since tradeoffs are often only discovered after a first pass at implementation. In Whiteboard, when you click on visualizations like a sequence diagram, an entity relationship diagram, or a quote from the agent’s trace, you can jump to the underlying code directly. Pinned code opens in VS Code, where your editor keybindings and language services are available.
 
 ### Semantic diff viewer
 
@@ -105,18 +105,19 @@ your code, diffs, Whiteboard text, prompts, or model output. Read the
 
 ## License
 
-Whiteboard is available under the [MIT License](LICENSE). The vendored Code -
-OSS fork retains Microsoft's MIT license and third-party notices; see
-[`apps/review-desktop/LICENSE`](apps/review-desktop/LICENSE) and
-[`apps/review-desktop/UPSTREAM`](apps/review-desktop/UPSTREAM).
+Whiteboard is available under the [MIT License](LICENSE). Third-party notices
+for the shared runtime are in
+[`packages/review/THIRD_PARTY_NOTICES.md`](packages/review/THIRD_PARTY_NOTICES.md).
 
-## On vendoring Code OSS
+## Desktop runtime
 
-With everyone using dedicated agent TUIs and desktop apps, we only use our text editors for reviewing line-by-line diffs now, so we figured why not have a text editor meant for reviewing code. In that case, might as well start off with the most successful open source editor out there as a baseline.
+Whiteboard uses Electrobun with a native webview and a local Bun backend.
+Bun also runs the CLI, package installation, builds, and tests. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for setup with Bun 1.4.2 and Hutch.
 
-We vendor Code OSS unlike other forks that maintain patches because coding agents have a hard time with patches and there's a lot of stuff from stock VS Code (i.e., ~45% of the codebase is Copilot these days 😬) that we don't need.
-
-We regularly monitor upstream Code OSS and merge in security/feature patches as they come in.
+The former Code OSS fork is available in this repository's Git history. Its
+upstream sources are at
+[microsoft/vscode](https://github.com/microsoft/vscode/tree/8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8).
 
 ## Influences
 

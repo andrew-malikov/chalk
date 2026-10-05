@@ -73,7 +73,10 @@ function compressedObject(
 }
 
 function httpTransport(
-  fetchImpl: typeof fetch,
+  fetchImpl: (
+    input: Request | string | URL,
+    init?: RequestInit,
+  ) => Promise<Response>,
   options?: TraceStoreTransportOptions,
 ) {
   return createHttpTraceStoreTransport({} as StoreClient, fetchImpl, options);
@@ -83,9 +86,9 @@ function httpTransport(
 function respondWith(body: Buffer | ReadableStream, headers = {}) {
   const bodyInit = Buffer.isBuffer(body) ? new Uint8Array(body) : body;
 
-  return vi.fn<typeof fetch>(
-    async () => new Response(bodyInit, { status: 200, headers }),
-  );
+  return vi.fn<
+    (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+  >(async () => new Response(bodyInit, { status: 200, headers }));
 }
 
 describe("trace-store-transport", () => {
@@ -489,7 +492,9 @@ describe("trace-store-transport", () => {
       },
     });
 
-    const fetchImpl = vi.fn<typeof fetch>(
+    const fetchImpl = vi.fn<
+      (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+    >(
       async () =>
         new Response(
           JSON.stringify({

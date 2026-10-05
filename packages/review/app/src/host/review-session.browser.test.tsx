@@ -50,9 +50,9 @@ describe("ReviewSessionProvider", () => {
     const rootB = createRoot(containerB);
     roots.push(rootA, rootB);
 
-    const fetchMock = vi.fn<typeof fetch>(
-      async () => new Response(null, { status: 204 }),
-    );
+    const fetchMock = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => new Response(null, { status: 204 }));
 
     vi.stubGlobal("fetch", fetchMock);
 

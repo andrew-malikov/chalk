@@ -29,7 +29,9 @@ const discovery = {
 } as const;
 
 test("rejects foreign origins before attaching credentials and disables redirects", async () => {
-  const fetcher = vi.fn<typeof fetch>(
+  const fetcher = vi.fn<
+    (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+  >(
     async (_input: RequestInfo | URL, _init?: RequestInit) =>
       new Response("ok"),
   );

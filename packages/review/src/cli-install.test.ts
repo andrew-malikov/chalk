@@ -630,7 +630,7 @@ describe("installed launcher runtime selection", () => {
       if (runtimeExists)
         await writeFile(
           discoveredRuntime,
-          '#!/bin/sh\nprintf "%s\\n" "discovered" "guard=$DEV_FAST_REVIEW_CLI_NO_DELEGATE" "delegated=$DEV_FAST_REVIEW_CLI_DELEGATED" "$@"\n',
+          '#!/bin/sh\n[ "$ELECTRON_RUN_AS_NODE" = 1 ] || exit 42\nprintf "%s\\n" "discovered" "guard=$DEV_FAST_REVIEW_CLI_NO_DELEGATE" "delegated=$DEV_FAST_REVIEW_CLI_DELEGATED" "$@"\n',
           { mode: 0o755 },
         );
       const discoveryDir = path.join(home, "review-desktop");
@@ -655,6 +655,7 @@ describe("installed launcher runtime selection", () => {
           ...process.env,
           DEV_REVIEW_HOME: home,
           DEV_FAST_REVIEW_CLI_NO_DELEGATE: noDelegate ? "1" : "",
+          ELECTRON_RUN_AS_NODE: "",
         },
       });
 

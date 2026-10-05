@@ -8,7 +8,10 @@ import type { ReviewTelemetry } from "@review/review-telemetry";
 export async function aliasInstallationToAccount(
   telemetry: Pick<ReviewTelemetry, "captureAccountAlias">,
   env: NodeJS.ProcessEnv = process.env,
-  fetchImpl?: typeof fetch,
+  fetchImpl?: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response>,
 ): Promise<void> {
   try {
     const auth = await readStoreAuth(env);

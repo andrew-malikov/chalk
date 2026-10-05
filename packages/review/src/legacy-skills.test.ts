@@ -141,10 +141,11 @@ describe("removeLegacySkills", () => {
       path.join(homeDir, ".claude/skills/dev-review"),
     ]);
     expect(await scanLegacySkills(homeDir)).toEqual([]);
-    await expect(
-      import("node:fs/promises").then((fs) =>
-        fs.access(path.join(homeDir, ".claude/skills/review/SKILL.md")),
-      ),
-    ).resolves.toBeUndefined();
+
+    const remaining = await import("node:fs/promises").then((fs) =>
+      fs.readFile(path.join(homeDir, ".claude/skills/review/SKILL.md"), "utf8"),
+    );
+
+    expect(remaining).toBe(USER_OWNED);
   });
 });

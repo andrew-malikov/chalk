@@ -67,7 +67,10 @@ export interface BugReportSource {
 export async function submitReviewBugReport(input: {
   report: ReviewBugReportRequest;
   clientErrorNames: string[];
-  fetchImpl?: typeof fetch;
+  fetchImpl?: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response>;
   source: BugReportSource;
   telemetryEnvelope?: PostHogCaptureProperties;
 }) {

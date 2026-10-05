@@ -686,9 +686,8 @@ export async function isOwnedShim(shimPath: string): Promise<boolean> {
  * The shim is POSIX sh, so running `review` needs no Node.js at all to start.
  * It prefers the CLI and runtime the running Whiteboard Desktop advertises in its
  * discovery file, falls back to the paths baked in by the app that wrote it,
- * and runs the CLI under the app's Electron binary as Node
- * (ELECTRON_RUN_AS_NODE) — the exact runtime the server uses. System Node is
- * the last resort and gets a clear version check instead of a cryptic crash.
+ * and runs the CLI under the app's Bun runtime, matching the server.
+ * A system Bun is the fallback when the app runtime is unavailable.
  */
 export async function writePathShim(
   shimPath: string,
@@ -777,24 +776,18 @@ fi
 export DEV_FAST_REVIEW_CLI_NO_DELEGATE=1
 export DEV_FAST_REVIEW_CLI_DELEGATED="$delegated"
 
-# The app's Electron binary runs as plain Node.js and matches the server's
-# runtime exactly; no system Node is required on this path.
+# Use the selected app's runtime so the CLI and server stay in sync.
 if [ -n "$runtime" ] && [ -x "$runtime" ]; then
+  # Older desktops advertise Electron; Bun ignores this compatibility flag.
   export ELECTRON_RUN_AS_NODE=1
   exec "$runtime" "$cli" "$@"
 fi
 
-if ! command -v node >/dev/null 2>&1; then
-  echo "Whiteboard needs Node.js 24 or newer and none was found. Install Node 24, or install Whiteboard Desktop." >&2
+if ! command -v bun >/dev/null 2>&1; then
+  echo "Whiteboard needs Bun 1.4.2 or newer. Install Bun, or install Whiteboard Desktop." >&2
   exit 1
 fi
-major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
-case "$major" in *[!0-9]*) major=0;; esac
-if [ "$major" -lt 24 ]; then
-  echo "Whiteboard needs Node.js 24 or newer; found $(node -v 2>/dev/null). Update Node, or install Whiteboard Desktop." >&2
-  exit 1
-fi
-exec node "$cli" "$@"
+exec bun "$cli" "$@"
 `;
 
   await writeFileAtomicAsync(shimPath, source, {

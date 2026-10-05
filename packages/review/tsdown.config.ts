@@ -40,7 +40,7 @@ export default defineConfig({
     "server/desktop-host": "src/server/desktop-host.ts",
   },
   platform: "node",
-  target: "node24",
+  target: "esnext",
   format: "esm",
   outDir: "dist",
   fixedExtension: false,
@@ -65,7 +65,7 @@ export default defineConfig({
       // Bundled to keep its KaTeX dependency out of the runtime.
       /^micromark-extension-math$/,
     ],
-    // Re-inlining core's public declaration graph exhausts the default Node heap.
+    // Re-inlining core's public declaration graph exhausts the default runtime heap.
     // Its only remaining declaration edge is the side-effect import handled above.
     dts: { neverBundle: ["@dev.fast/trace-core"] },
     onlyBundle: false,
@@ -95,7 +95,7 @@ export default defineConfig({
 });
 
 async function normalizeExecutable(filePath: string): Promise<void> {
-  const shebang = "#!/usr/bin/env node\n";
+  const shebang = "#!/usr/bin/env bun\n";
   const contents = await readFile(filePath, "utf8");
   const body = contents.replace(/^(?:#![^\n]*\n|\s*\n)+/, "");
   await writeFile(filePath, `${shebang}${body}`, "utf8");

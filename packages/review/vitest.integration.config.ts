@@ -5,6 +5,9 @@ import { reviewTestAliases } from "./test-config";
 export default defineConfig({
   resolve: { alias: reviewTestAliases },
   test: {
+    server: {
+      deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
+    },
     include: ["scripts/*.integration.mjs", "src/review-api/*.integration.ts"],
     maxWorkers: 1,
     testTimeout: 30_000,

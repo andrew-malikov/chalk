@@ -17,7 +17,9 @@ function jsonResponse(body: JsonValue, status = 200) {
 
 describe("StoreClient", () => {
   it("sends the bearer token and parses the envelope on error", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(
+    const fetch = vi.fn<
+      (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+    >(
       async () =>
         new Response(
           JSON.stringify({ error: { code: "forbidden", message: "no" } }),
@@ -43,7 +45,9 @@ describe("StoreClient", () => {
   });
 
   it("returns null for a 404 from findStore", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(
+    const fetch = vi.fn<
+      (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+    >(
       async () =>
         new Response(
           JSON.stringify({ error: { code: "not_found", message: "no" } }),
@@ -63,7 +67,9 @@ describe("StoreClient", () => {
   });
 
   it("maps device polling errors to pending states", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(
+    const fetch = vi.fn<
+      (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+    >(
       async () =>
         new Response(
           JSON.stringify({
@@ -79,7 +85,9 @@ describe("StoreClient", () => {
       pending: "authorization_pending",
     });
 
-    const rejectingFetch = vi.fn<typeof globalThis.fetch>(
+    const rejectingFetch = vi.fn<
+      (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+    >(
       async () =>
         new Response(
           JSON.stringify({
@@ -106,9 +114,9 @@ describe("StoreClient", () => {
   });
 
   it("maps a response outside the contract to upgrade_required", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
-      jsonResponse({ nonsense: true }),
-    );
+    const fetch = vi.fn<
+      (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+    >(async () => jsonResponse({ nonsense: true }));
 
     const client = new StoreClient({
       origin: "https://app.dev.fast",
@@ -126,7 +134,9 @@ describe("StoreClient", () => {
   });
 
   it("rejects a 0.1 store that begins an upload without an uploadId", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+    const fetch = vi.fn<
+      (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+    >(async () =>
       jsonResponse({
         storeId: "a".repeat(32),
         baseGeneration: 0,
@@ -154,9 +164,9 @@ describe("StoreClient", () => {
       commits: ["c".repeat(40)],
     };
 
-    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
-      jsonResponse(receipt),
-    );
+    const fetch = vi.fn<
+      (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+    >(async () => jsonResponse(receipt));
 
     const client = new StoreClient({
       origin: "https://app.dev.fast",
@@ -190,9 +200,9 @@ describe("StoreClient", () => {
       deletedAt: "2026-09-05T00:00:00.000Z",
     };
 
-    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
-      jsonResponse(receipt, 202),
-    );
+    const fetch = vi.fn<
+      (input: Request | string | URL, init?: RequestInit) => Promise<Response>
+    >(async () => jsonResponse(receipt, 202));
 
     const client = new StoreClient({
       origin: "https://app.dev.fast",

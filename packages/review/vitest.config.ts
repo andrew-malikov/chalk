@@ -7,6 +7,9 @@ import { reviewTestAliases } from "./test-config";
 
 export default defineConfig({
   test: {
+    server: {
+      deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
+    },
     env: {
       DEV_REVIEW_HOME: path.join(
         os.tmpdir(),
@@ -24,6 +27,9 @@ export default defineConfig({
       {
         resolve: { alias: reviewTestAliases },
         test: {
+          server: {
+            deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
+          },
           name: "shared-module-graph",
           environment: "node",
           isolate: false,

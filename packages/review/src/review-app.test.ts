@@ -28,7 +28,7 @@ const discovery = {
 };
 
 const runtime = (
-  fetch: typeof globalThis.fetch,
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>,
   read: () => Promise<typeof discovery | null> = async () => discovery,
 ) => ({
   launch,
@@ -40,7 +40,9 @@ const runtime = (
 describe("native Review picker", () => {
   it("asks for the snapshot the id lookup needs, not the block index", async () => {
     // Unversioned reads answer block descriptors, not the summary.
-    const fetch = vi.fn<typeof globalThis.fetch>(async (url, init) => {
+    const fetch = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async (url, init) => {
       if (String(url).endsWith("/health")) return healthyResponse();
 
       if (init?.method === "POST") return Response.json({ ok: true });
@@ -68,7 +70,9 @@ describe("native Review picker", () => {
     ]);
   });
   it("offers only undismissed reviews from the current repository and handles cancellation", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
+    const fetch = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async (url) =>
       String(url).endsWith("/health")
         ? healthyResponse()
         : Response.json([
@@ -107,7 +111,9 @@ describe("native Review picker", () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
   it("surfaces a missing native review without trying a different store", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
+    const fetch = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async (url) =>
       String(url).endsWith("/health")
         ? healthyResponse()
         : Response.json({ error: "Not found" }, { status: 404 }),
@@ -123,7 +129,9 @@ describe("native Review picker", () => {
     const launched = vi.fn<typeof launch>(launch);
     let reads = 0;
 
-    const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
+    const fetch = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async (url) =>
       String(url).endsWith("/health")
         ? healthyResponse()
         : Response.json({ reviewId: "review", title: "Native" }),
@@ -149,9 +157,9 @@ describe("native Review picker", () => {
   it("reports an unusable pointer instead of launching a second Desktop", async () => {
     const launched = vi.fn<typeof launch>(launch);
 
-    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
-      Response.json({ ok: true }),
-    );
+    const fetch = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => Response.json({ ok: true }));
 
     await expect(
       runReviewAppPick(
@@ -173,7 +181,9 @@ describe("native Review picker", () => {
   it("reports the instance as not running when the pointer leads nowhere", async () => {
     const launched = vi.fn<typeof launch>(launch);
 
-    const fetch = vi.fn<typeof globalThis.fetch>(async () => {
+    const fetch = vi.fn<
+      (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+    >(async () => {
       throw new Error("connection refused");
     });
 
@@ -227,7 +237,9 @@ describe("native Review picker", () => {
 
 /** Healthy Desktop: answers the summary read, accepts every post. */
 function desktopFetch() {
-  return vi.fn<typeof globalThis.fetch>(async (url, init) =>
+  return vi.fn<
+    (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+  >(async (url, init) =>
     String(url).endsWith("/health")
       ? healthyResponse()
       : Response.json(

@@ -19,32 +19,28 @@ Report security vulnerabilities privately as described in
 
 ## Setup
 
-Whiteboard requires Node.js 24 and pnpm 11. See the
-[desktop prerequisites](apps/review-desktop/README.md#prerequisites), then run
+Whiteboard uses Bun 1.4.2 or newer and Hutch 0.27.1. The native desktop
+build currently requires macOS on Apple Silicon. Install Hutch, then run
 from the repository root:
 
 ```sh
-pnpm install
-pnpm dev
+curl -fsSL https://hutch.blackboard.sh/hutch/install.sh | bash -s -- --version 0.27.1
+bun install
+bun dev
 ```
 
-A dev build can run alongside an installed Whiteboard. They share the same
-data, so commands and your agent's `whiteboard` MCP server talk to one selected
-app. Run `whiteboard instances` to see which one, `whiteboard instances use
-<key>` to change the default, or set `DEV_REVIEW_INSTANCE=<key>` in the shell
-you start your agent from. Reconnect the MCP server after switching.
+The desktop uses `~/.dev-fast/review-electrobun` by default. To use an existing
+profile, set `DEV_REVIEW_HOME` when starting it. Run `whiteboard instances` to
+see running apps and `whiteboard instances use <key>` to select one for the
+CLI and your agent. Reconnect the MCP server after switching.
 
 ## Repository layout
 
 The product is named Whiteboard, but package names and directories still use
 `review`.
 
-- `apps/review-desktop/` contains the desktop app, packaging scripts, and the
-  vendored Code - OSS fork. See
-  [apps/review-desktop/README.md](apps/review-desktop/README.md) for build,
-  packaging, and release details, and
-  [apps/review-desktop/UPSTREAM](apps/review-desktop/UPSTREAM) for the
-  Code - OSS source revision and fork differences.
+- `apps/review-electrobun/` contains the native Electrobun/Cottontail desktop
+  host. It launches the shared backend as a Bun sidecar.
 - `packages/review/` contains the `whiteboard` command-line interface, embedded
   server, and canvas.
 - `packages/review-protocol/` contains the shared process contracts.
@@ -54,31 +50,34 @@ The product is named Whiteboard, but package names and directories still use
   coding agents.
 - `packages/local-vcs/` contains local version-control helpers.
 
-The files under `apps/review-desktop/code-oss/` include upstream contribution
-and security documents. Those files apply to Microsoft's VS Code project; this
-document and [SECURITY.md](SECURITY.md) apply to Whiteboard.
+The former Code OSS fork is available from this repository's Git history.
+Its upstream was [microsoft/vscode](https://github.com/microsoft/vscode/tree/8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8)
+(commit `8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8`, also tagged locally as
+`code-oss-upstream-8a7abeba`).
 
 ## Testing
 
 Run the full check suite before you open a pull request:
 
 ```sh
-pnpm run ci
+bun run ci
 ```
 
 DOM-facing tests run in Chromium through Vitest Browser Mode. Install the
 browser once, then run the headless suite or watch mode:
 
 ```sh
-pnpm --filter @dev.fast/review exec playwright install chromium
-pnpm --filter @dev.fast/review test:browser
-pnpm --filter @dev.fast/review test:browser:watch
+cd packages/review/app
+bun --bun run playwright install chromium
+cd ../../..
+bun run --filter @dev.fast/review-canvas test:browser
+bun run --filter @dev.fast/review-canvas test:browser:watch
 ```
 
-Pure Node, filesystem, and server tests run through
-`pnpm --filter @dev.fast/review test:node`.
+Filesystem and server tests run through
+`bun run --filter @dev.fast/review test:node`.
 
-`pnpm --filter @dev.fast/review test:legacy-corpus` replays a private corpus of
+`bun run --filter @dev.fast/review test:legacy-corpus` replays a private corpus of
 legacy Reviews (from before the Whiteboard rename) through migration. Point
 `REVIEW_LEGACY_CORPUS` at a directory whose children are Review UUID folders;
 the script fails if the variable is unset. The corpus is copied before it is
@@ -102,7 +101,7 @@ description:
 - describe the behavior you added or changed;
 - explain how you validated it; and
 - call out anything reviewers should pay attention to, such as stored-data
-  migrations, telemetry changes, or changes to the vendored Code - OSS fork.
+  migrations, telemetry changes, or desktop runtime changes.
 
 If your change adds or changes telemetry, update
 [docs/telemetry.md](docs/telemetry.md) in the same pull request.
