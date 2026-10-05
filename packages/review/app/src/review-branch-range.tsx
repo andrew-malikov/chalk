@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { fontSize, radius } from "@canvas/scale.stylex";
 import * as stylex from "@stylexjs/stylex";
 import { type ReactElement, useEffect, useRef, useState } from "react";
@@ -88,7 +89,9 @@ function BranchRef({
   const tooltip = useTooltip(`${label} ${name}`, { detail: "Click to copy" });
 
   return (
-    <button
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
       type="button"
       {...stylex.props(
         styles.chip,
@@ -107,7 +110,7 @@ function BranchRef({
       <span {...stylex.props(styles.feedback)} role="status">
         {copied ? "Copied" : ""}
       </span>
-    </button>
+    </ButtonPrimitive>
   );
 }
 

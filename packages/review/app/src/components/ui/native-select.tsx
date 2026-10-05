@@ -1,7 +1,6 @@
+import { cn } from "@canvas/lib/utils";
 import { ChevronDownIcon } from "lucide-react";
 import * as React from "react";
-
-import { cn } from "../../lib/utils";
 
 function NativeSelect({
   className,

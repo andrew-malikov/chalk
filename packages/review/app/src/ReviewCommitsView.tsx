@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { fontSize, fontWeight, radius } from "@canvas/scale.stylex";
 import { IconButton } from "@canvas/ui/button";
 import { textStyles } from "@canvas/ui/text";
@@ -133,7 +134,9 @@ function CommitRow({
   return (
     <article {...stylex.props(styles.card, expanded && styles.cardExpanded)}>
       <div {...stylex.props(styles.header, expanded && styles.headerExpanded)}>
-        <button
+        <ButtonPrimitive
+          variant="ghost"
+          size="xs"
           type="button"
           {...stylex.props(chevronMarker, styles.toggle)}
           aria-expanded={expanded}
@@ -142,7 +145,7 @@ function CommitRow({
         >
           <DisclosureChevron expanded={expanded} xstyle={styles.chevron} />
           <strong {...stylex.props(styles.subject)}>{commit.subject}</strong>
-        </button>
+        </ButtonPrimitive>
         <span {...stylex.props(styles.actions)}>
           <span {...stylex.props(styles.sha)}>{commit.commit.slice(0, 8)}</span>
           <CopyButton
@@ -177,7 +180,9 @@ function CommitRow({
             <p {...stylex.props(styles.filesNote)}>{files.error.message}</p>
           ) : null}
           {visibleFiles?.files.map((file) => (
-            <button
+            <ButtonPrimitive
+              variant="ghost"
+              size="xs"
               type="button"
               {...stylex.props(styles.file)}
               key={file.path}
@@ -189,16 +194,18 @@ function CommitRow({
                 additions={file.additions}
                 deletions={file.deletions}
               />
-            </button>
+            </ButtonPrimitive>
           ))}
           {omittedFileCount > 0 ? (
-            <button
+            <ButtonPrimitive
+              variant="ghost"
+              size="xs"
               type="button"
               {...stylex.props(styles.filesFooter)}
               onClick={() => onOpenDiff(commit, "row")}
             >
               {countLabel(omittedFileCount, "more file")}
-            </button>
+            </ButtonPrimitive>
           ) : null}
         </div>
       ) : null}

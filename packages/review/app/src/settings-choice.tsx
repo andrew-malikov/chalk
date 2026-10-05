@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import * as stylex from "@stylexjs/stylex";
 
 import { controlStyles } from "./controls-styles";
@@ -26,7 +27,9 @@ export function Choice<T extends string>({
       aria-label={label}
     >
       {choices.map((choice) => (
-        <button
+        <ButtonPrimitive
+          variant="ghost"
+          size="xs"
           key={choice}
           type="button"
           role="radio"
@@ -39,7 +42,7 @@ export function Choice<T extends string>({
           onClick={() => onChange(choice)}
         >
           {labels[choice]}
-        </button>
+        </ButtonPrimitive>
       ))}
     </div>
   );

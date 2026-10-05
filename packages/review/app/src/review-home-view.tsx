@@ -6,7 +6,7 @@ import {
   radius,
   tracking,
 } from "@canvas/scale.stylex";
-import { Button, IconButton, buttonStyles } from "@canvas/ui/button";
+import { Button, IconButton } from "@canvas/ui/button";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { textStyles } from "@canvas/ui/text";
 import type {
@@ -700,12 +700,9 @@ function TableMenu<T extends string>({
       value={value}
       options={options}
       onChange={onChange}
-      triggerStyle={[
-        buttonStyles.base,
-        buttonStyles.secondary,
-        buttonStyles.large,
-        styles.menuTrigger,
-      ]}
+      variant="outline"
+      size="sm"
+      triggerStyle={styles.menuTrigger}
     >
       <svg
         {...stylex.props(styles.menuIcon)}

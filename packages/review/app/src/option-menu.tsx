@@ -1,3 +1,4 @@
+import { Button } from "@canvas/components/ui/button";
 import * as stylex from "@stylexjs/stylex";
 import type { ReactNode } from "react";
 
@@ -11,12 +12,16 @@ export function OptionMenu<T extends string>({
   onChange,
   triggerStyle,
   triggerProps,
+  variant = "ghost",
+  size = "xs",
   children,
 }: {
   ariaLabel: string;
   value: T | undefined;
   options: { value: T; label: string; icon?: ReactNode }[];
   onChange(value: T): void;
+  variant?: "ghost" | "outline";
+  size?: "xs" | "sm";
   triggerStyle?: stylex.StyleXStyles;
   triggerProps?: { "aria-pressed"?: boolean };
   children: ReactNode;
@@ -36,7 +41,9 @@ export function OptionMenu<T extends string>({
 
   return (
     <div {...stylex.props(styles.menu)}>
-      <button
+      <Button
+        variant={variant}
+        size={size}
         {...stylex.props(triggerStyle)}
         type="button"
         aria-label={ariaLabel}
@@ -51,7 +58,7 @@ export function OptionMenu<T extends string>({
         >
           <path d={menu.open ? "m5 12 5-5 5 5" : "m5 8 5 5 5-5"} />
         </svg>
-      </button>
+      </Button>
     </div>
   );
 }

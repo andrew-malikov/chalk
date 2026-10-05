@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { documentType } from "@canvas/document-type.stylex";
 import { fontSize, fontWeight } from "@canvas/scale.stylex";
 import { IconButton } from "@canvas/ui/button";
@@ -681,7 +682,9 @@ function TraceQuotePeekPanel({
   const events = loadedTrace.events;
 
   const headerAccessory = (
-    <button
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
       type="button"
       {...stylex.props(traceStyles.peekOpenFull)}
       onClick={() => {
@@ -694,7 +697,7 @@ function TraceQuotePeekPanel({
       }}
     >
       Full Trace ↗
-    </button>
+    </ButtonPrimitive>
   );
 
   return (
@@ -1015,7 +1018,9 @@ export function GuidedTourPanel({
         tour.stops.length > 0 ? (
           <div {...stylex.props(tourStyles.floatingFooter)}>
             {showIntroPill ? (
-              <button
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
                 type="button"
                 {...stylex.props(tourStyles.pill, tourStyles.pillIntro)}
                 onClick={() => {
@@ -1030,7 +1035,7 @@ export function GuidedTourPanel({
                 >
                   ↓
                 </span>
-              </button>
+              </ButtonPrimitive>
             ) : (
               <div
                 {...stylex.props(tourStyles.pill)}
@@ -1107,13 +1112,15 @@ export function GuidedTourPanel({
             <>
               <div {...stylex.props(tourStyles.endCap)}>
                 <span>End of tour</span>
-                <button
+                <ButtonPrimitive
+                  variant="ghost"
+                  size="xs"
                   type="button"
                   {...stylex.props(tourStyles.endCapButton)}
                   onClick={() => stepTo(0)}
                 >
                   ↑ Back to step 1
-                </button>
+                </ButtonPrimitive>
               </div>
               <div
                 ref={tailRef}

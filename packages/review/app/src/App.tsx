@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { Button, IconButton } from "@canvas/ui/button";
 import { StatusBanner } from "@canvas/ui/status-banner";
 import { surfaceStyles } from "@canvas/ui/surface";
@@ -33,7 +34,6 @@ import {
   AuthoringActivityBadge,
   ReviewSurfaceLabel,
 } from "./authoring-activity";
-import { BugReportControl } from "./bug-report-dialog";
 import { controlStyles } from "./controls-styles";
 import {
   ReviewDebugSettingsProvider,
@@ -45,7 +45,7 @@ import { ReviewDiffView } from "./DiffView";
 import { useDocumentEmbedScroll } from "./document-embed-scroll";
 import { documentStyles } from "./document-styles";
 import { useReviewSession } from "./host/review-session";
-import { DiscordIcon, MarkerUnderline, SettingsSlidersIcon } from "./icons";
+import { MarkerUnderline, SettingsSlidersIcon } from "./icons";
 import {
   appMarker,
   detailHostMarker,
@@ -93,7 +93,6 @@ import {
   motion,
   radius,
 } from "./scale.stylex";
-import { ShareControl } from "./share-control";
 import { shellStyles } from "./shell-styles";
 import { useRightPanelResize } from "./side-panel-resizer";
 import { selectActiveSoftwareMapModel } from "./software-map-selection";
@@ -301,7 +300,6 @@ function ReviewLayoutContent({
   useEffect(() => {
     if (scratchpad) captureUiEvent(session, "scratchpad_opened");
   }, [scratchpad, session]);
-  const discordTooltip = useTooltip("Join our Discord community");
   const sourceTreeTooltip = useTooltip("Open full read-only source");
   const panelStore = useReviewPanelStore();
   useSuppressPanelMotionOnCanvasResume(appRef);
@@ -535,7 +533,9 @@ function ReviewLayoutContent({
                 aria-label="Session views"
               >
                 {reviewViews.map((view) => (
-                  <button
+                  <ButtonPrimitive
+                    variant="ghost"
+                    size="xs"
                     key={view}
                     type="button"
                     aria-label={
@@ -597,7 +597,7 @@ function ReviewLayoutContent({
                       </span>
                     )}
                     <MarkerUnderline active={activeView === view} />
-                  </button>
+                  </ButtonPrimitive>
                 ))}
               </div>
             </div>
@@ -648,21 +648,6 @@ function ReviewLayoutContent({
               </div>
               <ReviewStackSelector />
               <AskHistoryControl />
-              <ShareControl />
-              <IconButton
-                xstyle={shellStyles.topbarItem}
-                ref={discordTooltip}
-                aria-label="Join our Discord community"
-                onClick={() => {
-                  captureUiEvent(session, "discord_clicked", {
-                    via: "topbar",
-                  });
-                  session.surface.post({ name: "joinDiscord", args: {} });
-                }}
-              >
-                <DiscordIcon xstyle={controlStyles.chromeIcon} />
-              </IconButton>
-              <BugReportControl />
               <ReviewBatonChip outcome={review.submissionOutcome} />
               <DiffLayoutControl />
               {!scratchpad &&
@@ -857,13 +842,15 @@ function CommitDiffScopeBar({
 }) {
   return (
     <div {...stylex.props(scopeBarStyles.bar)}>
-      <button
+      <ButtonPrimitive
+        variant="ghost"
+        size="xs"
         type="button"
         {...stylex.props(scopeBarStyles.back)}
         onClick={onBack}
       >
         <span aria-hidden="true">←</span> Commits
-      </button>
+      </ButtonPrimitive>
       <code {...stylex.props(scopeBarStyles.sha)} title={commit.commit}>
         {commit.commit.slice(0, 8)}
       </code>
@@ -1023,7 +1010,9 @@ function MapSettingsControl(): ReactElement {
               Map node tint
             </span>
             {(["none", "slate", "mineral"] as const).map((option) => (
-              <button
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
                 key={option}
                 type="button"
                 {...stylex.props(
@@ -1034,7 +1023,7 @@ function MapSettingsControl(): ReactElement {
                 onClick={() => setNodeTint(option)}
               >
                 {nodeTintLabel(option)}
-              </button>
+              </ButtonPrimitive>
             ))}
           </div>
         </section>

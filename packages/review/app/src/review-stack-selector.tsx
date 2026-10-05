@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import {
   fontSize,
   fontWeight,
@@ -178,7 +179,9 @@ function LayerRow({
   }
 
   return (
-    <button
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
       {...stylex.props(styles.row, styles.rowButton)}
       type="button"
       data-relation={layer.relation}
@@ -194,7 +197,7 @@ function LayerRow({
       }}
     >
       {content}
-    </button>
+    </ButtonPrimitive>
   );
 }
 

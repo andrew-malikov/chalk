@@ -1,9 +1,10 @@
-/* Prefixed shadcn utilities; the canvas keeps its own reset and theme. */
+/* Shared shadcn utilities; preserve the canvas reset and theme. */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme) prefix(tw);
 @import "tailwindcss/utilities.css" layer(utilities) prefix(tw) source(none);
 @source "./components";
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@source "./ui";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-review-theme="dark"], [data-review-theme="dark"] *));
 
 @theme inline {
   --color-background: var(--bg);
@@ -22,26 +23,26 @@
 }
 
 @layer base {
-  .review-shell [data-slot] {
+  [data-slot] {
     box-sizing: border-box;
     border-width: 0;
     border-style: solid;
   }
-  .review-shell button[data-slot],
-  .review-shell select[data-slot] {
+  button[data-slot],
+  select[data-slot] {
     font-family: inherit;
     color: inherit;
     background-color: transparent;
     cursor: pointer;
   }
-  .review-shell button[data-slot] {
+  button[data-slot] {
     padding: 0;
   }
-  .review-shell button[data-slot]:disabled {
+  button[data-slot]:disabled {
     cursor: default;
   }
-  .review-shell [data-slot="dialog-title"],
-  .review-shell [data-slot="dialog-description"] {
+  [data-slot="dialog-title"],
+  [data-slot="dialog-description"] {
     margin: 0;
   }
 }

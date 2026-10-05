@@ -1,3 +1,4 @@
+import { Input } from "@canvas/components/ui/input";
 import { fontSize, radius } from "@canvas/scale.stylex";
 import { type StyleArg, withClass } from "@canvas/stylex-props";
 import { tokens } from "@canvas/tokens.stylex";
@@ -11,7 +12,7 @@ type TextFieldProps = Omit<ComponentProps<"input">, "className" | "style"> & {
 
 export function TextField({ className, xstyle, ...props }: TextFieldProps) {
   return (
-    <input {...props} {...withClass(className, fieldStyles.box, xstyle)} />
+    <Input {...props} {...withClass(className, fieldStyles.box, xstyle)} />
   );
 }
 

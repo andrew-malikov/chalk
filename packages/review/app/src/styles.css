@@ -5,3 +5,5 @@
 @import "./fonts/fonts.css";
 @import "@xyflow/react/dist/style.css" layer(vendor);
 @import "./global.css";
+
+@import "./ui.css";

@@ -1,10 +1,10 @@
 "use client";
 
+import { cn } from "@canvas/lib/utils";
 import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import * as React from "react";
 
-import { cn } from "../../lib/utils";
 import { Button } from "./button";
 
 function Dialog({

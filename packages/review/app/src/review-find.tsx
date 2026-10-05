@@ -1,3 +1,5 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import { Input } from "@canvas/components/ui/input";
 import { fontSize, layer } from "@canvas/scale.stylex";
 import { IconButton } from "@canvas/ui/button";
 import { surfaceStyles } from "@canvas/ui/surface";
@@ -391,7 +393,7 @@ function ReviewFindWidget({
           invalid ? styles.inputShellInvalid : null,
         )}
       >
-        <input
+        <Input
           ref={inputRef}
           {...stylex.props(styles.input)}
           aria-label="Find"
@@ -488,7 +490,9 @@ function FindToggle({
   children: ReactNode;
 }) {
   return (
-    <button
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
       type="button"
       {...stylex.props(styles.toggle, active && styles.togglePressed, xstyle)}
       aria-label={label}
@@ -498,7 +502,7 @@ function FindToggle({
       onClick={onClick}
     >
       {children}
-    </button>
+    </ButtonPrimitive>
   );
 }
 

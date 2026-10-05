@@ -1,3 +1,13 @@
+import { Button } from "@canvas/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@canvas/components/ui/dialog";
+import { NativeSelect } from "@canvas/components/ui/native-select";
 import {
   mountReviewCanvas,
   reviewCanvasThemeClass,
@@ -52,16 +62,6 @@ import {
   openSourceWorkspace,
 } from "./bridge";
 import { createCanvasUi } from "./canvas-ui";
-import { Button } from "./components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./components/ui/dialog";
-import { NativeSelect } from "./components/ui/native-select";
 import { mountExternalLinks } from "./external-links";
 import type {
   AppRPCClient,
@@ -70,7 +70,6 @@ import type {
   ShellPreferences,
 } from "./rpc";
 
-import "./ui.css";
 import "./shell.css";
 
 type Options = {

@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 
 import stylex from "@stylexjs/unplugin";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { type UserConfig, defineConfig, mergeConfig } from "vite";
 
@@ -26,6 +27,7 @@ export function createReviewCanvasConfig(overrides: UserConfig = {}) {
     defineConfig({
       root: __dirname,
       plugins: [
+        tailwindcss(),
         pierreTrustedTypesPlugin(),
         // Appends the collected StyleX rules to the canvas CSS asset in its own
         // generateBundle, which runs before the scoping plugin below.

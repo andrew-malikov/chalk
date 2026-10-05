@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import type { ReviewKeymapChoice } from "@dev.fast/review-protocol";
 import type { ReviewComponentProps } from "@review/review-document-data";
 import * as stylex from "@stylexjs/stylex";
@@ -36,7 +37,9 @@ export function TutorialKeymapPicker(
         const disabled = !tutorial || pending !== null;
 
         return (
-          <button
+          <ButtonPrimitive
+            variant="ghost"
+            size="xs"
             key={choice.value}
             type="button"
             aria-pressed={pressed}
@@ -55,7 +58,7 @@ export function TutorialKeymapPicker(
             }}
           >
             {pending === choice.value ? "Applying…" : choice.label}
-          </button>
+          </ButtonPrimitive>
         );
       })}
     </div>

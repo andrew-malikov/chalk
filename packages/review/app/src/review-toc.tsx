@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { tocLayer } from "@canvas/review-toc.stylex";
 import { fontSize, fontWeight, motion } from "@canvas/scale.stylex";
 import { IconButton } from "@canvas/ui/button";
@@ -354,7 +355,9 @@ export function ReviewToc({
                 entry.level === "h3" && styles.itemH3,
               )}
             >
-              <button
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
                 type="button"
                 aria-current={active === entry.id ? "location" : undefined}
                 {...stylex.props(
@@ -374,7 +377,7 @@ export function ReviewToc({
                   {entry.number}
                 </span>
                 <span {...stylex.props(styles.text)}>{entry.text}</span>
-              </button>
+              </ButtonPrimitive>
             </li>
           ))}
         </ul>

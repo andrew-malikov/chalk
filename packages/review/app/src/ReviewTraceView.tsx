@@ -1,3 +1,8 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@canvas/components/ui/native-select";
 import { Button } from "@canvas/ui/button";
 import { Chip } from "@canvas/ui/chip";
 import { EmptyState } from "@canvas/ui/empty-state";
@@ -208,7 +213,8 @@ export function ReviewTraceView({
             <span {...stylex.props(textStyles.eyebrow, styles.kicker)}>
               Trace source
             </span>
-            <select
+            <NativeSelect
+              size="sm"
               {...stylex.props(fieldStyles.box)}
               aria-label="Trace source"
               value={activeSource ?? ""}
@@ -220,11 +226,11 @@ export function ReviewTraceView({
               }}
             >
               {sourceChoices.map((source) => (
-                <option key={source} value={source}>
+                <NativeSelectOption key={source} value={source}>
                   {source === "s3" ? "S3/R2 bucket" : "Hosted store"}
-                </option>
+                </NativeSelectOption>
               ))}
-            </select>
+            </NativeSelect>
           </label>
         )}
         {list.status === "loaded" &&
@@ -294,7 +300,9 @@ export function ReviewTraceView({
                   const itemTitle = target.title;
 
                   return (
-                    <button
+                    <ButtonPrimitive
+                      variant="ghost"
+                      size="xs"
                       key={target.key}
                       type="button"
                       role="option"
@@ -338,7 +346,7 @@ export function ReviewTraceView({
                       ) : isActive ? (
                         <span {...stylex.props(styles.pickerItemCheck)}>✓</span>
                       ) : null}
-                    </button>
+                    </ButtonPrimitive>
                   );
                 })}
               </div>

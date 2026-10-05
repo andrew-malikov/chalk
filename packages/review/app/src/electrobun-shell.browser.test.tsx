@@ -1027,9 +1027,11 @@ test("transient health loss disables the shell and retries the live control conn
     ).toHaveProperty("disabled", true),
   );
   await vi.waitFor(() => expect(controlAttachments).toBe(2), { timeout: 4000 });
-  expect(
-    container.querySelector('[aria-label="Open tutorial"]'),
-  ).toHaveProperty("disabled", false);
+  await vi.waitFor(() =>
+    expect(
+      container.querySelector('[aria-label="Open tutorial"]'),
+    ).toHaveProperty("disabled", false),
+  );
   await act(async () =>
     controlFrame({
       event: "desktop-verb",
