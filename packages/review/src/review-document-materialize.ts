@@ -190,7 +190,7 @@ function materializeChildren(
     if (!name) {
       errors.push(
         isPublishAuditComponent(child.type)
-          ? "Document-local components are not supported; use the Whiteboard components."
+          ? "Document-local components are not supported; use the Blackboard components."
           : `Unsupported element type ${String(child.type)}.`,
       );
       continue;

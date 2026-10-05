@@ -46,13 +46,13 @@ describe("agent-trace-hooks", () => {
 
     const content = JSON.parse(await readFile(first.path, "utf8"));
     expect(content.hooks.SessionStart[0].hooks[0].command).toBe(
-      "whiteboard trace hook SessionStart",
+      "blackboard trace hook SessionStart",
     );
     expect(content.hooks.UserPromptSubmit[0].hooks[0].command).toBe(
-      "whiteboard trace hook UserPromptSubmit",
+      "blackboard trace hook UserPromptSubmit",
     );
     expect(content.hooks.SessionEnd[0].hooks[0].command).toBe(
-      "whiteboard trace hook SessionEnd",
+      "blackboard trace hook SessionEnd",
     );
 
     const second = await installClaudeTraceHook(homeDir);
@@ -101,11 +101,11 @@ command = "review trace hook SessionEnd"
 
     expect((await installCodexTraceHook(homeDir)).modified).toBe(true);
     const installed = await readFile(configPath, "utf8");
-    expect(installed).toContain("whiteboard trace hook UserPromptSubmit");
-    expect(installed.match(/whiteboard trace hook SessionStart/g)).toHaveLength(
+    expect(installed).toContain("blackboard trace hook UserPromptSubmit");
+    expect(installed.match(/blackboard trace hook SessionStart/g)).toHaveLength(
       1,
     );
-    expect(installed.match(/whiteboard trace hook SessionEnd/g)).toHaveLength(
+    expect(installed.match(/blackboard trace hook SessionEnd/g)).toHaveLength(
       1,
     );
     expect((await installCodexTraceHook(homeDir)).modified).toBe(false);
@@ -114,7 +114,7 @@ command = "review trace hook SessionEnd"
     const removed = await readFile(configPath, "utf8");
     expect(removed).toContain('model = "gpt-5"');
     expect(removed).toContain('keep = "yes"');
-    expect(removed).not.toContain("whiteboard trace hook");
+    expect(removed).not.toContain("blackboard trace hook");
   });
 
   it("removes owned hooks and preserves unrelated agent configuration", async () => {
@@ -138,7 +138,7 @@ command = "review trace hook SessionEnd"
       '"customKey": "keep"',
     );
     expect(await readFile(claude.path, "utf8")).not.toContain(
-      "whiteboard trace hook",
+      "blackboard trace hook",
     );
     expect(await readFile(codex.path, "utf8")).toBe('model = "gpt-5"\n');
     expect(existsSync(pi.path)).toBe(false);
@@ -189,9 +189,9 @@ describe("hook ownership", () => {
     for (const command of [
       "review",
       "/opt/review",
-      "whiteboard",
-      "/opt/whiteboard",
-      "'/space here/whiteboard'",
+      "blackboard",
+      "/opt/blackboard",
+      "'/space here/blackboard'",
       "'/space here/review'",
       "'/it'\"'\"'s here/review'",
     ]) {
@@ -200,7 +200,7 @@ describe("hook ownership", () => {
       );
     }
 
-    expect(traceHookCommandOwner("whiteboard trace hook SessionEnd")).toBe(
+    expect(traceHookCommandOwner("blackboard trace hook SessionEnd")).toBe(
       "review",
     );
 

@@ -49,7 +49,7 @@ export async function syncReviewTrace(input: {
 
   if (!storage) {
     throw new Error(
-      `S3/R2 storage is not configured. Run \`whiteboard trace allow .\` to configure trace capture.`,
+      `S3/R2 storage is not configured. Run \`blackboard trace allow .\` to configure trace capture.`,
     );
   }
 

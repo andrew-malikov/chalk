@@ -103,7 +103,7 @@ export function AskDeleteButton({
 }
 
 /** The header's delete for the open conversation, once it is saved: it
- * leaves Whiteboard, and the panel returns to the saved conversations. The
+ * leaves Blackboard, and the panel returns to the saved conversations. The
  * agent keeps its own transcript. */
 export function AskDeleteThreadButton(): ReactElement | null {
   const threadId = useContext(OpenThreadContext)?.threadId;
@@ -124,7 +124,7 @@ export function AskDeleteThreadButton(): ReactElement | null {
             else
               showToast({
                 kind: "error",
-                text: "Whiteboard could not delete this conversation.",
+                text: "Blackboard could not delete this conversation.",
               });
           })
         }

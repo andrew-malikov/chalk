@@ -16,7 +16,7 @@ import {
 import { piTakesMcp, piWithMcp } from "@review/ask/pi-mcp.js";
 import { type AskAgentId, askAgentIds } from "@review/ask/thread-state.js";
 
-/** How Whiteboard runs an agent that speaks ACP on stdio. */
+/** How Blackboard runs an agent that speaks ACP on stdio. */
 type AskAgentLaunch =
   /** An ACP adapter's executable entry, run with this server's Bun, which
    * drives the user's CLI with the user's login. */
@@ -35,7 +35,7 @@ interface AskAgentSpec {
   /** Where its installer puts it when that is not on PATH, under home. */
   installDirs?: string[];
   launch: AskAgentLaunch;
-  /** The session mode Whiteboard starts the agent in, when it has one that
+  /** The session mode Blackboard starts the agent in, when it has one that
    * keeps the checkout as it is. Read-only is best effort: an agent without
    * one still answers. */
   readOnlyMode?: string;
@@ -50,7 +50,7 @@ interface AskAgentSpec {
   mcp?: AskAgentMcp;
   /** How it edits and runs commands without asking, in place of its
    * read-only mode and settings, when the reviewer bypasses permissions.
-   * Whiteboard also allows whatever it still asks. */
+   * Blackboard also allows whatever it still asks. */
   bypass?: AskAgentBypass;
 }
 
@@ -82,9 +82,9 @@ export const askAgents: Record<AskAgentId, AskAgentSpec> = {
     },
     signIn: "claude auth login",
     // Plan mode would end each answer asking to leave it, and it blocks the
-    // Whiteboard tools that edit the review. Claude instead runs in its
+    // Blackboard tools that edit the review. Claude instead runs in its
     // default mode without its file tools, and without bypass, so commands
-    // still ask; the review is edited through Whiteboard's MCP server.
+    // still ask; the review is edited through Blackboard's MCP server.
     readOnlyMode: "default",
     sessionMeta: {
       claudeCode: {
@@ -181,7 +181,7 @@ export interface AskAgentStatus {
   available: boolean;
   /** Whether it has a mode that keeps the checkout as it is. */
   readOnly: boolean;
-  /** Whether Whiteboard can have it edit and run commands without asking. */
+  /** Whether Blackboard can have it edit and run commands without asking. */
   bypass: boolean;
 }
 

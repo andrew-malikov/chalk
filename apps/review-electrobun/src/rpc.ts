@@ -3,6 +3,10 @@ import type {
   ReviewDiffLayout,
   ReviewInlineEditorRange,
 } from "@dev.fast/review-protocol";
+import {
+  REVIEW_KEYMAP_CHOICES,
+  REVIEW_TUTORIAL_STEP_IDS,
+} from "@dev.fast/review-protocol";
 import { z } from "zod";
 
 export const preferencesSchema = z.strictObject({
@@ -10,6 +14,14 @@ export const preferencesSchema = z.strictObject({
   diffLayout: z.enum(["split", "unified"]),
   reviewIds: z.array(z.string().min(1)),
   activeReviewId: z.string().min(1).nullable(),
+  keymap: z.enum(REVIEW_KEYMAP_CHOICES).default("none"),
+  tutorialProgress: z
+    .strictObject({
+      version: z.literal(1),
+      checked: z.array(z.enum(REVIEW_TUTORIAL_STEP_IDS)),
+      dismissed: z.boolean(),
+    })
+    .default(() => ({ version: 1 as const, checked: [], dismissed: false })),
 });
 
 export type ShellPreferences = z.infer<typeof preferencesSchema>;
@@ -19,6 +31,8 @@ export const defaultPreferences: ShellPreferences = {
   diffLayout: "split",
   reviewIds: [],
   activeReviewId: null,
+  keymap: "none",
+  tutorialProgress: { version: 1, checked: [], dismissed: false },
 };
 
 export type HostState =

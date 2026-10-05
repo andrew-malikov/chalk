@@ -46,7 +46,7 @@ async function offeredBy(
 
   try {
     const connection = process.connect(
-      client({ name: "whiteboard" }).onNotification(
+      client({ name: "blackboard" }).onNotification(
         methods.client.session.update,
         ({ params: { update } }) => {
           if (update.sessionUpdate === "available_commands_update")
@@ -60,7 +60,7 @@ async function offeredBy(
       {
         protocolVersion: PROTOCOL_VERSION,
         clientCapabilities: { _meta: { parameterizedModelPicker: true } },
-        clientInfo: { name: "whiteboard", title: "Whiteboard", version: "1" },
+        clientInfo: { name: "blackboard", title: "Blackboard", version: "1" },
       },
     );
 
@@ -127,18 +127,18 @@ async function offeredBy(
   }
 }
 
-/** Whiteboard's own tools, for every Ask session. */
+/** Blackboard's own tools, for every Ask session. */
 export interface AskTools {
   /** Its MCP server, for agents whose model gets it. */
   mcpServers?: AskMcpServers;
-  /** A shell command that runs Whiteboard's CLI against this server, for
+  /** A shell command that runs Blackboard's CLI against this server, for
    * the agents that don't. */
   cli?: () => string | undefined;
   /** Whether an agent's model gets the MCP servers it is given. */
   takesMcp?: (agent: AskAgentId) => Promise<boolean>;
 }
 
-/** How an agent reaches Whiteboard's tools, which its first prompt says. */
+/** How an agent reaches Blackboard's tools, which its first prompt says. */
 export type AskToolsReach =
   | { kind: "mcp" }
   | { kind: "cli"; command: string }
@@ -161,7 +161,7 @@ export class AskThreads {
     this.mcpServers = tools.mcpServers ?? (() => []);
   }
 
-  /** How the agent's sessions reach Whiteboard's tools: the MCP tools they
+  /** How the agent's sessions reach Blackboard's tools: the MCP tools they
    * are given where its model gets them, else the CLI from its shell. */
   async reach(agent: AskAgentId): Promise<AskToolsReach> {
     if (

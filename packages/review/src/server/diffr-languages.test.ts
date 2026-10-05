@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 test("delegates full installation once and selects its cache outside the runtime", async () => {
-  temporary = await mkdtemp(path.join(os.tmpdir(), "whiteboard-diffr-"));
+  temporary = await mkdtemp(path.join(os.tmpdir(), "blackboard-diffr-"));
   vi.stubEnv("XDG_CACHE_HOME", path.join(temporary, "cache"));
   vi.stubEnv("REVIEW_DIFFR_BINARY", "");
   const root = path.join(temporary, "runtime");

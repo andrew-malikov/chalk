@@ -57,7 +57,7 @@ interface ReviewAppLauncherRuntime {
 
 export interface RunReviewAppLaunchInput {
   timeoutMs?: number;
-  /** Bring Whiteboard Desktop forward. */
+  /** Bring Blackboard Desktop forward. */
   focus?: boolean;
   /** Explicit Linux container opt-out from the Chromium sandbox. */
   noSandbox?: boolean;
@@ -129,7 +129,7 @@ export async function runReviewAppLaunch(
 
   if (selection.key !== "stable" && selection.key !== "preview")
     throw new Error(
-      `${reviewInstanceStartHint(selection)}; \`whiteboard app launch\` starts only installed apps.`,
+      `${reviewInstanceStartHint(selection)}; \`blackboard app launch\` starts only installed apps.`,
     );
 
   if (selection.source === "fallback" && running.length > 1)
@@ -202,7 +202,7 @@ export async function runReviewAppLaunch(
   }
 
   throw new Error(
-    `Whiteboard Desktop did not become ready within ${Math.ceil((input.timeoutMs ?? DEFAULT_LAUNCH_TIMEOUT_MS) / 1_000)} seconds after ${attempt.method}. Open Whiteboard Desktop once, then run \`whiteboard app launch\` again.${launchDiagnostics(attempt.logPath)}`,
+    `Blackboard Desktop did not become ready within ${Math.ceil((input.timeoutMs ?? DEFAULT_LAUNCH_TIMEOUT_MS) / 1_000)} seconds after ${attempt.method}. Open Blackboard Desktop once, then run \`blackboard app launch\` again.${launchDiagnostics(attempt.logPath)}`,
   );
 }
 
@@ -221,7 +221,7 @@ export async function focusReviewDesktop(
   if (!response.ok || !result.ok) {
     throw new Error(
       result.ok
-        ? `Whiteboard Desktop focus returned ${response.status}.`
+        ? `Blackboard Desktop focus returned ${response.status}.`
         : result.error,
     );
   }
@@ -309,7 +309,7 @@ export function launchDesktopApplication(
       : `the macOS bundle identifier "${release.bundleId}"`;
 
     // -n allows parallel profiles; -W exits with Desktop, so a startup crash
-    // surfaces early; --env carries Whiteboard's context.
+    // surfaces early; --env carries Blackboard's context.
     args = ["-n", "-W", ...(focus ? [] : ["-g"]), ...target];
 
     for (const [key, value] of Object.entries(env)) {
@@ -332,7 +332,7 @@ export function launchDesktopApplication(
   try {
     if (platform === "linux") {
       logPath = path.join(
-        mkdtempSync(path.join(tmpdir(), "whiteboard-launch-")),
+        mkdtempSync(path.join(tmpdir(), "blackboard-launch-")),
         "stderr.log",
       );
       logFd = openSync(logPath, "wx", 0o600);
@@ -373,7 +373,7 @@ function launchEvent(
 
 function launchFailure(attempt: DesktopLaunchAttempt, error: Error): Error {
   return new Error(
-    `Could not launch Whiteboard with ${attempt.method}: ${error.message}. Open Whiteboard once, then run \`whiteboard app launch\` again. A sandboxed agent must run it outside the sandbox.${launchDiagnostics(attempt.logPath)}`,
+    `Could not launch Blackboard with ${attempt.method}: ${error.message}. Open Blackboard once, then run \`blackboard app launch\` again. A sandboxed agent must run it outside the sandbox.${launchDiagnostics(attempt.logPath)}`,
   );
 }
 

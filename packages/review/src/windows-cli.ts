@@ -18,7 +18,7 @@ export function windowsCliShim(
 ): string {
   const lines = [
     "@echo off",
-    "rem Managed by Whiteboard Desktop. Do not edit.",
+    "rem Managed by Blackboard Desktop. Do not edit.",
     "setlocal DisableDelayedExpansion",
   ];
 
@@ -46,10 +46,10 @@ $key = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Environment')
 $state = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\\dev.fast\\Whiteboard\\CLI')
 try {
   $old = [string]$key.GetValue('Path', '', [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
-  $dir = $env:WHITEBOARD_COMMAND_DIRECTORY
+  $dir = $env:BLACKBOARD_COMMAND_DIRECTORY
   $entries = @($old.Split(';'))
   $matches = @($entries | Where-Object { [Environment]::ExpandEnvironmentVariables($_).TrimEnd('\\') -ieq $dir.TrimEnd('\\') })
-  if ($env:WHITEBOARD_REMOVE_COMMAND_PATH -eq '1') {
+  if ($env:BLACKBOARD_REMOVE_COMMAND_PATH -eq '1') {
     if ([string]$state.GetValue('Path', '') -ine $dir) { return }
     $entries = @($entries | Where-Object { [Environment]::ExpandEnvironmentVariables($_).TrimEnd('\\') -ine $dir.TrimEnd('\\') })
     $key.SetValue('Path', ($entries -join ';'), [Microsoft.Win32.RegistryValueKind]::ExpandString)
@@ -61,9 +61,9 @@ try {
     $key.SetValue('Path', $value, [Microsoft.Win32.RegistryValueKind]::ExpandString)
   }
 } finally { $state.Dispose(); $key.Dispose() }
-Add-Type -Namespace Whiteboard -Name EnvironmentChange -MemberDefinition '[System.Runtime.InteropServices.DllImport("user32.dll", CharSet=System.Runtime.InteropServices.CharSet.Unicode)] public static extern System.IntPtr SendMessageTimeout(System.IntPtr h, uint m, System.UIntPtr w, string l, uint f, uint t, out System.UIntPtr r);'
+Add-Type -Namespace Blackboard -Name EnvironmentChange -MemberDefinition '[System.Runtime.InteropServices.DllImport("user32.dll", CharSet=System.Runtime.InteropServices.CharSet.Unicode)] public static extern System.IntPtr SendMessageTimeout(System.IntPtr h, uint m, System.UIntPtr w, string l, uint f, uint t, out System.UIntPtr r);'
 $result = [UIntPtr]::Zero
-[void][Whiteboard.EnvironmentChange]::SendMessageTimeout([IntPtr]0xffff, 0x1a, [UIntPtr]::Zero, 'Environment', 2, 5000, [ref]$result)
+[void][Blackboard.EnvironmentChange]::SendMessageTimeout([IntPtr]0xffff, 0x1a, [UIntPtr]::Zero, 'Environment', 2, 5000, [ref]$result)
 `;
 
   await execFileAsync(
@@ -80,8 +80,8 @@ $result = [UIntPtr]::Zero
       windowsHide: true,
       env: {
         ...process.env,
-        WHITEBOARD_COMMAND_DIRECTORY: directory,
-        WHITEBOARD_REMOVE_COMMAND_PATH: remove ? "1" : "0",
+        BLACKBOARD_COMMAND_DIRECTORY: directory,
+        BLACKBOARD_REMOVE_COMMAND_PATH: remove ? "1" : "0",
       },
     },
   );

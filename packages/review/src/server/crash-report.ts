@@ -214,7 +214,7 @@ export async function reportCrashDump(
   if (!dumpPath)
     return {
       status: 403,
-      body: { ok: false, error: "Not a Whiteboard crash dump." },
+      body: { ok: false, error: "Not a Blackboard crash dump." },
     };
 
   const launch = crashedLaunchProperties(request.launch);

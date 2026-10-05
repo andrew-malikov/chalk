@@ -1,10 +1,10 @@
 # Telemetry
 
-Whiteboard collects a small amount of anonymous usage and reliability data. We
-use it to learn which parts of Whiteboard are useful and where the app is
+Blackboard collects a small amount of anonymous usage and reliability data. We
+use it to learn which parts of Blackboard are useful and where the app is
 failing.
 
-This page is the complete public contract for Whiteboard app and `whiteboard`
+This page is the complete public contract for Blackboard app and `blackboard`
 CLI telemetry.
 For a shorter overview of all product data, including local files, coding
 agents, and bug reports, see [Privacy](privacy.md).
@@ -14,38 +14,38 @@ Last checked against this repository: 2026-09-24.
 ## The short version
 
 - Anonymous telemetry is on by default and can be turned off at any time.
-- Whiteboard records actions such as opening a whiteboard, changing tabs, using code
+- Blackboard records actions such as opening a blackboard, changing tabs, using code
   navigation, or completing a CLI command. Values are limited to fixed
   categories, booleans, counts, durations, versions, and opaque identifiers.
 - Passive telemetry never includes your code, diffs, file paths, repository
-  name, whiteboard title, refs, revision hashes, whiteboard ID, coding-agent
-  session ID, whiteboard text, prompts, or model output.
-- Whiteboard uses a random installation ID, never your email, username,
+  name, blackboard title, refs, revision hashes, blackboard ID, coding-agent
+  session ID, blackboard text, prompts, or model output.
+- Blackboard uses a random installation ID, never your email, username,
   hostname, or a hardware identifier. Signing in with GitHub links
   installations of the same account through a one-way hash.
 - Product errors may include a cleaned error message and stack frames from
-  Whiteboard's shipped program. Paths, web and email addresses, and recognizable secrets are removed
+  Blackboard's shipped program. Paths, web and email addresses, and recognizable secrets are removed
   on your machine before the event is accepted.
 - Sending a bug report is a separate, explicit action. You see and control its
   attachments before anything is uploaded.
 
-Whiteboard sends anonymous telemetry to PostHog. PostHog may derive a coarse
+Blackboard sends anonymous telemetry to PostHog. PostHog may derive a coarse
 location during ingestion; our project discards the source IP.
 
 ## Turn telemetry off
 
-In Whiteboard, open **Preferences → Settings** and disable **Share anonymous
-usage data**. The setting controls both the app and the `whiteboard` CLI on
+In Blackboard, open **Preferences → Settings** and disable **Share anonymous
+usage data**. The setting controls both the app and the `blackboard` CLI on
 that installation. Disabling it also clears any queued events that have
 not been sent.
 
 For a single command, a shell, or a headless environment, set `DO_NOT_TRACK`:
 
 ```sh
-DO_NOT_TRACK=1 whiteboard info
+DO_NOT_TRACK=1 blackboard info
 ```
 
-Whiteboard also honors these variables when their value is `1` or `true`:
+Blackboard also honors these variables when their value is `1` or `true`:
 
 - `DO_NOT_TRACK`
 - `DNT`
@@ -63,15 +63,15 @@ Tests also turn telemetry off with `VITEST=1` or `NODE_ENV=test`.
 An explicit bug report is still sent if you choose **Send** in the bug-report
 dialog. Bug reports do not pass through the passive telemetry system.
 
-## What Whiteboard collects
+## What Blackboard collects
 
 | Category           | Examples                                                  | What is not included                                       |
 | ------------------ | --------------------------------------------------------- | ---------------------------------------------------------- |
-| App usage          | A whiteboard opened, a tab viewed, a map expanded         | Whiteboard text, code, paths, or repository details        |
+| App usage          | A blackboard opened, a tab viewed, a map expanded         | Blackboard text, code, paths, or repository details        |
 | CLI usage          | Command category, success or failure, duration            | Command arguments, refs, process output, or exception text |
 | Code navigation    | Feature category, language category, editor surface       | Symbols, declarations, search text, or source code         |
 | Extensions         | An allowlisted extension ID, install outcome and duration | Extension version, configuration, or extension data        |
-| Whiteboard outcome | Dismiss, restore, or delete                               | Whiteboard text or reviewer identity                       |
+| Blackboard outcome | Dismiss, restore, or delete                               | Blackboard text or reviewer identity                       |
 | Reliability        | Error class, cleaned message, shipped-program frames      | User paths, repository frames, secrets, or authored text   |
 
 Every event is checked against an allowlist on your machine. Unknown events,
@@ -80,20 +80,20 @@ The full event-by-event list begins at [Event reference](#event-reference).
 
 ## Identity and storage
 
-On first use, Whiteboard creates a random installation UUID and stores it at
+On first use, Blackboard creates a random installation UUID and stores it at
 `${DEV_REVIEW_HOME:-~/.dev}/telemetry/progressive-review.json`. It does not call
 PostHog's `identify()` API. Events carry `$process_person_profile: false`, so
 PostHog keeps no person profile.
 
 **Account alias.** The first GitHub sign-in (in the app or with
-`whiteboard login`) sends one `$create_alias` linking the installation ID to
+`blackboard login`) sends one `$create_alias` linking the installation ID to
 `gh_` plus a one-way HMAC of the account ID. The account ID, login, and email
 never leave the machine. After that, events carry
 `$process_person_profile: true`, so installations signed into the same account
 share one PostHog person. Later sign-ins to other accounts and sign-outs change
 nothing.
 
-Whiteboard Preview keeps a separate installation ID in
+Blackboard Preview keeps a separate installation ID in
 `telemetry/progressive-review.preview.json`. The standalone CLI always uses the
 stable ID.
 
@@ -104,55 +104,55 @@ event keeps one random `uuid` across retries, so PostHog ingests a resent event
 once, and its `timestamp` is when it happened, not when it was sent. A
 `review_telemetry_dropped` count is queued the same way, so a resent count
 lands once too.
-Telemetry is best-effort and never blocks Whiteboard from working.
+Telemetry is best-effort and never blocks Blackboard from working.
 
 Three identifiers support exact lifecycle correlation without PostHog identity
 or group profiles:
 
 - `command_run_id` is a new random UUID for each CLI invocation.
-- `review_id` is `rv_` plus 128 bits of a namespaced HMAC of the whiteboard's
+- `review_id` is `rv_` plus 128 bits of a namespaced HMAC of the blackboard's
   ID.
 - `presentation_id` is `pr_` plus 128 bits of a namespaced HMAC of the ID of
-  one opening of a whiteboard in the app.
+  one opening of a blackboard in the app.
 
-The HMAC key is the random installation ID. The same whiteboard therefore has
+The HMAC key is the random installation ID. The same blackboard therefore has
 a stable `review_id` only on one installation; another installation produces a
 different value. The raw IDs are used only inside the local server and never
 reach the capture client.
 
-Whiteboard disables the built-in Microsoft telemetry inherited from Code -
+Blackboard disables the built-in Microsoft telemetry inherited from Code -
 OSS. A hardening test enforces that rule.
 
 ## How events leave the app
 
 The canvas and desktop window do not connect directly to PostHog. They send
-events to Whiteboard's local server, which checks the allowlist before adding an
+events to Blackboard's local server, which checks the allowlist before adding an
 event to the queue. The CLI uses the same queue and transport.
 
 ```text
-Whiteboard app    ──┐
-Whiteboard canvas ──┼─→ local allowlist ─→ disk queue ─→ PostHog
-whiteboard CLI    ──┘
+Blackboard app    ──┐
+Blackboard canvas ──┼─→ local allowlist ─→ disk queue ─→ PostHog
+blackboard CLI    ──┘
 ```
 
 User-initiated bug reports take a separate path:
 
 ```text
-Whiteboard ─→ local server ─→ bug.dev.fast ─→ private Cloudflare R2
+Blackboard ─→ local server ─→ bug.dev.fast ─→ private Cloudflare R2
                                       └─→ attachment-free PostHog metadata
 ```
 
 ## Inspect events during development
 
 Set `DEV_FAST_REVIEW_TELEMETRY_DEBUG` to `1` or `true` to see the events that
-Whiteboard emits. Whiteboard then prints one line for each event to stderr:
+Blackboard emits. Blackboard then prints one line for each event to stderr:
 
 ```
 [review-telemetry] {"event":"review_command_succeeded","distinctId":"…","properties":{…}}
 ```
 
-The sink replaces PostHog. Whiteboard sends nothing to PostHog while the switch
-is on. Set the variable before you start Whiteboard, because most events come
+The sink replaces PostHog. Blackboard sends nothing to PostHog while the switch
+is on. Set the variable before you start Blackboard, because most events come
 from the local server, not from the CLI.
 
 The sink ignores the opt-out rules above, because the sink does not send the
@@ -163,12 +163,12 @@ sent, so the real event still goes out on the next normal run.
 
 ### Common properties
 
-Every event from the Whiteboard telemetry API includes these properties:
+Every event from the Blackboard telemetry API includes these properties:
 
 | Property                  | Value                                                                                                                     |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `cli_version`             | CLI package version (`version` repeats it for one release)                                                                |
-| `app_version`             | Whiteboard app release version; absent for the standalone CLI                                                             |
+| `app_version`             | Blackboard app release version; absent for the standalone CLI                                                             |
 | `channel`                 | `stable`, `preview`, or `dev` for an unpackaged build                                                                     |
 | `environment`             | `production`, `ci`, `internal`, `e2e`, or `smoke`                                                                         |
 | `surface`                 | `desktop`, `cli`, `headless`, `mcp`, or `api`                                                                             |
@@ -193,12 +193,12 @@ Every event from the Whiteboard telemetry API includes these properties:
 - `PROGRESSIVE_REVIEW_TELEMETRY_INTERNAL`: `1` marks telemetry as internal and
   `0` as external, overriding the stored marker and workspace detection.
 
-The event names predate the Whiteboard name and are unchanged. UI events also
+The event names predate the Blackboard name and are unchanged. UI events also
 include `source: review_app`.
 
-Events about one opened whiteboard also include `review_id` and
+Events about one opened blackboard also include `review_id` and
 `presentation_id`. Global main-process and renderer errors remain unscoped;
-Whiteboard does not guess which open whiteboard caused them.
+Blackboard does not guess which open blackboard caused them.
 
 `review_telemetry_dropped` carries the common properties of the process that
 dropped the events.
@@ -207,26 +207,26 @@ dropped the events.
 
 | Event                           | Additional properties                                                                                                                          | When                                                                                         |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `review_installation_created`   | None                                                                                                                                           | The first enabled Whiteboard use                                                             |
+| `review_installation_created`   | None                                                                                                                                           | The first enabled Blackboard use                                                             |
 | `review_command_started`        | `command_path`, `command_run_id`, `agent_kind`                                                                                                 | A public CLI handler is about to run                                                         |
 | `review_command_succeeded`      | `command_path`, `command_run_id`, `exit_code`, `duration_ms`                                                                                   | A public CLI command succeeds                                                                |
 | `review_command_failed`         | The success properties plus `error_name` and `error_category` closed enums                                                                     | A public CLI command fails                                                                   |
 | `review_telemetry_dropped`      | `reason`, `count`                                                                                                                              | The queue drops one or more events                                                           |
-| `review_session_started`        | `source_kind`, `review_id`, `presentation_id`                                                                                                  | A whiteboard opens in the app canvas                                                         |
+| `review_session_started`        | `source_kind`, `review_id`, `presentation_id`                                                                                                  | A blackboard opens in the app canvas                                                         |
 | `review_review_presented`       | `load_ms`, `review_id`, `presentation_id`                                                                                                      | The canvas signals ready                                                                     |
-| `review_first_review_presented` | `review_id`, `presentation_id`                                                                                                                 | The first presented whiteboard on this installation                                          |
-| `review_session_ended`          | `outcome`, `duration_ms`, `review_id`, `presentation_id`                                                                                       | The whiteboard closes; see outcomes below                                                    |
-| `review_crash`                  | `process` in `renderer`, `gpu`, `utility`, `server`, `unknown`; `reason` (≤40 chars); `exit_code`; `uptime_ms`; `source` in `live`, `minidump` | A Whiteboard process dies, or an uncovered dump is found on the next launch                  |
+| `review_first_review_presented` | `review_id`, `presentation_id`                                                                                                                 | The first presented blackboard on this installation                                          |
+| `review_session_ended`          | `outcome`, `duration_ms`, `review_id`, `presentation_id`                                                                                       | The blackboard closes; see outcomes below                                                    |
+| `review_crash`                  | `process` in `renderer`, `gpu`, `utility`, `server`, `unknown`; `reason` (≤40 chars); `exit_code`; `uptime_ms`; `source` in `live`, `minidump` | A Blackboard process dies, or an uncovered dump is found on the next launch                  |
 | `review_hang_started`           | None                                                                                                                                           | An app window stops responding                                                               |
 | `review_hang_ended`             | `duration_ms`                                                                                                                                  | The window responds again, its process dies, or it closes                                    |
 | `review_app_ready`              | `duration_ms`                                                                                                                                  | The workbench restores, timed from the startup trace; once per app launch                    |
 | `review_error_burst`            | `message_hash`, `suppressed`                                                                                                                   | A `review_client_error` passes 5 reports for one message in one session; see "Error reports" |
 | `review_open_timeout`           | `elapsed_ms`, `review_id`, `presentation_id`                                                                                                   | A session starts and no presented or ended event follows within 30 seconds                   |
-| `review_review_created`         | `via` in `api`, `mcp`, `other`; `kind` in `review`, `scratchpad`; `blocks`; optional `agent_kind`                                              | A whiteboard or the scratchpad is created; `via` is `other` for the app's own UI             |
-| `review_review_published`       | `version`                                                                                                                                      | A whiteboard is published for sharing                                                        |
+| `review_review_created`         | `via` in `api`, `mcp`, `other`; `kind` in `review`, `scratchpad`; `blocks`; optional `agent_kind`                                              | A blackboard or the scratchpad is created; `via` is `other` for the app's own UI             |
+| `review_review_published`       | `version`                                                                                                                                      | A blackboard is published for sharing                                                        |
 | `review_review_revoked`         | None                                                                                                                                           | A share link is revoked                                                                      |
-| `review_authoring_completed`    | `duration_ms`; optional `agent_kind`                                                                                                           | The first publish of a whiteboard created via `api` or `mcp`, timed from its creation        |
-| `review_mcp_tool_called`        | `tool`; `via` in `api`, `mcp`; `ok`; `duration_ms`                                                                                             | An agent calls a Whiteboard authoring tool                                                   |
+| `review_authoring_completed`    | `duration_ms`; optional `agent_kind`                                                                                                           | The first publish of a blackboard created via `api` or `mcp`, timed from its creation        |
+| `review_mcp_tool_called`        | `tool`; `via` in `api`, `mcp`; `ok`; `duration_ms`                                                                                             | An agent calls a Blackboard authoring tool                                                   |
 | `review_login_started`          | None                                                                                                                                           | GitHub sign-in in the app begins                                                             |
 | `review_login_succeeded`        | None                                                                                                                                           | GitHub sign-in in the app finishes                                                           |
 | `review_login_failed`           | `reason` in `did_not_finish`, `error`                                                                                                          | GitHub sign-in in the app fails                                                              |
@@ -234,16 +234,16 @@ dropped the events.
 | `$create_alias`                 | `alias`, `$process_person_profile: true`                                                                                                       | The first GitHub sign-in on this installation; see "Identity and storage"                    |
 
 `source_kind` is `worktree`, `commits`, or `scratchpad`, set by the server from
-the opened whiteboard. `agent_kind` is allowlisted for session events but not
+the opened blackboard. `agent_kind` is allowlisted for session events but not
 yet sent.
 
 | `outcome`   | Meaning                                                                                                                                              |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `closed`    | The tab closed or another whiteboard replaced it                                                                                                     |
-| `dismissed` | The open whiteboard was dismissed while its session was active                                                                                       |
-| `deleted`   | The open whiteboard was deleted while its session was active                                                                                         |
-| `app_quit`  | The app quit, or reloaded, with the whiteboard open                                                                                                  |
-| `abnormal`  | The app died with the whiteboard open. Sent by the next launch, without `duration_ms`, with the dead launch's common properties and `app_session_id` |
+| `closed`    | The tab closed or another blackboard replaced it                                                                                                     |
+| `dismissed` | The open blackboard was dismissed while its session was active                                                                                       |
+| `deleted`   | The open blackboard was deleted while its session was active                                                                                         |
+| `app_quit`  | The app quit, or reloaded, with the blackboard open                                                                                                  |
+| `abnormal`  | The app died with the blackboard open. Sent by the next launch, without `duration_ms`, with the dead launch's common properties and `app_session_id` |
 
 `command_path` is a closed enum: `help`, `version`, `app.launch`, `app.pick`,
 `info`, `connect`, `instances`, `instances.use`, `instances.clear`,
@@ -251,14 +251,14 @@ yet sent.
 `trace.store.create`, `trace.store.delete`, `trace.store.info`,
 `trace.install`, `trace.allow`, `trace.deny`, `trace.storage.use`,
 `trace.config.migrate`, `api`, `mcp`, `server.start`, and `invalid`. Other
-commands, such as `share` and `status`, send no command events. Whiteboard
+commands, such as `share` and `status`, send no command events. Blackboard
 sends no arguments, refs, tokens, or storage credentials. `surface` is
 `headless` for `server.start`, `mcp` for `mcp`, `api` for `api`, and `cli`
 otherwise, on every event the command's process sends.
 
 The CLI writes `review_command_started` to the disk queue before entering the
 command handler. The queue normally begins its background flush after five
-seconds; Whiteboard does not wait for network delivery before starting the command.
+seconds; Blackboard does not wait for network delivery before starting the command.
 
 Error names and categories are closed enums. A failed command sends no exception
 message, stack, path, process output, project identifier, or remediation text.
@@ -292,8 +292,8 @@ The server checks all properties in this table against
 | `review_discord_clicked`          | `via` in topbar, dialog, docs                                                                                                                                                  | A user clicks a Discord invite                                                                             |
 | `review_discord_dialog_shown`     | None                                                                                                                                                                           | The community invite dialog opens                                                                          |
 | `review_discord_dialog_dismissed` | None                                                                                                                                                                           | The community invite dialog closes unaccepted                                                              |
-| `review_review_shared`            | None                                                                                                                                                                           | A user copies a whiteboard's share link                                                                    |
-| `review_review_deleted`           | `via` in home                                                                                                                                                                  | A user deletes a stored whiteboard from Home                                                               |
+| `review_review_shared`            | None                                                                                                                                                                           | A user copies a blackboard's share link                                                                    |
+| `review_review_deleted`           | `via` in home                                                                                                                                                                  | A user deletes a stored blackboard from Home                                                               |
 | `review_tour_started`             | `steps`                                                                                                                                                                        | A user starts a tour                                                                                       |
 | `review_tour_step_advanced`       | `step`, `steps`                                                                                                                                                                | A user moves to the next tour step                                                                         |
 | `review_tour_abandoned`           | `step`, `steps`                                                                                                                                                                | A user closes an incomplete tour                                                                           |
@@ -302,33 +302,33 @@ The server checks all properties in this table against
 | `review_commit_expanded`          | `expanded`                                                                                                                                                                     | A user expands or collapses a commit                                                                       |
 | `review_commit_diff_opened`       | `via` in row, file, footer                                                                                                                                                     | A user opens a commit diff                                                                                 |
 | `review_source_tree_opened`       | `via` in topbar, home                                                                                                                                                          | A user opens the source tree                                                                               |
-| `review_client_error`             | See "Error reports"                                                                                                                                                            | A part of Whiteboard reports an error                                                                      |
+| `review_client_error`             | See "Error reports"                                                                                                                                                            | A part of Blackboard reports an error                                                                      |
 | `review_update_started`           | Random `update_attempt_id`, `target_version`                                                                                                                                   | An update is downloaded and ready to install                                                               |
 | `review_update_completed`         | Start properties plus `duration_ms`                                                                                                                                            | The downloaded target launches after restart                                                               |
 | `review_update_failed`            | `phase` in check, download, install; `message_source` in electron, request, shipit, fallback; `error_name`; optional start properties and `duration_ms`; see "Error reports"   | An update check, download, or install fails                                                                |
 | `review_bug_report_dialog_opened` | None                                                                                                                                                                           | A user opens the bug report dialog                                                                         |
 | `review_bug_report_cancelled`     | None                                                                                                                                                                           | A user closes the dialog without a report                                                                  |
 | `review_bug_report_send_failed`   | Short `error_name`                                                                                                                                                             | A bug report request fails                                                                                 |
-| `review_setting_changed`          | `setting` in telemetry_enabled, keymap, software_map_enabled, scratchpad_enabled, diffr_config, structural_diff, theme, ctrl_tab, ready_notification, document_width; `enabled`; `value` in dark, light, system (theme only) | A user changes a Whiteboard setting                                                                        |
-| `review_review_opened`            | `via` in home, other                                                                                                                                                           | A user opens a whiteboard                                                                                  |
+| `review_setting_changed`          | `setting` in telemetry_enabled, keymap, software_map_enabled, scratchpad_enabled, diffr_config, structural_diff, theme, ctrl_tab, ready_notification, document_width; `enabled`; `value` in dark, light, system (theme only) | A user changes a Blackboard setting                                                                        |
+| `review_review_opened`            | `via` in home, other                                                                                                                                                           | A user opens a blackboard                                                                                  |
 | `review_diff_layout_changed`      | `layout` in split, unified                                                                                                                                                     | A user switches the diff layout                                                                            |
 | `review_home_empty_state_viewed`  | None                                                                                                                                                                           | The empty Home state opens                                                                                 |
 
 The canvas sends `review_review_dismissed`, `review_review_restored`, and
 `review_review_deleted` from Home's actions, with `via` set to `home`.
-`review_review_dismissed` also comes from the whiteboard's top bar, with `via`
+`review_review_dismissed` also comes from the blackboard's top bar, with `via`
 set to `review_topbar`. `review_review_restored`'s `open` (the implicit undo,
-where opening a dismissed whiteboard brings it back) is allowlisted but not yet
+where opening a dismissed blackboard brings it back) is allowlisted but not yet
 sent.
 
 ### Hangs
 
 - `review_hang_started` / `review_hang_ended`: Electron's window
   `unresponsive` / `responsive` events.
-- `review_open_timeout`: a whiteboard that neither presents nor ends within 30
+- `review_open_timeout`: a blackboard that neither presents nor ends within 30
   seconds.
 
-If the app dies with a whiteboard open, the next launch sends
+If the app dies with a blackboard open, the next launch sends
 `review_session_ended` with `outcome: "abnormal"`. A workbench reload ends its
 session with `outcome: "app_quit"`, the same as quitting.
 
@@ -340,9 +340,9 @@ session with `outcome: "app_quit"`, the same as quitting.
 | `review_ls_activated`             | `group` in python, go, rust, swift, csharp; `ok`                                                                                                                                                                                            | A language server activation check ends     |
 | `review_extension_installed`      | Allowlisted `extension_id`; `trigger` in user, auto_upgrade, startup_seed, keymap, rollback; `cached`; `duration_ms`                                                                                                                        | An optional extension installs              |
 | `review_extension_install_failed` | Allowlisted `extension_id`; allowlisted `trigger`; `phase` in download, install                                                                                                                                                             | An optional extension install fails         |
-| `review_extension_enabled`        | Allowlisted `extension_id`; allowlisted `trigger`                                                                                                                                                                                           | Whiteboard enables an optional extension    |
-| `review_extension_disabled`       | Allowlisted `extension_id`; allowlisted `trigger`                                                                                                                                                                                           | Whiteboard disables an optional extension   |
-| `review_extension_uninstalled`    | Allowlisted `extension_id`; allowlisted `trigger`                                                                                                                                                                                           | Whiteboard uninstalls an optional extension |
+| `review_extension_enabled`        | Allowlisted `extension_id`; allowlisted `trigger`                                                                                                                                                                                           | Blackboard enables an optional extension    |
+| `review_extension_disabled`       | Allowlisted `extension_id`; allowlisted `trigger`                                                                                                                                                                                           | Blackboard disables an optional extension   |
+| `review_extension_uninstalled`    | Allowlisted `extension_id`; allowlisted `trigger`                                                                                                                                                                                           | Blackboard uninstalls an optional extension |
 
 The `language` property is one of typescript, javascript, python, go, rust,
 swift, csharp, json, css, html, markdown, yaml, toml, shell, sql, or other.
@@ -352,39 +352,39 @@ The allowlisted extension identifiers are `vscodevim.vim`,
 `charliermarsh.ruff`, `golang.go`, `rust-lang.rust-analyzer`,
 `swiftlang.swift-vscode`, `llvm-vs-code-extensions.lldb-dap`,
 `muhammad-sammy.csharp`, and `ms-dotnettools.vscode-dotnet-runtime`.
-Whiteboard does not send an extension version.
+Blackboard does not send an extension version.
 
 ## Error reports
 
-Whiteboard reports its own failures so that a defect that only happens on your
-machine can still be found and fixed. Four parts of Whiteboard report an error:
+Blackboard reports its own failures so that a defect that only happens on your
+machine can still be found and fixed. Four parts of Blackboard report an error:
 the app window, the canvas, the background process, and a crash that happens
-before Whiteboard can start. Uncaught canvas errors are reported once, by the
+before Blackboard can start. Uncaught canvas errors are reported once, by the
 app window.
 
 Every `review_client_error` is also sent as a PostHog `$exception` with the same
 fields; `review_client_error` is removed after one release. After 5 reports of
-one `message_hash` in a session, Whiteboard sends a `review_error_burst` instead
+one `message_hash` in a session, Blackboard sends a `review_error_burst` instead
 and drops the rest.
 
-Whiteboard sends these properties with the `review_client_error` event. A
+Blackboard sends these properties with the `review_client_error` event. A
 `review_update_failed` event uses the same server-side message cleaning and
 fingerprinting, plus the closed update phase and message-source fields above.
 Install failures read at most 64 KiB appended to ShipIt's stderr log after the
-matching update was staged. Whiteboard extracts only the last NSError summary (or
+matching update was staged. Blackboard extracts only the last NSError summary (or
 the fixed retry-exhausted line); it neither stores nor uploads the raw log.
 
 | Property        | Value                                                                             |
 | --------------- | --------------------------------------------------------------------------------- |
-| `error_process` | Which part of Whiteboard failed: `main`, `renderer`, `canvas`, or `server`        |
+| `error_process` | Which part of Blackboard failed: `main`, `renderer`, `canvas`, or `server`        |
 | `error_source`  | Which handler caught it, from a closed list                                       |
 | `error_name`    | The error class name, such as `TypeError`. Identifier characters only, 40 at most |
 | `component`     | A fixed component name, when the reporter has one. Identifier characters only     |
 | `message`       | The error message, cleaned. See below                                             |
 | `message_hash`  | A fingerprint of the original message. See below                                  |
-| `frames`        | Up to 10 stack lines, all inside Whiteboard's shipped program. See below          |
+| `frames`        | Up to 10 stack lines, all inside Blackboard's shipped program. See below          |
 
-**Whiteboard cleans the message before it sends it.** The cleaner replaces each of
+**Blackboard cleans the message before it sends it.** The cleaner replaces each of
 these with a marker that names what it removed, such as
 `<REDACTED: user-file-path>`:
 
@@ -397,19 +397,19 @@ So `ENOENT: no such file or directory, open '/Users/you/work/notes.md'` is sent
 as `ENOENT: no such file or directory, open '<REDACTED: user-file-path>'`.
 
 The message cleaner was adapted from Microsoft's VS Code source.
-Whiteboard uses it rather than a rule of its own so that you can check it against a known
+Blackboard uses it rather than a rule of its own so that you can check it against a known
 implementation. The copy is in
 `packages/review/src/telemetry-clean-text.ts`, and its header lists
 every difference from the original.
 
 Two rules sit on top of the cleaner:
 
-- **Whiteboard sends no message for an error that quotes a whiteboard
+- **Blackboard sends no message for an error that quotes a blackboard
   document.** An authoring tool checks authored text against a schema, and
-  those errors repeat the text they rejected. Whiteboard keeps the error class, the fingerprint, and the
+  those errors repeat the text they rejected. Blackboard keeps the error class, the fingerprint, and the
   stack lines for these, and drops the message.
-- **Whiteboard sends no message the cleaner did not finish.** After cleaning,
-  Whiteboard checks the result again for a path or a secret. If it finds one, the message
+- **Blackboard sends no message the cleaner did not finish.** After cleaning,
+  Blackboard checks the result again for a path or a secret. If it finds one, the message
   is dropped. This is a second, separate check, so a fault in the cleaner cannot
   by itself put a path on the wire.
 
@@ -418,9 +418,9 @@ characters of a one-way SHA-256 digest. It is sent whether or not the message
 survives, so reports whose message was dropped still group together. The digest
 cannot be turned back into the message.
 
-**Whiteboard sends only frames from its shipped program.** Each frame reads as
+**Blackboard sends only frames from its shipped program.** Each frame reads as
 `file:line:column`, where the file is a path inside the program, such as
-`vs/review/browser/workbench.js:456:12`. Whiteboard finds the shipped program
+`vs/review/browser/workbench.js:456:12`. Blackboard finds the shipped program
 directory in each frame and discards everything before it, which removes your
 home directory. It then keeps a frame only when the result starts inside a known
 program directory, including the Code - OSS directories it ships. A frame in your repository, in `node_modules`, or in an
@@ -446,15 +446,15 @@ The **Report a bug** dialog sends data only after the user selects **Send**. The
 description is optional. Under **Include diagnostic attachments**, two
 independent controls choose what else is attached:
 
-- **Session**: the current whiteboard record and its software maps. On by
+- **Session**: the current blackboard record and its software maps. On by
   default.
 - **Changed-file diffs used by CodePeeks**. On by default.
 
-Whiteboard also captures a screenshot before the dialog opens and attaches it
+Blackboard also captures a screenshot before the dialog opens and attaches it
 by default. The dialog shows a removable preview and accepts a replacement
 image by paste or drag.
 
-A whiteboard does not always have a software map. The report then omits the
+A blackboard does not always have a software map. The report then omits the
 map and records no error, because an absent map is a normal state.
 
 The report payload contains these fields:
@@ -465,8 +465,8 @@ The report payload contains these fields:
 | `description`                    | Optional user-entered description, limited to 64 KiB of UTF-8 data            |
 | `screenshot.mime`                | `image/jpeg` when a screenshot is attached                                    |
 | `screenshot.base64`              | JPEG screenshot data, limited to 3 MiB decoded                                |
-| `review["review.json"]`          | The saved whiteboard record, when the user consents                           |
-| `map`                            | The software maps the whiteboard shows, when the user consents and one exists |
+| `review["review.json"]`          | The saved blackboard record, when the user consents                           |
+| `map`                            | The software maps the blackboard shows, when the user consents and one exists |
 | `diff.baseRef`                   | Base revision for the changed-file diffs, when one is available               |
 | `diff.headRef`                   | Head revision for the changed-file diffs, when one is available               |
 | `diff.files[].path`              | Current changed-file path                                                     |
@@ -474,25 +474,25 @@ The report payload contains these fields:
 | `diff.files[].status`            | Changed-file status                                                           |
 | `diff.files[].additions`         | Added line count                                                              |
 | `diff.files[].deletions`         | Deleted line count                                                            |
-| `diff.files[].patch`             | Unified patch used to resolve the whiteboard's exact CodePeek ranges          |
-| `diagnostics.app_version`        | Whiteboard app version                                                        |
+| `diff.files[].patch`             | Unified patch used to resolve the blackboard's exact CodePeek ranges          |
+| `diagnostics.app_version`        | Blackboard app version                                                        |
 | `diagnostics.cli_version`        | `@dev.fast/review` package version                                            |
 | `diagnostics.platform`           | Node platform enum                                                            |
 | `diagnostics.app_session_id`     | Random identifier for the canvas window                                       |
 | `diagnostics.client_error_names` | Last 20 sanitized JavaScript error class names from that canvas session       |
 | `diagnostics.attachment_errors`  | Selected attachment names with the value `unavailable`                        |
 
-The whiteboard record is the whole saved version: its title and document text,
+The blackboard record is the whole saved version: its title and document text,
 its lenses, the commits it is pinned to, and where it came from, such as the
-branch, base ref, and pull request number and URL. A whiteboard received
+branch, base ref, and pull request number and URL. A blackboard received
 through a share link also carries the sharer's GitHub login and the
 repository's clone URL. It does not contain source code; the changed-file diffs
 are a separate attachment.
 
-If a selected attachment is unavailable, Whiteboard omits it, names it in
+If a selected attachment is unavailable, Blackboard omits it, names it in
 `diagnostics.attachment_errors`, and sends the rest. If the report would exceed
-the upload limit, Whiteboard drops attachments in this order until it fits:
-the diffs, the maps, the screenshot, and the whiteboard record. If it still
+the upload limit, Blackboard drops attachments in this order until it fits:
+the diffs, the maps, the screenshot, and the blackboard record. If it still
 does not fit, the report is not sent.
 
 The Worker stores reports in a private Cloudflare R2 bucket. Only credentialed
@@ -507,7 +507,7 @@ not store that value in R2. The Worker does not send it to PostHog as report
 data. The limit is five report attempts per minute for each client IP.
 
 An explicit bug report submission overrides the passive telemetry opt-out.
-The local server sends this report even when Whiteboard telemetry is off. The
+The local server sends this report even when Blackboard telemetry is off. The
 passive event allowlist and telemetry disk queue do not process bug reports.
 
 ## Code locations
@@ -528,7 +528,7 @@ passive event allowlist and telemetry disk queue do not process bug reports.
 | First-use notice            | `apps/review-desktop/code-oss/src/vs/review/contrib/telemetry/reviewTelemetry.contribution.ts` |
 | Error budget and bursts     | `packages/review/src/server/client-error-budget.ts`                                            |
 | Account alias               | `packages/review/src/server/account-alias.ts`                                                  |
-| Whiteboard lifecycle events | `packages/review/src/server/review-lifecycle-telemetry.ts`                                     |
+| Blackboard lifecycle events | `packages/review/src/server/review-lifecycle-telemetry.ts`                                     |
 | Open-timeout watchdog       | `packages/review/src/server/review-open-watchdog.ts`                                           |
 | Crash dump upload           | `packages/review/src/server/crash-report.ts`                                                   |
 | Crash and hang listeners    | `apps/review-desktop/code-oss/src/vs/review/electron-main/reviewCrashTelemetry.ts`             |

@@ -387,7 +387,7 @@ it("shows CLI help without requiring Desktop or touching review storage", async 
       env: { DEV_REVIEW_HOME: "/does-not-exist" },
     }),
   ).toBe(0);
-  expect(output).toContain("whiteboard api <tool-name>");
+  expect(output).toContain("blackboard api <tool-name>");
 });
 
 it("prints readable CLI output by default and raw objects with --json", async () => {

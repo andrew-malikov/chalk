@@ -125,7 +125,7 @@ export function permissionSubject(entry: PermissionEntry, cwd: string) {
   return entry.toolKind === "execute" ? unwrapShell(subject) : subject;
 }
 
-/** Whiteboard's MCP tools that read or edit the review. */
+/** Blackboard's MCP tools that read or edit the review. */
 const reviewTools = new Set([
   "session_get",
   "session_get_instructions",
@@ -134,7 +134,7 @@ const reviewTools = new Set([
   "session_edit",
 ]);
 
-/** `mcp__whiteboard__session_get` (Claude) or `mcp.whiteboard.session_get` (Codex). */
+/** `mcp__blackboard__session_get` (Claude) or `mcp.blackboard.session_get` (Codex). */
 const mcpToolTitle = /^mcp(?:__|\.)(.+?)(?:__|\.)(.+)$/;
 
 function toolActivity(
@@ -148,8 +148,11 @@ function toolActivity(
   const mcp = mcpToolTitle.exec(entry.title);
   const shared = { id: entry.id, status, output: entry.output };
 
-  // Whiteboard's own tools read the review, or change it.
-  if (mcp?.[1] === "whiteboard" && reviewTools.has(mcp[2]!)) {
+  // Blackboard's own tools read the review, or change it.
+  if (
+    (mcp?.[1] === "blackboard" || mcp?.[1] === "whiteboard") &&
+    reviewTools.has(mcp[2]!)
+  ) {
     const edit = mcp[2] === "session_edit";
 
     return {
@@ -159,7 +162,7 @@ function toolActivity(
     };
   }
 
-  // fff searches Whiteboard's copy of agents' traces.
+  // fff searches Blackboard's copy of agents' traces.
   if (mcp?.[1] === "fff")
     return {
       ...shared,

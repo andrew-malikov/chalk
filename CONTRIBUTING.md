@@ -1,6 +1,6 @@
-# Contributing to Whiteboard
+# Contributing to Blackboard
 
-Thanks for contributing to Whiteboard. We welcome bug reports, fixes, and new
+Thanks for contributing to Blackboard. We welcome bug reports, fixes, and new
 features. By participating, you agree to follow our
 [Code of Conduct](CODE_OF_CONDUCT.md).
 
@@ -19,7 +19,7 @@ Report security vulnerabilities privately as described in
 
 ## Setup
 
-Whiteboard uses Bun 1.4.2 or newer and Hutch 0.27.1. The native desktop
+Blackboard uses Bun 1.4.2 or newer and Hutch 0.27.1. The native desktop
 build currently requires macOS on Apple Silicon. Install Hutch, then run
 from the repository root:
 
@@ -30,18 +30,18 @@ bun dev
 ```
 
 The desktop uses `~/.dev-fast/review-electrobun` by default. To use an existing
-profile, set `DEV_REVIEW_HOME` when starting it. Run `whiteboard instances` to
-see running apps and `whiteboard instances use <key>` to select one for the
+profile, set `DEV_REVIEW_HOME` when starting it. Run `blackboard instances` to
+see running apps and `blackboard instances use <key>` to select one for the
 CLI and your agent. Reconnect the MCP server after switching.
 
 ## Repository layout
 
-The product is named Whiteboard, but package names and directories still use
+The product is named Blackboard, but package names and directories still use
 `review`.
 
 - `apps/review-electrobun/` contains the native Electrobun/Cottontail desktop
   host. It launches the shared backend as a Bun sidecar.
-- `packages/review/` contains the `whiteboard` command-line interface, embedded
+- `packages/review/` contains the `blackboard` command-line interface, embedded
   server, and canvas.
 - `packages/review-protocol/` contains the shared process contracts.
 - `packages/trace-core/` and `packages/trace-protocol/` contain agent trace
@@ -78,7 +78,7 @@ Filesystem and server tests run through
 `bun run --filter @dev.fast/review test:node`.
 
 `bun run --filter @dev.fast/review test:legacy-corpus` replays a private corpus of
-legacy Reviews (from before the Whiteboard rename) through migration. Point
+legacy Reviews (from before the original product rename) through migration. Point
 `REVIEW_LEGACY_CORPUS` at a directory whose children are Review UUID folders;
 the script fails if the variable is unset. The corpus is copied before it is
 touched and the originals are re-verified afterwards.

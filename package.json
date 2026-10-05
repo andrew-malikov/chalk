@@ -2,7 +2,7 @@
   "name": "@dev.fast/review-workspace",
   "version": "0.0.0",
   "private": true,
-  "description": "Whiteboard desktop and CLI monorepo",
+  "description": "Blackboard desktop and CLI monorepo",
   "license": "MIT",
   "workspaces": {
     "packages": [

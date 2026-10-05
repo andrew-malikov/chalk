@@ -14,13 +14,13 @@ describe("cursorInstallDeeplink", () => {
 
     expect(url.protocol).toBe("cursor:");
 
-    expect(url.searchParams.get("name")).toBe("whiteboard");
+    expect(url.searchParams.get("name")).toBe("blackboard");
 
     const config = url.searchParams.get("config") ?? "";
 
     expect(JSON.parse(Buffer.from(config, "base64").toString("utf8"))).toEqual({
       command: "sh",
-      args: ["-c", 'exec "$HOME/.local/bin/whiteboard" mcp'],
+      args: ["-c", 'exec "$HOME/.local/bin/blackboard" mcp'],
     });
   });
 });

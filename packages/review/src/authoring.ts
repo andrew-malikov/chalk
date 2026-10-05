@@ -71,7 +71,7 @@ export interface ReviewDefinitionDiagnostic {
   code: "software-map-unavailable";
   level: "info";
   message: string;
-  remediation: "whiteboard map";
+  remediation: "blackboard map";
   component?: "SoftwareMap";
   path?: readonly string[];
 }
@@ -944,9 +944,9 @@ export function createReviewDefinitionSession(
       level: "info",
       message:
         "component" in context
-          ? "Document uses SoftwareMap but no software map is materialized for this repo; author one with `whiteboard map` or remove the section."
-          : "Definition references softwareMapPath but no software map is materialized for this repo; author one with `whiteboard map` or remove the reference.",
-      remediation: "whiteboard map",
+          ? "Document uses SoftwareMap but no software map is materialized for this repo; author one with `blackboard map` or remove the section."
+          : "Definition references softwareMapPath but no software map is materialized for this repo; author one with `blackboard map` or remove the reference.",
+      remediation: "blackboard map",
       ...("component" in context
         ? { component: context.component }
         : { path: context.path.map(String) }),

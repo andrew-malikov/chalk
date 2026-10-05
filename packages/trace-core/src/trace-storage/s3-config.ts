@@ -238,7 +238,7 @@ export function resolveS3Credentials(
   return resolveS3Setup(scope).credentials;
 }
 
-/** What `whiteboard trace status` prints about the direct bucket setup. */
+/** What `blackboard trace status` prints about the direct bucket setup. */
 export interface S3SetupReport {
   /** The file the values came from: the version-2 profile, else the env file. */
   envPath: string;
@@ -249,7 +249,7 @@ export interface S3SetupReport {
 
 /** The message a machine with no trace configuration reads, in either CLI. */
 export function noTraceConfigurationMessage(): string {
-  return `No trace configuration found. Run \`whiteboard trace allow .\` to configure trace capture.`;
+  return `No trace configuration found. Run \`blackboard trace allow .\` to configure trace capture.`;
 }
 
 /** Describes the resolved direct-bucket setup without testing the network. */

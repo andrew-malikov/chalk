@@ -401,7 +401,7 @@ it("resumes a commit diff with its scope", async () => {
   expect(scopeBar()).toBeNull();
 
   // The reader moved on to the whole diff, so the earlier version opens it too.
-  await act(async () => tab(container, "Whiteboard")!.click());
+  await act(async () => tab(container, "Blackboard")!.click());
   await act(async () => tab(container, "Diff")!.click());
   await open(scopedVersion);
   expect(tab(container, "Diff")?.getAttribute("aria-pressed")).toBe("true");
@@ -453,7 +453,7 @@ it("resumes the Trace view and the picked trace", async () => {
   );
 });
 
-it("lands a stored Trace view on the whiteboard once no traces are listed", async () => {
+it("lands a stored Trace view on the blackboard once no traces are listed", async () => {
   const { reviewId } = await traceReview();
   const { container, open, show } = traceCanvas(reviewId, [traceSession]);
 
@@ -469,7 +469,7 @@ it("lands a stored Trace view on the whiteboard once no traces are listed", asyn
   await act(async () => {
     await vi.waitFor(() =>
       expect(
-        tab(empty.container, "Whiteboard")?.getAttribute("aria-pressed"),
+        tab(empty.container, "Blackboard")?.getAttribute("aria-pressed"),
       ).toBe("true"),
     );
   });

@@ -586,7 +586,7 @@ it("keeps the agent through new versions of the review, and says so when the con
 
     // Lost, it stops looking busy and offers the way back.
     expect(container.textContent).toContain(
-      "Whiteboard lost its connection to Claude Code.",
+      "Blackboard lost its connection to Claude Code.",
     );
     expect(working(container)).toBeNull();
     expect(buttonNamed(container, "Stop")).toBeNull();
@@ -1055,7 +1055,7 @@ it("offers a new conversation when one cannot be reopened: one lost before it wa
     const push = (update: AskUpdate) =>
       stream.enqueue(new TextEncoder().encode(JSON.stringify(update) + "\n"));
 
-    // The agent never started a session, so Whiteboard saved nothing.
+    // The agent never started a session, so Blackboard saved nothing.
     await act(async () =>
       push({
         seq: 0,

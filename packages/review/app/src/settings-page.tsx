@@ -128,7 +128,7 @@ export function SettingsPage({
             <h1 {...stylex.props(homeStyles.heading)}>Settings</h1>
           </div>
           <p {...stylex.props(styles.lede)}>
-            Settings apply to Whiteboard on this machine.
+            Settings apply to Blackboard on this machine.
           </p>
 
           {install ? (
@@ -144,11 +144,11 @@ export function SettingsPage({
           {install?.status.cli ? (
             <Section label="Command line">
               <Row
-                label="whiteboard command"
+                label="blackboard command"
                 description={
                   install.status.shim.installed
                     ? `Installed at ${install.status.shim.path}. Your agents and trace capture run it.`
-                    : "Adds whiteboard to your shell PATH. Your agents and trace capture run it."
+                    : "Adds blackboard to your shell PATH. Your agents and trace capture run it."
                 }
               >
                 {install.status.shim.installer ? null : (
@@ -200,7 +200,7 @@ export function SettingsPage({
           </Section>
 
           <Section label="Editor">
-            <Row label="Theme" description="How Whiteboard looks.">
+            <Row label="Theme" description="How Blackboard looks.">
               <Choice
                 label="Theme"
                 value={theme}
@@ -336,7 +336,7 @@ export function SettingsPage({
             </Row>
             <Row
               label="Scratchpad"
-              description="Show the experimental scratchpad on Home. Agents draw on it through Whiteboard's MCP tools."
+              description="Show the experimental scratchpad on Home. Agents draw on it through Blackboard's MCP tools."
             >
               <label {...stylex.props(styles.toggle)}>
                 <input

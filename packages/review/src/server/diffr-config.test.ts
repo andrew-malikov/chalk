@@ -34,7 +34,7 @@ afterEach(async () => {
 const DEFAULT_PROMPT = "Summarize each fold.";
 
 // What diffr's schema says about each provider. "mistral" exists only here:
-// Whiteboard must handle a provider it has never heard of.
+// Blackboard must handle a provider it has never heard of.
 const PROVIDERS = [
   [
     "gemini",

@@ -9,7 +9,7 @@ const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const checkout = path.resolve(app, "../..");
 
 if (!process.versions.bun) {
-  throw new Error("Whiteboard requires Bun 1.4.2 or newer. Run: bun dev");
+  throw new Error("Blackboard requires Bun 1.4.2 or newer. Run: bun dev");
 }
 
 const installedHutch = path.join(homedir(), ".hutch/bin/hutch");

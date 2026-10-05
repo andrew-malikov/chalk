@@ -567,7 +567,7 @@ function ReviewLayoutContent({
                   >
                     {view === "review" ? (
                       <ReviewSurfaceLabel
-                        label={scratchpad ? "Scratchpad" : "Whiteboard"}
+                        label={scratchpad ? "Scratchpad" : "Blackboard"}
                         hasContent={document.empty === false}
                         active={activeView === "review"}
                       />

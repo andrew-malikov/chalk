@@ -106,7 +106,7 @@ export function selectTraceStorage(
         config,
         s3,
         hosted,
-        error: `S3 trace storage is selected but no bucket credentials are configured. Run \`whiteboard trace storage use s3 --endpoint <url> --bucket <name> --key <id> --secret <secret>\`.`,
+        error: `S3 trace storage is selected but no bucket credentials are configured. Run \`blackboard trace storage use s3 --endpoint <url> --bucket <name> --key <id> --secret <secret>\`.`,
       };
     }
 
@@ -242,7 +242,7 @@ async function hostedStorage(
 
   if (!origin) {
     throw new TraceConfigurationError(
-      `Hosted trace storage is not configured. Run \`whiteboard trace allow .\` or \`whiteboard trace storage use hosted\`.`,
+      `Hosted trace storage is not configured. Run \`blackboard trace allow .\` or \`blackboard trace storage use hosted\`.`,
     );
   }
 
@@ -259,7 +259,7 @@ async function hostedStorage(
 
   if (!storage) {
     throw new TraceConfigurationError(
-      `Hosted trace storage needs a login and a GitHub checkout with a trace store. Run \`whiteboard login\`, \`whiteboard trace store create\`, and \`whiteboard trace allow .\`.`,
+      `Hosted trace storage needs a login and a GitHub checkout with a trace store. Run \`blackboard login\`, \`blackboard trace store create\`, and \`blackboard trace allow .\`.`,
     );
   }
 

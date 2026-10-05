@@ -1,6 +1,6 @@
 {
-  "name": "whiteboard",
+  "name": "blackboard",
   "version": "0.1.0",
-  "description": "Connect your agent to dev.fast Whiteboard",
+  "description": "Connect your agent to dev.fast Blackboard",
   "author": { "name": "dev.fast" }
 }

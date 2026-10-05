@@ -65,7 +65,7 @@ function storeReadWarning(error: Error): string | null {
     if (error.code === "not_found") return null;
 
     if (error.code === "unauthorized") {
-      return `Trace store request failed: unauthorized. Run \`whiteboard login\`.`;
+      return `Trace store request failed: unauthorized. Run \`blackboard login\`.`;
     }
 
     if (error.code === "forbidden") {
@@ -179,8 +179,8 @@ export class HostedTraceStorage implements TraceStorage {
         if (!auth || auth.origin !== origin) {
           throw new Error(
             auth
-              ? `You are logged in to ${auth.origin}, not the selected store ${origin}. Run \`whiteboard login --origin ${origin}\`.`
-              : `The trace store login is missing. Run \`whiteboard login --origin ${origin}\`.`,
+              ? `You are logged in to ${auth.origin}, not the selected store ${origin}. Run \`blackboard login --origin ${origin}\`.`
+              : `The trace store login is missing. Run \`blackboard login --origin ${origin}\`.`,
           );
         }
 
@@ -216,7 +216,7 @@ export class HostedTraceStorage implements TraceStorage {
       // checkout may read while it is offline; the transport is never asked.
       if (auth && auth.origin !== origin) {
         report(
-          `You are logged in to ${auth.origin}, not the selected store ${origin}. Run \`whiteboard login --origin ${origin}\`; using saved copies until then.`,
+          `You are logged in to ${auth.origin}, not the selected store ${origin}. Run \`blackboard login --origin ${origin}\`; using saved copies until then.`,
         );
       }
 
@@ -576,7 +576,7 @@ export class HostedTraceStorage implements TraceStorage {
 
       if (begun.storeId !== target.storeId) {
         throw new Error(
-          `The trace store changed while this session was being resolved. Run \`whiteboard trace allow .\` again.`,
+          `The trace store changed while this session was being resolved. Run \`blackboard trace allow .\` again.`,
         );
       }
 
@@ -808,7 +808,7 @@ function publishResult(
 function syncStoreError(error: StoreApiError, sessionId: string): Error {
   if (error.code === "stale_upload") {
     return new Error(
-      `Another upload of this session finished first. Run \`whiteboard trace sync ${sessionId}\` again to publish the newer transcript.`,
+      `Another upload of this session finished first. Run \`blackboard trace sync ${sessionId}\` again to publish the newer transcript.`,
     );
   }
 

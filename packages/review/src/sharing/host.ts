@@ -169,7 +169,7 @@ export function mountSharingHost(
             "error",
             error instanceof ReviewInputError
               ? error.message
-              : "This share is unavailable, revoked, or needs a newer Whiteboard version.",
+              : "This share is unavailable, revoked, or needs a newer Blackboard version.",
           );
         })
         .finally(() => imports.delete(id));
@@ -219,7 +219,7 @@ export function mountSharingPublisher(
 
     if (!account)
       throw new ReviewInputError(
-        "Set DEV_REVIEW_SHARE_TOKEN for CI, or run whiteboard login before sharing.",
+        "Set DEV_REVIEW_SHARE_TOKEN for CI, or run blackboard login before sharing.",
         409,
       );
 
@@ -305,7 +305,7 @@ export function mountSharingPublisher(
 
     if (!account)
       throw new ReviewInputError(
-        "Set DEV_REVIEW_SHARE_TOKEN for CI, or run whiteboard login first.",
+        "Set DEV_REVIEW_SHARE_TOKEN for CI, or run blackboard login first.",
         409,
       );
     await new ShareClient(account.origin, account.token).revoke(shareId);

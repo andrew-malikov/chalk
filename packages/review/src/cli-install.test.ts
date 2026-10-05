@@ -287,7 +287,7 @@ describe("review command installation", () => {
     const homeDir = await temporaryHome("review-cli-symlink-shim-");
     const env = profileEnvironment(homeDir, "/bin/zsh");
     const cliPath = path.join(homeDir, "current-app", "cli.js");
-    const shimPath = path.join(homeDir, ".local", "bin", "whiteboard");
+    const shimPath = path.join(homeDir, ".local", "bin", "blackboard");
     await Promise.all([
       mkdir(path.dirname(cliPath), { recursive: true }),
       mkdir(path.dirname(shimPath), { recursive: true }),
@@ -314,7 +314,7 @@ describe("review command installation", () => {
     const homeDir = await temporaryHome("review-cli-only-shim-");
     const env = profileEnvironment(homeDir, "/bin/zsh");
     const cliPath = path.join(homeDir, "current-app", "cli.js");
-    const shimPath = path.join(homeDir, ".local", "bin", "whiteboard");
+    const shimPath = path.join(homeDir, ".local", "bin", "blackboard");
     await Promise.all([
       mkdir(path.dirname(cliPath), { recursive: true }),
       mkdir(path.dirname(shimPath), { recursive: true }),
@@ -337,7 +337,7 @@ describe("review command installation", () => {
     });
 
     expect(applied).toMatchObject({ code: 0, shimPath });
-    expect(applied.output).toContain("whiteboard command");
+    expect(applied.output).toContain("blackboard command");
     const installed = await readFile(shimPath, "utf8");
     expect(installed).toContain(cliPath);
     expect(installed).not.toContain("Old Review.app");
@@ -427,7 +427,7 @@ describe("review command installation", () => {
     await mkdir(foreignBin, { recursive: true });
     await Promise.all([
       writeFile(cliPath, "// test CLI\n"),
-      writeFile(path.join(foreignBin, "whiteboard"), "#!/bin/sh\n", {
+      writeFile(path.join(foreignBin, "blackboard"), "#!/bin/sh\n", {
         mode: 0o755,
       }),
     ]);
@@ -445,7 +445,7 @@ describe("review command installation", () => {
       env,
     });
 
-    expect(applied.output).toContain(path.join(foreignBin, "whiteboard"));
+    expect(applied.output).toContain(path.join(foreignBin, "blackboard"));
   });
 
   it("removes the owned command and profile block", async () => {
@@ -457,9 +457,9 @@ describe("review command installation", () => {
 
     const removed = await removeCliInstall({ shim: true, homeDir, env });
 
-    expect(removed.output).toContain("removed Whiteboard PATH entry");
+    expect(removed.output).toContain("removed Blackboard PATH entry");
     await expect(
-      readFile(path.join(homeDir, ".local", "bin", "whiteboard"), "utf8"),
+      readFile(path.join(homeDir, ".local", "bin", "blackboard"), "utf8"),
     ).rejects.toMatchObject({ code: "ENOENT" });
     expect(await readFile(path.join(homeDir, ".zprofile"), "utf8")).toBe("");
   });
@@ -467,7 +467,7 @@ describe("review command installation", () => {
   it("preserves a foreign command while removing the managed profile block", async () => {
     const homeDir = await temporaryHome("review-foreign-command-");
     const env = profileEnvironment(homeDir, "/bin/zsh");
-    const shimPath = path.join(homeDir, ".local", "bin", "whiteboard");
+    const shimPath = path.join(homeDir, ".local", "bin", "blackboard");
     await mkdir(path.dirname(shimPath), { recursive: true });
     await writeFile(shimPath, "#!/bin/sh\necho foreign\n", { mode: 0o755 });
     await ensureShellProfilePath({ homeDir, env });
@@ -508,7 +508,7 @@ function profileEnvironment(homeDir: string, shell: string): NodeJS.ProcessEnv {
 }
 
 describe("Windows command PATH", () => {
-  // A running Whiteboard keeps its startup PATH, and the registry check can
+  // A running Blackboard keeps its startup PATH, and the registry check can
   // disagree with the write the installer just made, so the stamp's record of
   // that write is what readies the command.
   const platform = Object.getOwnPropertyDescriptor(process, "platform")!;
@@ -527,7 +527,7 @@ describe("Windows command PATH", () => {
     await mkdir(path.dirname(shimPath), { recursive: true });
     await writeFile(
       shimPath,
-      "@echo off\r\nrem Managed by Whiteboard Desktop. Do not edit.\r\n",
+      "@echo off\r\nrem Managed by Blackboard Desktop. Do not edit.\r\n",
     );
 
     const stamp: ReviewCliInstallStamp = {
@@ -561,7 +561,7 @@ describe("installed launcher runtime selection", () => {
       cliPath,
       'console.log(JSON.stringify({build:"current",home:process.env.DEV_REVIEW_HOME}))',
     );
-    const shim = path.join(homeDir, ".local", "bin", "whiteboard");
+    const shim = path.join(homeDir, ".local", "bin", "blackboard");
     await writePathShim(
       shim,
       oldCli,
@@ -760,7 +760,7 @@ describe("Desktop installation alongside npm", () => {
   it("preserves the npm launcher and its target when npm uses ~/.local/bin", async () => {
     const homeDir = await temporaryHome("review-npm-coexist-");
     const cli = path.join(homeDir, "npm/cli.js");
-    const shim = path.join(homeDir, ".local/bin/whiteboard");
+    const shim = path.join(homeDir, ".local/bin/blackboard");
     await mkdir(path.dirname(cli), { recursive: true });
     await mkdir(path.dirname(shim), { recursive: true });
     await writeFile(cli, "#!/usr/bin/env node\n// npm-owned\n", {
@@ -928,7 +928,7 @@ describe("MCP self-install", () => {
 
       expect(built.connect).toMatchObject({
         command: "sh",
-        args: ["-c", 'exec "$HOME/.local/bin/whiteboard" mcp'],
+        args: ["-c", 'exec "$HOME/.local/bin/blackboard" mcp'],
       });
 
       await rm(shim);
@@ -940,7 +940,7 @@ describe("MCP self-install", () => {
       });
 
       expect(source.connect).toMatchObject({
-        command: "whiteboard",
+        command: "blackboard",
         args: ["mcp"],
       });
     });
@@ -1022,11 +1022,11 @@ describe("MCP self-install", () => {
   });
 
   describe("autoUpdate resync", () => {
-    it("rewrites only the shim and never touches agent files", async () => {
+    it("updates the old command name and stamp without touching agent files", async () => {
       await writeStamp({
         consent: "granted",
         fingerprint: "old",
-        shimPath: shim,
+        shimPath: path.join(homeDir, ".local/bin/whiteboard"),
         updatedAt: now,
       });
       const claudeConfig = path.join(homeDir, ".claude.json");
@@ -1041,8 +1041,13 @@ describe("MCP self-install", () => {
       });
 
       expect(result.code).toBe(0);
-      expect(await readFile(shim, "utf8")).toContain("Managed by Whiteboard");
+      expect(await readFile(shim, "utf8")).toContain("Managed by Blackboard");
       expect(await readFile(claudeConfig, "utf8")).toBe("{}");
+      expect(await readCliInstallStamp(cliInstallStampPath(env))).toMatchObject(
+        {
+          shimPath: shim,
+        },
+      );
       expect(
         (await readCliInstallStamp(cliInstallStampPath(env)))?.fingerprint,
       ).not.toBe("old");
@@ -1109,7 +1114,7 @@ it("retargets enabled repository hooks before removing the owned legacy launcher
   await mkdir(path.dirname(oldCommand), { recursive: true });
   await writeFile(
     oldCommand,
-    "#!/bin/sh\n# Managed by Whiteboard Desktop\nexit 1\n",
+    "#!/bin/sh\n# Managed by Blackboard Desktop\nexit 1\n",
     { mode: 0o755 },
   );
   await enableTraceRepository({

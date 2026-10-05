@@ -2,7 +2,7 @@ import type { ElectrobunConfig } from "electrobun";
 
 export default {
   app: {
-    name: "Review Electrobun",
+    name: "Blackboard",
     identifier: "dev.fast.review.electrobun",
     version: "0.2.0",
   },

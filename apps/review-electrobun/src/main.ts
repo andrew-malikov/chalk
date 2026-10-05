@@ -35,7 +35,7 @@ const appSessionId = randomUUID();
 
 const abort = new AbortController();
 
-let state: HostState = { status: "starting", message: "Starting Review…" };
+let state: HostState = { status: "starting", message: "Starting Blackboard…" };
 
 let preferences: Awaited<ReturnType<typeof createPreferencesStore>> | undefined;
 
@@ -109,7 +109,7 @@ async function run() {
   });
 
   const window = new BrowserWindow({
-    title: "Review",
+    title: "Blackboard",
     url: "views://mainview/index.html",
     rpc,
     frame: { width: 1200, height: 850 },
@@ -137,11 +137,11 @@ async function run() {
 
   ApplicationMenu.setApplicationMenu([
     {
-      label: "Review",
+      label: "Blackboard",
       submenu: [
         { label: "Settings…", action: "settings", accelerator: "CmdOrCtrl+," },
         { type: "divider" },
-        { role: "quit", label: "Quit Review" },
+        { role: "quit", label: "Quit Blackboard" },
       ],
     },
     {

@@ -50,7 +50,7 @@ export async function readReviewServerDiscovery(
     return discoverySchema.parse(JSON.parse(source));
   } catch {
     throw new Error(
-      `Whiteboard server discovery in ${stateDir} is invalid or incompatible. Restart it with this version of whiteboard server start.`,
+      `Blackboard server discovery in ${stateDir} is invalid or incompatible. Restart it with this version of blackboard server start.`,
     );
   }
 }
@@ -90,6 +90,6 @@ export async function readReviewServerHealth(
 
 export function serverNotReady(stateDir: string) {
   return new Error(
-    `Whiteboard server is not ready in ${stateDir}. Run whiteboard server start --state-dir ${JSON.stringify(stateDir)}, then retry.`,
+    `Blackboard server is not ready in ${stateDir}. Run blackboard server start --state-dir ${JSON.stringify(stateDir)}, then retry.`,
   );
 }

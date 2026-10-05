@@ -426,7 +426,7 @@ export class LocalReviewData {
           ),
         ));
 
-      const title = `${snapshot.title} — ${live ? "Live source" : side === "base" ? "Base source" : "Source"} — Whiteboard`;
+      const title = `${snapshot.title} — ${live ? "Live source" : side === "base" ? "Base source" : "Source"} — Blackboard`;
 
       const workspace = previous ?? {
         folders: [],

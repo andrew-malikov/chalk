@@ -33,7 +33,7 @@ interface AgentCliInput {
 }
 
 export const reviewAgentCliHelp =
-  "whiteboard api tools\nwhiteboard api <tool-name> '<json>'\nwhiteboard api <tool-name> -  (read JSON from stdin)\nwhiteboard mcp  (stdio MCP adapter; Whiteboard Desktop or whiteboard server start must be running)\nSelect headless state with DEV_REVIEW_SERVER_DIR or whiteboard --state-dir <path> api/mcp.\n";
+  "blackboard api tools\nblackboard api <tool-name> '<json>'\nblackboard api <tool-name> -  (read JSON from stdin)\nblackboard mcp  (stdio MCP adapter; Blackboard Desktop or blackboard server start must be running)\nSelect headless state with DEV_REVIEW_SERVER_DIR or blackboard --state-dir <path> api/mcp.\n";
 
 export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
   const env = input.env ?? process.env;
@@ -57,7 +57,7 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
     }
 
     if (extra.length || (mode === "mcp" && name))
-      throw new Error("Unexpected arguments. Use whiteboard api --help.");
+      throw new Error("Unexpected arguments. Use blackboard api --help.");
 
     const headers = {
       [REVIEW_VIA_HEADER]: mode === "mcp" ? "mcp" : "api",
@@ -120,7 +120,7 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
     }
 
     if (name === "tools") {
-      if (json) throw new Error("whiteboard api tools takes no input.");
+      if (json) throw new Error("blackboard api tools takes no input.");
       input.stdout.write(JSON.stringify(tools, null, 2) + "\n");
 
       return 0;
@@ -130,7 +130,7 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
 
     if (!tool)
       throw new Error(
-        `Unknown review tool: ${name}. Use whiteboard api tools.`,
+        `Unknown review tool: ${name}. Use blackboard api tools.`,
       );
     let source = json ?? "{}";
 

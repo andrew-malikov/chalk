@@ -52,7 +52,7 @@ const MODES: ReadonlyArray<{ mode: Mode; label: string }> = [
 ];
 
 /**
- * One agent at a time: a paste-in prompt that has the agent add Whiteboard's MCP
+ * One agent at a time: a paste-in prompt that has the agent add Blackboard's MCP
  * server, or the published plugin (an install command, or Cursor's link).
  */
 export function ConnectCard({
@@ -133,7 +133,7 @@ export function ConnectCard({
         <p {...stylex.props(styles.note)}>
           {status.legacySkills.length > 0
             ? "Remove deprecated skills first."
-            : "Install the whiteboard command in PATH first."}
+            : "Install the blackboard command in PATH first."}
         </p>
       </section>
     );
@@ -254,7 +254,7 @@ export function ConnectCard({
       ) : plugin.url ? (
         <>
           <p {...stylex.props(promptStyles.body)}>
-            Opens {agent} and adds the Whiteboard server.
+            Opens {agent} and adds the Blackboard server.
           </p>
           <div {...stylex.props(promptStyles.actions)}>
             <a
@@ -268,7 +268,7 @@ export function ConnectCard({
         </>
       ) : (
         <p {...stylex.props(promptStyles.body)}>
-          {`${plugin.label}\nInstall the whiteboard command first.`}
+          {`${plugin.label}\nInstall the blackboard command first.`}
         </p>
       )}
       {status.error ? (
@@ -332,7 +332,7 @@ function readStoredTarget(): ReviewCliInstallTarget {
 }
 
 /**
- * Skills that earlier versions of Whiteboard installed into agent configs. After
+ * Skills that earlier versions of Blackboard installed into agent configs. After
  * a removal the row names what went, until the next status refresh.
  */
 export function LegacySkillsRow({
@@ -381,12 +381,12 @@ export function LegacySkillsRow({
   return (
     <section
       {...stylex.props(styles.legacy)}
-      aria-label="Deprecated Whiteboard skills"
+      aria-label="Deprecated Blackboard skills"
     >
       {legacySkills.length > 0 ? (
         <>
           <p {...stylex.props(styles.legacyText)}>
-            Earlier versions of Whiteboard installed these skills. Whiteboard no
+            Earlier versions of Blackboard installed these skills. Blackboard no
             longer uses them.
           </p>
           <ul {...stylex.props(styles.legacyList)}>

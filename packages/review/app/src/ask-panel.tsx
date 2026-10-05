@@ -180,12 +180,12 @@ export function AskPanelContent({
         else
           setRequestError(
             (await readError(response)) ??
-              "Whiteboard could not reopen this conversation.",
+              "Blackboard could not reopen this conversation.",
           );
       })
       .catch(() => {
         if (current)
-          setRequestError("Whiteboard could not reopen this conversation.");
+          setRequestError("Blackboard could not reopen this conversation.");
       });
 
     return () => {
@@ -231,7 +231,7 @@ export function AskPanelContent({
       if (!response.ok)
         throw new Error(
           (await readError(response)) ??
-            "Whiteboard could not reach the agent.",
+            "Blackboard could not reach the agent.",
         );
 
       return response;
@@ -391,7 +391,7 @@ export function AskPanelContent({
     requestError ??
     thread?.error ??
     (lost
-      ? `Whiteboard lost its connection to ${thread?.agentName ?? chosenName}.`
+      ? `Blackboard lost its connection to ${thread?.agentName ?? chosenName}.`
       : null);
 
   // Saved once its agent started a session; before that, nothing reopens it.
@@ -431,7 +431,7 @@ export function AskPanelContent({
       ? () => panels.getState().openAsk(selection, thread?.agent ?? agent)
       : undefined;
 
-  // Reopening starts the agent and loads its session. Whiteboard's saved
+  // Reopening starts the agent and loads its session. Blackboard's saved
   // copy shows meanwhile; one saved before that copy waits for the replay.
   const connecting =
     savedThreadId !== undefined &&

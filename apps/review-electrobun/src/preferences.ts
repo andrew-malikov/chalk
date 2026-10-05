@@ -26,8 +26,7 @@ export async function createPreferencesStore(file: string) {
 
   const update = (patch: Partial<ShellPreferences>) => {
     const action = async () => {
-      const checked = preferencesSchema.partial().parse(patch);
-      const next = preferencesSchema.parse({ ...value, ...checked });
+      const next = preferencesSchema.parse({ ...value, ...patch });
       await mkdir(path.dirname(file), { recursive: true, mode: 0o700 });
       await writeFile(`${file}.tmp`, JSON.stringify(next), { mode: 0o600 });
       await rename(`${file}.tmp`, file);

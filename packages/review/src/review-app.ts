@@ -26,7 +26,7 @@ interface ReviewAppRuntime {
 export interface RunReviewAppInput {
   cwd: string;
   reviewUuid?: string;
-  /** Bring Whiteboard Desktop forward. */
+  /** Bring Blackboard Desktop forward. */
   focus?: boolean;
   stdin: NodeJS.ReadStream;
   stdout: Writable;
@@ -55,7 +55,7 @@ export async function runReviewAppPick(
     ...overrides,
   };
 
-  // Only `whiteboard app launch` may recover a stale or incompatible record; the
+  // Only `blackboard app launch` may recover a stale or incompatible record; the
   // other verbs report the diagnosis rather than start a second Desktop. No
   // record at all means nothing is running, which launching does fix.
   let selection = await runtime.selectInstance();
@@ -87,7 +87,7 @@ export async function runReviewAppPick(
   } else {
     if (!input.stdin.isTTY)
       throw new Error(
-        "whiteboard app pick needs a terminal without --session. Pass --session <uuid> or run it in a terminal.",
+        "blackboard app pick needs a terminal without --session. Pass --session <uuid> or run it in a terminal.",
       );
     const root = await runtime.resolveReviewRoot(input.cwd);
 

@@ -106,7 +106,7 @@ describe("WelcomePage", () => {
 
   const stepOpen = (index: number) => step(index)?.getAttribute("data-open");
 
-  it("opens on the install step until the whiteboard command is installed", async () => {
+  it("opens on the install step until the blackboard command is installed", async () => {
     const onClose = vi.fn<() => void>();
 
     const setupActions = {
@@ -132,7 +132,7 @@ describe("WelcomePage", () => {
     expect(stepOpen(0)).toBe("true");
     expect(stepState(0)).toBe("todo");
     expect(stepState(1)).toBe("todo");
-    expect(buttons("Install whiteboard in PATH")).toHaveLength(1);
+    expect(buttons("Install blackboard in PATH")).toHaveLength(1);
 
     for (const index of [1, 2, 3]) {
       const header = step(index)?.querySelector("button") as HTMLButtonElement;
@@ -141,13 +141,13 @@ describe("WelcomePage", () => {
       expect(stepOpen(index)).toBe("false");
     }
 
-    await act(async () => buttons("Install whiteboard in PATH")[0]?.click());
+    await act(async () => buttons("Install blackboard in PATH")[0]?.click());
     await waitForStepAdvance();
     expect(setupActions.installCli).toHaveBeenCalledOnce();
     expect(buttons("Close")[0]?.disabled).toBe(false);
     expect(stepState(0)).toBe("done");
     expect(stepOpen(1)).toBe("true");
-    expect(buttons("Install whiteboard in PATH")).toHaveLength(0);
+    expect(buttons("Install blackboard in PATH")).toHaveLength(0);
     expect(
       (step(1)?.querySelector("button") as HTMLButtonElement).disabled,
     ).toBe(false);
@@ -167,7 +167,7 @@ describe("WelcomePage", () => {
     await act(async () => root.render(<WelcomePage install={install} />));
     expect(container.querySelectorAll("ol > li")).toHaveLength(3);
     expect(container.textContent).not.toContain(
-      "Install the whiteboard command",
+      "Install the blackboard command",
     );
     expect(stepOpen(0)).toBe("true");
     expect(buttons("Remove deprecated skills")).toHaveLength(1);
@@ -202,7 +202,7 @@ describe("WelcomePage", () => {
     );
     expect(stepState(0)).toBe("todo");
     expect(container.textContent).toContain("CLI build missing.");
-    expect(buttons("Install whiteboard in PATH")).toHaveLength(0);
+    expect(buttons("Install blackboard in PATH")).toHaveLength(0);
     expect(
       (step(1)?.querySelector("button") as HTMLButtonElement).disabled,
     ).toBe(true);
@@ -211,7 +211,7 @@ describe("WelcomePage", () => {
     expect(setupActions.load).toHaveBeenCalledOnce();
     expect(setupActions.installCli).not.toHaveBeenCalled();
     expect(container.textContent).not.toContain("CLI build missing.");
-    expect(buttons("Install whiteboard in PATH")).toHaveLength(1);
+    expect(buttons("Install blackboard in PATH")).toHaveLength(1);
     expect(
       (step(1)?.querySelector("button") as HTMLButtonElement).disabled,
     ).toBe(true);
@@ -247,7 +247,7 @@ describe("WelcomePage", () => {
   });
 
   it("tells a Windows reader to open a terminal rather than edit a POSIX PATH", async () => {
-    const shimPath = "C:\\Users\\tester\\.local\\bin\\whiteboard.cmd";
+    const shimPath = "C:\\Users\\tester\\.local\\bin\\blackboard.cmd";
     await act(async () =>
       root.render(
         <WelcomePage
@@ -351,12 +351,12 @@ describe("WelcomePage", () => {
         />,
       ),
     );
-    await act(async () => buttons("Install whiteboard in PATH")[0]?.click());
+    await act(async () => buttons("Install blackboard in PATH")[0]?.click());
     expect(container.textContent).toContain("Installation failed");
     expect(stepOpen(0)).toBe("true");
     expect(buttons("Close")[0]?.disabled).toBe(true);
     setupActions.installCli.mockResolvedValue(undefined);
-    await act(async () => buttons("Install whiteboard in PATH")[0]?.click());
+    await act(async () => buttons("Install blackboard in PATH")[0]?.click());
     expect(stepOpen(0)).toBe("true");
     expect(buttons("Close")[0]?.disabled).toBe(true);
   });
@@ -385,7 +385,7 @@ describe("WelcomePage", () => {
     const install = content({
       ...fresh,
       updateNeeded: true,
-      legacySkills: [{ path: "/h/.agents/skills/whiteboard" }],
+      legacySkills: [{ path: "/h/.agents/skills/blackboard" }],
     });
 
     const ready = content({
@@ -419,7 +419,7 @@ describe("WelcomePage", () => {
     expect(buttons("Dismiss")[0]?.disabled).toBe(true);
     await act(async () => buttons("Dismiss")[0]?.click());
     expect(onClose).not.toHaveBeenCalled();
-    await act(async () => buttons("Install whiteboard in PATH")[0]?.click());
+    await act(async () => buttons("Install blackboard in PATH")[0]?.click());
     await waitForStepAdvance();
     expect(stepOpen(2)).toBe("true");
     expect(buttons("Dismiss")[0]?.disabled).toBe(false);
@@ -432,7 +432,7 @@ describe("WelcomePage", () => {
     const status = {
       ...fresh,
       updateNeeded: true,
-      legacySkills: [{ path: "/h/.codex/skills/whiteboard" }],
+      legacySkills: [{ path: "/h/.codex/skills/blackboard" }],
     };
 
     const setupActions = {
@@ -453,7 +453,7 @@ describe("WelcomePage", () => {
     );
     expect(stepOpen(0)).toBe("true");
     expect(buttons("Remove deprecated skills")).toHaveLength(1);
-    expect(buttons("Install whiteboard in PATH")).toHaveLength(0);
+    expect(buttons("Install blackboard in PATH")).toHaveLength(0);
     expect(
       (step(1)?.querySelector("button") as HTMLButtonElement).disabled,
     ).toBe(true);
@@ -465,7 +465,7 @@ describe("WelcomePage", () => {
     expect(stepState(0)).toBe("done");
     expect(stepOpen(1)).toBe("true");
     expect(stepState(1)).toBe("todo");
-    await act(async () => buttons("Install whiteboard in PATH")[0]?.click());
+    await act(async () => buttons("Install blackboard in PATH")[0]?.click());
     expect(setupActions.installCli).toHaveBeenCalledOnce();
     expect(stepState(1)).toBe("done");
     expect(stepState(0)).toBe("done");
@@ -476,7 +476,7 @@ describe("WelcomePage", () => {
       ...fresh,
       updateNeeded: true,
       shim: { ...fresh.shim, installed: true, profileConfigured: true },
-      legacySkills: [{ path: "/h/.agents/skills/whiteboard" }],
+      legacySkills: [{ path: "/h/.agents/skills/blackboard" }],
     };
 
     await act(async () =>
@@ -509,7 +509,7 @@ describe("WelcomePage", () => {
     const status = {
       ...fresh,
       shim: { ...fresh.shim, installed: true, profileConfigured: true },
-      legacySkills: [{ path: "/h/.codex/skills/whiteboard" }],
+      legacySkills: [{ path: "/h/.codex/skills/blackboard" }],
     };
 
     const install = content(status);

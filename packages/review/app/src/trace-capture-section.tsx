@@ -17,11 +17,11 @@ type TraceCredentials = Exclude<InstallApplyRequest["trace"], true | undefined>;
 /** One line naming the selected trace store and where its setup lives. */
 function traceStorageSummary(trace: ReviewCliInstallStatus["trace"]): string {
   if (trace.storageMode === "hosted") {
-    return "Storage: hosted trace store selected. Manage it with `whiteboard login`, `whiteboard trace allow`, and `whiteboard trace storage use` in a terminal.";
+    return "Storage: hosted trace store selected. Manage it with `blackboard login`, `blackboard trace allow`, and `blackboard trace storage use` in a terminal.";
   }
 
   if (trace.storageMode === "none" || !trace.configured) {
-    return "Storage: none selected. Enter S3/R2 credentials below, or select the hosted store with `whiteboard trace storage use hosted`.";
+    return "Storage: none selected. Enter S3/R2 credentials below, or select the hosted store with `blackboard trace storage use hosted`.";
   }
 
   const source =
@@ -37,10 +37,10 @@ function traceStorageSummary(trace: ReviewCliInstallStatus["trace"]): string {
 /** What capture records and where, for the selected store. */
 function traceDestinationCopy(trace: ReviewCliInstallStatus["trace"]): string {
   if (trace.storageMode === "hosted") {
-    return "Records agent sessions from allowed repositories to the hosted /dev/fast trace store so Whiteboard sessions can quote them. Session hooks activate each Git or Jujutsu repository when an agent session starts.";
+    return "Records agent sessions from allowed repositories to the hosted /dev/fast trace store so Blackboard sessions can quote them. Session hooks activate each Git or Jujutsu repository when an agent session starts.";
   }
 
-  return "Records agent sessions to your own S3/R2 bucket so Whiteboard sessions can quote them. Session hooks activate each Git or Jujutsu repository when an agent session starts.";
+  return "Records agent sessions to your own S3/R2 bucket so Blackboard sessions can quote them. Session hooks activate each Git or Jujutsu repository when an agent session starts.";
 }
 
 /**

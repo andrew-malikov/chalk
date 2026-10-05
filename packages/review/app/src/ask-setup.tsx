@@ -47,7 +47,7 @@ export function AskSetup({
         <AskSelectionQuote selection={selection} />
         <EmptyState
           title="No agent is ready to answer"
-          message="Whiteboard runs a coding agent on your machine, against the pinned checkout. Install one and sign in to it once in a terminal; it shows up here when you come back."
+          message="Blackboard runs a coding agent on your machine, against the pinned checkout. Install one and sign in to it once in a terminal; it shows up here when you come back."
           xstyle={setupStyles.message}
         />
         <ul {...stylex.props(askPanelStyles.list)}>

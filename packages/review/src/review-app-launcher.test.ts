@@ -262,7 +262,7 @@ describe("Review Desktop launcher", () => {
         },
       ),
     ).rejects.toThrow(
-      'Could not launch Whiteboard with the macOS bundle identifier "dev.fast.review": the launch process exited with code 1. Open Whiteboard once, then run `whiteboard app launch` again. A sandboxed agent must run it outside the sandbox.',
+      'Could not launch Blackboard with the macOS bundle identifier "dev.fast.review": the launch process exited with code 1. Open Blackboard once, then run `blackboard app launch` again. A sandboxed agent must run it outside the sandbox.',
     );
   });
 
@@ -293,7 +293,7 @@ describe("Review Desktop launcher", () => {
         },
       ),
     ).rejects.toThrow(
-      'Could not launch Whiteboard with the Desktop-managed bundle at "/missing/Review": spawn ENOENT.',
+      'Could not launch Blackboard with the Desktop-managed bundle at "/missing/Review": spawn ENOENT.',
     );
   });
 
@@ -322,7 +322,7 @@ describe("Review Desktop launcher", () => {
         },
       ),
     ).rejects.toThrow(
-      'Could not launch Whiteboard with the Desktop-managed bundle at "/tmp/Review": the launch process exited before Desktop became ready.',
+      'Could not launch Blackboard with the Desktop-managed bundle at "/tmp/Review": the launch process exited before Desktop became ready.',
     );
   });
 

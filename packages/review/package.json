@@ -9,6 +9,7 @@
     "directory": "packages/review"
   },
   "bin": {
+    "blackboard": "./dist/cli.js",
     "review": "./dist/cli.js",
     "whiteboard": "./dist/cli.js"
   },
@@ -61,7 +62,7 @@
     "test:telemetry-privacy": "bun --bun run vitest run --config vitest.config.ts src/ui-telemetry-events.test.ts src/error-telemetry.test.ts",
     "typecheck": "bun --bun run tsc --noEmit -p ../review",
     "test:integration:diffr": "bun run build:workspace-deps && bun run ensure:diffr --required && bun --bun run vitest run --config vitest.integration.config.ts",
-    "whiteboard": "bun src/cli.ts"
+    "blackboard": "bun src/cli.ts"
   },
   "dependencies": {
     "@agentclientprotocol/claude-agent-acp": "0.84.0",

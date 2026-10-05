@@ -79,7 +79,7 @@ export async function recordTraceSyncFailure(input: {
     reason: input.reason ?? "sync_failed",
     retry: input.reason
       ? undefined
-      : `whiteboard trace sync ${input.sessionId}`,
+      : `blackboard trace sync ${input.sessionId}`,
   };
 
   await writePrivateJsonAtomic(

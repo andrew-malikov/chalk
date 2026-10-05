@@ -50,11 +50,11 @@ export async function renderInstructions(
   root = findReviewPackageRoot(import.meta.url),
 ): Promise<string> {
   if (topic === "scratchpad" && !scratchpadAvailable(context)) {
-    return "The Whiteboard scratchpad is turned off or Whiteboard Desktop is not running. Answer in chat; the scratchpad can be turned on in Whiteboard Desktop Settings.";
+    return "The Blackboard scratchpad is turned off or Blackboard Desktop is not running. Answer in chat; the scratchpad can be turned on in Blackboard Desktop Settings.";
   }
 
   if (topic === "trace-archaeology" && !context.traceEnabled)
-    return "Trace capture is off on this machine, so no agent traces are available. It can be turned on in Whiteboard Desktop Settings under Experimental Features.";
+    return "Trace capture is off on this machine, so no agent traces are available. It can be turned on in Blackboard Desktop Settings under Experimental Features.";
 
   if (topic !== "authoring") return read(root, topic);
 

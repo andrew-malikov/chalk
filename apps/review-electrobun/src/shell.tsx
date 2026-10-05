@@ -6,8 +6,10 @@ import { createReviewAppSessionId } from "@canvas/tab-dwell-telemetry";
 import {
   REVIEW_CANVAS_RESUME_EVENT,
   REVIEW_DISCORD_URL,
+  REVIEW_TUTORIAL_STEP_IDS,
   ReviewApiClient,
   ReviewApiError,
+  parseReviewCliInstallStatus,
   reviewSourceAnchor,
   reviewSourceComparison,
 } from "@dev.fast/review-protocol";
@@ -15,10 +17,13 @@ import type {
   ReviewApiSummary,
   ReviewCanvasContent,
   ReviewCanvasHandle,
+  ReviewCanvasInstallContent,
+  ReviewCanvasTutorialBridge,
   ReviewCanvasUi,
   ReviewSourceView,
   ReviewVerbRequest,
   ReviewVerbResponse,
+  TutorialProgressV1,
 } from "@dev.fast/review-protocol";
 import {
   useEffect,
@@ -141,11 +146,13 @@ function Shell(
   const active = useRef<string | null>(null);
   const homeHandle = useRef<ReviewCanvasHandle>(undefined);
   const prefs = useRef(options.state.preferences);
+  const tutorialProgress = useRef(options.state.preferences.tutorialProgress);
   const listeners = useRef(new Set<() => void>());
   const [connected, setConnected] = useState(true);
   const connectedRef = useRef(true);
   const tutorialIds = useRef(new Set<string>());
   const [loaded, setLoaded] = useState(false);
+  const [install, setInstall] = useState<ReviewCanvasInstallContent>();
   const [error, setError] = useState<string>();
   const [settings, setSettings] = useState(false);
   const media = useRef(matchMedia("(prefers-color-scheme: dark)"));
@@ -187,6 +194,52 @@ function Shell(
 
   const { abort, api, request } = resources.current;
 
+  async function loadInstall(): Promise<ReviewCanvasInstallContent> {
+    const response = await request(
+      options.state.discovery.url + "/install/status",
+    );
+
+    if (!response.ok) throw new Error("Cannot load Blackboard command setup.");
+    const status = parseReviewCliInstallStatus(await response.json());
+
+    const mutate = async (path: string, body = {}) => {
+      requireConnected();
+
+      const response = await request(
+        options.state.discovery.url + "/install/" + path,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => undefined);
+        throw new Error(
+          result?.output ?? result?.error ?? "Blackboard command setup failed.",
+        );
+      }
+
+      return (await loadInstall()).status;
+    };
+
+    const content: ReviewCanvasInstallContent = {
+      status,
+      apply: (body) => mutate("apply", body),
+      remove: (body) => mutate("remove", body),
+      removeLegacySkills: () => mutate("legacy-skills/remove"),
+      finishUpdate: () => mutate("finish-update"),
+      decline: () => mutate("decline"),
+      skip: () => mutate("skip"),
+      enablePrompts: async () => (await loadInstall()).status,
+    };
+
+    if (!abort.signal.aborted) setInstall(content);
+
+    return content;
+  }
+
   const theme = () =>
     prefs.current.theme === "system"
       ? media.current.matches
@@ -205,6 +258,12 @@ function Shell(
     });
 
   const publish = () => {
+    for (const id of tutorialIds.current) {
+      const tab = tabs.current.get(id);
+
+      if (tab) tab.content = { ...tab.content, tutorial: tutorialBridge(id) };
+    }
+
     for (const listener of listeners.current) listener();
     render();
   };
@@ -213,6 +272,51 @@ function Shell(
     prefs.current = await options.rpc.request.setPreferences(patch);
 
     if (!abort.signal.aborted) publish();
+  }
+
+  function updateTutorial(progress: TutorialProgressV1) {
+    const previous = tutorialProgress.current;
+    tutorialProgress.current = progress;
+    publish();
+    void save({ tutorialProgress: progress }).catch((cause) => {
+      if (tutorialProgress.current === progress) {
+        tutorialProgress.current = previous;
+        publish();
+      }
+
+      fail(cause);
+    });
+  }
+
+  function tutorialBridge(id: string): ReviewCanvasTutorialBridge {
+    return {
+      content: {
+        reviewUuid: id,
+        progress: tutorialProgress.current,
+        keymap: prefs.current.keymap,
+      },
+      setStep: (step, checked) => {
+        const progress = tutorialProgress.current;
+        const steps = new Set(progress.checked);
+
+        if (checked) steps.add(step);
+        else steps.delete(step);
+        updateTutorial({ ...progress, checked: [...steps] });
+      },
+      dismiss: () =>
+        updateTutorial({ ...tutorialProgress.current, dismissed: true }),
+      reopen: () =>
+        updateTutorial({ ...tutorialProgress.current, dismissed: false }),
+      selectKeymap: async (keymap) => {
+        try {
+          await save({ keymap });
+          tutorialBridge(id).setStep("chooseKeymap", true);
+        } catch (cause) {
+          fail(cause);
+        }
+      },
+      close: () => close(id),
+    };
   }
 
   if (!uiRef.current)
@@ -308,6 +412,9 @@ function Shell(
 
     tab.content = {
       kind: "api",
+      tutorial: tutorialIds.current.has(tab.id)
+        ? tutorialBridge(tab.id)
+        : undefined,
       reviewId: tab.id,
       softwareMapEnabled: true,
       structuralDiffEnabled: false,
@@ -565,6 +672,8 @@ function Shell(
       }
     };
 
+    void loadInstall().catch(fail);
+
     void api
       .read<ReviewApiSummary[]>("?mode=textual", abort.signal)
       .then(async (values) => {
@@ -657,11 +766,28 @@ function Shell(
     if (!response.ok) throw new Error("Cannot prepare the tutorial.");
     const result = await response.json();
     tutorialIds.current.add(result.reviewUuid);
+    updateTutorial({ ...tutorialProgress.current, dismissed: false });
     await open(result.reviewUuid, "Tutorial");
   }
 
   const home: Extract<ReviewCanvasContent, { kind: "home" }> = {
     kind: "home",
+    install,
+    onboarding: {
+      installed: !!install?.status.shim.installed,
+      tutorialChecked: REVIEW_TUTORIAL_STEP_IDS.filter((step) =>
+        tutorialProgress.current.checked.includes(step),
+      ).length,
+      tutorialTotal: REVIEW_TUTORIAL_STEP_IDS.length,
+      published: catalog.current.some((review) => !review.origin?.tutorial),
+    },
+    setupActions: {
+      load: loadInstall,
+      installCli: async () => {
+        const current = await loadInstall();
+        await current.apply({ shim: true });
+      },
+    },
     reviews: catalog.current,
     openReview: (id) => {
       void open(id).catch(fail);

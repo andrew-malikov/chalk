@@ -1,4 +1,4 @@
-/** Cursor's one-click MCP install link for Whiteboard's server. */
+/** Cursor's one-click MCP install link for Blackboard's server. */
 export function cursorInstallDeeplink(launch: {
   command: string;
   args: string[];
@@ -7,5 +7,5 @@ export function cursorInstallDeeplink(launch: {
     JSON.stringify({ command: launch.command, args: launch.args }),
   ).toString("base64");
 
-  return `cursor://anysphere.cursor-deeplink/mcp/install?name=whiteboard&config=${encodeURIComponent(config)}`;
+  return `cursor://anysphere.cursor-deeplink/mcp/install?name=blackboard&config=${encodeURIComponent(config)}`;
 }

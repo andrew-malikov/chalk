@@ -238,7 +238,7 @@ export function ReviewTraceView({
               }
               message={
                 list.storageError ??
-                "Open Agent Setup in Whiteboard to enable trace capture."
+                "Open Agent Setup in Blackboard to enable trace capture."
               }
             />
           )}

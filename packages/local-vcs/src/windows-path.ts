@@ -4,7 +4,7 @@ import path from "node:path";
 
 /**
  * A Windows process keeps the PATH it launched with, so Git installed while
- * Whiteboard runs is only in the saved system and user PATH. Merge those (and
+ * Blackboard runs is only in the saved system and user PATH. Merge those (and
  * Git for Windows' usual location) into this process. Returns whether PATH
  * gained any entries.
  */

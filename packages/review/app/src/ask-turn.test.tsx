@@ -165,55 +165,58 @@ it("reads a command the reviewer denied as the denial, not as run", async () => 
   await view.unmount();
 });
 
-it("reads Codex's shell-wrapped commands and Whiteboard's own tools plainly", async () => {
-  const run = (id: string, input: string): AgentEntry => ({
-    kind: "tool",
-    id,
-    title: input,
-    toolKind: "execute",
-    status: "completed",
-    input,
-  });
-
-  const entries: AgentEntry[] = [
-    {
+it.each(["blackboard", "whiteboard"])(
+  "reads Codex's shell-wrapped commands and %s tools plainly",
+  async (server) => {
+    const run = (id: string, input: string): AgentEntry => ({
       kind: "tool",
-      id: "get",
-      title: "mcp.whiteboard.session_get",
-      toolKind: "other",
+      id,
+      title: input,
+      toolKind: "execute",
       status: "completed",
-    },
-    run("sed", `/bin/zsh -lc "sed -n '65,145p' src/extension.ts"`),
-    run("joined", "/bin/zsh -lc rg -n setMode"),
-    // Two quoted words, not one wrapped command: left as it is.
-    run("two", "bash -lc 'a' && 'b'"),
-    { kind: "agent", id: "a", text: "It sets the mode." },
-  ];
+      input,
+    });
 
-  const view = await render(
-    <AskAgentTurn
-      thread={thread(entries)}
-      entries={entries}
-      renderPermission={() => null}
-    />,
-  );
+    const entries: AgentEntry[] = [
+      {
+        kind: "tool",
+        id: "get",
+        title: `mcp.${server}.session_get`,
+        toolKind: "other",
+        status: "completed",
+      },
+      run("sed", `/bin/zsh -lc "sed -n '65,145p' src/extension.ts"`),
+      run("joined", "/bin/zsh -lc rg -n setMode"),
+      // Two quoted words, not one wrapped command: left as it is.
+      run("two", "bash -lc 'a' && 'b'"),
+      { kind: "agent", id: "a", text: "It sets the mode." },
+    ];
 
-  expect(
-    view.container.querySelector("button[aria-expanded]")?.textContent,
-  ).toBe("Read the review, ran 3 commands");
-  await view.click("button[aria-expanded]");
-  expect(
-    [...view.container.querySelectorAll("li [title]")].map(
-      (label) => label.textContent,
-    ),
-  ).toEqual([
-    "Read the review",
-    "sed -n '65,145p' src/extension.ts",
-    "rg -n setMode",
-    "bash -lc 'a' && 'b'",
-  ]);
-  await view.unmount();
-});
+    const view = await render(
+      <AskAgentTurn
+        thread={thread(entries)}
+        entries={entries}
+        renderPermission={() => null}
+      />,
+    );
+
+    expect(
+      view.container.querySelector("button[aria-expanded]")?.textContent,
+    ).toBe("Read the review, ran 3 commands");
+    await view.click("button[aria-expanded]");
+    expect(
+      [...view.container.querySelectorAll("li [title]")].map(
+        (label) => label.textContent,
+      ),
+    ).toEqual([
+      "Read the review",
+      "sed -n '65,145p' src/extension.ts",
+      "rg -n setMode",
+      "bash -lc 'a' && 'b'",
+    ]);
+    await view.unmount();
+  },
+);
 
 it("reads as writing while the answer streams in, and thinking again once it pauses", async () => {
   vi.useFakeTimers();

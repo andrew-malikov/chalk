@@ -99,7 +99,7 @@ export function WelcomePage({
 
     if (cliInstallReady(next.status) && next.status.legacySkills.length === 0)
       setFinishing({
-        from: "Install the whiteboard command",
+        from: "Install the blackboard command",
         to: "Connect your agents",
       });
     setCardStatus(undefined);
@@ -124,7 +124,7 @@ export function WelcomePage({
   if (installed && hasLegacySkills && !replaceInstallStep)
     setReplaceInstallStep(true);
 
-  // Whiteboard cannot see agent configs, so a copied prompt or command is the
+  // Blackboard cannot see agent configs, so a copied prompt or command is the
   // closest signal that an agent got connected.
   const [connectCopied, setConnectCopied] = useState(readConnectCopied);
   const [updateFinished, setUpdateFinished] = useState(false);
@@ -148,35 +148,35 @@ export function WelcomePage({
   const tourChecked = onboarding?.tutorialChecked ?? 0;
   const tourTotal = onboarding?.tutorialTotal ?? 0;
 
-  const installDone = finishing?.from === "Install the whiteboard command";
+  const installDone = finishing?.from === "Install the blackboard command";
 
   const installOffered =
     setupActions !== undefined && !installed && !cliBuildMissing;
 
   const installStep: WelcomeStep = {
-    title: "Install the whiteboard command",
+    title: "Install the blackboard command",
     disabled: hasLegacySkills,
     done: installed,
     body: (
       <>
         <p {...stylex.props(styles.hint)}>
           {installed ? (
-            `Installed at ${status?.shim.path ?? "~/.local/bin/whiteboard"}.`
+            `Installed at ${status?.shim.path ?? "~/.local/bin/blackboard"}.`
           ) : cliBuildMissing ? (
             <>
               CLI build missing. If you’re running from source, run{" "}
               <code {...stylex.props(styles.hintCode)}>
                 bun run --filter @dev.fast/review build
               </code>{" "}
-              from the repository root, then restart Whiteboard. Otherwise,
-              reinstall Whiteboard.
+              from the repository root, then restart Blackboard. Otherwise,
+              reinstall Blackboard.
             </>
           ) : status?.shim.installed ? (
             pathHint(status.shim.path)
           ) : (
             <>
-              The <code {...stylex.props(styles.hintCode)}>whiteboard</code> CLI
-              lets your agents talk to Whiteboard
+              The <code {...stylex.props(styles.hintCode)}>blackboard</code> CLI
+              lets your agents talk to Blackboard
             </>
           )}
         </p>
@@ -194,7 +194,7 @@ export function WelcomePage({
               })
             }
           >
-            Install whiteboard in PATH
+            Install blackboard in PATH
           </Button>
         ) : null}
         {setupActions &&
@@ -256,7 +256,7 @@ export function WelcomePage({
                         from: "Remove deprecated skills",
                         to: cliInstallReady(next)
                           ? "Connect your agents"
-                          : "Install the whiteboard command",
+                          : "Install the blackboard command",
                       });
                   }}
                 />
@@ -355,7 +355,7 @@ export function WelcomePage({
           <div {...stylex.props(styles.columns)}>
             <div {...stylex.props(styles.intro)}>
               <span {...stylex.props(textStyles.eyebrow, styles.kicker)}>
-                Welcome to Whiteboard
+                Welcome to Blackboard
               </span>
               {updating ? (
                 <>
@@ -365,12 +365,12 @@ export function WelcomePage({
                       styles.headline,
                     )}
                   >
-                    Whiteboard now connects to your agents over MCP
+                    Blackboard now connects to your agents over MCP
                   </h1>
                   <p {...stylex.props(styles.sub)}>
-                    Whiteboard (fka. Review) no longer installs skills. Your
+                    Blackboard (fka. Review) no longer installs skills. Your
                     agents connect via MCP which makes updating and lifecycle
-                    simpler! To continue using Whiteboard, axe the skills,
+                    simpler! To continue using Blackboard, axe the skills,
                     install the plugin in your harness of choice, and you're
                     good to go.
                   </p>

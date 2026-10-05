@@ -2,7 +2,7 @@
   "name": "@dev.fast/trace-core",
   "version": "0.0.0",
   "private": true,
-  "description": "Agent trace capture, publication, and hosted-store client for the Whiteboard CLI.",
+  "description": "Agent trace capture, publication, and hosted-store client for the Blackboard CLI.",
   "license": "MIT",
   "files": [
     "dist"

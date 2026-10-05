@@ -52,13 +52,13 @@ import {
 
 const installErrors = new Map<string, string>();
 
-const SHIM_MARKER = "Managed by Whiteboard";
+const SHIM_MARKER = "Managed by Blackboard";
 
 function hasManagedShimMarker(source: string): boolean {
   return (
     source.includes(SHIM_MARKER) ||
     source.includes("Managed by Review Desktop") ||
-    source.includes("Managed by Whiteboard Desktop")
+    source.includes("Managed by Whiteboard")
   );
 }
 
@@ -100,7 +100,7 @@ export function pathShimPath(homeDir = os.homedir()): string {
     homeDir,
     ".local",
     "bin",
-    process.platform === "win32" ? "whiteboard.cmd" : "whiteboard",
+    process.platform === "win32" ? "blackboard.cmd" : "blackboard",
   );
 }
 
@@ -176,7 +176,7 @@ export async function resolveCliInstallStatus(input: {
 
 /**
  * The Windows installer's "Add to PATH" task puts <install dir>\bin, which
- * holds a whiteboard.cmd, on the user or machine PATH.
+ * holds a blackboard.cmd, on the user or machine PATH.
  */
 export async function windowsInstallerCommand(
   packageRoot: string,
@@ -186,7 +186,7 @@ export async function windowsInstallerCommand(
 
   // packageRoot is <install dir>\resources\app\review-runtime.
   const bin = path.resolve(packageRoot, "..", "..", "..", "bin");
-  const command = path.join(bin, "whiteboard.cmd");
+  const command = path.join(bin, "blackboard.cmd");
 
   if (!(await isOwnedShim(command))) return undefined;
 
@@ -257,7 +257,7 @@ async function withDesktopInstallLock<T>(
 
   if (!outcome.acquired)
     throw new Error(
-      "Another Whiteboard setup operation is running. Retry shortly.",
+      "Another Blackboard setup operation is running. Retry shortly.",
     );
 
   return outcome.result;
@@ -295,6 +295,8 @@ async function resyncCliInstallUnlocked(
     fingerprint,
     updatedAt: new Date().toISOString(),
   };
+
+  if (shimPath) next.shimPath = shimPath;
 
   if (userPath) next.userPath = userPath;
 
@@ -440,12 +442,12 @@ function connectPlugins(
         : {
             label: "Install the Claude Code plugin",
             command:
-              "/plugin marketplace add devdotfast/whiteboard\n/plugin install whiteboard@devfast",
+              "/plugin marketplace add devdotfast/whiteboard\n/plugin install blackboard@devfast",
           },
     codex: {
       label: "Install the Codex plugin",
       command:
-        "codex plugin marketplace add devdotfast/whiteboard\ncodex plugin add whiteboard@devfast",
+        "codex plugin marketplace add devdotfast/whiteboard\ncodex plugin add blackboard@devfast",
     },
     cursor: hasShim
       ? {
@@ -455,15 +457,15 @@ function connectPlugins(
       : { label: "Install in Cursor" },
     opencode: {
       label: "Add the OpenCode MCP server (OpenCode 2+)",
-      command: `opencode mcp add --global whiteboard -- ${launchCommand(reviewMcpLaunch(hasShim))}`,
+      command: `opencode mcp add --global blackboard -- ${launchCommand(reviewMcpLaunch(hasShim))}`,
     },
     pi: {
       label: "Add the Pi MCP server (Pi 0.99+)",
-      command: `pi mcp add whiteboard -- ${launchCommand(reviewMcpLaunch(hasShim))}`,
+      command: `pi mcp add blackboard -- ${launchCommand(reviewMcpLaunch(hasShim))}`,
     },
     omp: {
       label: "Add the oh-my-pi MCP server",
-      command: `Add ${JSON.stringify({ whiteboard: reviewMcpLaunch(hasShim) })}\nto "mcpServers" in ~/.omp/agent/mcp.json, then run /mcp reload.`,
+      command: `Add ${JSON.stringify({ blackboard: reviewMcpLaunch(hasShim) })}\nto "mcpServers" in ~/.omp/agent/mcp.json, then run /mcp reload.`,
     },
     copilot:
       process.platform === "win32"
@@ -474,12 +476,12 @@ function connectPlugins(
         : {
             label: "Install the Copilot CLI plugin",
             command:
-              "copilot plugin marketplace add devdotfast/whiteboard\ncopilot plugin install whiteboard@devfast",
+              "copilot plugin marketplace add devdotfast/whiteboard\ncopilot plugin install blackboard@devfast",
           },
   };
 }
 
-/** Removes the skills Whiteboard Desktop installed before it connected over MCP. */
+/** Removes the skills Blackboard Desktop installed before it connected over MCP. */
 export async function removeLegacyReviewSkills(
   input: { homeDir?: string; env?: NodeJS.ProcessEnv } = {},
 ): Promise<{ removed: string[] }> {
@@ -585,7 +587,7 @@ async function removeCliInstallUnlocked(
     // the same path stays untouched.
     const contents = await readTextIfExists(shimPath);
 
-    if (contents.includes(SHIM_MARKER)) {
+    if (hasManagedShimMarker(contents)) {
       await rm(shimPath, { force: true });
 
       if (process.platform === "win32") {
@@ -594,15 +596,15 @@ async function removeCliInstallUnlocked(
         if (await isOwnedShim(bashShim)) await rm(bashShim, { force: true });
       }
 
-      chunks.push(`[ok] removed whiteboard command ${shimPath}\n`);
+      chunks.push(`[ok] removed blackboard command ${shimPath}\n`);
     } else if (contents) {
       chunks.push(
-        `${shimPath} was not installed by Whiteboard Desktop; left in place.\n`,
+        `${shimPath} was not installed by Blackboard Desktop; left in place.\n`,
       );
     }
 
     for (const profilePath of await removeShellProfilePath(homeDir)) {
-      chunks.push(`[ok] removed Whiteboard PATH entry from ${profilePath}\n`);
+      chunks.push(`[ok] removed Blackboard PATH entry from ${profilePath}\n`);
     }
   }
 
@@ -619,11 +621,11 @@ async function removeCliInstallUnlocked(
 
     if (kept.length || Object.values(remaining).some(Boolean)) {
       chunks.push(
-        "[skip] kept trace capture for another Whiteboard installation\n",
+        "[skip] kept trace capture for another Blackboard installation\n",
       );
     } else {
       await disableTraceMachine({ homeDir, env });
-      chunks.push("[ok] disabled Whiteboard trace capture\n");
+      chunks.push("[ok] disabled Blackboard trace capture\n");
     }
   }
 
@@ -684,7 +686,7 @@ export async function isOwnedShim(shimPath: string): Promise<boolean> {
 
 /**
  * The shim is POSIX sh, so running `review` needs no Node.js at all to start.
- * It prefers the CLI and runtime the running Whiteboard Desktop advertises in its
+ * It prefers the CLI and runtime the running Blackboard Desktop advertises in its
  * discovery file, falls back to the paths baked in by the app that wrote it,
  * and runs the CLI under the app's Bun runtime, matching the server.
  * A system Bun is the fallback when the app runtime is unavailable.
@@ -707,7 +709,7 @@ export async function writePathShim(
   }
 
   const source = `#!/bin/sh
-# Managed by Whiteboard Desktop ("Whiteboard: Install CLI in PATH"). Do not edit.
+# Managed by Blackboard Desktop ("Blackboard: Install CLI in PATH"). Do not edit.
 FALLBACK_CLI=${shSingleQuote(cliPath)}
 FALLBACK_RUNTIME=${shSingleQuote(runtimePath ?? "")}
 DEFAULT_HOME=${shSingleQuote(devHome)}
@@ -768,7 +770,7 @@ if [ -z "$cli" ] || [ ! -f "$cli" ] || { [ -n "$runtime" ] && [ ! -x "$runtime" 
 fi
 
 if [ ! -f "$cli" ]; then
-  echo "Whiteboard CLI not found at $cli. Start Whiteboard Desktop, or run npx @dev.fast/review instead." >&2
+  echo "Blackboard CLI not found at $cli. Start Blackboard Desktop, or run npx @dev.fast/review instead." >&2
   exit 1
 fi
 
@@ -784,7 +786,7 @@ if [ -n "$runtime" ] && [ -x "$runtime" ]; then
 fi
 
 if ! command -v bun >/dev/null 2>&1; then
-  echo "Whiteboard needs Bun 1.4.2 or newer. Install Bun, or install Whiteboard Desktop." >&2
+  echo "Blackboard needs Bun 1.4.2 or newer. Install Bun, or install Blackboard Desktop." >&2
   exit 1
 fi
 exec bun "$cli" "$@"
@@ -811,12 +813,12 @@ export async function installReviewCommand(input: {
   if ((await isFile(shimPath)) && !(await isOwnedShim(shimPath))) {
     return {
       shimPath,
-      output: `[skip] kept the existing whiteboard command at ${shimPath}\n`,
+      output: `[skip] kept the existing blackboard command at ${shimPath}\n`,
     };
   }
 
   const shadowingCommand = await resolvePathCommand(
-    "whiteboard",
+    "blackboard",
     shimPath,
     env,
   );
@@ -853,7 +855,7 @@ export async function installReviewCommand(input: {
     ? `Warning: ${shadowingCommand} currently shadows ${shimPath}. Remove that PATH entry or put ${path.dirname(shimPath)} before it.\n`
     : "";
 
-  const output = `[ok] whiteboard command -> ${shimPath}\n${profileOutput}${shadowingOutput}`;
+  const output = `[ok] blackboard command -> ${shimPath}\n${profileOutput}${shadowingOutput}`;
 
   // ensureShellProfilePath throws when the Windows PATH write fails, so
   // reaching here means new terminals will find the command.
@@ -889,7 +891,7 @@ export async function ensureShellProfilePath(input: {
   }
 
   if (!profileName) {
-    return "Whiteboard did not update PATH for this shell. Add ~/.local/bin to PATH. Fish users can run: fish_add_path ~/.local/bin\n";
+    return "Blackboard did not update PATH for this shell. Add ~/.local/bin to PATH. Fish users can run: fish_add_path ~/.local/bin\n";
   }
 
   const profilePath = path.join(input.homeDir, profileName);

@@ -38,7 +38,7 @@
       },
     },
     "packages/agent-plugins/pi": {
-      "name": "@dev.fast/pi-whiteboard",
+      "name": "@dev.fast/pi-blackboard",
       "version": "0.1.2",
     },
     "packages/json": {
@@ -68,6 +68,7 @@
       "version": "0.2.0",
       "bin": {
         "review": "./dist/cli.js",
+        "blackboard": "./dist/cli.js",
         "whiteboard": "./dist/cli.js",
       },
       "dependencies": {
@@ -292,7 +293,7 @@
 
     "@dev.fast/local-vcs": ["@dev.fast/local-vcs@workspace:packages/local-vcs"],
 
-    "@dev.fast/pi-whiteboard": ["@dev.fast/pi-whiteboard@workspace:packages/agent-plugins/pi"],
+    "@dev.fast/pi-blackboard": ["@dev.fast/pi-blackboard@workspace:packages/agent-plugins/pi"],
 
     "@dev.fast/review": ["@dev.fast/review@workspace:packages/review"],
 

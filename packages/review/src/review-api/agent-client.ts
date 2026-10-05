@@ -114,7 +114,7 @@ export async function callAuthoringTool(
       if (error instanceof ReviewApiError || signal?.aborted) throw error;
 
       throw new Error(
-        `Whiteboard may or may not have applied ${tool.name} (${error instanceof Error ? error.message : String(error)}). Retry with identical input, including leaseId, and commandId "${String(commandId)}": if the first attempt was applied, you get its result back instead of a second write.`,
+        `Blackboard may or may not have applied ${tool.name} (${error instanceof Error ? error.message : String(error)}). Retry with identical input, including leaseId, and commandId "${String(commandId)}": if the first attempt was applied, you get its result back instead of a second write.`,
         { cause: error },
       );
     }

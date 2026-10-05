@@ -17,14 +17,14 @@ const PROMPT_KINDS: ReadonlyArray<{ kind: PromptKind; label: string }> = [
 ];
 
 /**
- * Prompts name the subject and stop there: Whiteboard's server gives the agent
+ * Prompts name the subject and stop there: Blackboard's server gives the agent
  * the authoring instructions, so every agent gets the same wording.
  */
 export const PROMPTS: Record<PromptKind, string> = {
   change:
-    "Create a Whiteboard of my current branch against up to date main, then open it in Whiteboard.",
+    "Create a Blackboard of my current branch against up to date main, then open it in Blackboard.",
   architecture:
-    "Create a Whiteboard that sketches out the main data flows, access patterns, and code paths in this repo, so I can do a full architecture review of it. Open it in Whiteboard when you're done.",
+    "Create a Blackboard that sketches out the main data flows, access patterns, and code paths in this repo, so I can do a full architecture review of it. Open it in Blackboard when you're done.",
 };
 
 const COPIED_RESET_MS = 2000;
@@ -73,7 +73,7 @@ export function PromptCard() {
   };
 
   return (
-    <section {...stylex.props(styles.card)} aria-label="Whiteboard prompt">
+    <section {...stylex.props(styles.card)} aria-label="Blackboard prompt">
       <div
         {...stylex.props(controlStyles.segmented, promptStyles.tabs)}
         role="group"

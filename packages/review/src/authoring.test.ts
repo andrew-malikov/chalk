@@ -32,8 +32,8 @@ describe("Review definition session", () => {
         level: "info",
         component: "SoftwareMap",
         message:
-          "Document uses SoftwareMap but no software map is materialized for this repo; author one with `whiteboard map` or remove the section.",
-        remediation: "whiteboard map",
+          "Document uses SoftwareMap but no software map is materialized for this repo; author one with `blackboard map` or remove the section.",
+        remediation: "blackboard map",
       },
     ]);
   });
@@ -75,8 +75,8 @@ describe("Review definition session", () => {
         code: "software-map-unavailable",
         level: "info",
         message:
-          "Definition references softwareMapPath but no software map is materialized for this repo; author one with `whiteboard map` or remove the reference.",
-        remediation: "whiteboard map",
+          "Definition references softwareMapPath but no software map is materialized for this repo; author one with `blackboard map` or remove the reference.",
+        remediation: "blackboard map",
         path: ["browser", "softwareMapPath"],
       },
     ]);

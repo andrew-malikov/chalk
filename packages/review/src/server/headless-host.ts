@@ -50,7 +50,7 @@ export async function runHeadlessServer(input: HeadlessServerInput) {
 
   if (!outcome.acquired)
     throw new Error(
-      `A Whiteboard server already owns ${stateDir}. Stop it first, or choose another --state-dir.`,
+      `A Blackboard server already owns ${stateDir}. Stop it first, or choose another --state-dir.`,
     );
 }
 

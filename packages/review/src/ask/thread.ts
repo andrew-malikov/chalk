@@ -81,8 +81,8 @@ const READ_ONLY_MCP_SERVERS = new Set([
   "fff",
 ]);
 
-/** MCP servers Whiteboard gives every Ask session. Their tool calls are
- * Whiteboard's own, so they run without asking the reviewer. */
+/** MCP servers Blackboard gives every Ask session. Their tool calls are
+ * Blackboard's own, so they run without asking the reviewer. */
 export type AskMcpServers = () => McpServer[];
 
 interface AskThreadBase {
@@ -134,7 +134,7 @@ export type AskThreadStart = AskThreadBase &
 /** How long an agent may take to start and open its session. */
 const START_TIMEOUT_MS = 60_000;
 
-/** How long a turn may run on after Stop before Whiteboard stops its agent.
+/** How long a turn may run on after Stop before Blackboard stops its agent.
  * Claude's adapter ends a wedged turn itself after 30 seconds; Codex's does not. */
 const STOP_GRACE_MS = 15_000;
 
@@ -521,7 +521,7 @@ export class AskThread {
 
     // Advertise no file system or terminal: the agent reads the checkout itself.
     const connection = launched.connect(
-      client({ name: "whiteboard" })
+      client({ name: "blackboard" })
         .onRequest(
           methods.client.session.requestPermission,
           ({ params, signal }) => this.requestPermission(params, signal),
@@ -548,7 +548,7 @@ export class AskThread {
         session: { notices: {} },
         _meta: { parameterizedModelPicker: true },
       },
-      clientInfo: { name: "whiteboard", title: "Whiteboard", version: "1" },
+      clientInfo: { name: "blackboard", title: "Blackboard", version: "1" },
     });
 
     this.emit({
@@ -744,7 +744,7 @@ export class AskThread {
     this.permitted = true;
     this.start.onBypass?.(bypass);
     this.disconnect();
-    // Its mode is Whiteboard's change, not one to announce as the agent's.
+    // Its mode is Blackboard's change, not one to announce as the agent's.
     this.settings.clear();
     this.emit({ type: "set", status: "starting" });
     await this.attempt(async () => {
@@ -946,7 +946,7 @@ export class AskThread {
       (option) => option.kind === "allow_once",
     );
 
-    // Bypassing permissions, everything runs; otherwise Whiteboard's own
+    // Bypassing permissions, everything runs; otherwise Blackboard's own
     // tools, and tools that only read. Allow once, never "always": an adapter
     // may save an "always" rule into the checkout's settings.
     if (

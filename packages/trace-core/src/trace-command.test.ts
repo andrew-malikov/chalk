@@ -51,10 +51,10 @@ describe("resolveTraceCommand", () => {
       }),
     ).toEqual({ file: "/env/review" });
     expect(resolveTraceCommand({ env, homeDir })).toEqual({
-      file: "whiteboard",
+      file: "blackboard",
     });
 
-    const installed = await installFile(homeDir, "whiteboard");
+    const installed = await installFile(homeDir, "blackboard");
     expect(resolveTraceCommand({ env, homeDir })).toEqual({ file: installed });
   });
 });
@@ -73,7 +73,7 @@ describe("renderTraceCommand", () => {
 
 it("pins an npm PATH executable when Desktop has no local launcher", async () => {
   const homeDir = await tempHome();
-  const command = path.join(homeDir, "npm", "bin", "whiteboard");
+  const command = path.join(homeDir, "npm", "bin", "blackboard");
   await mkdir(path.dirname(command), { recursive: true });
   await writeFile(command, "#!/bin/sh\n", { mode: 0o755 });
   expect(

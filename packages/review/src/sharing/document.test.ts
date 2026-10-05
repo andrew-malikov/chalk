@@ -31,7 +31,7 @@ async function fixture() {
 
   const { reviewId } = await local.store.execute({
     commandId: randomUUID(),
-    operation: { type: "create", kind: "scratchpad", title: "Whiteboard" },
+    operation: { type: "create", kind: "scratchpad", title: "Blackboard" },
   });
 
   await local.store.execute({

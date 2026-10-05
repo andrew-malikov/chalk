@@ -27,7 +27,7 @@ export class ReviewDesktopProtocolMismatchError extends Error {
     readonly expectedVersion = REVIEW_DESKTOP_DISCOVERY_VERSION,
   ) {
     super(
-      `Whiteboard Desktop uses protocol ${actualVersion}, but this Whiteboard CLI needs protocol ${expectedVersion}. Update the Whiteboard CLI and Whiteboard Desktop to compatible versions, then try again.`,
+      `Blackboard Desktop uses protocol ${actualVersion}, but this Blackboard CLI needs protocol ${expectedVersion}. Update the Blackboard CLI and Blackboard Desktop to compatible versions, then try again.`,
     );
   }
 }
@@ -37,7 +37,7 @@ export class ReviewDesktopDiscoveryUnreadableError extends Error {
 
   constructor(filePath: string, detail?: string) {
     super(
-      `Whiteboard Desktop discovery is unreadable at ${filePath}. Restart Whiteboard Desktop and try again.${detail ? ` ${detail}` : ""}`,
+      `Blackboard Desktop discovery is unreadable at ${filePath}. Restart Blackboard Desktop and try again.${detail ? ` ${detail}` : ""}`,
     );
   }
 }
@@ -139,7 +139,7 @@ export const REVIEW_INSTANCE_ENV = "DEV_REVIEW_INSTANCE";
 function checkedInstanceKey(key: string, origin = "") {
   if (/^(?:stable|preview|dev-[A-Za-z0-9_.-]+)$/.test(key)) return key;
   throw new Error(
-    `Unknown Whiteboard instance ${JSON.stringify(key)}${origin}. Use stable, preview, or a dev-… key from \`whiteboard instances\`.`,
+    `Unknown Blackboard instance ${JSON.stringify(key)}${origin}. Use stable, preview, or a dev-… key from \`blackboard instances\`.`,
   );
 }
 
@@ -304,7 +304,7 @@ export async function selectReviewInstance(
       ? [
           checkedInstanceKey(
             fromDefault,
-            " as the machine default (`whiteboard instances clear` removes it)",
+            " as the machine default (`blackboard instances clear` removes it)",
           ),
           "default",
         ]
@@ -343,15 +343,15 @@ export function reviewInstanceUnavailable(
 
   const others = running.length
     ? ` Running: ${running.join(", ")}.`
-    : " No Whiteboard is running.";
+    : " No Blackboard is running.";
 
   if (selection.source === "fallback" && running.length > 1)
     return new Error(
-      `Several Whiteboard instances are running and none is selected.${others} Choose one with \`whiteboard instances use <key>\`, or \`export ${REVIEW_INSTANCE_ENV}=<key>\` for this shell.`,
+      `Several Blackboard instances are running and none is selected.${others} Choose one with \`blackboard instances use <key>\`, or \`export ${REVIEW_INSTANCE_ENV}=<key>\` for this shell.`,
     );
 
   return new Error(
-    `Whiteboard \`${selection.key}\` is not running. ${reviewInstanceStartHint(selection)}, or pick another instance with \`whiteboard instances\`.${others}`,
+    `Blackboard \`${selection.key}\` is not running. ${reviewInstanceStartHint(selection)}, or pick another instance with \`blackboard instances\`.${others}`,
   );
 }
 
@@ -359,7 +359,7 @@ export function reviewInstanceStartHint(
   selection: Pick<ReviewInstanceSelection, "key" | "instance">,
 ): string {
   if (!selection.key.startsWith("dev-"))
-    return "Start it with `whiteboard app launch`";
+    return "Start it with `blackboard app launch`";
   const checkout = selection.instance?.discovery.checkout;
 
   return checkout

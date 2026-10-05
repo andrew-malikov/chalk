@@ -4,7 +4,12 @@ import {
   fixtureReviewBridge,
   libavoidWasmUrl,
 } from "@canvas/fixture-review-bridge";
-import type { ReviewDesktopVerbFrame } from "@dev.fast/review-protocol";
+import {
+  type ReviewCliInstallStatus,
+  type ReviewDesktopVerbFrame,
+  parseJsonText,
+} from "@dev.fast/review-protocol";
+import { defineSoftwareMap } from "@review/software-map-model";
 import { act } from "react";
 import { afterEach, expect, test, vi } from "vitest";
 
@@ -92,7 +97,22 @@ fixtures.set(
       origin: { tutorial: true },
       document: [
         { id: "tour", type: "markdown", markdown: "Managed tutorial document" },
+        { id: "tutorial-map", type: "software_map", mapVersionId: c },
+        { id: "tutorial-keys", type: "tutorial", kind: "keymap" },
       ],
+    },
+    maps: {
+      [c]: parseJsonText(
+        JSON.stringify({
+          ...defineSoftwareMap({
+            systems: { sample: { label: "Sample service" } },
+          }),
+          side: "head",
+          commit: "head",
+          countsByElementPath: {},
+          unmappedByElementPath: {},
+        }),
+      ),
     },
   }),
 );
@@ -115,6 +135,8 @@ let controlFrame: (frame: ReviewDesktopVerbFrame) => void;
 
 let controlResults: unknown[] = [];
 
+let installRequests: Array<{ token: string | null; body: unknown }> = [];
+
 afterEach(async () => {
   await act(async () => mounted?.dispose());
   container?.remove();
@@ -124,13 +146,18 @@ afterEach(async () => {
 async function setup(
   reviewIds: string[] = [],
   activeReviewId: string | null = null,
+  emptyCatalog = false,
+  installFailures = 0,
+  tutorialReviewId = a,
 ) {
   activeStreams = 0;
   controlResults = [];
+  installRequests = [];
   catalogUpdates = [];
   healthFailures = 0;
   controlAttachments = 0;
-  let catalogValues = [...summaries];
+  let catalogValues = emptyCatalog ? [] : [...summaries];
+  let commandInstalled = false;
   let preferences = { ...defaultPreferences, reviewIds, activeReviewId };
 
   const rpc: AppRPCClient = {
@@ -167,6 +194,70 @@ async function setup(
 
   vi.stubGlobal("fetch", async (input: string | URL, init?: RequestInit) => {
     const url = new URL(String(input));
+
+    if (url.pathname === "/install/status") {
+      const status: ReviewCliInstallStatus = {
+        fingerprint: "test",
+        stamp: null,
+        stale: false,
+        updateNeeded: false,
+        shim: {
+          path: "/tmp/blackboard",
+          installed: commandInstalled,
+          profileConfigured: commandInstalled,
+          onPath: false,
+        },
+        cli: { path: "/tmp/cli.js", version: "0.2.0" },
+        trace: {
+          enabled: false,
+          configured: false,
+          autoActivateRepositories: false,
+          envPath: "/tmp/env",
+          settingsPath: "/tmp/settings",
+        },
+        legacySkills: [],
+        connect: {
+          command: "blackboard",
+          args: ["mcp"],
+          prompts: {
+            claude: "Connect Claude",
+            codex: "Connect Codex",
+            cursor: "Connect Cursor",
+            opencode: "Connect OpenCode",
+            pi: "Connect Pi",
+            omp: "Connect omp",
+            copilot: "Connect Copilot",
+          },
+          plugins: {
+            claude: { label: "Claude" },
+            codex: { label: "Codex" },
+            cursor: { label: "Cursor" },
+            opencode: { label: "OpenCode" },
+            pi: { label: "Pi" },
+            omp: { label: "omp" },
+            copilot: { label: "Copilot" },
+          },
+        },
+      };
+
+      return Response.json(status);
+    }
+
+    if (url.pathname === "/install/apply") {
+      installRequests.push({
+        token: new Headers(init?.headers).get("x-review-token"),
+        body: JSON.parse(String(init?.body)),
+      });
+
+      if (installFailures-- > 0)
+        return Response.json(
+          { output: "Cannot write the blackboard command." },
+          { status: 500 },
+        );
+      commandInstalled = true;
+
+      return Response.json({ ok: true, output: "Installed" });
+    }
 
     if (
       url.pathname === `/reviews-api/${c}` &&
@@ -292,7 +383,7 @@ async function setup(
     }
 
     if (url.pathname === "/tutorial/prepare")
-      return Response.json({ ok: true, reviewUuid: a });
+      return Response.json({ ok: true, reviewUuid: tutorialReviewId });
 
     if (url.pathname === "/reviews-api/commands")
       return Response.json({ ok: true });
@@ -597,6 +688,160 @@ test("delete confirmation settles on cancel, approval and owner disposal", async
   ui.dispose();
   expect(await pending).toBe(false);
   expect(container.querySelector("dialog")).toBeNull();
+});
+
+test("empty Home installs the command and unlocks agent setup and the tutorial", async () => {
+  await setup([], null, true);
+  await vi.waitFor(() =>
+    expect(container.textContent).toContain("Install blackboard in PATH"),
+  );
+
+  const button = [...container.querySelectorAll("button")].find(
+    (button) => button.textContent === "Install blackboard in PATH",
+  );
+
+  await act(async () => button!.click());
+  await vi.waitFor(() =>
+    expect(container.textContent).toContain("Connect Claude"),
+  );
+  expect(installRequests).toEqual([{ token: "test", body: { shim: true } }]);
+
+  const tour = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Expand Take the tour"]',
+  );
+
+  expect(tour?.disabled).toBe(false);
+  await act(async () => tour!.click());
+
+  const open = [...container.querySelectorAll("button")].find(
+    (button) => button.textContent === "Open the tutorial",
+  );
+
+  await act(async () => open!.click());
+  await vi.waitFor(() =>
+    expect(container.textContent).toContain("Alpha document"),
+  );
+});
+
+test("failed command installation stays on setup and can be retried", async () => {
+  await setup([], null, true, 1);
+  await vi.waitFor(() =>
+    expect(container.textContent).toContain("Install blackboard in PATH"),
+  );
+
+  const button = [...container.querySelectorAll("button")].find(
+    (button) => button.textContent === "Install blackboard in PATH",
+  );
+
+  await act(async () => button!.click());
+  await vi.waitFor(() =>
+    expect(container.textContent).toContain(
+      "Cannot write the blackboard command.",
+    ),
+  );
+  expect(
+    container.querySelector<HTMLButtonElement>(
+      '[aria-label="Expand Connect your agents"]',
+    )?.disabled,
+  ).toBe(true);
+  await act(async () => button!.click());
+  await vi.waitFor(() =>
+    expect(container.textContent).toContain("Connect Claude"),
+  );
+  expect(container.textContent).not.toContain(
+    "Cannot write the blackboard command.",
+  );
+});
+
+test("the tutorial has a guide, finishes, and checks off Take the tour on Home", async () => {
+  const rpc = await setup([], null, true, 0, tutorial);
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>('[aria-label="Open tutorial"]')!
+      .click(),
+  );
+  await vi.waitFor(() =>
+    expect(
+      container.querySelector('[aria-label="Tutorial guide"]'),
+    ).not.toBeNull(),
+  );
+
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>('[aria-label="Hide tutorial"]')!
+      .click(),
+  );
+  await vi.waitFor(() =>
+    expect(container.querySelector('[aria-label="Tutorial guide"]')).toBeNull(),
+  );
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>('[aria-label="Show tutorial"]')!
+      .click(),
+  );
+  await vi.waitFor(() =>
+    expect(
+      container.querySelector('[aria-label="Tutorial guide"]'),
+    ).not.toBeNull(),
+  );
+
+  const keymap = [
+    ...container.querySelectorAll('[aria-label="Keybindings"] button'),
+  ].find((button) => button.textContent === "Vim") as HTMLButtonElement;
+
+  expect(keymap.disabled).toBe(false);
+  await act(async () => keymap.click());
+  await vi.waitFor(() =>
+    expect(
+      container
+        .querySelector('[aria-label="Tutorial guide"]')
+        ?.getAttribute("data-tutorial-step"),
+    ).toBe("showHover"),
+  );
+  expect(rpc.request.setPreferences).toHaveBeenCalledWith({ keymap: "vim" });
+
+  for (let step = 0; step < 9; step++) {
+    const guide = container.querySelector('[aria-label="Tutorial guide"]')!;
+    const before = guide.getAttribute("data-tutorial-step");
+
+    const next = [...guide.querySelectorAll("button")].find(
+      (button) => button.textContent === "Next",
+    );
+
+    await act(async () => next!.click());
+    await vi.waitFor(() =>
+      expect(
+        container
+          .querySelector('[aria-label="Tutorial guide"]')
+          ?.getAttribute("data-tutorial-step"),
+      ).not.toBe(before),
+    );
+  }
+
+  const finish = [
+    ...container.querySelectorAll('[aria-label="Tutorial guide"] button'),
+  ].find((button) => button.textContent === "Finish tour") as HTMLButtonElement;
+
+  await act(async () => finish.click());
+  await vi.waitFor(() =>
+    expect(
+      container.querySelector('[role="tab"][aria-label="Hidden tutorial"]'),
+    ).toBeNull(),
+  );
+  expect(
+    container
+      .querySelector('[aria-label="Expand Take the tour"]')
+      ?.closest("li")
+      ?.getAttribute("data-state"),
+  ).toBe("done");
+  expect(container.textContent).toContain("11 of 11 checks");
+  expect(rpc.request.setPreferences).toHaveBeenCalledWith(
+    expect.objectContaining({
+      tutorialProgress: expect.objectContaining({
+        checked: expect.arrayContaining(["getHelp"]),
+      }),
+    }),
+  );
 });
 
 test("Home tutorial opens through the sidecar without CLI installation", async () => {

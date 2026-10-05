@@ -251,7 +251,7 @@ describe("ConnectCard", () => {
     writeText.mockRestore();
   });
 
-  it("links to Cursor's installer, or asks for the whiteboard command without one", async () => {
+  it("links to Cursor's installer, or asks for the blackboard command without one", async () => {
     localStorage.setItem(REVIEW_CONNECT_TARGET_STORAGE_KEY, "cursor");
 
     const container = await mount(<ConnectCard install={content()} />);
@@ -360,7 +360,7 @@ describe("LegacySkillsRow", () => {
       <LegacySkillsRow install={install} onStatusChange={onStatusChange} />,
     );
 
-    expect(container.textContent).toContain("Whiteboard no longer uses them.");
+    expect(container.textContent).toContain("Blackboard no longer uses them.");
     expect(container.textContent).toContain("/h/.claude/skills/review");
 
     const button = [...container.querySelectorAll("button")].find(

@@ -1,9 +1,9 @@
 {
-  "title": "Whiteboard Desktop: three-minute tour",
+  "title": "Blackboard Desktop: three-minute tour",
   "document": [
     {
       "type": "markdown",
-      "markdown": "# Whiteboard Desktop: three-minute tour\n"
+      "markdown": "# Blackboard Desktop: three-minute tour\n"
     },
     {
       "type": "section",
@@ -62,7 +62,7 @@
       "children": [
         {
           "type": "markdown",
-          "markdown": "Whiteboard pins an exact base and head before the agent starts writing. Open\n**Commits** to see the change in author order. Expand the sample commit to see\nits files, then choose the **<>** button to inspect only that commit.\n\nThe **Diff** tab shows the complete change between the pinned base and head.\nChoose **Review** when you are ready to return to this tour.\n"
+          "markdown": "Blackboard pins an exact base and head before the agent starts writing. Open\n**Commits** to see the change in author order. Expand the sample commit to see\nits files, then choose the **<>** button to inspect only that commit.\n\nThe **Diff** tab shows the complete change between the pinned base and head.\nChoose **Review** when you are ready to return to this tour.\n"
         },
         {
           "type": "tutorial",
@@ -331,7 +331,7 @@
       "children": [
         {
           "type": "markdown",
-          "markdown": "To connect Whiteboard to your agents, open **Preferences \u2192\nSettings**. To take this tour again, open the tutorial from Home.\n"
+          "markdown": "To connect Blackboard to your agents, open **Preferences \u2192\nSettings**. To take this tour again, open the tutorial from Home.\n"
         }
       ]
     },

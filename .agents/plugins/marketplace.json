@@ -2,7 +2,7 @@
   "name": "devfast",
   "plugins": [
     {
-      "name": "whiteboard",
+      "name": "blackboard",
       "source": { "source": "local", "path": "./packages/agent-plugins/codex" },
       "policy": { "installation": "AVAILABLE" },
       "category": "Productivity"

@@ -137,7 +137,7 @@ function CanvasShell({
   return (
     <main {...stylex.props(styles.shell)}>
       <div {...stylex.props(textStyles.eyebrow, styles.brand)}>
-        /dev/fast Whiteboard
+        /dev/fast Blackboard
       </div>
       <h1 {...stylex.props(styles.shellTitle)}>{title}</h1>
       {children}

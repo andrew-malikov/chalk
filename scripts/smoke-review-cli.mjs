@@ -67,7 +67,7 @@ try {
     await access(path.join(pkgRoot, file));
   await assert.rejects(access(path.join(pkgRoot, "app")));
   await assert.rejects(access(path.join(pkgRoot, "skills")));
-  const cli = path.join(prefix, "node_modules/.bin/whiteboard");
+  const cli = path.join(prefix, "node_modules/.bin/blackboard");
 
   const env = {
     ...process.env,

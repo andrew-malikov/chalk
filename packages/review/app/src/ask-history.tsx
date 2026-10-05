@@ -94,7 +94,7 @@ export function AskHistoryProvider({
       })
       .catch(() => {
         if (read === reads.current)
-          setError("Whiteboard could not read saved conversations.");
+          setError("Blackboard could not read saved conversations.");
       });
   }, [session]);
 
@@ -107,7 +107,7 @@ export function AskHistoryProvider({
         .catch(() => null);
 
       if (!response?.ok) {
-        setError("Whiteboard could not delete that conversation.");
+        setError("Blackboard could not delete that conversation.");
 
         return false;
       }

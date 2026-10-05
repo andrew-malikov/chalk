@@ -56,7 +56,7 @@ it("links the files an answer names to the Source window, once the checkout has 
     readOnly: true,
     bypass: false,
     head: "7fd03b8e2",
-    cwd: "/checkouts/whiteboard",
+    cwd: "/checkouts/blackboard",
     selection: { title: "review-files extension" },
     entries,
   };

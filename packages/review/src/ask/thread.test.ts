@@ -272,7 +272,7 @@ function openThread(
       cwd: "/checkout",
       head: "abc123",
       selection: { title: "Paragraph 3", quote: "The index is concurrent." },
-      context: "Selected text from Whiteboard.",
+      context: "Selected text from Blackboard.",
       question: { text: "Is this safe?" },
       ...start,
     },
@@ -337,7 +337,7 @@ it("asks in read-only mode and streams the answer and tool activity", async () =
 
   expect(modes).toEqual(["default"]);
   expect(state.readOnly).toBe(true);
-  expect(prompts[0]).toContain("Selected text from Whiteboard.");
+  expect(prompts[0]).toContain("Selected text from Blackboard.");
   expect(prompts[0]).toContain("Is this safe?");
 
   expect(state.entries).toEqual([
@@ -514,14 +514,14 @@ it("reports an agent that cannot start", async () => {
   expect(state.error).toBe("Codex is not installed.");
 });
 
-const whiteboardMcp: McpServer = {
-  name: "whiteboard",
-  command: "/usr/bin/whiteboard",
+const blackboardMcp: McpServer = {
+  name: "blackboard",
+  command: "/usr/bin/blackboard",
   args: ["mcp"],
   env: [],
 };
 
-it("gives the agent Whiteboard's MCP server and runs its tools, and read-only search, without asking", async () => {
+it("gives the agent Blackboard's MCP server and runs its tools, and read-only search, without asking", async () => {
   const decisions: RequestPermissionResponse[] = [];
 
   const options = [
@@ -539,12 +539,12 @@ it("gives the agent Whiteboard's MCP server and runs its tools, and read-only se
           sessionId: "session",
           toolCall: {
             toolCallId: "claude-call",
-            title: "mcp__whiteboard__session_get",
+            title: "mcp__blackboard__session_get",
             kind: "other",
             _meta: {
               claudeCode: {
-                toolName: "mcp__whiteboard__session_get",
-                mcpServer: { name: "whiteboard", source: "acp" },
+                toolName: "mcp__blackboard__session_get",
+                mcpServer: { name: "blackboard", source: "acp" },
               },
             },
           },
@@ -559,9 +559,9 @@ it("gives the agent Whiteboard's MCP server and runs its tools, and read-only se
       update: {
         sessionUpdate: "tool_call",
         toolCallId: "codex-call",
-        title: "mcp.whiteboard.session_get",
+        title: "mcp.blackboard.session_get",
         kind: "execute",
-        rawInput: { server: "whiteboard", tool: "session_get", arguments: {} },
+        rawInput: { server: "blackboard", tool: "session_get", arguments: {} },
       },
     });
     decisions.push(
@@ -614,10 +614,10 @@ it("gives the agent Whiteboard's MCP server and runs its tools, and read-only se
     );
   });
 
-  const thread = openThread(launch, () => [whiteboardMcp]);
+  const thread = openThread(launch, () => [blackboardMcp]);
   const waiting = await until(thread, ({ status }) => status === "waiting");
 
-  expect(mcpServers).toEqual([[whiteboardMcp]]);
+  expect(mcpServers).toEqual([[blackboardMcp]]);
   expect(decisions).toEqual([
     { outcome: { outcome: "selected", optionId: "once" } },
     { outcome: { outcome: "selected", optionId: "once" } },
@@ -649,7 +649,7 @@ function reopenThread(
     cwd: "/checkout",
     head: "abc123",
     selection: { title: "Paragraph 3", quote: "The index is concurrent." },
-    context: "Selected text from Whiteboard.",
+    context: "Selected text from Blackboard.",
     resume: { sessionId: "session", entries: saved.entries },
     onSave: saved.onSave,
     onSession: saved.onSession,
@@ -676,9 +676,9 @@ it("reopens a saved conversation as the reviewer saw it and continues it", async
       await say(client, "Yes, replicas too.");
     },
     async (client) => {
-      // The first question arrives with the context Whiteboard sent it.
+      // The first question arrives with the context Blackboard sent it.
       for (const text of [
-        "<whiteboard-context>\nSelected text from Whiteboard.\n",
+        "<whiteboard-context>\nSelected text from Blackboard.\n",
         "</whiteboard-context>",
         "Is this safe?",
       ])
@@ -791,7 +791,7 @@ it("shows the saved conversation at once and keeps it as it goes", async () => {
       await askPermission(client, "execute");
     },
     async (client) => {
-      // Whiteboard's copy is shown, so the replay is not added to it.
+      // Blackboard's copy is shown, so the replay is not added to it.
       await say(client, "Replayed answer.");
       await new Promise<void>((resolve) => (loaded = resolve));
     },
@@ -1184,7 +1184,7 @@ it("gives up on an agent that does not start, and starts it again", async () => 
   const state = await until(thread, ({ status }) => status === "idle");
 
   expect(prompts).toHaveLength(1);
-  expect(prompts[0]).toContain("Selected text from Whiteboard.");
+  expect(prompts[0]).toContain("Selected text from Blackboard.");
   expect(state.entries.map((entry) => entry.kind)).toEqual(["user", "agent"]);
   thread.close();
 });
@@ -1215,7 +1215,7 @@ it("stops an agent that is still starting, and starts it again for the next ques
 
   // The agent never saw the selection, so the next question brings it.
   expect(prompts).toHaveLength(1);
-  expect(prompts[0]).toContain("Selected text from Whiteboard.");
+  expect(prompts[0]).toContain("Selected text from Blackboard.");
   expect(prompts[0]).toContain("Is it safe now?");
   thread.close();
 });
@@ -1297,7 +1297,7 @@ it("continues a conversation its agent can no longer reopen in a new session", a
 
   // The new session has not seen the selection.
   expect(prompts).toHaveLength(1);
-  expect(prompts[0]).toContain("Selected text from Whiteboard.");
+  expect(prompts[0]).toContain("Selected text from Blackboard.");
   expect(prompts[0]).toContain("Are you still there?");
   expect(state.entries.slice(0, 2)).toEqual(saved);
   thread.close();
@@ -1435,7 +1435,7 @@ it("lists the agent's commands, and sends one alone, keeping the selection for t
 
   await thread.ask({ text: "Is this safe?" });
 
-  expect(prompts[1]).toContain("Selected text from Whiteboard.");
+  expect(prompts[1]).toContain("Selected text from Blackboard.");
   expect(prompts[1]).toMatch(/Is this safe\?$/);
   thread.close();
 });

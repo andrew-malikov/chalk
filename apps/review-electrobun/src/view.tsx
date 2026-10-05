@@ -29,7 +29,7 @@ function render(state: HostState) {
   const status = document.createElement("main");
   status.className = "review-shell-loading";
   status.setAttribute("role", state.status === "starting" ? "status" : "alert");
-  status.textContent = state.message ?? "Starting Review…";
+  status.textContent = state.message ?? "Starting Blackboard…";
   container.replaceChildren(status);
 }
 

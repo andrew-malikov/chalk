@@ -3,8 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   CLAUDE_WINDOWS_MCP_ADD,
   COPILOT_WINDOWS_MCP_ADD,
-  REVIEW_MCP_LAUNCH,
-  WINDOWS_MCP_LAUNCH,
   connectPrompt,
   launchCommand,
   reviewMcpLaunch,
@@ -18,21 +16,6 @@ const input = {
   fffBinaryPath: "/Users/u/.local/bin/fff-mcp",
   fffCorpusRoot: "/Users/u/.dev/trace-search",
 };
-
-describe("reviewMcpLaunch", () => {
-  it("is the shared sh form with a shim and a bare whiteboard without one", () => {
-    expect(reviewMcpLaunch(true)).toEqual(REVIEW_MCP_LAUNCH);
-    expect(reviewMcpLaunch(false)).toEqual({
-      command: "whiteboard",
-      args: ["mcp"],
-    });
-  });
-
-  it("launches through cmd on Windows, which has no sh", () => {
-    for (const hasShim of [true, false])
-      expect(reviewMcpLaunch(hasShim, "win32")).toEqual(WINDOWS_MCP_LAUNCH);
-  });
-});
 
 describe("connectPrompt", () => {
   it("adds optional trace search only for supported harnesses when enabled", () => {
@@ -65,7 +48,7 @@ describe("connectPrompt", () => {
       expect(prompt).toContain(add);
       expect(prompt).not.toContain(`${target} plugin install`);
       expect(connectPrompt(target, { ...input, platform: "darwin" })).toContain(
-        `${target} plugin install whiteboard@devfast`,
+        `${target} plugin install blackboard@devfast`,
       );
     }
   });
@@ -75,21 +58,21 @@ describe("connectPrompt", () => {
       const launch = reviewMcpLaunch(true, platform);
 
       expect(connectPrompt("opencode", { ...input, platform })).toContain(
-        `opencode mcp add --global whiteboard -- ${launchCommand(launch)}\n`,
+        `opencode mcp add --global blackboard -- ${launchCommand(launch)}\n`,
       );
 
       expect(connectPrompt("pi", { ...input, platform })).toContain(
-        `pi mcp add whiteboard -- ${launchCommand(launch)}\n`,
+        `pi mcp add blackboard -- ${launchCommand(launch)}\n`,
       );
       expect(connectPrompt("omp", { ...input, platform })).toContain(
-        JSON.stringify({ whiteboard: launch }, null, 2),
+        JSON.stringify({ blackboard: launch }, null, 2),
       );
     }
   });
 
   it("quotes the sh launch so Pi stores it unchanged", () => {
     expect(launchCommand(reviewMcpLaunch(true, "darwin"))).toBe(
-      `sh -c 'exec "$HOME/.local/bin/whiteboard" mcp'`,
+      `sh -c 'exec "$HOME/.local/bin/blackboard" mcp'`,
     );
   });
 });

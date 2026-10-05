@@ -90,7 +90,7 @@
   --review-home-rule: #262c37;
   --review-home-rule-soft: #39404d;
   --review-home-meta: #9199a8;
-  /* Code (Whiteboard Dark): ink at three strengths, the marker for keywords,
+  /* Code (Blackboard Dark): ink at three strengths, the marker for keywords,
      sky and periwinkle for types and functions, straw strings, orchid
      numbers. Every value clears WCAG AA on the editor background. */
   --syntax-comment: #778090;
@@ -114,7 +114,7 @@
   );
   /* Scrollbar slider, bridged from the workbench so the canvas pill and the
      Monaco sliders share one color on any theme. The fallbacks are the
-     Whiteboard recipe: ink-faint at 45% at rest, ink-faint on hover, ink-muted
+     Blackboard recipe: ink-faint at 45% at rest, ink-faint on hover, ink-muted
      while dragging. */
   --review-scrollbar-size: 10px;
   --review-scrollbar-thumb: var(

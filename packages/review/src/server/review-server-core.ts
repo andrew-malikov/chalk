@@ -198,7 +198,7 @@ function openControlEvents(
     // chunked framing beside a Content-Length.
     return serverJson(409, {
       ok: false,
-      error: "This server has no room for another Whiteboard Desktop.",
+      error: "This server has no room for another Blackboard Desktop.",
     });
   }
 

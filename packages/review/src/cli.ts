@@ -28,8 +28,8 @@ process.exitCode = delegatedExitCode ?? (await runCli(ownCliPath));
 async function runCli(effectivePath: string): Promise<number> {
   if (!supportedBunRuntime()) {
     process.stderr.write(
-      `Whiteboard needs Bun 1.4.2 or newer; found ${process.versions.bun ?? "a different runtime"}. ` +
-        "Install Bun, or use the whiteboard command installed by Whiteboard Desktop.\n",
+      `Blackboard needs Bun 1.4.2 or newer; found ${process.versions.bun ?? "a different runtime"}. ` +
+        "Install Bun, or use the blackboard command installed by Blackboard Desktop.\n",
     );
 
     return 1;

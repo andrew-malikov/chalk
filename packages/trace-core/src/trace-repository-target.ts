@@ -210,7 +210,7 @@ export async function resolveTraceRepositoryTarget(input: {
     throw new StoreApiError(
       "not_found",
       404,
-      `This repository has no active hosted trace store. Run \`whiteboard trace store create\`.`,
+      `This repository has no active hosted trace store. Run \`blackboard trace store create\`.`,
     );
   }
 
@@ -259,11 +259,11 @@ export async function requireTraceConsent(
 
   if (entry) {
     throw new Error(
-      `${entry.name} is allowed to publish traces to ${entry.enabledOrigins.join(", ")}, not ${target.origin}. Run \`whiteboard trace allow .\` while logged in there.`,
+      `${entry.name} is allowed to publish traces to ${entry.enabledOrigins.join(", ")}, not ${target.origin}. Run \`blackboard trace allow .\` while logged in there.`,
     );
   }
 
   throw new Error(
-    `This repository is not allowed for trace publication. Run \`whiteboard trace allow .\`.`,
+    `This repository is not allowed for trace publication. Run \`blackboard trace allow .\`.`,
   );
 }

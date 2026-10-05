@@ -23,17 +23,17 @@ import { REVIEW_STATUS_TOOL } from "./status-tool.js";
 
 // Some hosts ignore tools/list_changed, so the agent itself has to reload.
 const RELOAD_TOOLS =
-  "Whiteboard is running now, but this session listed Whiteboard's tools before it started, so you may see only session_get_instructions. Before authoring, reload the `whiteboard` MCP server's tools (reconnect it in your agent, or start a new agent session). If you can already see tools such as session_create, carry on.";
+  "Blackboard is running now, but this session listed Blackboard's tools before it started, so you may see only session_get_instructions. Before authoring, reload the `blackboard` MCP server's tools (reconnect it in your agent, or start a new agent session). If you can already see tools such as session_create, carry on.";
 
 function mcpAuthoringGuidance(context: {
   scratchpadAvailable: boolean;
   traceEnabled: boolean;
 }): string {
   return [
-    "Whiteboard explains code in documents the user reads in Whiteboard Desktop. Call session_get_instructions before creating or editing a Whiteboard and follow it. Read session_capabilities before authoring; session_create opens the new review in Desktop when it is available, so call session_open only for an existing review, and generate software maps only when softwareMapEnabled is true. When the user asks for a Whiteboard or to use Whiteboard (for example to review a branch, a change or a pull request, or to explain a system in Whiteboard), author a Whiteboard with the default topic.",
+    "Blackboard explains code in documents the user reads in Blackboard Desktop. Call session_get_instructions before creating or editing a Blackboard and follow it. Read session_capabilities before authoring; session_create opens the new review in Desktop when it is available, so call session_open only for an existing review, and generate software maps only when softwareMapEnabled is true. When the user asks for a Blackboard or to use Blackboard (for example to review a branch, a change or a pull request, or to explain a system in Blackboard), author a Blackboard with the default topic.",
     ...(context.scratchpadAvailable
       ? [
-          'When the user asks in conversation to be shown how code works or wants a diagram, without asking for a Whiteboard, call session_capabilities; if it reports scratchpadEnabled and desktopAvailable, draw on the Whiteboard scratchpad rather than answering only in chat, starting with session_get_instructions({topic:"scratchpad"}).',
+          'When the user asks in conversation to be shown how code works or wants a diagram, without asking for a Blackboard, call session_capabilities; if it reports scratchpadEnabled and desktopAvailable, draw on the Blackboard scratchpad rather than answering only in chat, starting with session_get_instructions({topic:"scratchpad"}).',
         ]
       : []),
     ...(context.traceEnabled
@@ -41,7 +41,7 @@ function mcpAuthoringGuidance(context: {
           'For why code exists, what an agent was thinking, or whether an agent solved something before, call session_get_instructions({topic:"trace-archaeology"}).',
         ]
       : []),
-    "Never read or write Whiteboard files or SQL.",
+    "Never read or write Blackboard files or SQL.",
   ].join(" ");
 }
 
@@ -52,7 +52,7 @@ export async function serveReviewMcp(
   stdout: Writable,
   stderr: Writable = process.stderr,
   traceEnabled = false,
-  /** What whiteboard_status reports when the Desktop cannot be reached, and why. */
+  /** What blackboard_status reports when the Desktop cannot be reached, and why. */
   offlineStatus?: (problem: string) => Promise<JsonValue>,
   onToolCall?: (call: ReviewToolCall) => Promise<void> | void,
 ) {
@@ -64,7 +64,7 @@ export async function serveReviewMcp(
   };
 
   const server = new Server(
-    { name: "whiteboard", version: "1.0.0" },
+    { name: "blackboard", version: "1.0.0" },
     {
       capabilities: { tools: { listChanged: true } },
     },
@@ -106,7 +106,7 @@ export async function serveReviewMcp(
       announceCatalog = true;
       listedWhileDown = true;
       stderr.write(
-        `whiteboard mcp: ${error instanceof Error ? error.message : String(error)}\n`,
+        `blackboard mcp: ${error instanceof Error ? error.message : String(error)}\n`,
       );
     }
 
@@ -178,7 +178,7 @@ export async function serveReviewMcp(
       tool = tools.find((tool) => tool.name === request.params.name);
 
       if (!tool)
-        throw new Error(`Unknown Whiteboard tool: ${request.params.name}`);
+        throw new Error(`Unknown Blackboard tool: ${request.params.name}`);
 
       const result = await callPublicTool(
         client,

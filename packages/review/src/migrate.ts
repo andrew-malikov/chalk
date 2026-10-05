@@ -135,7 +135,7 @@ export async function runReviewMigration(input: {
   );
 
   const managedCheckouts = await runMigrationPhase(
-    "Whiteboard-managed checkout migration",
+    "Blackboard-managed checkout migration",
     { checked: 0, created: 0, legacyRemoved: 0, blockers: [] },
     () =>
       runtime.migrateReviewManagedCheckouts({
@@ -177,7 +177,7 @@ export async function runReviewMigration(input: {
 
   human.write(
     [
-      `Whiteboard migration: ${count(stored.documents, "document")} checked;`,
+      `Blackboard migration: ${count(stored.documents, "document")} checked;`,
       `${count(stored.droppedReviews, "old review")} dropped;`,
       `${count(jj.migrated, "jj repository", "jj repositories")} converted;`,
       `${count(managedCheckouts.created, "managed checkout")} created;`,
@@ -189,7 +189,7 @@ export async function runReviewMigration(input: {
   );
 
   for (const blocker of blockers) {
-    input.stderr.write(`Whiteboard migration blocker: ${blocker}\n`);
+    input.stderr.write(`Blackboard migration blocker: ${blocker}\n`);
   }
 
   emitJsonEvent(input, {
@@ -631,7 +631,7 @@ export async function removeLegacyGlobalReviewInstalls(input: {
         !input.desktopManagedCli
       ) {
         result.blockers.push(
-          `${packageRoot} is a legacy global Whiteboard CLI, but no separate Desktop-managed review command is available.`,
+          `${packageRoot} is a legacy global Blackboard CLI, but no separate Desktop-managed review command is available.`,
         );
         continue;
       }
@@ -650,7 +650,7 @@ export async function removeLegacyGlobalReviewInstalls(input: {
         result.removed += 1;
       } else {
         result.blockers.push(
-          `${manager} could not remove the legacy Whiteboard CLI at ${packageRoot}.`,
+          `${manager} could not remove the legacy Blackboard CLI at ${packageRoot}.`,
         );
       }
     }

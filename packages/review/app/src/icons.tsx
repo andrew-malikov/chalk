@@ -163,7 +163,7 @@ export function MapPinIcon({ xstyle }: IconProps = {}): ReactElement {
 }
 
 /**
- * The whiteboard marker stroke, drawn under a top bar surface; it is revealed
+ * The blackboard marker stroke, drawn under a top bar surface; it is revealed
  * left to right with a clip. Its tab carries `segmentMarker`.
  */
 export function MarkerUnderline({ active }: { active: boolean }): ReactElement {

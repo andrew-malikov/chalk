@@ -1,6 +1,6 @@
-you are grouping a code whiteboard's changed files into file lenses for the Diff view.
+you are grouping a code blackboard's changed files into file lenses for the Diff view.
 
-**input:** a whiteboard id.
+**input:** a blackboard id.
 
 **flow**
 - call `session_activity_begin` with `scope: "lenses"` before writing, and `session_activity_end` when done.

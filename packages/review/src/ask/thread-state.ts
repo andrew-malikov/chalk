@@ -61,7 +61,7 @@ export const askEntrySchema = z.discriminatedUnion("kind", [
     options: z.array(permissionOptionSchema),
     /** The chosen option, `cancelled`, or absent while the user decides. */
     outcome: z.string().optional(),
-    /** Refused by Whiteboard's read-only policy, not by the user. */
+    /** Refused by Blackboard's read-only policy, not by the user. */
     automatic: z.boolean().optional(),
   }),
   /** An aside apart from the answer, which it is not part of: an agent's
@@ -332,7 +332,7 @@ export function applyAskChange(
 }
 
 /** A saved conversation, as the history list shows it. The transcript stays
- * with the agent; Whiteboard keeps what it needs to find and reopen it. */
+ * with the agent; Blackboard keeps what it needs to find and reopen it. */
 export const askHistoryEntrySchema = z.object({
   id: z.string(),
   agent: z.enum(askAgentIds),

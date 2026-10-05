@@ -187,7 +187,7 @@ export async function migrateStoredReviewData(input: {
       total.documents += 1;
     } catch (error) {
       total.failedReviewUuids?.push(entry.name);
-      const message = `${reviewDir}: current artifact migration failed: ${errorMessage(error)} Review preserved; retry whiteboard migrate apply after resolving the blocker.`;
+      const message = `${reviewDir}: current artifact migration failed: ${errorMessage(error)} Review preserved; retry blackboard migrate apply after resolving the blocker.`;
       input.onBlocker?.(message);
       input.log?.(message);
     }
@@ -326,7 +326,7 @@ async function regeneratePresentedArtifacts(input: {
         JSON.stringify(input.original)
       ) {
         throw new Error(
-          "Review changed while preparing migration; rerun whiteboard migrate apply.",
+          "Review changed while preparing migration; rerun blackboard migrate apply.",
         );
       }
 

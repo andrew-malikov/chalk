@@ -149,7 +149,7 @@ async function resolveTraceReview(
   }
 
   if (candidates.length > 1) {
-    throw new Error("Multiple Whiteboards require --session <uuid>.");
+    throw new Error("Multiple Blackboards require --session <uuid>.");
   }
 
   return candidates[0];

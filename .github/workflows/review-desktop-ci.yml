@@ -1,4 +1,4 @@
-name: Whiteboard CI
+name: Blackboard CI
 
 on:
   pull_request:
@@ -48,7 +48,7 @@ jobs:
       - name: Install Playwright Chromium
         working-directory: packages/review/app
         run: bun --bun run playwright install chromium --only-shell
-      - name: Build Whiteboard
+      - name: Build Blackboard
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: bun run desktop:build

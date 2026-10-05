@@ -440,7 +440,7 @@ describe("trace storage commands", () => {
         await githubCheckout();
         const result = await use({ mode: "hosted" });
         expect(result.code).toBe(1);
-        expect(result.stderr).toContain("whiteboard login --origin");
+        expect(result.stderr).toContain("blackboard login --origin");
         expect(existsSync(traceConfigPath({ env, homeDir: home }))).toBe(false);
       });
 

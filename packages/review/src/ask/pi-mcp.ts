@@ -21,14 +21,14 @@ const PI_MCP_VERSION = [0, 99, 0] as const;
  * launch ask moments apart, and an update during a review is seen soon. */
 const VERSION_TTL_MS = 30_000;
 
-const SERVERS_ENV = "WHITEBOARD_ASK_MCP";
+const SERVERS_ENV = "BLACKBOARD_ASK_MCP";
 
-const PI_ENV = "WHITEBOARD_ASK_PI";
+const PI_ENV = "BLACKBOARD_ASK_PI";
 
-const EXTENSION_ENV = "WHITEBOARD_ASK_PI_EXTENSION";
+const EXTENSION_ENV = "BLACKBOARD_ASK_PI_EXTENSION";
 
-const EXTENSION = `// Managed by Whiteboard: gives a Pi session that Ask starts the MCP servers
-// Whiteboard hands it. Do not edit.
+const EXTENSION = `// Managed by Blackboard: gives a Pi session that Ask starts the MCP servers
+// Blackboard hands it. Do not edit.
 export default function (pi: {
   registerMcpServer(name: string, config: object): void;
 }) {
@@ -40,7 +40,7 @@ export default function (pi: {
 `;
 
 const WRAPPER = `#!/bin/sh
-# Managed by Whiteboard: starts Pi for Ask with Whiteboard's extension.
+# Managed by Blackboard: starts Pi for Ask with Blackboard's extension.
 exec "$${PI_ENV}" -e "$${EXTENSION_ENV}" "$@"
 `;
 
@@ -139,7 +139,7 @@ export async function piWithMcp(
   env: NodeJS.ProcessEnv,
 ): Promise<string> {
   const directory = path.join(devReviewHome(), "ask", "pi");
-  const extension = path.join(directory, "whiteboard-mcp.ts");
+  const extension = path.join(directory, "blackboard-mcp.ts");
   const wrapper = path.join(directory, "pi");
 
   await mkdir(directory, { recursive: true });

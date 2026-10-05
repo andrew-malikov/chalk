@@ -132,7 +132,7 @@ export interface AuthoringCapabilities {
 }
 
 const SCRATCHPAD_DISABLED =
-  "The scratchpad is off. Turn it on in Whiteboard Desktop Settings.";
+  "The scratchpad is off. Turn it on in Blackboard Desktop Settings.";
 
 /**
  * What the host reports about reviews, for telemetry. `onReviewCreated` fires
@@ -173,7 +173,7 @@ export function createReviewApi(
   scratchpadEnabled: () => boolean = () => false,
   // Read per request: capture can change from outside this server.
   traceEnabled: () => Promise<boolean> = async () => false,
-  /** Which server this is, for whiteboard_status. */
+  /** Which server this is, for blackboard_status. */
   status: () => JsonObject = () => ({}),
   hooks: ReviewApiHooks = {},
   /** Desktop's Ask: local agents answering questions about a selection. */
@@ -204,7 +204,7 @@ export function createReviewApi(
 
     return context.json(
       {
-        error: `Whiteboard operation failed (${failureKind(error)}). The server logged the cause; Whiteboard Desktop writes it to main.log in its logs folder.`,
+        error: `Blackboard operation failed (${failureKind(error)}). The server logged the cause; Blackboard Desktop writes it to main.log in its logs folder.`,
       },
       500,
     );
@@ -1171,7 +1171,7 @@ export function createReviewApi(
     );
 
     return [
-      `Selected ${target.kind === "text" ? "text" : "code"} from Whiteboard: ${snapshot.title}`,
+      `Selected ${target.kind === "text" ? "text" : "code"} from Blackboard: ${snapshot.title}`,
       `Session ID: ${snapshot.reviewId}`,
       `Version: ${snapshot.version}`,
       ...(selection.apiSource?.commit
@@ -1224,7 +1224,7 @@ export function createReviewApi(
       const { reviewId } = snapshot;
 
       return [
-        `A reviewer is reading "${snapshot.title}" in Whiteboard and has a question about a selection.`,
+        `A reviewer is reading "${snapshot.title}" in Blackboard and has a question about a selection.`,
         checkout.live
           ? "Your working directory is the repository the review describes."
           : `Your working directory is a checkout of the review's head commit, ${checkout.head}. Answer from this code, not from other branches.`,
@@ -1232,11 +1232,11 @@ export function createReviewApi(
         "Name files by their path from the checkout root, with a line where it helps, as in `src/app.ts:42`; the reviewer can open them from your answer.",
         ...(reach?.kind === "mcp"
           ? [
-              `The whiteboard MCP tools read and change this review: its sessionId is "${reviewId}". Read it with session_get. If the reviewer asks you to change the review, edit it with session_edit; do not write files to do it.`,
+              `The blackboard MCP tools read and change this review: its sessionId is "${reviewId}". Read it with session_get. If the reviewer asks you to change the review, edit it with session_edit; do not write files to do it.`,
             ]
           : reach?.kind === "cli"
             ? [
-                `Whiteboard's CLI reads and changes this review from your shell: its sessionId is "${reviewId}". Read it with \`${reach.command} api session_get '{"sessionId":"${reviewId}"}'\`. If the reviewer asks you to change the review, edit it with \`${reach.command} api session_edit '<json>'\`; do not write files to do it. \`${reach.command} api tools\` lists each tool's input.`,
+                `Blackboard's CLI reads and changes this review from your shell: its sessionId is "${reviewId}". Read it with \`${reach.command} api session_get '{"sessionId":"${reviewId}"}'\`. If the reviewer asks you to change the review, edit it with \`${reach.command} api session_edit '<json>'\`; do not write files to do it. \`${reach.command} api tools\` lists each tool's input.`,
               ]
             : []),
         "",

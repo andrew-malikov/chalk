@@ -439,7 +439,7 @@ function TutorialGuide({
         </h2>
         <p {...stylex.props(styles.instruction)}>
           {activeStep?.instruction ??
-            "You have walked through the core Whiteboard experience."}
+            "You have walked through the core Blackboard experience."}
         </p>
       </div>
       <footer {...stylex.props(styles.guideFooter)}>

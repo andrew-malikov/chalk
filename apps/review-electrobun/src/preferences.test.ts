@@ -63,3 +63,36 @@ test("invalid privileged preference updates never alter stored state", async () 
   );
   expect(store.get().theme).toBe("system");
 });
+
+test("tutorial progress survives unrelated preferences, restart, and older preference files", async () => {
+  const target = await file();
+  await writeFile(
+    target,
+    JSON.stringify({
+      theme: "dark",
+      diffLayout: "split",
+      reviewIds: ["tutorial"],
+      activeReviewId: "tutorial",
+    }),
+  );
+  const store = await createPreferencesStore(target);
+  expect(store.get()).toMatchObject({
+    theme: "dark",
+    reviewIds: ["tutorial"],
+    tutorialProgress: { checked: [], dismissed: false },
+  });
+  await store.update({
+    tutorialProgress: {
+      version: 1,
+      checked: ["chooseKeymap", "getHelp"],
+      dismissed: true,
+    },
+    keymap: "vim",
+  });
+  await store.update({ theme: "light" });
+  expect((await createPreferencesStore(target)).get()).toMatchObject({
+    theme: "light",
+    keymap: "vim",
+    tutorialProgress: { checked: ["chooseKeymap", "getHelp"], dismissed: true },
+  });
+});

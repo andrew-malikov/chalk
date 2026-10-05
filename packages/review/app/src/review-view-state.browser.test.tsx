@@ -209,7 +209,7 @@ describe("review view state", () => {
 
   it("restores the scroll only on the view it was taken on", () => {
     const session = testReviewSession();
-    // Older records carry no view: their scroll belongs to the whiteboard.
+    // Older records carry no view: their scroll belongs to the blackboard.
     storeState(session, { scrollTop: 320 });
 
     const diff = renderViewState({
@@ -341,7 +341,7 @@ describe("review view state", () => {
   it("persists navigation without discarding a stored view the canvas could not offer", () => {
     const session = testReviewSession();
     storeState(session, { activeView: "map" });
-    // The canvas opened without a map, so it started on the whiteboard.
+    // The canvas opened without a map, so it started on the blackboard.
     const store = createReviewPanelStore({ view: "review" });
     renderViewState({ session, store });
 

@@ -1228,7 +1228,7 @@ it("names a linked worktree's source workspace after its repository", async () =
     { path: realpathSync(worktree), name: "repository" },
   ]);
   expect(first.workspace.settings["window.title"]).toBe(
-    "Worktree source — Live source — Whiteboard",
+    "Worktree source — Live source — Blackboard",
   );
 
   // A workspace named after the checkout directory carries its preferences
@@ -1259,14 +1259,14 @@ it("names a linked worktree's source workspace after its repository", async () =
   expect(migrated.workspace.settings).toEqual({
     "files.readonlyInclude": { "**/*": true },
     "editor.wordWrap": "on",
-    "window.title": "Worktree source — Live source — Whiteboard",
+    "window.title": "Worktree source — Live source — Blackboard",
   });
   expect(existsSync(legacy)).toBe(true);
 
-  git("remote", "add", "origin", "git@github.com:acme/whiteboard.git");
+  git("remote", "add", "origin", "git@github.com:acme/blackboard.git");
   const remote = await open();
-  expect(path.basename(remote.workspacePath)).toBe("whiteboard.code-workspace");
-  expect(remote.workspace.folders[0].name).toBe("whiteboard");
+  expect(path.basename(remote.workspacePath)).toBe("blackboard.code-workspace");
+  expect(remote.workspace.folders[0].name).toBe("blackboard");
 });
 
 it("browses committed directories, including history, without listing untracked files", async () => {
@@ -2352,7 +2352,7 @@ it("copies prose with the displayed version's title and immutable review identit
 
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({
-    text: `Selected text from Whiteboard: Original title\nSession ID: ${reviewId}\nVersion: 0\nRepository ID: ${pins.repositoryId}\nSession base: ${pins.base}\nSession head: ${pins.head}\nRead this version with session_get({"sessionId":"${reviewId}","version":0,"full":true}).\n\n> First line\n> Second line\n\n`,
+    text: `Selected text from Blackboard: Original title\nSession ID: ${reviewId}\nVersion: 0\nRepository ID: ${pins.repositoryId}\nSession base: ${pins.base}\nSession head: ${pins.head}\nRead this version with session_get({"sessionId":"${reviewId}","version":0,"full":true}).\n\n> First line\n> Second line\n\n`,
   });
 });
 
@@ -2386,7 +2386,7 @@ it("copies code from historical pins after a repin, never from working-tree cont
 
   expect(historical.status).toBe(200);
   expect(await historical.json()).toEqual({
-    text: `Selected code from Whiteboard: Code\nSession ID: ${reviewId}\nVersion: 0\nRepository ID: ${pins.repositoryId}\nSession base: ${pins.base}\nSession head: ${pins.head}\nRead this version with session_get({"sessionId":"${reviewId}","version":0,"full":true}).\n\n## Value\n\nSelected source\n\n## head: example.ts:1-1 (${pins.head})\n    export const value = 2;\n\n`,
+    text: `Selected code from Blackboard: Code\nSession ID: ${reviewId}\nVersion: 0\nRepository ID: ${pins.repositoryId}\nSession base: ${pins.base}\nSession head: ${pins.head}\nRead this version with session_get({"sessionId":"${reviewId}","version":0,"full":true}).\n\n## Value\n\nSelected source\n\n## head: example.ts:1-1 (${pins.head})\n    export const value = 2;\n\n`,
   });
 
   const latest = await app.request(`/${reviewId}/copy-context`, {

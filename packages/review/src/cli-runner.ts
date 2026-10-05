@@ -228,19 +228,19 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     );
 
   const program = configureOutput(new Command(), "review")
-    .name("whiteboard")
+    .name("blackboard")
     .enablePositionalOptions()
     .version(cliVersion)
     .description("Create and open dev.fast reviews.")
     .addHelpText("after", reviewTopLevelHelp());
 
-  // Tolerate the leading form (`whiteboard --json scaffold`) as well as the usual
+  // Tolerate the leading form (`blackboard --json scaffold`) as well as the usual
   // trailing one. Never give this a .default(): optsWithGlobals merges globals
   // over locals, so a default would clobber a subcommand's own true.
   program.addOption(new Option("--json").hideHelp());
   program.option(
     "--state-dir <path>",
-    "select headless Whiteboard state for server, api, and mcp",
+    "select headless Blackboard state for server, api, and mcp",
   );
   program.exitOverride();
 
@@ -315,7 +315,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
           input.stdout.write(
             options.json
               ? `${JSON.stringify({ event: "server.ready", url, serverPid, stateDir })}\n`
-              : `Whiteboard server ready at ${url}\nSaved reviews: ${stateDir}\n`,
+              : `Blackboard server ready at ${url}\nSaved reviews: ${stateDir}\n`,
           );
         },
       });
@@ -350,7 +350,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     input.stdout.write(
       options.json
         ? `${JSON.stringify({ event: "server.status", ready: true, url, serverPid, stateDir, version, serverId })}\n`
-        : `Whiteboard server ready at ${url}\nSaved reviews: ${stateDir}\n`,
+        : `Blackboard server ready at ${url}\nSaved reviews: ${stateDir}\n`,
     );
   });
 
@@ -388,12 +388,12 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
 
     if (problem)
       throw new Error(
-        `Cannot tell whether a Whiteboard Desktop is using ${stateDir}: ${problem.message}`,
+        `Cannot tell whether a Blackboard Desktop is using ${stateDir}: ${problem.message}`,
       );
 
     const inUse = () =>
       new Error(
-        `A Whiteboard server is using ${stateDir}. Stop it first, then run whiteboard server reset-id again.`,
+        `A Blackboard server is using ${stateDir}. Stop it first, then run blackboard server reset-id again.`,
       );
 
     if (
@@ -442,7 +442,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   configureJsonOutput(
     program
       .command("version")
-      .description("Print Whiteboard package version")
+      .description("Print Blackboard package version")
       .option("--verbose", "Show executing CLI paths and build identity"),
     "plain",
   ).action(async (options: { verbose?: boolean }, command: Command) => {
@@ -488,13 +488,13 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     } else if (event.action === "launch") {
       input.stdout.write(
         event.state === "running"
-          ? "Whiteboard Desktop is already running.\n"
+          ? "Blackboard Desktop is already running.\n"
           : options.focus
-            ? "Whiteboard Desktop is ready.\n"
-            : "Whiteboard Desktop is ready in the background. Pass --focus to bring it forward.\n",
+            ? "Blackboard Desktop is ready.\n"
+            : "Blackboard Desktop is ready in the background. Pass --focus to bring it forward.\n",
       );
     } else {
-      input.stdout.write(`Whiteboard Desktop is showing "${event.title}".\n`);
+      input.stdout.write(`Blackboard Desktop is showing "${event.title}".\n`);
     }
   };
 
@@ -542,8 +542,8 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   const app = configureJsonOutput(
     program
       .command("app")
-      .description("Start Whiteboard Desktop in the background")
-      .option("--focus", "bring Whiteboard Desktop to the foreground")
+      .description("Start Blackboard Desktop in the background")
+      .option("--focus", "bring Blackboard Desktop to the foreground")
       .option(
         "--no-sandbox",
         "disable the Chromium sandbox for a Linux container",
@@ -554,8 +554,8 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   configureJsonOutput(
     app
       .command("launch")
-      .description("Start Whiteboard Desktop in the background")
-      .option("--focus", "bring Whiteboard Desktop to the foreground")
+      .description("Start Blackboard Desktop in the background")
+      .option("--focus", "bring Blackboard Desktop to the foreground")
       .option(
         "--no-sandbox",
         "disable the Chromium sandbox for a Linux container",
@@ -567,7 +567,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
       .command("pick")
       .description("Select a review (interactive picker without --session)")
       .option("--session <uuid>", "review UUID")
-      .option("--focus", "bring Whiteboard Desktop to the foreground"),
+      .option("--focus", "bring Blackboard Desktop to the foreground"),
     "plain",
   ).action(pickReview);
 
@@ -632,7 +632,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     program
       .command("connect")
       .description(
-        "Print the prompt that connects a coding agent to Whiteboard",
+        "Print the prompt that connects a coding agent to Blackboard",
       )
       .addArgument(
         new Argument("[target...]", "coding agent").choices([
@@ -725,7 +725,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   )
     .option("--review <id>", "review ID")
     .option("--version <number>", "Saved version to share")
-    .option("--preview", "Open the share link in Whiteboard Preview by default")
+    .option("--preview", "Open the share link in Blackboard Preview by default")
     .option(
       "--request-id <uuid>",
       "Reuse this ID when retrying the same immutable upload",
@@ -765,10 +765,10 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   // Hosted trace store login. Logging in authenticates a user; it selects
   // no storage by itself.
   configureJsonOutput(
-    program.command("login").description("Log in to Whiteboard with GitHub"),
+    program.command("login").description("Log in to Blackboard with GitHub"),
     "plain",
   )
-    .option("--origin <url>", "Whiteboard service origin", DEFAULT_STORE_ORIGIN)
+    .option("--origin <url>", "Blackboard service origin", DEFAULT_STORE_ORIGIN)
     .option("--traces", "Also authorize GitHub repositories for hosted traces")
     .option("--no-browser", "Print the URL instead of opening a browser")
     .action(
@@ -828,7 +828,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     stderr: input.stderr,
     configureOutput: (command) => configureOutput(command, "plain"),
     configureJsonOutput: (command) => configureJsonOutput(command, "plain"),
-    verifyCommand: "whiteboard trace status",
+    verifyCommand: "blackboard trace status",
     setExitCode: (code) => {
       state.exitCode = code;
     },
@@ -1098,7 +1098,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
         error.code === "repository_authorization_required"
       ) {
         serialized.code = error.code;
-        serialized.remedy = "whiteboard login --traces";
+        serialized.remedy = "blackboard login --traces";
       }
 
       emitReviewEvent(input.stdout, { event: "error", error: serialized });
@@ -1183,17 +1183,17 @@ function reviewCliRuntime(
 function reviewTopLevelHelp(): string {
   return [
     "",
-    "Use `whiteboard info` to discover review documents for this checkout.",
-    "Reviews are authored through the JSON API: `whiteboard api tools` lists the tools, and `whiteboard mcp` serves the same catalog to an agent.",
-    "Use `whiteboard app launch` to start Whiteboard Desktop. Use `whiteboard app pick --session <uuid>` to open one.",
-    "Use `whiteboard server start` for headless authoring, and `whiteboard server status --json` to check readiness.",
+    "Use `blackboard info` to discover review documents for this checkout.",
+    "Reviews are authored through the JSON API: `blackboard api tools` lists the tools, and `blackboard mcp` serves the same catalog to an agent.",
+    "Use `blackboard app launch` to start Blackboard Desktop. Use `blackboard app pick --session <uuid>` to open one.",
+    "Use `blackboard server start` for headless authoring, and `blackboard server status --json` to check readiness.",
     "",
     "Every command accepts --json. Stdout then carries only JSON events, one per line,",
     "human progress moves to stderr, and a failure prints a JSON error event too.",
     "",
     "Example agent prompt (for a repository that provides a CI/CD system):",
     "",
-    "  Can you use Whiteboard to explain this repository's CI/CD system to me?",
+    "  Can you use Blackboard to explain this repository's CI/CD system to me?",
     "",
     "  My current understanding:",
     "",

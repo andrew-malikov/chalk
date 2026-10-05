@@ -62,9 +62,9 @@ export class ReviewDocumentBoundary extends Component<
             <>
               Your coding agent is writing the canvas now…
               <br />
-              Edit the review through the Whiteboard MCP tools or{" "}
+              Edit the review through the Blackboard MCP tools or{" "}
               <code {...stylex.props(documentStyles.code)}>
-                whiteboard api
+                blackboard api
               </code>{" "}
               to replace the failing block.
             </>

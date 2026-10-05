@@ -15,18 +15,18 @@ export function registerTraceReadCommands(
 
   const listOptions = (command: Command): Command =>
     command
-      .option("--session <uuid>", "Whiteboard session UUID")
+      .option("--session <uuid>", "Blackboard session UUID")
       .option("--commit <sha>", "commit or revision");
 
   const pullOptions = (command: Command): Command =>
-    command.option("--session <uuid>", "pull sessions for one Whiteboard");
+    command.option("--session <uuid>", "pull sessions for one Blackboard");
 
   configureJsonOutput(
     withStorage(
       listOptions(
         trace
           .command("list")
-          .description("List agent sessions for a Whiteboard or commit"),
+          .description("List agent sessions for a Blackboard or commit"),
       ),
     ),
   ).action(

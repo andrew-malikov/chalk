@@ -307,7 +307,7 @@ export interface ReviewCanvasDiagnostic {
 }
 
 /**
- * `instant` shows the Whiteboard tooltip the moment the pointer lands, for
+ * `instant` shows the Blackboard tooltip the moment the pointer lands, for
  * small targets like the viewed box and the diff counts; `quick` shows it
  * after half the delay; `detail` is its fainter second line. Without options
  * the host shows its delayed hover.
@@ -802,7 +802,7 @@ export interface ReviewCanvasModule {
 // bump; readers must ignore fields they do not understand.
 export const ReviewDesktopDiscoverySchema = z.object({
   version: z.literal(REVIEW_DESKTOP_DISCOVERY_VERSION, {
-    error: "Unsupported Whiteboard Desktop discovery version",
+    error: "Unsupported Blackboard Desktop discovery version",
   }),
   instanceId: requiredString,
   url: loopbackOriginSchema,
@@ -985,7 +985,7 @@ export const ReviewCliInstallStatusSchema = z.strictObject({
     installed: z.boolean(),
     profileConfigured: z.boolean(),
     onPath: z.boolean(),
-    /** The Windows installer put this command on PATH; uninstalling Whiteboard removes it. */
+    /** The Windows installer put this command on PATH; uninstalling Blackboard removes it. */
     installer: z.literal(true).optional(),
   }),
   trace: z.strictObject({
@@ -1013,9 +1013,9 @@ export const ReviewCliInstallStatusSchema = z.strictObject({
     .strictObject({ path: requiredString, version: requiredString })
     .nullable(),
   connect: z.strictObject({
-    // "sh", or "whiteboard" when Desktop has no built CLI.
+    // "sh", or "blackboard" when Desktop has no built CLI.
     command: requiredString,
-    // ["-c", "exec \"$HOME/.local/bin/whiteboard\" mcp"], or ["mcp"].
+    // ["-c", "exec \"$HOME/.local/bin/blackboard\" mcp"], or ["mcp"].
     args: z.array(z.string()),
     prompts: z.record(ReviewCliInstallTargetSchema, requiredString),
     // The published plugin per harness: an install command, or Cursor's link.

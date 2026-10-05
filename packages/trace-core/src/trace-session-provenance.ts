@@ -176,7 +176,7 @@ export async function requireTraceSessionProvenance(
   if (records.length === 0) {
     throw new TraceProvenanceError(
       "provenance_missing",
-      `This session was not captured in ${target.name}. Start a new agent session there after \`whiteboard trace allow .\`; a commit trailer does not authorize publication.`,
+      `This session was not captured in ${target.name}. Start a new agent session there after \`blackboard trace allow .\`; a commit trailer does not authorize publication.`,
     );
   }
 

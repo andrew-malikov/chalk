@@ -273,7 +273,7 @@ describe("review_get_instructions", () => {
           stderr: errors,
         }),
       ).toBe(0);
-      expect(stdout).toContain("rfc-style whiteboard");
+      expect(stdout).toContain("rfc-style blackboard");
       expect(stdout).not.toMatch(/^"/);
 
       connection.mockRejectedValueOnce(new Error("Desktop is down"));
@@ -284,7 +284,7 @@ describe("review_get_instructions", () => {
           stderr: errors,
         }),
       ).toBe(1);
-      expect(stderr).toMatch(/^Whiteboard is not running/);
+      expect(stderr).toMatch(/^Blackboard is not running/);
     } finally {
       connection.mockRestore();
     }
@@ -420,7 +420,7 @@ const initialize = {
   clientInfo: { name: "test", version: "1" },
 };
 
-describe("whiteboard mcp instructions", () => {
+describe("blackboard mcp instructions", () => {
   it("lists and answers while down, then serves guidance through a restart", async () => {
     let up = false;
     let connections = 0;
@@ -444,7 +444,7 @@ describe("whiteboard mcp instructions", () => {
     const mcp = await startMcp(async () => {
       connections++;
 
-      if (!up) throw new Error("No Whiteboard Desktop server is ready.");
+      if (!up) throw new Error("No Blackboard Desktop server is ready.");
 
       return client;
     });
@@ -457,7 +457,7 @@ describe("whiteboard mcp instructions", () => {
       const list = await mcp.request(2, "tools/list", {});
       expect(
         list.result.tools.map((tool: { name: string }) => tool.name),
-      ).toEqual(["session_get_instructions", "whiteboard_status"]);
+      ).toEqual(["session_get_instructions", "blackboard_status"]);
       const guidance = list.result.tools[0].description;
       expect(guidance).toContain("session_get_instructions");
       expect(guidance).toContain("trace-archaeology");
@@ -469,7 +469,7 @@ describe("whiteboard mcp instructions", () => {
       });
 
       expect(down.result.isError).toBeFalsy();
-      expect(down.result.content[0].text).toMatch(/^Whiteboard is not running/);
+      expect(down.result.content[0].text).toMatch(/^Blackboard is not running/);
 
       up = true;
 
@@ -478,7 +478,7 @@ describe("whiteboard mcp instructions", () => {
         arguments: {},
       });
 
-      expect(live.result.content[0].text).toContain("rfc-style whiteboard");
+      expect(live.result.content[0].text).toContain("rfc-style blackboard");
       const liveList = await mcp.request(5, "tools/list", {});
       expect(liveList.result.tools[0].name).toBe("session_get_instructions");
       const preamble = guidance.split("\n\n")[0];
@@ -500,7 +500,7 @@ describe("whiteboard mcp instructions", () => {
       });
 
       expect(restartedDown.result.content[0].text).toMatch(
-        /^Whiteboard is not running/,
+        /^Blackboard is not running/,
       );
       up = true;
 
@@ -536,7 +536,7 @@ describe("whiteboard mcp instructions", () => {
     );
 
     const mcp = await startMcp(async () => {
-      if (!up) throw new Error("No Whiteboard Desktop server is ready.");
+      if (!up) throw new Error("No Blackboard Desktop server is ready.");
 
       return client;
     });
@@ -556,13 +556,13 @@ describe("whiteboard mcp instructions", () => {
       up = true;
 
       const stale = await instructions(3);
-      expect(stale).toMatch(/^Whiteboard is running now/);
+      expect(stale).toMatch(/^Blackboard is running now/);
       expect(stale).toContain("reload");
-      expect(stale).toContain("rfc-style whiteboard");
+      expect(stale).toContain("rfc-style blackboard");
 
       await mcp.request(4, "tools/list", {});
 
-      expect(await instructions(5)).not.toMatch(/^Whiteboard is running now/);
+      expect(await instructions(5)).not.toMatch(/^Blackboard is running now/);
     } finally {
       await mcp.close();
       store.close();
@@ -617,7 +617,7 @@ describe("whiteboard mcp instructions", () => {
 
       expect(invalid.result.isError).toBe(true);
       expect(invalid.result.content[0].text).not.toMatch(
-        /^Whiteboard is not running/,
+        /^Blackboard is not running/,
       );
 
       failInstruction = true;

@@ -179,7 +179,7 @@ describe("Review instance selection", () => {
       "stable",
     ]);
     expect(reviewInstanceUnavailable(selection).message).toBe(
-      "Whiteboard `preview` is not running. Start it with `whiteboard app launch`, or pick another instance with `whiteboard instances`. Running: stable.",
+      "Blackboard `preview` is not running. Start it with `blackboard app launch`, or pick another instance with `blackboard instances`. Running: stable.",
     );
   });
 
@@ -190,19 +190,19 @@ describe("Review instance selection", () => {
     });
 
     expect(reviewInstanceUnavailable(await select()).message).toMatch(
-      /Several Whiteboard instances are running and none is selected\. Running: .*`whiteboard instances use <key>`/,
+      /Several Blackboard instances are running and none is selected\. Running: .*`blackboard instances use <key>`/,
     );
   });
 
   it("rejects a key that is not an instance name and says where it came from", async () => {
     const select = await home({});
     await expect(select({ DEV_REVIEW_INSTANCE: "../server" })).rejects.toThrow(
-      'Unknown Whiteboard instance "../server" from DEV_REVIEW_INSTANCE',
+      'Unknown Blackboard instance "../server" from DEV_REVIEW_INSTANCE',
     );
 
     const stored = await home({}, { defaultInstance: "../server" });
     await expect(stored()).rejects.toThrow(
-      /as the machine default \(`whiteboard instances clear` removes it\)/,
+      /as the machine default \(`blackboard instances clear` removes it\)/,
     );
   });
 
@@ -223,7 +223,7 @@ describe("Review instance selection", () => {
 
   it("reports any broken record when nothing is selected and nothing answers", async () => {
     // The one Desktop that ran may be the broken record; without a selected
-    // key that is the diagnosis, not "no Whiteboard is running".
+    // key that is the diagnosis, not "no Blackboard is running".
     const select = await home({ "dev-review-0123456789ab": "broken" });
     const selection = await select();
     expect(selection).toMatchObject({ key: "stable", source: "fallback" });

@@ -144,7 +144,7 @@ export function createGlobalReviewServer(
     input.relay ?? new GlobalReviewDesktopVerbRelay({ maxClients: 1 });
 
   // This Desktop's own CLI, pinned to this instance so another running
-  // Whiteboard never answers it.
+  // Blackboard never answers it.
   const askCliEnv = () => [
     { name: REVIEW_INSTANCE_ENV, value: identity.key },
     ...(process.versions.electron
@@ -155,14 +155,14 @@ export function createGlobalReviewServer(
       : []),
   ];
 
-  // Ask sessions get its MCP server, `whiteboard mcp`; an agent whose model
-  // would not get it uses `whiteboard api` from its shell instead.
+  // Ask sessions get its MCP server, `blackboard mcp`; an agent whose model
+  // would not get it uses `blackboard api` from its shell instead.
   const askThreads = new AskThreads(launchAskAgent, {
     mcpServers: () =>
       discovery.cliPath
         ? [
             {
-              name: "whiteboard",
+              name: "blackboard",
               command: process.execPath,
               args: [discovery.cliPath, "mcp"],
               env: askCliEnv(),

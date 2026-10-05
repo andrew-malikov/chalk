@@ -31,7 +31,7 @@ export interface TraceCommand {
 
 /** The executable name used in trace hooks. */
 export function traceCliName(): string {
-  return "whiteboard";
+  return "blackboard";
 }
 
 /** Returns the configured trace home, then the operating-system home. */
@@ -62,7 +62,7 @@ export function resolveTraceCommand(
     input.homeDir ?? traceHomeDir(env),
     ".local",
     "bin",
-    "whiteboard",
+    "blackboard",
   );
 
   if (existsSync(installed)) return { file: installed };
@@ -70,10 +70,10 @@ export function resolveTraceCommand(
   const onPath = (env.PATH ?? "")
     .split(path.delimiter)
     .filter((directory) => path.isAbsolute(directory))
-    .map((directory) => path.join(directory, "whiteboard"))
+    .map((directory) => path.join(directory, "blackboard"))
     .find(isLiveTraceExecutable);
 
-  return { file: onPath ?? "whiteboard" };
+  return { file: onPath ?? "blackboard" };
 }
 
 /** Quotes one value for a POSIX shell command. */

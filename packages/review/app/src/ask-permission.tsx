@@ -70,7 +70,7 @@ export function AskPermission({
           {actions.get(entry.toolKind) ?? "use a tool"}
         </h3>
         <p {...stylex.props(permissionStyles.text)}>
-          Whiteboard keeps this session read-only, so{" "}
+          Blackboard keeps this session read-only, so{" "}
           {command ? "commands need" : "this needs"} your OK.
         </p>
       </div>

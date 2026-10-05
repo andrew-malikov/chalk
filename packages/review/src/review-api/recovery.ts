@@ -1,2 +1,2 @@
 export const RECOVERY =
-  "Whiteboard is not running, so its tools and guidance are unavailable. Start Whiteboard Desktop (or `whiteboard server start` for headless use). If Whiteboard's tools still do not appear, reconnect the Whiteboard MCP server or start a new agent session.";
+  "Blackboard is not running, so its tools and guidance are unavailable. Start Blackboard Desktop (or `blackboard server start` for headless use). If Blackboard's tools still do not appear, reconnect the Blackboard MCP server or start a new agent session.";

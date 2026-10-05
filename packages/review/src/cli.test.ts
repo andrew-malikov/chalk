@@ -32,7 +32,7 @@ import {
 } from "./review-telemetry";
 import { runTraceStatus as runTraceStatusActual } from "./trace-cli";
 
-describe("Whiteboard CLI", () => {
+describe("Blackboard CLI", () => {
   it("routes Cursor install instructions without connecting to Desktop", async () => {
     const { code, stdout, stderr } = await runConnect(
       ["connect", "cursor", "--json"],
@@ -51,7 +51,7 @@ describe("Whiteboard CLI", () => {
       ),
     ).toEqual({
       command: "sh",
-      args: ["-c", 'exec "$HOME/.local/bin/whiteboard" mcp'],
+      args: ["-c", 'exec "$HOME/.local/bin/blackboard" mcp'],
     });
   });
 
@@ -174,7 +174,7 @@ describe("Whiteboard CLI", () => {
           stderr: outputStream(),
         }),
       ).resolves.toBe(0);
-      expect(output).toContain("whiteboard api tools");
+      expect(output).toContain("blackboard api tools");
     },
   );
 
@@ -624,7 +624,7 @@ function outputStream(): PassThrough {
 async function installTestShim(home: string): Promise<void> {
   const bin = path.join(home, ".local", "bin");
   await mkdir(bin, { recursive: true });
-  await writeFile(path.join(bin, "whiteboard"), "# Managed by Whiteboard\n");
+  await writeFile(path.join(bin, "blackboard"), "# Managed by Blackboard\n");
 }
 
 async function runConnect(
@@ -678,7 +678,7 @@ it("emits one JSON error when a trace command needs repository authorization", a
         {
           error: {
             code: "repository_authorization_required",
-            message: "Run whiteboard login --traces.",
+            message: "Run blackboard login --traces.",
           },
         },
         { status: 403 },
@@ -709,9 +709,9 @@ it("emits one JSON error when a trace command needs repository authorization", a
   expect(events[0]).toMatchObject({
     event: "error",
     error: {
-      message: "Run whiteboard login --traces.",
+      message: "Run blackboard login --traces.",
       code: "repository_authorization_required",
-      remedy: "whiteboard login --traces",
+      remedy: "blackboard login --traces",
     },
   });
 });

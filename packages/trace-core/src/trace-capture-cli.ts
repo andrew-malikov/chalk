@@ -145,7 +145,7 @@ export async function runTraceEnable(input: {
 }): Promise<number> {
   if (!(await traceMachineStatus(input.scope)).enabled) {
     input.stderr.write(
-      `trace enable: Trace capture is not enabled. Run \`whiteboard trace allow .\`\n`,
+      `trace enable: Trace capture is not enabled. Run \`blackboard trace allow .\`\n`,
     );
 
     return 1;
@@ -240,7 +240,7 @@ export async function runTraceRepair(input: {
 }): Promise<number> {
   if (!(await traceMachineStatus(input.scope)).enabled) {
     input.stderr.write(
-      `trace repair: Trace capture is not enabled. Run \`whiteboard trace allow .\`\n`,
+      `trace repair: Trace capture is not enabled. Run \`blackboard trace allow .\`\n`,
     );
 
     return 1;
@@ -280,7 +280,7 @@ export async function runTraceSync(input: {
 
       if (current !== input.expectStorage) {
         throw new Error(
-          `The trace storage selection changed since this capture started (expected ${input.expectStorage}, now ${current}). Run \`whiteboard trace sync ${input.sessionId}\` to publish to the current selection.`,
+          `The trace storage selection changed since this capture started (expected ${input.expectStorage}, now ${current}). Run \`blackboard trace sync ${input.sessionId}\` to publish to the current selection.`,
         );
       }
     }

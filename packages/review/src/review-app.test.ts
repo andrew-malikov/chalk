@@ -172,7 +172,7 @@ describe("native Review picker", () => {
         },
       ),
     ).rejects.toThrow(
-      "Whiteboard Desktop uses protocol 999, but this Whiteboard CLI needs protocol 3.",
+      "Blackboard Desktop uses protocol 999, but this Blackboard CLI needs protocol 3.",
     );
     expect(launched).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
@@ -193,7 +193,7 @@ describe("native Review picker", () => {
         { ...runtime(fetch), launch: launched },
       ),
     ).rejects.toThrow(
-      "Whiteboard `stable` is not running. Start it with `whiteboard app launch`, or pick another instance with `whiteboard instances`. No Whiteboard is running.",
+      "Blackboard `stable` is not running. Start it with `blackboard app launch`, or pick another instance with `blackboard instances`. No Blackboard is running.",
     );
     expect(launched).not.toHaveBeenCalled();
   });

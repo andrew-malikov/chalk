@@ -139,7 +139,7 @@ export async function readStoredReview(
         return {
           error: reviewHomeError(dir, jsonObject(value), {
             code: "REPAIR_REQUIRED",
-            message: `${errorMessage(error)} This review was published with the removed MDX toolchain and its stored files are damaged, so it cannot be imported. Delete it from Home and recreate it with your agent through Whiteboard.`,
+            message: `${errorMessage(error)} This review was published with the removed MDX toolchain and its stored files are damaged, so it cannot be imported. Delete it from Home and recreate it with your agent through Blackboard.`,
           }),
         };
       }
@@ -151,7 +151,7 @@ export async function readStoredReview(
     if (!parsed.success) {
       return {
         error: reviewHomeError(dir, jsonObject(value), {
-          message: `Invalid review.json; run \`whiteboard migrate apply\`: ${parsed.error.issues.map((issue) => issue.message).join("; ")}`,
+          message: `Invalid review.json; run \`blackboard migrate apply\`: ${parsed.error.issues.map((issue) => issue.message).join("; ")}`,
           code: "MIGRATION_REQUIRED",
         }),
       };

@@ -602,13 +602,13 @@ it("authenticates clients, reports capabilities and readiness without exposing t
 
   await expect(
     server.client.post(`/${result.reviewId}/open`, {}),
-  ).rejects.toThrow(/No Whiteboard Desktop is attached/);
+  ).rejects.toThrow(/No Blackboard Desktop is attached/);
   await server.stop();
   const stopped = await cli(["server", "status", "--json"], server.env);
   expect(stopped.exitCode).toBe(1);
   expect(JSON.parse(stopped.output)).toMatchObject({ event: "error" });
   await expect(connectReviewApi(server.env)).rejects.toThrow(
-    /whiteboard server start/g,
+    /blackboard server start/g,
   );
 });
 

@@ -5,7 +5,7 @@ import { useOptionalReviewSession } from "./host/review-session";
 
 /**
  * Attach the host's tooltip to an element, or a native `title` without a
- * Desktop host. `instant` asks for the Whiteboard tooltip with no delay, for
+ * Desktop host. `instant` asks for the Blackboard tooltip with no delay, for
  * small targets; `quick` for half the delay; `detail` is its fainter second
  * line.
  */

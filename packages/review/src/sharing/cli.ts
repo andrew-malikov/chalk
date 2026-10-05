@@ -35,7 +35,7 @@ export async function runShareCli(input: {
           : "Share revoked. Existing downloads remain available offline.\n",
       );
     } else {
-      if (!input.review) throw new Error("Use whiteboard share --review <id>.");
+      if (!input.review) throw new Error("Use blackboard share --review <id>.");
 
       const version =
         input.version === undefined

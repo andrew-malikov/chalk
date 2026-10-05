@@ -732,11 +732,11 @@ describe("hosted trace storage", () => {
           override: storageOverride,
           onWarning: () => undefined,
         }),
-      ).rejects.toThrow(/whiteboard login/);
+      ).rejects.toThrow(/blackboard login/);
       writeConfig({ version: 2, "current-store": "hosted" });
       await expect(
         loadReviewAgentTrace({ sessionId, cwd: repoDir }),
-      ).rejects.toThrow(/whiteboard login/);
+      ).rejects.toThrow(/blackboard login/);
     },
   );
 
