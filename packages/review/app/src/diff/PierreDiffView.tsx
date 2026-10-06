@@ -1,3 +1,4 @@
+import { NativeSelect } from "@canvas/components/ui/native-select";
 import type {
   ReviewCommitScope,
   ReviewDiffFileWire,
@@ -37,9 +38,9 @@ import {
 import { tokens } from "../tokens.stylex";
 import { ViewedButton } from "../viewed-button";
 import {
+  type PierreComparisonEntry,
   loadPierreComparison,
   loadPierreFile,
-  type PierreComparisonEntry,
 } from "./pierre-comparison";
 import { selectedPierreDiff } from "./pierre-selection";
 
@@ -61,6 +62,11 @@ interface SavedView {
 }
 
 export function PierreDiffView(props: Props) {
+  const [structural, setStructural] = useReviewUiState(
+    "diff-structural",
+    false,
+  );
+
   const session = useReviewSession();
   const summary = useReviewDiffFiles();
   const revision = props.scope ? undefined : summary.revision;
@@ -111,11 +117,13 @@ export function PierreDiffView(props: Props) {
     );
   return (
     <Comparison
-      key={`${comparisonUrl}:${revision ?? ""}:${props.lens?.id ?? "all"}`}
+      key={`${comparisonUrl}:${revision ?? ""}:${props.lens?.id ?? "all"}:${structural}`}
       {...props}
       files={files}
       url={comparisonUrl}
       revision={revision}
+      structural={structural}
+      setStructural={setStructural}
     />
   );
 }
@@ -133,10 +141,14 @@ function Comparison({
   restoreFile,
   hidden,
   inWorkspace,
+  structural,
+  setStructural,
 }: Props & {
   files: readonly ReviewDiffFileWire[];
   url: string;
   revision?: string;
+  structural: boolean;
+  setStructural(value: boolean): void;
 }) {
   const session = useReviewSession();
   const queryClient = useQueryClient();
@@ -144,8 +156,14 @@ function Comparison({
   const preferred = useRef(revealFile);
   preferred.current = revealFile;
   const queryKey = useMemo(
-    () => ["pierre-comparison", url, revision, JSON.stringify(files)],
-    [url, revision, files],
+    () => [
+      "pierre-comparison",
+      url,
+      revision,
+      JSON.stringify(files),
+      structural,
+    ],
+    [url, revision, files, structural],
   );
   const comparison = useQuery({
     queryKey,
@@ -155,6 +173,7 @@ function Comparison({
         url,
         signal,
         request: session.fetchUrl,
+        structural,
         preferredFile: () => preferred.current,
         onUpdate: (entries) => queryClient.setQueryData(queryKey, entries),
       }),
@@ -180,6 +199,7 @@ function Comparison({
       session.review?.historicalRevision,
       scope?.commit ?? "review",
       lens?.id ?? "all",
+      structural,
     ]),
   );
   const saved = useRef(readSavedView(stateKey));
@@ -390,7 +410,8 @@ function Comparison({
   const options = useMemo(
     () => ({
       diffStyle: layout,
-      hunkSeparators: committed ? ("line-info" as const) : ("simple" as const),
+      hunkSeparators:
+        committed || structural ? ("line-info" as const) : ("simple" as const),
       theme: theme === "light" ? "pierre-light" : "pierre-dark",
       themeType: theme === "light" ? ("light" as const) : ("dark" as const),
       preferredHighlighter: "shiki-js" as const,
@@ -400,18 +421,20 @@ function Comparison({
       unsafeCSS:
         ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}",
       onPostRender: restore,
-      loadDiffFiles: committed
-        ? (diff: Parameters<typeof loadPierreFile>[0]) => {
-            const request = new AbortController();
-            sourceRequests.add(request);
-            return loadPierreFile(
-              diff,
-              url,
-              session.fetchUrl,
-              request.signal,
-            ).finally(() => sourceRequests.delete(request));
-          }
-        : undefined,
+      loadDiffFiles:
+        committed && !structural
+          ? (diff: Parameters<typeof loadPierreFile>[0]) => {
+              const request = new AbortController();
+              sourceRequests.add(request);
+
+              return loadPierreFile(
+                diff,
+                url,
+                session.fetchUrl,
+                request.signal,
+              ).finally(() => sourceRequests.delete(request));
+            }
+          : undefined,
     }),
     [
       layout,
@@ -422,6 +445,7 @@ function Comparison({
       url,
       sourceRequests,
       restore,
+      structural,
     ],
   );
   const fileProgress = new Map(
@@ -471,6 +495,51 @@ function Comparison({
         aria-label="Diff display"
       >
         {lens && <span>Showing full file diffs for this lens</span>}
+        {structural && chosen?.diff?.hunks.some((hunk) => hunk.hunkContext) && (
+          <NativeSelect
+            size="sm"
+            className="tw:max-w-64"
+            aria-label="Changed functions"
+            value=""
+            onChange={(event) => {
+              const hunk = chosen.diff!.hunks[Number(event.target.value)];
+              if (!hunk) return;
+              viewer.current?.scrollTo({
+                type: "line",
+                id: chosen.file.path,
+                lineNumber: hunk.additionCount
+                  ? hunk.additionStart
+                  : hunk.deletionStart,
+                side: hunk.additionCount ? "additions" : "deletions",
+                align: "start",
+              });
+            }}
+          >
+            <option value="" disabled>
+              Changed functions
+            </option>
+            {chosen.diff.hunks.map(
+              (hunk, index) =>
+                hunk.hunkContext && (
+                  <option key={index} value={index}>
+                    {hunk.hunkContext}
+                  </option>
+                ),
+            )}
+          </NativeSelect>
+        )}
+        <NativeSelect
+          size="sm"
+          aria-label="Diff mode"
+          value={structural ? "structural" : "text"}
+          onChange={(event) =>
+            setStructural(event.target.value === "structural")
+          }
+          title="Group code changes by function and ignore formatting-only edits"
+        >
+          <option value="text">Text diff</option>
+          <option value="structural">Structural diff</option>
+        </NativeSelect>
         <button
           type="button"
           {...stylex.props(styles.headerButton)}
@@ -520,13 +589,18 @@ function Comparison({
           No changed files
         </p>
       )}
-      {chosen && !chosen.diff && (
+      {chosen && (!chosen.diff || chosen.error) && (
         <div
           {...stylex.props(styles.notice)}
           role={chosen.error ? "alert" : "status"}
         >
           <strong>{chosen.file.path}</strong>
           <p>{chosen.error ?? chosen.notice ?? "Loading diff…"}</p>
+          {structural && chosen.error && (
+            <button type="button" onClick={() => setStructural(false)}>
+              Show text diff
+            </button>
+          )}
           {(chosen.error || chosen.notice) && (
             <button type="button" onClick={() => void openSource(chosen.file)}>
               Open source
@@ -741,6 +815,7 @@ const styles = stylex.create({
   headerActions: { display: "flex", gap: 8, alignItems: "center" },
   toolbar: {
     display: "flex",
+    flexWrap: "wrap",
     gap: 12,
     alignItems: "center",
     justifyContent: "flex-end",

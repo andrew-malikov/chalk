@@ -346,10 +346,13 @@ const styles = stylex.create({
   },
   stats: {
     gap: "10px",
+    flexWrap: "nowrap",
+    flexShrink: 0,
   },
   changeBar: {
     display: "flex",
     flex: "0 0 42px",
+    width: "42px",
     gap: "2px",
     height: "8px",
   },

@@ -37,7 +37,6 @@ import type {
 } from "@dev.fast/review-protocol";
 import {
   BookOpenIcon,
-  HomeIcon,
   PanelsTopLeftIcon,
   SearchIcon,
   Settings2Icon,
@@ -859,6 +858,7 @@ function Shell(
           variant="ghost"
           className="review-shell-brand"
           aria-label="Go Home"
+          aria-current={active.current === null ? "page" : undefined}
           title="Home (⌘⇧H)"
           onClick={() => activate(null)}
         >
@@ -980,19 +980,7 @@ function Shell(
             buttons[next]?.focus();
           }}
         >
-          <Button
-            variant="ghost"
-            size="sm"
-            role="tab"
-            aria-label="Home"
-            tabIndex={active.current === null ? 0 : -1}
-            aria-selected={active.current === null}
-            onClick={() => activate(null)}
-          >
-            <HomeIcon aria-hidden="true" />
-            Home
-          </Button>
-          {[...tabs.current.values()].map((tab) => (
+          {[...tabs.current.values()].map((tab, index) => (
             <div
               className="review-shell-tab"
               data-active={active.current === tab.id}
@@ -1003,7 +991,12 @@ function Shell(
                 size="sm"
                 role="tab"
                 aria-label={tab.title}
-                tabIndex={active.current === tab.id ? 0 : -1}
+                tabIndex={
+                  active.current === tab.id ||
+                  (active.current === null && index === 0)
+                    ? 0
+                    : -1
+                }
                 aria-selected={active.current === tab.id}
                 onClick={() => activate(tab.id)}
               >

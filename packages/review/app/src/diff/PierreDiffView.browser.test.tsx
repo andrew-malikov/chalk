@@ -409,3 +409,146 @@ it("reveals a lens source line in a file initially outside the viewport", async 
     expect(readingLine("c.ts")).toBeLessThanOrEqual(83);
   });
 });
+
+it("switches to structural changes, navigates functions, and offers text mode when the engine fails", async () => {
+  const file = {
+    path: "a.ts",
+    status: "modified" as const,
+    additions: 2,
+    deletions: 2,
+  };
+
+  const before =
+    "function answer() {\n  return 1;\n}\n\nfunction unchanged() {\n  return 5;\n}\n";
+
+  const after = before
+    .replace("return 1", "return 2")
+    .replace("  return 5", "    return 5");
+
+  let fail = false;
+
+  const session = testReviewSession(
+    {},
+    {
+      request: async (input) => {
+        const url = new URL(input);
+
+        if (url.pathname.endsWith("/structural-diff")) {
+          if (fail)
+            return new Response(
+              JSON.stringify({ type: "error", message: "Engine unavailable" }) +
+                "\n",
+            );
+
+          return new Response(
+            [
+              {
+                type: "file",
+                file: { rhs: { path: "a.ts", oid: "", mode: "" } },
+                diff: {
+                  type: "text",
+                  lhs: { text: before },
+                  rhs: {
+                    text: after,
+                    regions: [
+                      {
+                        id: 1,
+                        fold_state_id: 1,
+                        kind: "fold",
+                        tags: ["context:scope"],
+                        start: { line: 0, column: 0 },
+                        end: { line: 3, column: 0 },
+                        children: [],
+                      },
+                    ],
+                  },
+                  stats: {
+                    textual: { added: 2, removed: 2 },
+                    visible: { added: 1, removed: 1 },
+                  },
+                  structural_changes: { base: [[1, 2]], head: [[1, 2]] },
+                },
+              },
+              { type: "complete", succeeded: 1, failed: 0 },
+            ]
+              .map((event) => JSON.stringify(event))
+              .join("\n"),
+          );
+        }
+
+        if (url.searchParams.get("format") !== "raw")
+          return Response.json([file]);
+
+        return new Response(
+          "diff --git a/a.ts b/a.ts\n--- a/a.ts\n+++ b/a.ts\n@@ -1,7 +1,7 @@\n function answer() {\n-  return 1;\n+  return 2;\n }\n \n function unchanged() {\n-  return 5;\n+    return 5;\n }\n",
+        );
+      },
+    },
+  );
+
+  const container = document.createElement("div");
+  container.className = "review-canvas-root review-document";
+  container.style.cssText = "height:500px;width:1000px;display:flex";
+  document.body.append(container);
+  root = createRoot(container);
+
+  const render = async (commit: string) =>
+    act(async () =>
+      root!.render(
+        <TestCanvasQuery>
+          <ReviewSessionProvider session={session}>
+            <AgentSelectionProvider revision={commit}>
+              <PierreDiffView scope={{ commit }} inWorkspace />
+            </AgentSelectionProvider>
+          </ReviewSessionProvider>
+        </TestCanvasQuery>,
+      ),
+    );
+
+  await render("one");
+
+  const changes = () =>
+    [...container.querySelectorAll("diffs-container")]
+      .flatMap((host) => [
+        ...host.shadowRoot!.querySelectorAll(
+          '[data-line-type="change-addition"]',
+        ),
+      ])
+      .map((row) => row.textContent)
+      .join("\n");
+
+  await vi.waitFor(() => expect(changes()).toContain("return 5"));
+
+  const mode = () =>
+    container.querySelector<HTMLSelectElement>('[aria-label="Diff mode"]')!;
+
+  await act(async () => {
+    mode().value = "structural";
+    mode().dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await vi.waitFor(() => expect(changes()).toContain("return 2"));
+  expect(changes()).not.toContain("return 5");
+
+  const functions = container.querySelector<HTMLSelectElement>(
+    '[aria-label="Changed functions"]',
+  )!;
+
+  expect(functions.textContent).toContain("function answer()");
+  await act(async () => {
+    functions.value = "0";
+    functions.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  fail = true;
+  await render("two");
+  await vi.waitFor(() =>
+    expect(container.textContent).toContain("Engine unavailable"),
+  );
+
+  const textButton = [...container.querySelectorAll("button")].find(
+    (button) => button.textContent === "Show text diff",
+  )!;
+
+  await act(async () => textButton.click());
+  await vi.waitFor(() => expect(changes()).toContain("return 5"));
+  expect(mode().value).toBe("text");
+});

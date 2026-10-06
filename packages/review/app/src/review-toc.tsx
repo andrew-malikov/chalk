@@ -488,8 +488,8 @@ const styles = stylex.create({
   },
   toggle: {
     position: "absolute",
-    top: "1px",
-    left: "1px",
+    top: 0,
+    left: 0,
     display: { default: "inline-flex", ":is([hidden])": "none" },
   },
   toggleOpen: {

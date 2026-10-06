@@ -432,7 +432,11 @@ test("opens singleton review tabs and closes to Home", async () => {
         container.querySelectorAll('[role="tab"][aria-label="Alpha"]').length,
     )
     .toBe(1);
-  await act(async () => mounted?.command("home"));
+  await act(async () =>
+    container
+      .querySelector<HTMLButtonElement>('[aria-label="Go Home"]')!
+      .click(),
+  );
   await act(async () => {
     Array.from(container.querySelectorAll("button"))
       .find((el) => el.textContent?.includes("Alpha"))
@@ -444,9 +448,9 @@ test("opens singleton review tabs and closes to Home", async () => {
   await act(async () => mounted?.command("closeTab"));
   expect(
     container
-      .querySelector('[role="tab"][aria-label="Home"]')
-      ?.getAttribute("aria-selected"),
-  ).toBe("true");
+      .querySelector('[aria-label="Go Home"]')
+      ?.getAttribute("aria-current"),
+  ).toBe("page");
   expect(rpc.request.setPreferences).toHaveBeenCalled();
 });
 
@@ -459,7 +463,7 @@ test("restores catalog tabs and drops missing review IDs", async () => {
         ?.getAttribute("aria-selected"),
     )
     .toBe("true");
-  expect(container.querySelectorAll('[role="tab"]').length).toBe(3);
+  expect(container.querySelectorAll('[role="tab"]').length).toBe(2);
   expect(container.textContent).not.toContain("missing");
 });
 
@@ -594,9 +598,9 @@ test("keyboard find and close operate on the active review", async () => {
   );
   expect(
     container
-      .querySelector('[role="tab"][aria-label="Home"]')
-      ?.getAttribute("aria-selected"),
-  ).toBe("true");
+      .querySelector('[aria-label="Go Home"]')
+      ?.getAttribute("aria-current"),
+  ).toBe("page");
 });
 
 test("arrow keys switch retained tabs and system appearance updates Home", async () => {

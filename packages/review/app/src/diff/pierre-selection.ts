@@ -30,14 +30,18 @@ export function selectedPierreDiff(
       newStart = head;
     }
   }
-  function context(count: number, oldIndex: number) {
+  function context(count: number, oldIndex: number, newIndex: number) {
     for (let offset = 0; offset < count; offset++) {
       const line = (side === "base" ? oldLine : newLine) + offset;
       if (line < from || line > to) continue;
       start(oldLine + offset, newLine + offset);
       rows.push({
         kind: "unchanged",
-        text: text(diff.deletionLines[oldIndex + offset]),
+        text: text(
+          side === "base"
+            ? diff.deletionLines[oldIndex + offset]
+            : diff.additionLines[newIndex + offset],
+        ),
       });
       covered++;
     }
@@ -51,12 +55,13 @@ export function selectedPierreDiff(
       context(
         Math.max(0, Math.min(old - oldLine, head - newLine)),
         oldLine - 1,
+        newLine - 1,
       );
     oldLine = old;
     newLine = head;
     for (const block of hunk.hunkContent) {
       if (block.type === "context") {
-        context(block.lines, block.deletionLineIndex);
+        context(block.lines, block.deletionLineIndex, block.additionLineIndex);
         continue;
       }
       const count = side === "base" ? block.deletions : block.additions;
@@ -107,6 +112,7 @@ export function selectedPierreDiff(
         diff.additionLines.length - newLine + 1,
       ),
       oldLine - 1,
+      newLine - 1,
     );
   if (rows.length === 0 || covered !== to - from + 1) return undefined;
   return { oldPath, newPath, oldStart, newStart, rows };

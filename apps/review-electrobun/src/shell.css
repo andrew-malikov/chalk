@@ -34,6 +34,7 @@
   padding: 0 8px;
   font-size: 14px;
   letter-spacing: -0.04em;
+  line-height: 20px;
 }
 .review-shell-brand-mark {
   display: grid;
@@ -53,6 +54,7 @@
   min-width: 0;
   padding-left: 16px;
   border-left: 1px solid var(--rule);
+  line-height: 20px;
 }
 .review-shell-repository {
   max-width: 180px;
@@ -67,6 +69,10 @@
 }
 .review-shell-current-title {
   font-weight: 500;
+}
+.review-shell-brand-name,
+.review-shell-editor span {
+  line-height: 20px;
 }
 .review-shell-context-separator {
   color: var(--ink-faint);
