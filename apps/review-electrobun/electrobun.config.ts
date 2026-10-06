@@ -13,9 +13,9 @@ export default {
       "dist/index.html": "views/mainview/index.html",
       "dist/assets": "views/mainview/assets",
     },
-    mac: { bundleCEF: false },
-    linux: { bundleCEF: false },
-    win: { bundleCEF: false },
+    mac: { bundleCEF: true, defaultRenderer: "cef" },
+    linux: { bundleCEF: true, defaultRenderer: "cef" },
+    win: { bundleCEF: true, defaultRenderer: "cef" },
   },
   runtime: { exitOnLastWindowClosed: true },
 } satisfies ElectrobunConfig;

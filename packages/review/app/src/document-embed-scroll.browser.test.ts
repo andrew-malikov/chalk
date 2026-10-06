@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 
 import { routeDocumentEmbedScroll } from "./document-embed-scroll";
 
@@ -23,7 +24,22 @@ function mount(embedClass: string, inDocument = true) {
   return { region, embed, content };
 }
 
-it.each(["sequence-diagram", "flow-diagram", "database-lens", "code-peek"])(
+it("scrolls an unfocused inline diff before continuing through the document", async () => {
+  const { region, embed } = mount("code-peek");
+  const host = document.createElement("diffs-container");
+  const shadow = host.attachShadow({ mode: "open" });
+  shadow.innerHTML = '<pre style="height:600px;margin:0">Diff lines</pre>';
+  embed.replaceChildren(host);
+  await userEvent.wheel(embed, { delta: { y: 120 } });
+  await vi.waitFor(() => expect(embed.scrollTop).toBeGreaterThan(0));
+  expect(region.scrollTop).toBe(0);
+
+  embed.scrollTop = embed.scrollHeight - embed.clientHeight;
+  await userEvent.wheel(embed, { delta: { y: 120 } });
+  await vi.waitFor(() => expect(region.scrollTop).toBeGreaterThan(0));
+});
+
+it.each(["sequence-diagram", "flow-diagram", "database-lens"])(
   "scrolls the document vertically over %s without scrolling the embed",
   (embedClass) => {
     const { region, embed, content } = mount(embedClass);
@@ -95,8 +111,8 @@ it("leaves vertical gestures to a code peek the reader clicked into", () => {
   expect(region.scrollTop).toBe(0);
 });
 
-it("routes a diagonal tie to the document, not the code peek", () => {
-  const { region, embed, content } = mount("code-peek");
+it("routes a diagonal tie over a diagram to the document", () => {
+  const { region, embed, content } = mount("sequence-diagram");
   const embeddedWheel = vi.fn<(event: WheelEvent) => void>();
   embed.addEventListener("wheel", embeddedWheel);
   region.scrollTop = 300;
@@ -140,7 +156,7 @@ it.each([
 });
 
 it("normalizes line and page wheel deltas", () => {
-  const { region, content } = mount("code-peek");
+  const { region, content } = mount("sequence-diagram");
   content.dispatchEvent(
     new WheelEvent("wheel", {
       bubbles: true,

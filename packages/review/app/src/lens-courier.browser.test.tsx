@@ -317,17 +317,25 @@ it("folds the sidebar to a rail that still filters and opens again", async () =>
       );
 
     await vi.waitFor(() =>
-      expect(railLens("Uncategorized changes")?.textContent).toBe("n/a"),
+      expect(railLens("Uncategorized changes")).not.toBeNull(),
     );
-    expect(railLens(api.title)?.textContent).toBe("API");
+
+    const divider = app.querySelector<HTMLElement>(
+      '[role="separator"][aria-label="Resize diff sidebar"]',
+    )!;
+
+    expect(divider.getBoundingClientRect().width).toBeGreaterThan(0);
+    expect(divider.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+      railLens(api.title)!.getBoundingClientRect().right,
+    );
 
     await act(async () => railLens(api.title)!.click());
     expect(railLens(api.title)?.getAttribute("aria-pressed")).toBe("true");
 
     await act(async () =>
-      app
-        .querySelector<HTMLButtonElement>('button[aria-label="Show lenses"]')!
-        .click(),
+      divider.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+      ),
     );
     expect(app.querySelector('nav[aria-label="Lens rail"]')).toBeNull();
     expect(

@@ -1,4 +1,6 @@
 import { NativeSelect } from "@canvas/components/ui/native-select";
+import { fontSize } from "@canvas/scale.stylex";
+import { Button, IconButton } from "@canvas/ui/button";
 import type {
   ReviewCommitScope,
   ReviewDiffFileWire,
@@ -15,6 +17,12 @@ import type {
 import { CodeView, type CodeViewHandle } from "@pierre/diffs/react";
 import * as stylex from "@stylexjs/stylex";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ExternalLinkIcon,
+  WrapTextIcon,
+} from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -494,60 +502,68 @@ function Comparison({
         role="toolbar"
         aria-label="Diff display"
       >
-        {lens && <span>Showing full file diffs for this lens</span>}
+        {lens && (
+          <span {...stylex.props(styles.lensNotice)}>
+            Showing full file diffs for this lens
+          </span>
+        )}
         {structural && chosen?.diff?.hunks.some((hunk) => hunk.hunkContext) && (
+          <div {...stylex.props(styles.functionPicker)}>
+            <NativeSelect
+              size="sm"
+              aria-label="Changed functions"
+              value=""
+              onChange={(event) => {
+                const hunk = chosen.diff!.hunks[Number(event.target.value)];
+                if (!hunk) return;
+                viewer.current?.scrollTo({
+                  type: "line",
+                  id: chosen.file.path,
+                  lineNumber: hunk.additionCount
+                    ? hunk.additionStart
+                    : hunk.deletionStart,
+                  side: hunk.additionCount ? "additions" : "deletions",
+                  align: "start",
+                });
+              }}
+            >
+              <option value="" disabled>
+                Changed functions
+              </option>
+              {chosen.diff.hunks.map(
+                (hunk, index) =>
+                  hunk.hunkContext && (
+                    <option key={index} value={index}>
+                      {hunk.hunkContext}
+                    </option>
+                  ),
+              )}
+            </NativeSelect>
+          </div>
+        )}
+        <div {...stylex.props(styles.modePicker)}>
           <NativeSelect
             size="sm"
-            className="tw:max-w-64"
-            aria-label="Changed functions"
-            value=""
-            onChange={(event) => {
-              const hunk = chosen.diff!.hunks[Number(event.target.value)];
-              if (!hunk) return;
-              viewer.current?.scrollTo({
-                type: "line",
-                id: chosen.file.path,
-                lineNumber: hunk.additionCount
-                  ? hunk.additionStart
-                  : hunk.deletionStart,
-                side: hunk.additionCount ? "additions" : "deletions",
-                align: "start",
-              });
-            }}
+            aria-label="Diff mode"
+            value={structural ? "structural" : "text"}
+            onChange={(event) =>
+              setStructural(event.target.value === "structural")
+            }
+            title="Group code changes by function and ignore formatting-only edits"
           >
-            <option value="" disabled>
-              Changed functions
-            </option>
-            {chosen.diff.hunks.map(
-              (hunk, index) =>
-                hunk.hunkContext && (
-                  <option key={index} value={index}>
-                    {hunk.hunkContext}
-                  </option>
-                ),
-            )}
+            <option value="text">Text diff</option>
+            <option value="structural">Structural diff</option>
           </NativeSelect>
-        )}
-        <NativeSelect
-          size="sm"
-          aria-label="Diff mode"
-          value={structural ? "structural" : "text"}
-          onChange={(event) =>
-            setStructural(event.target.value === "structural")
-          }
-          title="Group code changes by function and ignore formatting-only edits"
-        >
-          <option value="text">Text diff</option>
-          <option value="structural">Structural diff</option>
-        </NativeSelect>
-        <button
-          type="button"
-          {...stylex.props(styles.headerButton)}
+        </div>
+        <Button
+          variant="secondary"
+          xstyle={[styles.wrapButton, wrap && styles.wrapActive]}
           aria-pressed={wrap}
           onClick={() => setWrap(!wrap)}
         >
+          <WrapTextIcon aria-hidden="true" />
           Wrap lines
-        </button>
+        </Button>
       </div>
       {treeContainer &&
         createPortal(
@@ -596,15 +612,18 @@ function Comparison({
         >
           <strong>{chosen.file.path}</strong>
           <p>{chosen.error ?? chosen.notice ?? "Loading diff…"}</p>
-          {structural && chosen.error && (
-            <button type="button" onClick={() => setStructural(false)}>
-              Show text diff
-            </button>
-          )}
           {(chosen.error || chosen.notice) && (
-            <button type="button" onClick={() => void openSource(chosen.file)}>
-              Open source
-            </button>
+            <div {...stylex.props(styles.noticeActions)}>
+              {structural && chosen.error && (
+                <Button onClick={() => setStructural(false)}>
+                  Show text diff
+                </Button>
+              )}
+              <Button onClick={() => void openSource(chosen.file)}>
+                <ExternalLinkIcon aria-hidden="true" />
+                Open source
+              </Button>
+            </div>
           )}
         </div>
       )}
@@ -615,9 +634,7 @@ function Comparison({
         selectedLines={selection}
         style={{ flex: 1, minHeight: 0, width: "100%", overflowY: "auto" }}
         renderHeaderPrefix={(item) => (
-          <button
-            type="button"
-            {...stylex.props(styles.headerButton)}
+          <IconButton
             aria-label={`${item.collapsed ? "Expand" : "Collapse"} ${item.id}`}
             aria-expanded={!item.collapsed}
             onClick={() => {
@@ -629,15 +646,18 @@ function Comparison({
               save();
             }}
           >
-            {item.collapsed ? "▸" : "▾"}
-          </button>
+            {item.collapsed ? (
+              <ChevronRightIcon size={14} aria-hidden="true" />
+            ) : (
+              <ChevronDownIcon size={14} aria-hidden="true" />
+            )}
+          </IconButton>
         )}
         renderHeaderMetadata={(item) => (
           <div {...stylex.props(styles.headerActions)}>
             {viewed(item.id)}
-            <button
-              type="button"
-              {...stylex.props(styles.headerButton)}
+            <Button
+              variant="ghost"
               aria-label={`Open source: ${item.id}`}
               onClick={() => {
                 const entry = entries.find(
@@ -646,8 +666,9 @@ function Comparison({
                 void openSource(entry.file);
               }}
             >
+              <ExternalLinkIcon size={14} aria-hidden="true" />
               Open
-            </button>
+            </Button>
           </div>
         )}
         onScroll={(scrollTop, instance) => {
@@ -779,8 +800,9 @@ const styles = stylex.create({
     padding: 16,
     color: tokens.inkMuted,
     fontFamily: tokens.fontMono,
-    fontSize: 12,
+    fontSize: fontSize.body,
   },
+  noticeActions: { display: "flex", flexWrap: "wrap", gap: 8 },
   tree: { minWidth: 0, paddingBlock: 4 },
   treeRow: {
     display: "flex",
@@ -799,28 +821,31 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     color: tokens.ink,
     fontFamily: tokens.fontMono,
-    fontSize: 12,
+    fontSize: fontSize.body,
     textAlign: "left",
     cursor: "pointer",
     paddingBlock: 5,
   },
-  headerButton: {
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    color: "inherit",
-    cursor: "pointer",
-    fontFamily: tokens.fontMono,
-    padding: 4,
+  wrapButton: { height: 32 },
+  wrapActive: {
+    backgroundColor: tokens.accentWash,
+    borderColor: tokens.accentOutline,
+    color: tokens.accent,
   },
+  lensNotice: { marginInlineEnd: "auto" },
+  functionPicker: { maxWidth: "min(256px, 100%)", minWidth: 0 },
+  modePicker: { flexShrink: 0 },
   headerActions: { display: "flex", gap: 8, alignItems: "center" },
   toolbar: {
     display: "flex",
     flexWrap: "wrap",
-    gap: 12,
+    gap: 8,
     alignItems: "center",
     justifyContent: "flex-end",
     paddingInline: 8,
-    fontSize: 11,
+    paddingBlock: 8,
+    fontFamily: tokens.fontMono,
+    fontSize: fontSize.body,
     color: tokens.inkMuted,
   },
 });

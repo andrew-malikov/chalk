@@ -27,6 +27,7 @@
     box-sizing: border-box;
     border-width: 0;
     border-style: solid;
+    border-color: var(--rule);
   }
   button[data-slot],
   select[data-slot] {

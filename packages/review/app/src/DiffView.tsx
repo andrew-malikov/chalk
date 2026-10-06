@@ -6,10 +6,7 @@ import type {
   ReviewDiffLens,
   ReviewDiffProgress,
 } from "@dev.fast/review-protocol";
-import {
-  type Lens,
-  UNCATEGORIZED_LENS_ID,
-} from "@review/review-api/diff-lenses";
+import type { Lens } from "@review/review-api/diff-lenses";
 import {
   type CoverageProgress,
   coverageProgress,
@@ -504,6 +501,7 @@ export function ReviewDiffView({
         {...stylex.props(
           shellStyles.resizer,
           styles.sidebarResizer,
+          sidebarResize.collapsed && styles.railResizer,
           sidebarResize.isResizing && styles.resizing,
         )}
       />
@@ -600,10 +598,11 @@ function DiffRail({
       <RailButton label="Show lenses" onClick={onExpand}>
         <MagnifierIcon />
       </RailButton>
-      {rows.items.map((item) => (
+      {rows.items.map((item, index) => (
         <RailLens
           key={item.id}
           item={item}
+          number={index + 1}
           lenses={lenses}
           selected={activeId === item.id}
           phase={rows.phases.get(item.id)}
@@ -620,11 +619,13 @@ function DiffRail({
 
 function RailLens({
   item,
+  number,
   lenses,
   selected,
   phase,
 }: {
   item: LensItem;
+  number: number;
   lenses: ReviewLenses;
   selected: boolean;
   phase: MotionPhase | undefined;
@@ -652,11 +653,7 @@ function RailLens({
       disabled={!!item.unavailable || (empty && !selected)}
       onClick={() => (selected ? lenses.clear() : lenses.select(item.id))}
     >
-      <span ref={tooltip}>
-        {item.id === UNCATEGORIZED_LENS_ID
-          ? "n/a"
-          : item.title.slice(0, 5).trimEnd()}
-      </span>
+      <span ref={tooltip}>{number}</span>
     </button>
   );
 }
@@ -852,13 +849,12 @@ const styles = stylex.create({
     outline: { default: null, ":focus-visible": `1px solid ${tokens.accent}` },
     outlineOffset: { default: null, ":focus-visible": "-2px" },
   },
-  // 5ch is five letters in Geist Mono.
   railLens: {
     flexShrink: 0,
-    boxSizing: "content-box",
-    width: "5ch",
+    boxSizing: "border-box",
+    width: "28px",
     height: "24px",
-    padding: "0 5px",
+    padding: 0,
     borderWidth: 0,
     borderStyle: "none",
     borderColor: "currentcolor",
@@ -1085,6 +1081,12 @@ const styles = stylex.create({
       right: "-3px",
       content: "''",
     },
+  },
+  railResizer: {
+    flex: "0 0 6px",
+    width: "6px",
+    minWidth: "6px",
+    marginLeft: "-6px",
   },
   // Overlaps the files pane; the line stays on the pane edge.
   cabinetsResizer: {

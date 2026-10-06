@@ -230,11 +230,13 @@ button {
 /* The workbench mounts its diff view and file tree into the diff workspace;
    its buttons and viewed sections (and the shared viewed box, which the
    workbench's review.css styles) take the workspace's type and fade. */
-.diff-workspace button {
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-  background: transparent;
+@layer base {
+  .diff-workspace button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    background: transparent;
+  }
 }
 
 .diff-workspace button:focus-visible {

@@ -114,6 +114,8 @@ async function run() {
     rpc,
     frame: { width: 1200, height: 850 },
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
+    // Center macOS window controls in the shell's 56px header.
+    trafficLightOffset: { x: 0, y: 12 },
   });
 
   window.webview.setNavigationRules(["^*", "views://mainview/*"]);
