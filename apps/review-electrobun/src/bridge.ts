@@ -277,6 +277,9 @@ export function createCanvasBridge(
     currentTheme: options.theme,
     onDidChangeTheme: (listener) => watch(options.theme, listener),
     currentDiffLayout: () => preferences.current().diffLayout,
+    get defaultDiffMode() {
+      return preferences.current().defaultDiffMode;
+    },
     setDiffLayout: (layout) => preferences.set({ diffLayout: layout }),
     onDidChangeDiffLayout: (listener) =>
       watch(() => preferences.current().diffLayout, listener),

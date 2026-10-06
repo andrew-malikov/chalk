@@ -563,6 +563,7 @@ const styles = stylex.create({
   },
   link: {
     display: "flex",
+    justifyContent: "flex-start",
     alignItems: "baseline",
     width: "100%",
     borderWidth: 0,

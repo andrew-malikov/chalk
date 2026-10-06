@@ -13,6 +13,7 @@ import {
   coverageSources,
 } from "@review/viewed-coverage";
 import * as stylex from "@stylexjs/stylex";
+import { PanelLeftCloseIcon } from "lucide-react";
 import {
   type CSSProperties,
   type ReactNode,
@@ -47,6 +48,7 @@ import {
 } from "./side-panel-resizer";
 import { withClass } from "./stylex-props";
 import { tokens } from "./tokens.stylex";
+import { IconButton } from "./ui/button";
 import { ProgressRing } from "./ui/progress-ring";
 import { useTooltip } from "./use-tooltip";
 import { ViewedButton } from "./viewed-button";
@@ -310,7 +312,16 @@ export function ReviewDiffView({
               </>
             )}
           </span>
-          {viewed && <ViewedRing {...viewed} />}
+          <div {...stylex.props(styles.progressActions)}>
+            {viewed && <ViewedRing {...viewed} />}
+            <IconButton
+              aria-label="Collapse diff sidebar"
+              title="Collapse diff sidebar"
+              onClick={sidebarResize.collapse}
+            >
+              <PanelLeftCloseIcon aria-hidden="true" />
+            </IconButton>
+          </div>
         </div>
         <div {...stylex.props(styles.cabinets)} ref={cabinetsRef}>
           <div
@@ -902,6 +913,11 @@ const styles = stylex.create({
     display: "flex",
     alignItems: "center",
     gap: "9px",
+  },
+  progressActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
   },
   ring: {
     display: "flex",

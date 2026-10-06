@@ -338,6 +338,19 @@ it("folds the sidebar to a rail that still filters and opens again", async () =>
       ),
     );
     expect(app.querySelector('nav[aria-label="Lens rail"]')).toBeNull();
+
+    const collapse = app.querySelector<HTMLButtonElement>(
+      '[aria-label="Collapse diff sidebar"]',
+    )!;
+
+    await act(async () => collapse.click());
+    expect(app.querySelector('nav[aria-label="Lens rail"]')).not.toBeNull();
+    await act(async () =>
+      app
+        .querySelector<HTMLButtonElement>('[aria-label="Show lenses"]')!
+        .click(),
+    );
+    expect(app.querySelector('nav[aria-label="Lens rail"]')).toBeNull();
     expect(
       row(api.id)
         ?.querySelector("button[aria-pressed]")

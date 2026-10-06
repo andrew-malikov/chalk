@@ -410,7 +410,7 @@ it("reveals a lens source line in a file initially outside the viewport", async 
   });
 });
 
-it("switches to structural changes, navigates functions, and offers text mode when the engine fails", async () => {
+it("uses the structural default, navigates functions, and offers text mode when the engine fails", async () => {
   const file = {
     path: "a.ts",
     status: "modified" as const,
@@ -430,14 +430,17 @@ it("switches to structural changes, navigates functions, and offers text mode wh
   const session = testReviewSession(
     {},
     {
+      defaultDiffMode: "structural",
       request: async (input) => {
         const url = new URL(input);
 
         if (url.pathname.endsWith("/structural-diff")) {
           if (fail)
             return new Response(
-              JSON.stringify({ type: "error", message: "Engine unavailable" }) +
-                "\n",
+              JSON.stringify({
+                type: "error",
+                message: "Engine unavailable",
+              }) + "\n",
             );
 
           return new Response(
@@ -517,15 +520,10 @@ it("switches to structural changes, navigates functions, and offers text mode wh
       .map((row) => row.textContent)
       .join("\n");
 
-  await vi.waitFor(() => expect(changes()).toContain("return 5"));
-
   const mode = () =>
     container.querySelector<HTMLSelectElement>('[aria-label="Diff mode"]')!;
 
-  await act(async () => {
-    mode().value = "structural";
-    mode().dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  await vi.waitFor(() => expect(mode()?.value).toBe("structural"));
   await vi.waitFor(() => expect(changes()).toContain("return 2"));
   expect(changes()).not.toContain("return 5");
 

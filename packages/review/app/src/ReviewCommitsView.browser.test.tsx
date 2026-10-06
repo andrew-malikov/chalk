@@ -12,6 +12,8 @@ import { ReviewSessionProvider } from "./host/review-session";
 import { testReviewSession } from "./review-session-test-utils";
 import { ReviewCommitsView } from "./ReviewCommitsView";
 
+import "./styles.css";
+
 let root: ReturnType<typeof createRoot> | undefined;
 
 afterEach(async () => {
@@ -42,6 +44,7 @@ async function mount(
   diffView: ReviewCanvasBridge["diffView"],
 ) {
   const container = document.createElement("div");
+  container.className = "review-canvas-root";
   document.body.append(container);
   root = createRoot(container);
 
@@ -57,6 +60,36 @@ async function mount(
 
   return container;
 }
+
+it("aligns commit subjects with their metadata at different row widths", async () => {
+  const container = await mount(
+    <ReviewCommitsView
+      commits={[commit]}
+      range={{
+        baseRef: "main",
+        headRef: "feature",
+        baseCommit: "base",
+        headCommit: commit.commit,
+      }}
+      onOpenDiff={() => {}}
+    />,
+    { files: async () => [file] },
+  );
+
+  for (const width of [1000, 500]) {
+    container.style.width = `${width}px`;
+    const subject = container.querySelector("button strong")!;
+    const meta = container.querySelector("article > div > span:last-child")!;
+    const metadataText = document.createRange();
+    metadataText.selectNodeContents(meta);
+    expect(
+      Math.abs(
+        subject.getBoundingClientRect().left -
+          metadataText.getBoundingClientRect().left,
+      ),
+    ).toBeLessThan(1);
+  }
+});
 
 it("opens a commit's diff at the file clicked in its file list", async () => {
   const onOpenDiff =

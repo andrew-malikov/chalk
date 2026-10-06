@@ -332,6 +332,8 @@ export interface ReviewCanvasBridge {
   // The diff layout is app-wide and backed by the `diffEditor.renderSideBySide`
   // setting, so a choice outlives the session and the app restart.
   currentDiffLayout(): ReviewDiffLayout;
+  /** Default for reviews without a saved Text/Structural mode choice. */
+  readonly defaultDiffMode?: "text" | "structural";
   setDiffLayout(layout: ReviewDiffLayout): Promise<void>;
   onDidChangeDiffLayout(
     listener: (layout: ReviewDiffLayout) => void,

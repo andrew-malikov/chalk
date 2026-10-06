@@ -137,7 +137,7 @@ function mount(
   const progressLabel = document.createElement("span");
   header.append(open, counts, progressLabel);
   const body = document.createElement("div");
-  body.style.cssText = `overflow:auto;${spec.heightMode === "capped" ? "max-height:360px;" : ""}`;
+  body.style.cssText = `overflow:auto;scrollbar-width:thin;${spec.heightMode === "capped" ? "max-height:360px;" : ""}`;
   body.tabIndex = 0;
   body.setAttribute("aria-label", `${spec.title} code preview`);
   body.textContent = "Loading preview…";
@@ -264,7 +264,15 @@ function mount(
     const theme = session.bridge.currentTheme();
     instance.setOptions({
       ...instance.options,
-      diffStyle: session.bridge.currentDiffLayout(),
+      diffStyle:
+        diff &&
+        (!diff.deletionLines.length ||
+          !diff.additionLines.length ||
+          diff.hunks.every((hunk) =>
+            hunk.hunkContent.every((content) => content.type === "context"),
+          ))
+          ? "unified"
+          : session.bridge.currentDiffLayout(),
       theme: theme === "light" ? "pierre-light" : "pierre-dark",
       themeType: theme,
     });

@@ -64,6 +64,28 @@ test("invalid privileged preference updates never alter stored state", async () 
   expect(store.get().theme).toBe("system");
 });
 
+test("default diff mode survives restart and older preference files use text", async () => {
+  const target = await file();
+  await writeFile(
+    target,
+    JSON.stringify({
+      theme: "dark",
+      diffLayout: "unified",
+      reviewIds: [],
+      activeReviewId: null,
+    }),
+  );
+  const store = await createPreferencesStore(target);
+  expect(store.get().defaultDiffMode).toBe("text");
+  await store.update({ defaultDiffMode: "structural" });
+  await store.update({ theme: "light" });
+  expect((await createPreferencesStore(target)).get()).toMatchObject({
+    defaultDiffMode: "structural",
+    diffLayout: "unified",
+    theme: "light",
+  });
+});
+
 test("tutorial progress survives unrelated preferences, restart, and older preference files", async () => {
   const target = await file();
   await writeFile(

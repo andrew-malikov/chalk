@@ -1165,6 +1165,24 @@ function SettingsDialog({
               <option value="unified">Unified</option>
             </NativeSelect>
           </label>
+          <label htmlFor="shell-default-diff-mode">
+            <span>Default diff mode</span>
+            <NativeSelect
+              id="shell-default-diff-mode"
+              aria-label="Default diff mode"
+              value={preferences.defaultDiffMode}
+              onChange={(event) => {
+                // SAFETY: the options below contain only supported modes.
+                save({
+                  defaultDiffMode: event.target
+                    .value as ShellPreferences["defaultDiffMode"],
+                });
+              }}
+            >
+              <option value="text">Text</option>
+              <option value="structural">Structural</option>
+            </NativeSelect>
+          </label>
         </div>
         <DialogFooter>
           <Button onClick={close}>Done</Button>

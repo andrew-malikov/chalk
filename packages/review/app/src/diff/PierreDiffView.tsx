@@ -70,12 +70,13 @@ interface SavedView {
 }
 
 export function PierreDiffView(props: Props) {
+  const session = useReviewSession();
   const [structural, setStructural] = useReviewUiState(
     "diff-structural",
-    false,
+    session.bridge.defaultDiffMode === "structural",
+    { scope: "session" },
   );
 
-  const session = useReviewSession();
   const summary = useReviewDiffFiles();
   const revision = props.scope ? undefined : summary.revision;
   const sourceIdentity = JSON.stringify([

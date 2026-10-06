@@ -110,6 +110,42 @@ describe("ReviewToc", () => {
       document.querySelector('[aria-controls="review-toc-body"]')?.textContent,
     ).not.toContain("§");
   });
+  it("aligns contents numbers and labels across different title lengths", async () => {
+    const entries = [
+      { id: "heading-0", text: "What / why", level: "h2" as const },
+      { id: "heading-1", text: "Design", level: "h2" as const },
+      { id: "heading-2", text: "Implementation", level: "h2" as const },
+    ];
+
+    const article = renderArticle(entries.map((entry) => entry.text));
+    view.append(article);
+    reviewRoots.articleRef.current = article;
+    shell.style.width = "1200px";
+    const root = createRoot(mount);
+    mountedRoots.push(root);
+    await act(async () =>
+      root.render(
+        <ReviewRootsProvider roots={reviewRoots}>
+          <ReviewToc entries={entries} />
+        </ReviewRootsProvider>,
+      ),
+    );
+    await act(async () =>
+      document
+        .querySelector<HTMLButtonElement>('[aria-controls="review-toc-body"]')!
+        .click(),
+    );
+
+    for (const child of [1, 2]) {
+      const lefts = [
+        ...document.querySelectorAll(
+          `#review-toc li > button > span:nth-child(${child})`,
+        ),
+      ].map((element) => element.getBoundingClientRect().left);
+
+      expect(Math.max(...lefts) - Math.min(...lefts)).toBeLessThan(1);
+    }
+  });
   it.each([
     { from: 1400, to: 1200, rail: false },
     { from: 1200, to: 1400, rail: true },

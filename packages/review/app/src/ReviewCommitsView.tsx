@@ -386,6 +386,7 @@ const styles = stylex.create({
   },
   toggle: {
     display: "flex",
+    justifyContent: "flex-start",
     minWidth: 0,
     alignItems: "center",
     padding: 0,

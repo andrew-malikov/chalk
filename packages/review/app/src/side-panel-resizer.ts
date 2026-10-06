@@ -384,6 +384,7 @@ export function useRightPanelResize({
   );
 
   const expand = useCallback(() => setCollapsed(false), [setCollapsed]);
+  const collapse = useCallback(() => setCollapsed(true), [setCollapsed]);
   const renderedWidth = foldedWidth ?? width;
   const widest = Math.round(constrainWidth(Number.POSITIVE_INFINITY));
 
@@ -421,6 +422,7 @@ export function useRightPanelResize({
     setWidth,
     collapsed,
     expand,
+    collapse,
     isResizing,
     separatorProps,
   };

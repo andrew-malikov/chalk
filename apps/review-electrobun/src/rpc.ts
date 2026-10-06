@@ -12,6 +12,7 @@ import { z } from "zod";
 export const preferencesSchema = z.strictObject({
   theme: z.enum(["system", "light", "dark"]),
   diffLayout: z.enum(["split", "unified"]),
+  defaultDiffMode: z.enum(["text", "structural"]).default("text"),
   reviewIds: z.array(z.string().min(1)),
   activeReviewId: z.string().min(1).nullable(),
   keymap: z.enum(REVIEW_KEYMAP_CHOICES).default("none"),
@@ -29,6 +30,7 @@ export type ShellPreferences = z.infer<typeof preferencesSchema>;
 export const defaultPreferences: ShellPreferences = {
   theme: "system",
   diffLayout: "split",
+  defaultDiffMode: "text",
   reviewIds: [],
   activeReviewId: null,
   keymap: "none",

@@ -355,6 +355,9 @@ test("theme and layout subscribers ignore unrelated tab preferences", async () =
   });
 
   expect(await bridge.diffView.files()).toEqual([]);
+  expect(bridge.defaultDiffMode).toBe("text");
+  preferences = { ...preferences, defaultDiffMode: "structural" };
+  expect(bridge.defaultDiffMode).toBe("structural");
 
   const themes: string[] = [],
     layouts: string[] = [];
