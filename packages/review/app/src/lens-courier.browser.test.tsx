@@ -347,7 +347,7 @@ it("folds the sidebar to a rail that still filters and opens again", async () =>
     expect(app.querySelector('nav[aria-label="Lens rail"]')).not.toBeNull();
     await act(async () =>
       app
-        .querySelector<HTMLButtonElement>('[aria-label="Show lenses"]')!
+        .querySelector<HTMLButtonElement>('[aria-label="Expand diff sidebar"]')!
         .click(),
     );
     expect(app.querySelector('nav[aria-label="Lens rail"]')).toBeNull();

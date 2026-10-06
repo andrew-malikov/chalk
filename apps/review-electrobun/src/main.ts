@@ -144,7 +144,7 @@ async function run() {
       submenu: [
         { label: "Settings…", action: "settings", accelerator: "CmdOrCtrl+," },
         { type: "divider" },
-        { role: "quit", label: "Quit Blackboard" },
+        { role: "quit", label: "Quit Blackboard", accelerator: "CmdOrCtrl+Q" },
       ],
     },
     {

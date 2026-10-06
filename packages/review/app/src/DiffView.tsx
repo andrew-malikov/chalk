@@ -13,7 +13,7 @@ import {
   coverageSources,
 } from "@review/viewed-coverage";
 import * as stylex from "@stylexjs/stylex";
-import { PanelLeftCloseIcon } from "lucide-react";
+import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
 import {
   type CSSProperties,
   type ReactNode,
@@ -317,6 +317,7 @@ export function ReviewDiffView({
             <IconButton
               aria-label="Collapse diff sidebar"
               title="Collapse diff sidebar"
+              xstyle={styles.sidebarAction}
               onClick={sidebarResize.collapse}
             >
               <PanelLeftCloseIcon aria-hidden="true" />
@@ -604,6 +605,9 @@ function DiffRail({
   return (
     <nav {...stylex.props(styles.rail)} aria-label="Lens rail">
       <div {...stylex.props(styles.railProgress)}>
+        <RailButton label="Expand diff sidebar" onClick={onExpand}>
+          <PanelLeftOpenIcon size={16} aria-hidden="true" />
+        </RailButton>
         {viewed && <ViewedRing {...viewed} xstyle={styles.railRing} />}
       </div>
       <RailButton label="Show lenses" onClick={onExpand}>
@@ -826,11 +830,14 @@ const styles = stylex.create({
   },
   railProgress: {
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+    gap: "6px",
     alignSelf: "stretch",
     flexShrink: 0,
     minHeight: "52px",
+    paddingBlock: "8px",
     marginBottom: "2px",
     borderBottomWidth: "1px",
     borderBottomStyle: "solid",
@@ -902,7 +909,7 @@ const styles = stylex.create({
     gap: "8px",
     flexShrink: 0,
     minHeight: "52px",
-    padding: "0 14px 0 16px",
+    padding: "0 8px 0 16px",
     borderBottomWidth: "1px",
     borderBottomStyle: "solid",
     borderBottomColor: tokens.rule,
@@ -911,8 +918,12 @@ const styles = stylex.create({
   },
   progressLabel: {
     display: "flex",
-    alignItems: "center",
+    alignItems: "baseline",
     gap: "9px",
+  },
+  sidebarAction: {
+    width: "28px",
+    height: "28px",
   },
   progressActions: {
     display: "flex",
@@ -982,7 +993,7 @@ const styles = stylex.create({
   row: {
     display: "flex",
     alignItems: "center",
-    paddingRight: "10px",
+    paddingRight: "8px",
     gap: "7px",
   },
   toggle: {
