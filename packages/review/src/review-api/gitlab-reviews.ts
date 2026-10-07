@@ -475,6 +475,39 @@ export class GitLabReviews {
     cwd: string,
     input: GitLabPosition,
   ): Promise<GitLabPosition> {
+    const selectedFile = input.side === "head" ? input.newPath : input.oldPath;
+    const names = (
+      await this.git(cwd, [
+        "diff",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--name-status",
+        "-z",
+        "--find-renames",
+        input.baseSha,
+        input.headSha,
+      ])
+    ).split("\0");
+    let oldPath = selectedFile;
+    let newPath = selectedFile;
+
+    for (let index = 0; index < names.length - 1; ) {
+      const status = names[index++]!;
+      const old = names[index++]!;
+      const next =
+        status.startsWith("R") || status.startsWith("C")
+          ? names[index++]!
+          : old;
+
+      if ((input.side === "head" ? next : old) === selectedFile) {
+        oldPath = old;
+        newPath = next;
+        break;
+      }
+    }
+
+    input = { ...input, oldPath, newPath };
+
     const text = await this.text(
       cwd,
       input.side === "head" ? input.headSha : input.baseSha,

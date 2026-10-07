@@ -291,6 +291,7 @@ export function ApiCanvas({
       ...baseSession,
       review: {
         kind: snapshot.kind,
+        gitlab: snapshot.origin?.gitlab,
         pins: snapshot.pins
           ? { base: snapshot.pins.base, head: snapshot.pins.head }
           : undefined,

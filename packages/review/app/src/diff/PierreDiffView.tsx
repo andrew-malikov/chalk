@@ -1,5 +1,7 @@
 import { useAgentSelection } from "@canvas/ask/agent-selection";
 import { NativeSelect } from "@canvas/components/ui/native-select";
+import { useGitLab } from "@canvas/gitlab/gitlab-context";
+import { useReviewSession } from "@canvas/host/review-session";
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
 import {
   readReviewUiState,
@@ -9,13 +11,13 @@ import {
 import { fontSize } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button, IconButton } from "@canvas/ui/button";
+import type { GitLabDiscussion } from "@dev.fast/review-protocol";
 import type {
   ReviewCommitScope,
   ReviewDiffFileWire,
   ReviewDiffLens,
   ReviewDiffProgress,
 } from "@dev.fast/review-protocol";
-import { isJsonObject } from "@dev.fast/review-protocol";
 import type {
   CodeViewItem,
   CodeViewLineSelection,
@@ -41,8 +43,8 @@ import {
   useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
+import { z } from "zod";
 
-import { useReviewSession } from "../host/review-session";
 import { DiffCount } from "./diff-count";
 import {
   type PierreComparisonEntry,
@@ -71,6 +73,7 @@ interface SavedView {
 
 export function PierreDiffView(props: Props) {
   const session = useReviewSession();
+
   const [structural, setStructural] = useReviewUiState(
     "diff-structural",
     session.bridge.defaultDiffMode === "structural",
@@ -79,51 +82,63 @@ export function PierreDiffView(props: Props) {
 
   const summary = useReviewDiffFiles();
   const revision = props.scope ? undefined : summary.revision;
+
   const sourceIdentity = JSON.stringify([
     session.review?.pins,
     session.review?.targetKind,
     session.review?.historicalRevision,
     props.scope?.commit,
   ]);
+
   const comparisonUrl = useMemo(() => {
     const url = new URL(session.apiUrl("/diff"));
+
     if (props.scope) url.searchParams.set("commit", props.scope.commit);
+
     return url.href;
   }, [session.apiUrl, sourceIdentity]);
+
   const scopedSummary = useQuery<ReviewDiffFileWire[]>({
     queryKey: ["pierre-commit-files", comparisonUrl],
     enabled: !!props.scope,
     queryFn: async ({ signal }) => {
       const response = await session.fetchUrl(comparisonUrl, { signal });
+
       if (!response.ok)
         throw new Error(`Cannot load changed files (${response.status})`);
+
       return response.json();
     },
     staleTime: Infinity,
     gcTime: 0,
   });
+
   const files = props.scope
     ? scopedSummary.data
     : summary.status === "loaded"
       ? summary.files
       : undefined;
+
   const error = props.scope
     ? scopedSummary.error?.message
     : summary.status === "error"
       ? summary.error
       : undefined;
+
   if (error)
     return (
       <p {...stylex.props(styles.notice)} role="alert">
         {error}
       </p>
     );
+
   if (!files)
     return (
       <p {...stylex.props(styles.notice)} role="status">
         Loading changed files…
       </p>
     );
+
   return (
     <Comparison
       key={`${comparisonUrl}:${revision ?? ""}:${props.lens?.id ?? "all"}:${structural}`}
@@ -160,10 +175,12 @@ function Comparison({
   setStructural(value: boolean): void;
 }) {
   const session = useReviewSession();
+  const gitlab = useGitLab();
   const queryClient = useQueryClient();
   const select = useAgentSelection();
   const preferred = useRef(revealFile);
   preferred.current = revealFile;
+
   const queryKey = useMemo(
     () => [
       "pierre-comparison",
@@ -174,6 +191,7 @@ function Comparison({
     ],
     [url, revision, files, structural],
   );
+
   const comparison = useQuery({
     queryKey,
     queryFn: ({ signal }) =>
@@ -189,11 +207,14 @@ function Comparison({
     staleTime: Infinity,
     gcTime: 0,
   });
+
   const entries =
     comparison.data ?? files.map((file): PierreComparisonEntry => ({ file }));
+
   const allowed = lens
     ? new Set(lens.ranges.map((range) => range.file))
     : undefined;
+
   const visible = allowed
     ? entries.filter(
         (entry) =>
@@ -201,6 +222,7 @@ function Comparison({
           (!!entry.file.previousPath && allowed.has(entry.file.previousPath)),
       )
     : entries;
+
   const stateKey = session.storageKey(
     "pierre-diff-view",
     JSON.stringify([
@@ -211,74 +233,119 @@ function Comparison({
       structural,
     ]),
   );
+
   const saved = useRef(readSavedView(stateKey));
+
   const [collapsed, setCollapsed] = useState(
     () => new Set(saved.current.collapsed),
   );
+
   const [selectedPath, setSelectedPath] = useState(
     revealFile ?? visible[0]?.file.path,
   );
+
   const [selection, setSelection] = useState<CodeViewLineSelection | null>(
     null,
   );
+
   const [wrap, setWrap] = useReviewUiState("diff-wrap", false);
+
   // Pierre hydrates metadata in place; each mounted viewer owns its copy.
   const renderedDiffs = useRef(
     new WeakMap<FileDiffMetadata, FileDiffMetadata>(),
   );
-  const viewer = useRef<CodeViewHandle<undefined, undefined>>(null);
+
+  const viewer = useRef<CodeViewHandle<GitLabDiscussion, undefined>>(null);
   const container = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const restored = useRef(false);
+
   const pendingReveal = useRef(
     revealFile && !(restoreFile && saved.current.anchor?.id === revealFile)
       ? revealFile
       : undefined,
   );
+
   const pendingRange = useRef(
     !saved.current.anchor && !lens?.wholeFiles ? lens?.ranges[0] : undefined,
   );
+
   const layout = useSyncExternalStore(
     useCallback(
       (notify) => {
         const subscription = session.bridge.onDidChangeDiffLayout(notify);
+
         return () => subscription.dispose();
       },
       [session.bridge],
     ),
     () => session.bridge.currentDiffLayout(),
   );
+
   const theme = useSyncExternalStore(
     useCallback(
       (notify) => {
         const subscription = session.bridge.onDidChangeTheme(notify);
+
         return () => subscription.dispose();
       },
       [session.bridge],
     ),
     () => session.theme(),
   );
-  const items = useMemo<CodeViewItem<undefined>[]>(
+
+  const annotationRevision = useRef({ key: "", version: 0 });
+  const annotationKey = JSON.stringify(gitlab?.state?.discussions);
+
+  if (annotationRevision.current.key !== annotationKey)
+    annotationRevision.current = {
+      key: annotationKey,
+      version: annotationRevision.current.version + 2,
+    };
+  const annotationVersion = annotationRevision.current.version;
+
+  const items = useMemo<CodeViewItem<GitLabDiscussion>[]>(
     () =>
       visible.flatMap((entry) => {
         if (!entry.diff) return [];
         let diff = renderedDiffs.current.get(entry.diff);
+
         if (!diff) {
           diff = structuredClone(entry.diff);
           renderedDiffs.current.set(entry.diff, diff);
         }
+
         return [
           {
             id: entry.file.path,
             type: "diff" as const,
             fileDiff: diff,
-            version: Number(collapsed.has(entry.file.path)),
+            annotations:
+              scope || session.review?.historicalRevision !== null
+                ? []
+                : gitlab?.state?.discussions
+                    .filter(
+                      (d) =>
+                        d.location &&
+                        (d.location.file === entry.file.path ||
+                          d.location.file === entry.file.previousPath),
+                    )
+                    .map((d) => ({
+                      lineNumber: d.location!.from,
+                      side:
+                        d.location!.side === "head"
+                          ? ("additions" as const)
+                          : ("deletions" as const),
+                      metadata: d,
+                    })),
+            version: Number(collapsed.has(entry.file.path)) + annotationVersion,
             collapsed: collapsed.has(entry.file.path),
           },
         ];
       }),
-    [visible, collapsed],
+    [visible, collapsed, gitlab?.state, scope, annotationVersion],
   );
+
   const save = useCallback(() => {
     clearTimeout(timer.current);
     timer.current = setTimeout(
@@ -286,6 +353,7 @@ function Comparison({
       200,
     );
   }, [stateKey]);
+
   useEffect(
     () => () => {
       clearTimeout(timer.current);
@@ -294,6 +362,7 @@ function Comparison({
     },
     [stateKey, select],
   );
+
   const navigate = useCallback(
     (path: string) => {
       setSelectedPath(path);
@@ -304,22 +373,80 @@ function Comparison({
         next.delete(path);
         saved.current.collapsed = [...next];
         save();
+
         return next;
       });
       viewer.current?.scrollTo({ type: "item", id: path, align: "start" });
     },
     [save],
   );
+
+  const lastGitLabReveal = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    const reveal = gitlab?.reveal;
+
+    if (
+      !reveal ||
+      lastGitLabReveal.current === reveal.nonce ||
+      hidden ||
+      scope ||
+      lens
+    )
+      return;
+
+    const entry = files.find(
+      (file) => file.path === reveal.file || file.previousPath === reveal.file,
+    );
+
+    if (!entry) {
+      session.surface.revealAnchor(
+        reveal.file,
+        { fromLine: reveal.from, toLine: reveal.to },
+        reveal.side,
+      );
+      lastGitLabReveal.current = reveal.nonce;
+
+      return;
+    }
+
+    lastGitLabReveal.current = reveal.nonce;
+    navigate(entry.path);
+    pendingReveal.current = undefined;
+    pendingRange.current = {
+      file: reveal.file,
+      side: reveal.side,
+      fromLine: reveal.from,
+      toLine: reveal.to,
+    };
+    viewer.current?.scrollTo({
+      type: "line",
+      id: entry.path,
+      lineNumber: reveal.from,
+      side: reveal.side === "head" ? "additions" : "deletions",
+      align: "start",
+    });
+    setSelection({
+      id: entry.path,
+      range: {
+        start: reveal.from,
+        end: reveal.to,
+        side: reveal.side === "head" ? "additions" : "deletions",
+      },
+    });
+  }, [gitlab?.reveal, hidden, scope, lens, files, navigate, session.surface]);
   const previousReveal = useRef(revealFile);
   useEffect(() => {
     if (previousReveal.current === revealFile) return;
     previousReveal.current = revealFile;
+
     if (revealFile) navigate(revealFile);
   }, [revealFile, navigate]);
+
   const restore = useCallback(() => {
     if (hidden) return;
     const instance = viewer.current?.getInstance();
     const reveal = pendingReveal.current;
+
     if (reveal && instance?.getTopForItem(reveal) !== undefined) {
       pendingReveal.current = undefined;
       restored.current = true;
@@ -329,17 +456,22 @@ function Comparison({
         align: "start",
         behavior: "instant",
       });
+
       return;
     }
+
     const range = pendingRange.current;
+
     if (range) {
       const entry = files.find(
         (file) => file.path === range.file || file.previousPath === range.file,
       );
+
       if (entry && instance?.getTopForItem(entry.path) !== undefined) {
         const rendered = instance
           .getRenderedItems()
           .find((item) => item.id === entry.path);
+
         if (!rendered) {
           viewer.current!.scrollTo({
             type: "item",
@@ -347,8 +479,10 @@ function Comparison({
             align: "start",
             behavior: "instant",
           });
+
           return;
         }
+
         pendingRange.current = undefined;
         restored.current = true;
         const side = range.side === "base" ? "deletions" : "additions";
@@ -369,19 +503,26 @@ function Comparison({
                 behavior: "instant",
               },
         );
+
         return;
       }
     }
+
     if (restored.current) return;
     const anchor = saved.current.anchor;
+
     if (!anchor) {
       restored.current = true;
+
       return;
     }
+
     if (instance?.getTopForItem(anchor.id) === undefined) {
       if (!comparison.isFetching) restored.current = true;
+
       return;
     }
+
     restored.current = true;
     viewer.current!.scrollTo(
       anchor.line
@@ -403,11 +544,14 @@ function Comparison({
           },
     );
   }, [files, comparison.isFetching, hidden]);
+
   useLayoutEffect(restore, [restore, items, hidden]);
+
   const committed =
     !!scope ||
     session.review?.targetKind !== "worktree" ||
     session.review?.historicalRevision !== null;
+
   const sourceRequests = useMemo(() => new Set<AbortController>(), [url]);
   useEffect(
     () => () => {
@@ -416,6 +560,7 @@ function Comparison({
     },
     [sourceRequests],
   );
+
   const options = useMemo(
     () => ({
       diffStyle: layout,
@@ -457,12 +602,16 @@ function Comparison({
       structural,
     ],
   );
+
   const fileProgress = new Map(
     progress?.files.map((file) => [file.path, file]),
   );
+
   function viewed(path: string) {
     const file = fileProgress.get(path);
+
     if (!file || !onToggleViewed) return null;
+
     return (
       <ViewedButton
         label={path}
@@ -476,7 +625,9 @@ function Comparison({
       />
     );
   }
+
   const chosen = visible.find((entry) => entry.file.path === selectedPath);
+
   const openSource = (file: ReviewDiffFileWire) =>
     session.surface.revealAnchor(
       file.status === "deleted" ? (file.previousPath ?? file.path) : file.path,
@@ -485,6 +636,7 @@ function Comparison({
       undefined,
       scope,
     );
+
   return (
     <div
       {...stylex.props(styles.root, inWorkspace && styles.workspace)}
@@ -516,6 +668,7 @@ function Comparison({
               value=""
               onChange={(event) => {
                 const hunk = chosen.diff!.hunks[Number(event.target.value)];
+
                 if (!hunk) return;
                 viewer.current?.scrollTo({
                   type: "line",
@@ -634,12 +787,23 @@ function Comparison({
         options={options}
         selectedLines={selection}
         style={{ flex: 1, minHeight: 0, width: "100%", overflowY: "auto" }}
+        renderAnnotation={(annotation) => (
+          <Button
+            variant="ghost"
+            onClick={() => gitlab?.select(annotation.metadata)}
+            aria-label={`Open GitLab discussion ${annotation.metadata.id}`}
+          >
+            GitLab · @{annotation.metadata.comments[0]?.author.username} ·{" "}
+            {annotation.metadata.resolved ? "Resolved" : "Open"}
+          </Button>
+        )}
         renderHeaderPrefix={(item) => (
           <IconButton
             aria-label={`${item.collapsed ? "Expand" : "Collapse"} ${item.id}`}
             aria-expanded={!item.collapsed}
             onClick={() => {
               const next = new Set(collapsed);
+
               if (next.has(item.id)) next.delete(item.id);
               else next.add(item.id);
               setCollapsed(next);
@@ -664,6 +828,7 @@ function Comparison({
                 const entry = entries.find(
                   (entry) => entry.file.path === item.id,
                 )!;
+
                 void openSource(entry.file);
               }}
             >
@@ -674,6 +839,7 @@ function Comparison({
         )}
         onScroll={(scrollTop, instance) => {
           if (!restored.current || hidden) return;
+
           const current = instance
             .getRenderedItems()
             .find(
@@ -682,11 +848,14 @@ function Comparison({
                   item.instance.getVirtualizedHeight() >
                 scrollTop + 48,
             );
+
           if (!current) return;
           const top = instance.getLocalTopForInstance(current.instance);
+
           const line = current.instance.getNumericScrollAnchor(
             scrollTop - top + 48,
           );
+
           saved.current.anchor = {
             id: current.id,
             line,
@@ -697,18 +866,25 @@ function Comparison({
         }}
         onSelectedLinesChange={(value) => {
           setSelection(value);
+
           if (!value) {
             select(null);
+
             return;
           }
+
           const entry = entries.find((entry) => entry.file.path === value.id);
+
           if (!entry?.diff) return;
           setSelectedPath(entry.file.path);
           const side = value.range.side === "deletions" ? "base" : "head";
+
           if (value.range.endSide && value.range.endSide !== value.range.side) {
             select(null);
+
             return;
           }
+
           const from = Math.min(value.range.start, value.range.end);
           const to = Math.max(value.range.start, value.range.end);
           const source = new URL(url);
@@ -729,7 +905,7 @@ function Comparison({
               ? {
                   reviewId: session.config.reviewId,
                   version: Number(version),
-                  ...(scope ? { commit: scope.commit } : {}),
+                  ...(scope && { commit: scope.commit }),
                 }
               : undefined,
             selectedDiff: selectedPierreDiff(
@@ -753,38 +929,40 @@ function Comparison({
   );
 }
 
+const savedViewSchema = z.object({
+  collapsed: z
+    .array(z.json())
+    .transform((values) =>
+      values.flatMap((value) => {
+        const parsed = z.string().safeParse(value);
+
+        return parsed.success ? [parsed.data] : [];
+      }),
+    )
+    .catch([]),
+  anchor: z
+    .object({
+      id: z.string(),
+      offset: z.number(),
+      line: z
+        .object({
+          lineNumber: z.number().positive(),
+          top: z.number(),
+          side: z.enum(["additions", "deletions"]).optional(),
+        })
+        .optional()
+        .catch(undefined),
+    })
+    .optional()
+    .catch(undefined),
+});
+
 function readSavedView(key: string): SavedView {
-  const value = readReviewUiState<unknown>("session", key);
-  if (!isJsonObject(value)) return { collapsed: [] };
-  const collapsed = Array.isArray(value.collapsed)
-    ? value.collapsed.filter((path): path is string => typeof path === "string")
-    : [];
-  const anchor = value.anchor;
-  if (
-    !isJsonObject(anchor) ||
-    typeof anchor.id !== "string" ||
-    typeof anchor.offset !== "number" ||
-    !Number.isFinite(anchor.offset)
-  )
-    return { collapsed };
-  const line = anchor.line;
-  return {
-    collapsed,
-    anchor: {
-      id: anchor.id,
-      offset: anchor.offset,
-      line:
-        isJsonObject(line) &&
-        typeof line.lineNumber === "number" &&
-        line.lineNumber > 0 &&
-        typeof line.top === "number" &&
-        (line.side === undefined ||
-          line.side === "additions" ||
-          line.side === "deletions")
-          ? { lineNumber: line.lineNumber, top: line.top, side: line.side }
-          : undefined,
-    },
-  };
+  return (
+    savedViewSchema.safeParse(readReviewUiState("session", key)).data ?? {
+      collapsed: [],
+    }
+  );
 }
 
 const styles = stylex.create({

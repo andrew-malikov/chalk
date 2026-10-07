@@ -30,6 +30,7 @@ V4: Only explicit Post/Post all mutates remote notes. Post all attempts every un
 V5: Resolve only affects remote resolution; saved draft unchanged. Paginated import keeps all actual comments, omits system notes, preserves unmapped/resolved access.
 V6: Refresh refuses dirty checkout or committed HEAD deviation; no forced reset/checkout. Fetch/reacquire + checked advancement before repin; failure preserves old pins/document/drafts. No document lease bypass.
 V7: Inline remapping requires exact unambiguous context correspondence; otherwise preserve text + original target flagged unmapped. Reply IDs stable; general targets untouched. Range targets use current GitLab diff refs; no guessed positions.
+V9: Imported thread replies/resolution/refresh update both panel + code markers without reloading the review.
 V8: Local reviews expose no GitLab panel/mutations. Historical/shared reviews cannot publish GitLab drafts. Autosave ordering flushes before post/discard; failed save stays visible with unsaved editor text.
 
 ## §T
@@ -38,8 +39,8 @@ id|status|goal|cites
 ---|---|---|---
 T1|x|GitLab protocol, URL/transport/source mapping + meaningful tests|V1,V5,V7,I.create,I.ui
 T2|x|Durable GitLab state + posting/refresh service + managed MR creation + API tests|V2,V3,V4,V5,V6,V7,I.create,I.state,I.drafts,I.post
-T3|~|Integrate production discussions panel, selection drafting, code markers/navigation + interaction tests|V3,V5,V8,I.ui
-T4|.|Run affected tests, typecheck, lint, build + whole-suite regression checks; record limits|V1,V2,V3,V4,V5,V6,V7,V8
+T3|x|Integrate production discussions panel, selection drafting, code markers/navigation + interaction tests|V3,V5,V8,V9,I.ui
+T4|~|Run affected tests, typecheck, lint, build + whole-suite regression checks; record limits|V1,V2,V3,V4,V5,V6,V7,V8
 
 ## §B
 
@@ -47,3 +48,5 @@ id|date|cause|fix
 ---|---|---|---
 B1|2026-10-07|Broad text replacement inserted an import inside a function; input test assumed Promise rejection for a synchronous schema guard|Typecheck + correct boundary assertion; existing V1 sufficient
 B2|2026-10-07|Installed Bun 1.2.15 cannot initialize current jsdom VM context|Run canvas Node tests with Node; environment mismatch, no new invariant
+B3|2026-10-07|Diff annotation cache ignored changed discussion metadata when item version stayed unchanged|V9; bump annotation revision on imported thread changes + browser regression
+B4|2026-10-07|Inline target retained client-supplied opposite file path, allowing unrelated-file hunks in coordinate calculation|V1,V7; derive both paths from actual Git name-status data + integration assertion

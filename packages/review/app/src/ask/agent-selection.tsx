@@ -1,3 +1,4 @@
+import { useGitLab } from "@canvas/gitlab/gitlab-context";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useOptionalReviewPanelStore } from "@canvas/review/review-panel";
 import { controlStyles } from "@canvas/styles/controls-styles";
@@ -62,6 +63,7 @@ export function AgentSelectionProvider({
   children: ReactNode;
 }) {
   const session = useReviewSession();
+  const gitlab = useGitLab();
   const panels = useOptionalReviewPanelStore();
   // Ask needs a panel to answer in and a host that runs agents (Desktop).
   const askAgents = useAskAgents(panels ? session : null);
@@ -345,6 +347,54 @@ export function AgentSelectionProvider({
                         ) : null}
                       </>
                     ) : null}
+                    {gitlab?.editable &&
+                      gitlab.state &&
+                      selection.target.kind === "code" &&
+                      !selection.apiSource?.commit &&
+                      gitlab.state.refs.headSha ===
+                        session.review?.pins?.head &&
+                      gitlab.state.refs.baseSha ===
+                        session.review?.pins?.base &&
+                      (!selection.apiSource?.pins ||
+                        (selection.apiSource.pins.head ===
+                          session.review?.pins?.head &&
+                          (selection.target.side === "head" ||
+                            (selection.apiSource.pins.base ??
+                              selection.apiSource.pins.head) ===
+                              session.review?.pins?.base))) &&
+                      (!selection.apiSource ||
+                        selection.apiSource.reviewId ===
+                          session.config.reviewId) && (
+                        <Button
+                          disabled={gitlab.busy}
+                          onClick={() => {
+                            if (
+                              selection.target.kind !== "code" ||
+                              !gitlab.state
+                            )
+                              return;
+                            const target = selection.target;
+                            gitlab.compose({
+                              kind: "inline",
+                              position: {
+                                ...gitlab.state.refs,
+                                oldPath:
+                                  selection.selectedDiff?.oldPath ||
+                                  target.path,
+                                newPath:
+                                  selection.selectedDiff?.newPath ||
+                                  target.path,
+                                side: target.side,
+                                from: target.startLine,
+                                to: target.endLine,
+                              },
+                            });
+                            select(null);
+                          }}
+                        >
+                          GitLab comment
+                        </Button>
+                      )}
                     <Button
                       variant="ghost"
                       aria-keyshortcuts="Meta+Shift+C"

@@ -186,7 +186,7 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
           baseSha: base,
           startSha: base,
           headSha: snapshot.pins!.head,
-          oldPath: "code.ts",
+          oldPath: "unrelated.ts",
           newPath: "code.ts",
           side: "head",
           from: 2,
@@ -198,6 +198,9 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
     expect(
       inline.target.kind === "inline" && inline.target.position.oppositeFrom,
     ).toBeUndefined();
+    expect(
+      inline.target.kind === "inline" && inline.target.position.oldPath,
+    ).toBe("code.ts");
     writeFileSync(
       path.join(origin, "code.ts"),
       "added\none\ntwo changed\nthree\n",

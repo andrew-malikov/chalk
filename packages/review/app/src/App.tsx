@@ -40,6 +40,8 @@ import { useDocumentEmbedScroll } from "./documents/document-embed-scroll";
 import { documentStyles } from "./documents/document-styles";
 import { ReviewDocumentBoundary } from "./documents/review-document-boundary";
 import { reportReviewDocumentRenderError } from "./documents/review-document-error-report";
+import { GitLabProvider, useGitLab } from "./gitlab/gitlab-context";
+import { GitLabDiscussionPanel } from "./gitlab/gitlab-discussions";
 import { useReviewSession } from "./host/review-session";
 import { useTooltip } from "./lib/use-tooltip";
 import {
@@ -240,31 +242,33 @@ function ReviewLayout({
             softwareMapEnabled={softwareMapEnabled}
             openTraceSession={panelStore.getState().openTrace}
           >
-            <AskHistoryProvider>
-              <AgentSelectionProvider revision={documentRevision}>
-                <ReviewLayoutContent
-                  appRef={appRef}
-                  shellRef={shellRef}
-                  scrollRegionRef={scrollRegionRef}
-                  articleRef={articleRef}
-                  document={document}
-                  documentRevision={documentRevision}
-                  softwareModels={[
-                    ...(softwareMap.head ? [softwareMap.head] : []),
-                    ...document.documentSoftwareModels,
-                  ]}
-                  repoSoftwareMap={softwareMap.head ?? null}
-                  baseSoftwareMap={softwareMap.base ?? null}
-                  softwareMapTopologyDiff={diffSoftwareMaps(
-                    softwareMap.base,
-                    softwareMap.head,
-                  )}
-                  softwareMapEnabled={softwareMapEnabled}
-                  range={range}
-                  commits={commits}
-                />
-              </AgentSelectionProvider>
-            </AskHistoryProvider>
+            <GitLabProvider>
+              <AskHistoryProvider>
+                <AgentSelectionProvider revision={documentRevision}>
+                  <ReviewLayoutContent
+                    appRef={appRef}
+                    shellRef={shellRef}
+                    scrollRegionRef={scrollRegionRef}
+                    articleRef={articleRef}
+                    document={document}
+                    documentRevision={documentRevision}
+                    softwareModels={[
+                      ...(softwareMap.head ? [softwareMap.head] : []),
+                      ...document.documentSoftwareModels,
+                    ]}
+                    repoSoftwareMap={softwareMap.head ?? null}
+                    baseSoftwareMap={softwareMap.base ?? null}
+                    softwareMapTopologyDiff={diffSoftwareMaps(
+                      softwareMap.base,
+                      softwareMap.head,
+                    )}
+                    softwareMapEnabled={softwareMapEnabled}
+                    range={range}
+                    commits={commits}
+                  />
+                </AgentSelectionProvider>
+              </AskHistoryProvider>
+            </GitLabProvider>
           </ReviewProvider>
         </ReviewDebugSettingsProvider>
       </ReviewFindProvider>
@@ -302,6 +306,7 @@ function ReviewLayoutContent({
   commits: readonly ReviewCommitSummary[];
 }): ReactElement {
   const session = useReviewSession();
+  const gitlab = useGitLab();
   const review = useReview();
   // The scratchpad is a document and nothing else: no source tree to browse,
   // nothing to share, nothing to dismiss.
@@ -349,7 +354,8 @@ function ReviewLayoutContent({
 
   const debugSettings = useReviewDebugSettings();
 
-  const rightPanelOpen = activePanel !== null || askDocked;
+  const gitlabShown = !!gitlab?.open && activePanel === null && !askDocked;
+  const rightPanelOpen = activePanel !== null || askDocked || gitlabShown;
 
   const sidePeekResize = useRightPanelResize({
     stateKey: "side-peek-width",
@@ -532,6 +538,15 @@ function ReviewLayoutContent({
           scrollRegionRef={scrollRegionRef}
         >
           <header {...stylex.props(shellStyles.topbar)}>
+            {gitlab && (
+              <Button
+                variant="ghost"
+                aria-expanded={gitlabShown}
+                onClick={gitlab.toggle}
+              >
+                GitLab discussions
+              </Button>
+            )}
             <div {...stylex.props(shellStyles.topbarLeft, topbarTabsMarker)}>
               <div
                 {...stylex.props(
@@ -836,6 +851,7 @@ function ReviewLayoutContent({
         />
       )}
       <div {...stylex.props(shellStyles.detailHost, detailHostMarker)}>
+        {gitlabShown && <GitLabDiscussionPanel />}
         <ReviewPanelHost />
       </div>
     </div>

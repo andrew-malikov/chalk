@@ -83,7 +83,7 @@ const TOUR_ACTIVE_TOP_SLACK_PX = 18;
  * the same animation everywhere. The panel occupies a grid column, so the
  * document reflows next to it instead of being overlaid.
  */
-function ReviewPanelFrame({
+export function ReviewPanelFrame({
   label,
   title,
   onClose,
