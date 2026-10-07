@@ -194,12 +194,17 @@ export function GitLabInlineContent({
   if (!discussion && local.length === 0) return null;
 
   const content = (
-    <>
+    <div {...stylex.props(styles.thread)}>
       {discussion && <Discussion discussion={discussion} inline />}
       {local.map((draft) => (
-        <DraftEditor key={draft.id} draft={draft} inline />
+        <DraftEditor
+          key={draft.id}
+          draft={draft}
+          inline
+          attached={!!discussion}
+        />
       ))}
-    </>
+    </div>
   );
 
   return (
@@ -253,6 +258,7 @@ function Discussion({
       {...stylex.props(
         styles.card,
         inline && styles.inlineCard,
+        inline && styles.discussionCard,
         gitlab.selected === discussion.id && styles.selected,
       )}
     >
@@ -352,9 +358,11 @@ function Discussion({
 function DraftEditor({
   draft,
   inline = false,
+  attached = false,
 }: {
   draft: GitLabDraft;
   inline?: boolean;
+  attached?: boolean;
 }) {
   const gitlab = useGitLab()!;
   const editor = gitlab.editors[draft.id];
@@ -397,7 +405,13 @@ function DraftEditor({
   );
 
   return (
-    <div {...stylex.props(styles.card, inline && styles.inlineCard)}>
+    <div
+      {...stylex.props(
+        styles.card,
+        inline && styles.inlineCard,
+        attached && styles.attachedDraft,
+      )}
+    >
       <div {...stylex.props(styles.draftHeader)}>
         <label htmlFor={inputId}>
           {targetLabel(editor?.target ?? draft.target)}
@@ -574,6 +588,7 @@ const styles = stylex.create({
     width: "100%",
     boxSizing: "border-box",
   },
+  thread: { display: "flex", flexDirection: "column", gap: 0 },
   content: {
     display: "flex",
     flexDirection: "column",
@@ -613,6 +628,14 @@ const styles = stylex.create({
     backgroundColor: tokens.surface,
     maxWidth: 820,
     gap: 12,
+  },
+  discussionCard: { position: "relative", zIndex: 1 },
+  attachedDraft: {
+    marginTop: -8,
+    paddingTop: 20,
+    backgroundColor: tokens.surfaceRaised,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
   },
   resolvedDetails: { maxWidth: 820 },
   resolvedSummary: {

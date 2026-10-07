@@ -153,8 +153,16 @@ async function run() {
     {
       label: "File",
       submenu: [
-        { label: "Home", action: "home", accelerator: "CmdOrCtrl+Shift+H" },
-        { label: "Close Tab", action: "closeTab", accelerator: "CmdOrCtrl+W" },
+        {
+          label: "Toggle Sidebar",
+          action: "toggleSidebar",
+          accelerator: "CmdOrCtrl+Shift+B",
+        },
+        {
+          label: "Close Review",
+          action: "closeTab",
+          accelerator: "CmdOrCtrl+W",
+        },
       ],
     },
     {
@@ -178,7 +186,7 @@ async function run() {
 
     if (
       action === "find" ||
-      action === "home" ||
+      action === "toggleSidebar" ||
       action === "settings" ||
       action === "closeTab"
     )

@@ -24,27 +24,8 @@
 .review-shell-titlebar[data-native-titlebar] {
   padding-left: 88px;
 }
-.review-shell-titlebar button,
-.review-shell-tabs {
+.review-shell-titlebar button {
   -webkit-app-region: no-drag;
-}
-.review-shell-brand {
-  flex: none;
-  gap: 8px;
-  padding: 0 8px;
-  font-size: 14px;
-  letter-spacing: -0.04em;
-  line-height: 20px;
-}
-.review-shell-brand-mark {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--accent-outline);
-  border-radius: 8px;
-  background: var(--accent-wash);
-  color: var(--accent);
 }
 .review-shell-context {
   display: flex;
@@ -61,8 +42,7 @@
   color: var(--ink-muted);
 }
 .review-shell-repository,
-.review-shell-current-title,
-.review-shell-tab-label {
+.review-shell-current-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -70,7 +50,6 @@
 .review-shell-current-title {
   font-weight: 500;
 }
-.review-shell-brand-name,
 .review-shell-editor span {
   line-height: 20px;
 }
@@ -88,45 +67,6 @@
   margin-right: 8px;
   border-color: var(--rule);
   font-size: 12px;
-}
-.review-shell-tabs {
-  flex: none;
-  padding: 4px 16px;
-  background: var(--tray);
-  border-bottom: 1px solid var(--rule);
-}
-.review-shell-tabs[hidden] {
-  display: none;
-}
-.review-shell-tabs [role="tablist"] {
-  display: flex;
-  align-items: center;
-  overflow-x: auto;
-  gap: 8px;
-  padding: 2px;
-  scrollbar-width: thin;
-}
-.review-shell-tabs [role="tab"] {
-  flex: none;
-  color: var(--ink-muted);
-  font-size: 12px;
-}
-.review-shell-tab {
-  display: flex;
-  align-items: center;
-  flex: none;
-  border-radius: 6px;
-}
-.review-shell-tabs [role="tab"][aria-selected="true"],
-.review-shell-tab[data-active="true"] {
-  background: var(--well);
-  color: var(--ink);
-}
-.review-shell-tab-label {
-  max-width: 200px;
-}
-.review-shell-tab-close {
-  color: var(--ink-muted);
 }
 .review-shell :focus-visible:not([data-slot]) {
   outline: 2px solid var(--accent);
@@ -156,9 +96,7 @@
     gap: 8px;
     padding-right: 8px;
   }
-  .review-shell-brand-name,
-  .review-shell-editor span,
-  .review-shell-tutorial span {
+  .review-shell-editor span {
     display: none;
   }
   .review-shell-editor {
@@ -180,13 +118,13 @@
     display: none;
   }
 }
-.review-shell [role="tabpanel"] {
+.review-shell-review-panel {
   flex: 1;
   min-height: 0;
   display: flex;
   position: relative;
 }
-.review-shell [role="tabpanel"][hidden] {
+.review-shell-review-panel[hidden] {
   display: none;
 }
 .review-shell-canvas {
@@ -275,4 +213,192 @@
 }
 .review-shell .review-shell-destructive {
   color: var(--error);
+}
+
+.review-shell-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.review-shell-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: 272px;
+  min-height: 0;
+  padding: 16px 12px 12px;
+  background: var(--tray);
+  border-right: 1px solid var(--rule);
+}
+.review-shell-sidebar[hidden] {
+  display: none;
+}
+.review-shell-sidebar-heading {
+  padding: 0 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+.review-shell-sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 16px;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  color: var(--ink-muted);
+}
+.review-shell-sidebar-search svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.review-shell-sidebar-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+}
+.review-shell-review-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.review-shell-sidebar-label {
+  padding: 8px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+summary.review-shell-sidebar-label {
+  margin-top: 16px;
+  cursor: pointer;
+}
+.review-shell-review {
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+.review-shell-review[data-active="true"] {
+  background: var(--well);
+}
+.review-shell-review-link {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  min-height: 48px;
+  justify-content: flex-start;
+  padding: 8px;
+  color: var(--ink-muted);
+}
+.review-shell-review-link[aria-current="page"] {
+  color: var(--ink);
+}
+.review-shell-review-label {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  min-width: 0;
+  font-size: 12px;
+  gap: 4px;
+}
+.review-shell-review-label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.review-shell-review-repository {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.review-shell-review-menu {
+  flex: none;
+  color: var(--ink-muted);
+}
+.review-shell-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.review-shell-sidebar-footer button {
+  justify-content: flex-start;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.review-shell-sidebar-empty {
+  color: var(--ink-muted);
+  padding: 8px;
+  font-size: 12px;
+}
+.review-shell-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.review-shell-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  color: var(--ink-muted);
+}
+.review-shell-empty > svg {
+  width: 32px;
+  height: 32px;
+}
+.review-shell-empty h1 {
+  margin-top: 16px;
+  font-size: 18px;
+  color: var(--ink);
+}
+.review-shell-empty p {
+  max-width: 360px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.review-shell-setup {
+  width: min(860px, calc(100% - 32px));
+  max-width: 860px;
+  height: min(720px, calc(100% - 64px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.review-shell-sidebar-backdrop {
+  display: none;
+}
+@media (max-width: 760px) {
+  .review-shell-sidebar {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: min(272px, calc(100% - 56px));
+    z-index: 3;
+    box-shadow: 8px 0 24px var(--backdrop);
+  }
+  .review-shell-sidebar-backdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border: 0;
+    background: var(--backdrop);
+  }
 }

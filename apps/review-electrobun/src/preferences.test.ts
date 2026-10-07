@@ -40,7 +40,7 @@ test("serial patches preserve unrelated settings and persist the last state", as
   expect(JSON.parse(await readFile(target, "utf8"))).toEqual(store.get());
 });
 
-test("corrupt preferences recover to Home and valid preferences restore", async () => {
+test("corrupt preferences recover with no active review and valid preferences restore", async () => {
   const target = await file();
   await writeFile(target, "corrupt");
   const recovered = await createPreferencesStore(target);
@@ -51,6 +51,28 @@ test("corrupt preferences recover to Home and valid preferences restore", async 
     activeReviewId: "r",
   });
   expect((await createPreferencesStore(target)).get()).toMatchObject({
+    theme: "light",
+    activeReviewId: "r",
+  });
+});
+
+test("sidebar visibility defaults for older preferences and survives restart", async () => {
+  const target = await file();
+  await writeFile(
+    target,
+    JSON.stringify({
+      theme: "dark",
+      diffLayout: "split",
+      reviewIds: ["r"],
+      activeReviewId: "r",
+    }),
+  );
+  const store = await createPreferencesStore(target);
+  expect(store.get().sidebarHidden).toBe(false);
+  await store.update({ sidebarHidden: true });
+  await store.update({ theme: "light" });
+  expect((await createPreferencesStore(target)).get()).toMatchObject({
+    sidebarHidden: true,
     theme: "light",
     activeReviewId: "r",
   });

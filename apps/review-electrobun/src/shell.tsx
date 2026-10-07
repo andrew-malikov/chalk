@@ -16,7 +16,6 @@ import { createReviewAppSessionId } from "@canvas/telemetry/tab-dwell-telemetry"
 import {
   REVIEW_CANVAS_RESUME_EVENT,
   REVIEW_DISCORD_URL,
-  REVIEW_TUTORIAL_STEP_IDS,
   ReviewApiClient,
   ReviewApiError,
   parseReviewCliInstallStatus,
@@ -37,10 +36,13 @@ import type {
 } from "@dev.fast/review-protocol";
 import {
   BookOpenIcon,
-  PanelsTopLeftIcon,
+  FileTextIcon,
+  MoreHorizontalIcon,
+  PanelLeftIcon,
   SearchIcon,
   Settings2Icon,
   SquareArrowOutUpRightIcon,
+  TerminalIcon,
   XIcon,
 } from "lucide-react";
 import {
@@ -163,7 +165,9 @@ function Shell(
   const tabs = useRef(new Map<string, Tab>());
   const catalog = useRef<ReviewApiSummary[]>([]);
   const active = useRef<string | null>(null);
-  const homeHandle = useRef<ReviewCanvasHandle>(undefined);
+  const sidebarToggle = useRef<HTMLButtonElement>(null);
+  const sidebarSearch = useRef<HTMLInputElement>(null);
+  const setupButton = useRef<HTMLButtonElement>(null);
   const prefs = useRef(options.state.preferences);
   const tutorialProgress = useRef(options.state.preferences.tutorialProgress);
   const listeners = useRef(new Set<() => void>());
@@ -174,6 +178,15 @@ function Shell(
   const [install, setInstall] = useState<ReviewCanvasInstallContent>();
   const [error, setError] = useState<string>();
   const [settings, setSettings] = useState(false);
+  const [setup, setSetup] = useState(false);
+
+  const [sidebarHidden, setSidebarHidden] = useState(
+    options.state.preferences.sidebarHidden,
+  );
+
+  const sidebarHiddenRef = useRef(sidebarHidden);
+  sidebarHiddenRef.current = sidebarHidden;
+  const [query, setQuery] = useState("");
   const media = useRef(matchMedia("(prefers-color-scheme: dark)"));
 
   const resources = useRef<{
@@ -398,7 +411,12 @@ function Shell(
     tabs.current.delete(id);
     tutorialIds.current.delete(id);
 
-    if (active.current === id) active.current = null;
+    if (active.current === id) {
+      active.current = [...tabs.current.keys()].at(-1) ?? null;
+
+      if (!active.current) setSidebarHidden(false);
+    }
+
     render();
     void persistTabs();
   }
@@ -583,14 +601,17 @@ function Shell(
     }
 
     if (shellElement.current?.querySelector('[data-slot="dialog-content"]')) {
-      if (command === "closeTab") setSettings(false);
+      if (command === "closeTab") {
+        setSettings(false);
+        setSetup(false);
+      }
 
       return;
     }
 
     switch (command) {
-      case "home":
-        activate(null);
+      case "toggleSidebar":
+        toggleSidebar();
         break;
       case "settings":
         setSettings(true);
@@ -599,10 +620,13 @@ function Shell(
         if (active.current) close(active.current);
         break;
       case "find":
-        (active.current
-          ? tabs.current.get(active.current)?.handle
-          : homeHandle.current
-        )?.showFind();
+        if (active.current)
+          tabs.current.get(active.current)?.handle?.showFind();
+        else {
+          setSidebarHidden(false);
+          requestAnimationFrame(() => sidebarSearch.current?.focus());
+        }
+
         break;
     }
   }
@@ -620,8 +644,8 @@ function Shell(
             ? "settings"
             : key === "w"
               ? "closeTab"
-              : key === "h" && event.shiftKey
-                ? "home"
+              : key === "b" && event.shiftKey
+                ? "toggleSidebar"
                 : undefined;
 
       if (action) {
@@ -683,7 +707,15 @@ function Shell(
         if (abort.signal.aborted) return;
         active.current = tabs.current.has(prefs.current.activeReviewId ?? "")
           ? prefs.current.activeReviewId
-          : null;
+          : ([...tabs.current.keys()].at(-1) ??
+            summaries.find((review) => !review.dismissedAt)?.reviewId ??
+            null);
+
+        const initial = summaries.find(
+          (review) => review.reviewId === active.current,
+        );
+
+        if (initial) add(initial);
         setLoaded(true);
         void persistTabs();
       } else {
@@ -795,46 +827,117 @@ function Shell(
     await open(result.reviewUuid, "Tutorial");
   }
 
-  const home: Extract<ReviewCanvasContent, { kind: "home" }> = {
-    kind: "home",
-    install,
-    onboarding: {
-      installed: !!install?.status.shim.installed,
-      tutorialChecked: REVIEW_TUTORIAL_STEP_IDS.filter((step) =>
-        tutorialProgress.current.checked.includes(step),
-      ).length,
-      tutorialTotal: REVIEW_TUTORIAL_STEP_IDS.length,
-      published: catalog.current.some((review) => !review.origin?.tutorial),
-    },
-    setupActions: {
-      load: loadInstall,
-      installCli: async () => {
-        const current = await loadInstall();
-        await current.apply({ shim: true });
-      },
-    },
-    reviews: catalog.current,
-    openReview: (id) => {
-      void open(id).catch(fail);
-    },
-    deleteReview: (id) => command({ type: "delete", reviewId: id }),
-    dismissReview: (id) =>
-      command({ type: "attention", reviewId: id, action: "dismiss" }),
-    restoreReview: (id) =>
-      command({ type: "attention", reviewId: id, action: "restore" }),
-    openSourceTree: (id) => {
-      const summary = catalog.current.find((item) => item.reviewId === id);
+  function toggleSidebar() {
+    const next = !sidebarHiddenRef.current;
+    sidebarHiddenRef.current = next;
+    setSidebarHidden(next);
+    void save({ sidebarHidden: next }).catch(fail);
+    sidebarToggle.current?.focus();
+  }
 
-      if (summary)
-        void openSourceWorkspace(api, options.rpc.request.openSource, {
-          reviewId: id,
-          version: summary.version,
-        }).catch(fail);
-    },
-    openTutorial: () => {
-      void openTutorial().catch(fail);
-    },
-  };
+  function reviewMenu(anchor: HTMLElement, id: string, title: string) {
+    const review = catalog.current.find((item) => item.reviewId === id);
+    ui.showMenu({
+      anchor,
+      items: [
+        ...(tabs.current.has(id)
+          ? [{ id: "close", label: "Close review" }]
+          : []),
+        ...(review && review.kind !== "scratchpad"
+          ? [
+              {
+                id: "attention",
+                label: review.dismissedAt ? "Restore review" : "Dismiss review",
+              },
+              { id: "delete", label: "Delete review…" },
+            ]
+          : []),
+      ],
+      onHide() {},
+      onSelect: async (action) => {
+        if (action === "close") close(id);
+        else if (action === "attention")
+          await command({
+            type: "attention",
+            reviewId: id,
+            action: review?.dismissedAt ? "restore" : "dismiss",
+          });
+        else if (action === "delete" && (await ui.confirmDelete?.(title)))
+          await command({ type: "delete", reviewId: id });
+      },
+    });
+  }
+
+  const reviews = catalog.current.map((review) => ({
+    id: review.reviewId,
+    title:
+      tabs.current.get(review.reviewId)?.title ||
+      review.title ||
+      "Untitled review",
+    repository: review.repositoryName,
+    dismissed: !!review.dismissedAt,
+  }));
+
+  for (const tab of tabs.current.values()) {
+    if (!reviews.some((review) => review.id === tab.id))
+      reviews.push({
+        id: tab.id,
+        title: tab.title,
+        repository: "Tutorial",
+        dismissed: false,
+      });
+  }
+
+  const needle = query.trim().toLowerCase();
+
+  const filtered = reviews.filter((review) =>
+    `${review.title} ${review.repository}`.toLowerCase().includes(needle),
+  );
+
+  const reviewRows = (dismissed: boolean) =>
+    filtered
+      .filter((review) => review.dismissed === dismissed)
+      .map((review) => (
+        <div
+          key={review.id}
+          className="review-shell-review"
+          data-active={active.current === review.id}
+        >
+          <Button
+            variant="ghost"
+            className="review-shell-review-link"
+            aria-current={active.current === review.id ? "page" : undefined}
+            onClick={() => {
+              void open(review.id).catch(fail);
+
+              if (matchMedia("(max-width: 760px)").matches) {
+                setSidebarHidden(true);
+                sidebarToggle.current?.focus();
+              }
+            }}
+          >
+            <FileTextIcon aria-hidden="true" />
+            <span className="review-shell-review-label">
+              <span title={review.title}>{review.title}</span>
+              <span className="review-shell-review-repository">
+                {review.repository}
+              </span>
+            </span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="review-shell-review-menu"
+            aria-label={`Actions for ${review.title}`}
+            disabled={!connected}
+            onClick={(event) =>
+              reviewMenu(event.currentTarget, review.id, review.title)
+            }
+          >
+            <MoreHorizontalIcon aria-hidden="true" />
+          </Button>
+        </div>
+      ));
 
   const resolvedTheme = theme();
   const themeClass = reviewCanvasThemeClass(resolvedTheme);
@@ -855,17 +958,16 @@ function Shell(
         data-native-titlebar={options.nativeTitlebar || undefined}
       >
         <Button
+          ref={sidebarToggle}
           variant="ghost"
-          className="review-shell-brand"
-          aria-label="Go Home"
-          aria-current={active.current === null ? "page" : undefined}
-          title="Home (⌘⇧H)"
-          onClick={() => activate(null)}
+          size="icon"
+          aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
+          aria-expanded={!sidebarHidden}
+          aria-controls="review-shell-sidebar"
+          title="Toggle sidebar (⌘⇧B)"
+          onClick={toggleSidebar}
         >
-          <span className="review-shell-brand-mark">
-            <PanelsTopLeftIcon aria-hidden="true" />
-          </span>
-          <span className="review-shell-brand-name">Blackboard</span>
+          <PanelLeftIcon aria-hidden="true" />
         </Button>
         <div className="review-shell-context" aria-label="Current review">
           {currentTab && (
@@ -886,9 +988,9 @@ function Shell(
           )}
           <span
             className="review-shell-current-title"
-            title={currentTab?.title || "Home"}
+            title={currentTab?.title || "Blackboard"}
           >
-            {currentTab?.title || "Home"}
+            {currentTab?.title || "Blackboard"}
           </span>
         </div>
         <div className="review-shell-actions">
@@ -907,20 +1009,6 @@ function Shell(
               <span>Open in VS Code</span>
             </Button>
           )}
-          {!currentTab && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="review-shell-tutorial"
-              aria-label="Open tutorial"
-              title="Take the tour"
-              disabled={!connected}
-              onClick={home.openTutorial}
-            >
-              <BookOpenIcon aria-hidden="true" />
-              <span>Tutorial</span>
-            </Button>
-          )}
           <Button
             variant="ghost"
             size="icon"
@@ -931,93 +1019,19 @@ function Shell(
           >
             <SearchIcon aria-hidden="true" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Settings"
-            title="Settings (⌘,)"
-            onClick={() => setSettings(true)}
-          >
-            <Settings2Icon aria-hidden="true" />
-          </Button>
+          {sidebarHidden && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Settings"
+              title="Settings (⌘,)"
+              onClick={() => setSettings(true)}
+            >
+              <Settings2Icon aria-hidden="true" />
+            </Button>
+          )}
         </div>
       </header>
-      <nav
-        className="review-shell-tabs"
-        aria-label="Review navigation"
-        hidden={tabs.current.size === 0}
-      >
-        <div
-          role="tablist"
-          tabIndex={-1}
-          aria-label="Reviews"
-          onKeyDown={(event) => {
-            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
-              return;
-            event.preventDefault();
-
-            const buttons = [
-              ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                "[role=tab]",
-              ),
-            ];
-
-            const index = buttons.findIndex(
-              (button) => button === document.activeElement,
-            );
-
-            const next =
-              event.key === "Home"
-                ? 0
-                : event.key === "End"
-                  ? buttons.length - 1
-                  : (index +
-                      (event.key === "ArrowRight" ? 1 : -1) +
-                      buttons.length) %
-                    buttons.length;
-
-            buttons[next]?.click();
-            buttons[next]?.focus();
-          }}
-        >
-          {[...tabs.current.values()].map((tab, index) => (
-            <div
-              className="review-shell-tab"
-              data-active={active.current === tab.id}
-              key={tab.id}
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                role="tab"
-                aria-label={tab.title}
-                tabIndex={
-                  active.current === tab.id ||
-                  (active.current === null && index === 0)
-                    ? 0
-                    : -1
-                }
-                aria-selected={active.current === tab.id}
-                onClick={() => activate(tab.id)}
-              >
-                <span className="review-shell-tab-label" title={tab.title}>
-                  {tab.title}
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="review-shell-tab-close"
-                aria-label={`Close ${tab.title}`}
-                title={`Close ${tab.title}`}
-                onClick={() => close(tab.id)}
-              >
-                <XIcon aria-hidden="true" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      </nav>
       {!connected && (
         <div className="review-shell-notice" role="status">
           Reconnecting to review server…
@@ -1036,33 +1050,118 @@ function Shell(
           </Button>
         </div>
       )}
-      {!loaded ? (
-        <main className="review-shell-loading">
-          {error
-            ? "Unable to load reviews. Close and reopen Review to retry."
-            : "Loading reviews…"}
-        </main>
-      ) : (
-        <>
-          <section
-            inert={!connected}
-            role="tabpanel"
-            aria-label="Home"
-            hidden={active.current !== null}
-          >
-            <Canvas
-              ui={ui}
-              content={home}
-              active={active.current === null}
-              onHandle={(handle) => {
-                homeHandle.current = handle;
-              }}
+      <div className="review-shell-body">
+        <aside
+          id="review-shell-sidebar"
+          className="review-shell-sidebar"
+          aria-label="Sidebar"
+          hidden={sidebarHidden}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              toggleSidebar();
+            }
+          }}
+        >
+          <div className="review-shell-sidebar-heading">Blackboard</div>
+          <div className="review-shell-sidebar-search">
+            <SearchIcon aria-hidden="true" />
+            <input
+              ref={sidebarSearch}
+              type="search"
+              aria-label="Search reviews"
+              placeholder="Search reviews…"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
             />
-          </section>
+          </div>
+          <nav
+            className="review-shell-review-list"
+            aria-label="Reviews"
+            inert={!connected}
+          >
+            <div className="review-shell-sidebar-label">Reviews</div>
+            {reviewRows(false)}
+            {filtered.length === 0 && (
+              <p className="review-shell-sidebar-empty">
+                {!loaded
+                  ? "Loading reviews…"
+                  : needle
+                    ? "No matching reviews."
+                    : "No reviews yet."}
+              </p>
+            )}
+            {filtered.some((review) => review.dismissed) && (
+              <details open={needle ? true : undefined}>
+                <summary className="review-shell-sidebar-label">
+                  Dismissed
+                </summary>
+                {reviewRows(true)}
+              </details>
+            )}
+          </nav>
+          <div className="review-shell-sidebar-footer">
+            <Button
+              variant="ghost"
+              disabled={!connected}
+              onClick={() => void openTutorial().catch(fail)}
+            >
+              <BookOpenIcon aria-hidden="true" /> Tutorial
+            </Button>
+            <Button
+              ref={setupButton}
+              variant="ghost"
+              disabled={!connected}
+              onClick={() => setSetup(true)}
+            >
+              <TerminalIcon aria-hidden="true" /> Command setup
+            </Button>
+            <Button variant="ghost" onClick={() => setSettings(true)}>
+              <Settings2Icon aria-hidden="true" /> Settings
+            </Button>
+          </div>
+        </aside>
+        {!sidebarHidden && (
+          <button
+            className="review-shell-sidebar-backdrop"
+            aria-label="Close sidebar"
+            onClick={toggleSidebar}
+          />
+        )}
+        <main className="review-shell-content" inert={!connected}>
+          {!loaded ? (
+            <div className="review-shell-loading" role="status">
+              {error
+                ? "Unable to load reviews. Close and reopen Blackboard to retry."
+                : "Loading reviews…"}
+            </div>
+          ) : !currentTab ? (
+            <div className="review-shell-empty">
+              <FileTextIcon aria-hidden="true" />
+              <h1>
+                {reviews.length
+                  ? "Select a review"
+                  : "Your reviews appear here"}
+              </h1>
+              <p>
+                {reviews.length
+                  ? "Choose a review from the sidebar to continue."
+                  : "Publish a review from your agent, or open the tutorial to get started."}
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSidebarHidden(false);
+                  requestAnimationFrame(() => sidebarSearch.current?.focus());
+                }}
+              >
+                Browse reviews
+              </Button>
+            </div>
+          ) : null}
           {[...tabs.current.values()].map((tab) => (
             <section
-              inert={!connected}
-              role="tabpanel"
+              className="review-shell-review-panel"
               aria-label={tab.title}
               key={tab.id}
               hidden={active.current !== tab.id}
@@ -1077,7 +1176,46 @@ function Shell(
               />
             </section>
           ))}
-        </>
+        </main>
+      </div>
+      {setup && (
+        <Dialog open onOpenChange={setSetup}>
+          <DialogContent
+            container={shellElement.current}
+            className="review-shell-setup"
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              setupButton.current?.focus();
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>Command setup</DialogTitle>
+              <DialogDescription>
+                Connect Blackboard to your coding agent.
+              </DialogDescription>
+            </DialogHeader>
+            <Canvas
+              ui={ui}
+              active
+              onHandle={() => {}}
+              content={{
+                kind: "welcome",
+                install,
+                setupActions: {
+                  load: loadInstall,
+                  installCli: async () => {
+                    const current = await loadInstall();
+                    await current.apply({ shim: true });
+                  },
+                },
+                openTutorial: () => {
+                  setSetup(false);
+                  void openTutorial().catch(fail);
+                },
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       )}
       {settings && (
         <SettingsDialog
