@@ -51,6 +51,11 @@ export class GitLabReviews {
   private directory(
     identity: Pick<GitLabIdentity, "host" | "projectId" | "iid">,
   ) {
+    const existing = this.store.gitlab.find(identity);
+    const pins = existing ? this.store.read(existing).pins : undefined;
+
+    if (pins) return this.store.repositoryPath(pins.repositoryId);
+
     return path.join(
       this.root,
       createHash("sha256")
@@ -65,8 +70,9 @@ export class GitLabReviews {
     identity: GitLabIdentity,
     action: () => Promise<T>,
   ): Promise<T> {
-    await mkdir(this.root, { recursive: true });
-    const lock = this.directory(identity) + ".lock";
+    const directory = this.directory(identity);
+    await mkdir(path.dirname(directory), { recursive: true });
+    const lock = directory + ".lock";
 
     try {
       await mkdir(lock);
@@ -476,6 +482,7 @@ export class GitLabReviews {
     input: GitLabPosition,
   ): Promise<GitLabPosition> {
     const selectedFile = input.side === "head" ? input.newPath : input.oldPath;
+
     const names = (
       await this.git(cwd, [
         "diff",
@@ -488,12 +495,14 @@ export class GitLabReviews {
         input.headSha,
       ])
     ).split("\0");
+
     let oldPath = selectedFile;
     let newPath = selectedFile;
 
     for (let index = 0; index < names.length - 1; ) {
       const status = names[index++]!;
       const old = names[index++]!;
+
       const next =
         status.startsWith("R") || status.startsWith("C")
           ? names[index++]!
@@ -649,9 +658,26 @@ export class GitLabReviews {
         }
 
         if (!draft) continue;
+        let writeAttempted = false;
 
         try {
           if (draft.target.kind === "inline") {
+            const position = draft.target.position;
+            const refs = this.store.gitlab.read(id).refs;
+            const pins = this.store.read(id).pins;
+
+            if (
+              position.baseSha !== refs.baseSha ||
+              position.startSha !== refs.startSha ||
+              position.headSha !== refs.headSha ||
+              position.baseSha !== pins?.base ||
+              position.headSha !== pins.head
+            )
+              throw new ReviewInputError(
+                "Draft source changed. Refresh and select the current code before posting.",
+                409,
+              );
+
             const current = await client.metadata(
               state.identity.projectId,
               state.identity.iid,
@@ -666,6 +692,8 @@ export class GitLabReviews {
                 409,
               );
           }
+
+          writeAttempted = true;
 
           const noteId = await client.post(
             state.identity.projectId,
@@ -684,8 +712,9 @@ export class GitLabReviews {
         } catch (error) {
           this.store.gitlab.finishPost(id, draft.id, {
             status:
-              error instanceof ReviewInputError &&
-              !(error instanceof GitLabRequestError && error.uncertain)
+              !writeAttempted ||
+              (error instanceof ReviewInputError &&
+                !(error instanceof GitLabRequestError && error.uncertain))
                 ? "failed"
                 : "uncertain",
             error:

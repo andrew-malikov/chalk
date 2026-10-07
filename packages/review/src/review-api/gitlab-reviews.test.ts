@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -227,6 +227,21 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
       3,
     );
     expect(moved.text).toBe("range draft");
+
+    const stale = local.store.gitlab.save(first.reviewId, {
+      id: randomUUID(),
+      text: "Old position preserved",
+      target: inline.target,
+    });
+
+    await local.data.gitlab.post(first.reviewId, stale.id);
+    expect(posts).toBe(3);
+    expect(
+      local.store.gitlab
+        .read(first.reviewId)
+        .drafts.find((d) => d.id === stale.id)?.status,
+    ).toBe("failed");
+
     execFileSync(
       "git",
       [
@@ -248,6 +263,23 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
       stdio: "pipe",
     });
     rmSync(checkout, { recursive: true });
+
+    const reopened = openLocalReviewStore(path.join(root, "review.sqlite"), {
+      gitlab: { run, cloneRoot: path.join(root, "new-clone-root") },
+      manageWorkspaces: false,
+    });
+
+    try {
+      await reopened.data.gitlab.refresh(first.reviewId);
+      expect(existsSync(checkout)).toBe(true);
+      expect(reopened.store.repositoryPath(snapshot.pins!.repositoryId)).toBe(
+        checkout,
+      );
+    } finally {
+      await reopened.data.close();
+      await reopened.store.close();
+    }
+
     await local.data.gitlab.refresh(first.reviewId);
     expect(local.store.gitlab.read(first.reviewId).sourceError).toBeUndefined();
     expect(

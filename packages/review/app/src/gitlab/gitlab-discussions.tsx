@@ -225,6 +225,7 @@ function DraftEditor({ draft }: { draft: GitLabDraft }) {
   }, [gitlab.selected, draft.id]);
   const locked = !["saved", "failed"].includes(draft.status);
   const target = editor?.target ?? draft.target;
+
   const thread =
     target.kind === "reply"
       ? gitlab.state?.discussions.find((d) => d.id === target.discussionId)

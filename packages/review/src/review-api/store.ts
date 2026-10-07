@@ -1159,6 +1159,22 @@ export class ReviewStore {
           throw new ReviewInputError("Supply a title.");
       }
 
+      if (op.type === "set_target" && this.read(op.reviewId).origin?.gitlab)
+        throw new ReviewInputError(
+          "GitLab MR source is managed. Use GitLab Refresh to update it.",
+          409,
+        );
+
+      if (
+        op.type === "repin" &&
+        this.read(op.reviewId).origin?.gitlab &&
+        op.pins.repositoryId !== this.read(op.reviewId).pins?.repositoryId
+      )
+        throw new ReviewInputError(
+          "GitLab MR source must stay in its managed clone.",
+          409,
+        );
+
       const requestedTarget =
         op.type === "create" || op.type === "set_target"
           ? op.target

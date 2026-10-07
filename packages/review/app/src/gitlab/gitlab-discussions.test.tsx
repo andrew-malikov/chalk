@@ -104,10 +104,12 @@ it("keeps unsaved text after an autosave failure and flushes the latest edit bef
     expect(calls.at(-1)).toBe("/gitlab/post");
     expect(postedText).toBe("Latest reply");
     expect(container.textContent).toContain("Sent");
+
     const historical = {
       ...session,
       review: { ...session.review!, historicalRevision: "0" },
     };
+
     const callsBefore = calls.length;
     await act(async () =>
       root.render(
