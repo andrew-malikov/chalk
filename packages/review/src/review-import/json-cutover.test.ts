@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { openLocalReviewStore } from "@review/review-api/local-data";
-import { reviewVcs } from "@review/review-vcs";
+import { reviewVcs } from "@review/vcs/review-vcs";
 import { afterEach, expect, it } from "vitest";
 
 import { scratchGitRepo, syntheticLegacyReview } from "./import-test-utils";

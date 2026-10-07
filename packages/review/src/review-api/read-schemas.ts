@@ -1,4 +1,4 @@
-import type { SourcePins } from "@review/source.js";
+import type { SourcePins } from "@review/documents/source.js";
 import { z } from "zod";
 
 import { ReviewInputError } from "./input-error.js";

@@ -1,5 +1,5 @@
-import { fontSize, fontWeight, radius } from "@canvas/scale.stylex";
-import { tokens } from "@canvas/tokens.stylex";
+import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
+import { tokens } from "@canvas/styles/tokens.stylex";
 import { EmptyState } from "@canvas/ui/empty-state";
 import * as stylex from "@stylexjs/stylex";
 import type { CSSProperties, ReactElement } from "react";

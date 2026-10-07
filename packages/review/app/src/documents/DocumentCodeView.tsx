@@ -1,0 +1,378 @@
+import { createPierreInlineEditors } from "@canvas/diff/pierre-inline-editors";
+import { useReviewSession } from "@canvas/host/review-session";
+import { useReviewFindRegistration } from "@canvas/review/review-find";
+import { emitReviewInteraction } from "@canvas/review/review-interaction-event";
+import {
+  type ReviewLensView,
+  useReviewLenses,
+} from "@canvas/review/review-lenses";
+import { fontSize, radius } from "@canvas/styles/scale.stylex";
+import { tokens } from "@canvas/styles/tokens.stylex";
+import type {
+  ReviewDiffProgress,
+  ReviewDiffSide,
+  ReviewFindQuery,
+  ReviewInlineEditorHandle,
+  ReviewInlineEditorHeightMode,
+  ReviewInlineEditorRange,
+  ReviewSourcePins,
+} from "@dev.fast/review-protocol";
+import {
+  coverageProgress,
+  coverageSources,
+} from "@review/documents/viewed-coverage";
+import * as stylex from "@stylexjs/stylex";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+
+const LINE_HEIGHT = 20;
+
+const MAX_VISIBLE_LINES = 18;
+
+const INLINE_HEADER_HEIGHT = 40;
+
+export function DocumentCodeView({
+  path,
+  title,
+  description,
+  side,
+  pins,
+  ranges,
+  heightMode,
+  countRanges,
+  active,
+  onFocus,
+  onOpen,
+  collapsed = false,
+  lenses: lensesOverride,
+}: {
+  path: string;
+  title: string;
+  description?: string;
+  side: ReviewDiffSide;
+  /** Read at these pins instead of the review's. Such a view is outside
+   * the review's comparison, so it carries no viewed-coverage marks. */
+  pins?: ReviewSourcePins;
+  ranges: readonly ReviewInlineEditorRange[];
+  heightMode: ReviewInlineEditorHeightMode;
+  countRanges?: readonly ReviewInlineEditorRange[];
+  active: boolean;
+  onFocus?: () => void;
+  onOpen?: () => void;
+  collapsed?: boolean;
+  lenses?: ReviewLensView;
+}) {
+  const session = useReviewSession();
+  const contextLenses = useReviewLenses();
+  const lenses = lensesOverride ?? contextLenses;
+
+  const sources = (countRanges ?? ranges).map((range) => ({
+    file: path,
+    side: range.side ?? side,
+    fromLine: range.startLine,
+    toLine: range.endLine,
+  }));
+
+  const progress: ReviewDiffProgress = {
+    files: (pins ? [] : (lenses?.progress?.files ?? []))
+      .filter((file) => file.path === path || file.previousPath === path)
+      .map((file) => ({
+        path: file.path,
+        ...coverageProgress([file], sources),
+        viewedRanges: coverageSources(file),
+        changedRanges: coverageSources(file, file.changed),
+      })),
+  };
+
+  const progressRef = useRef(progress);
+  progressRef.current = progress;
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+
+  const handleNavigation = useCallback(
+    () =>
+      emitReviewInteraction(container, {
+        kind: "inline-navigation",
+        path,
+      }),
+    [container, path],
+  );
+
+  const handleHover = useCallback(
+    () => emitReviewInteraction(container, { kind: "inline-hover", path }),
+    [container, path],
+  );
+
+  const [shouldMount, setShouldMount] = useState(active);
+
+  const [height, setHeight] = useState(() =>
+    estimatedHeight(ranges, heightMode),
+  );
+
+  const rangesKey = ranges
+    .map((range) => `${range.side ?? side}:${range.startLine}-${range.endLine}`)
+    .join(",");
+
+  const countRangesKey = JSON.stringify(countRanges);
+  const pinsKey = JSON.stringify(pins);
+
+  const [error, setError] = useState<string | null>(null);
+  const handleRef = useRef<ReviewInlineEditorHandle | null>(null);
+  const creationFailedRef = useRef(false);
+  const latestFindQueryRef = useRef<ReviewFindQuery | null>(null);
+
+  const handleWaitersRef = useRef<
+    Array<(handle: ReviewInlineEditorHandle | null) => void>
+  >([]);
+
+  const onFocusRef = useRef(onFocus);
+  onFocusRef.current = onFocus;
+  const handleFocus = useCallback(() => onFocusRef.current?.(), []);
+  const onOpenRef = useRef(onOpen);
+  onOpenRef.current = onOpen;
+  const handleOpen = useCallback(() => onOpenRef.current?.(), []);
+  const collapsedRef = useRef(collapsed);
+  collapsedRef.current = collapsed;
+
+  const inlineEditorFactory = useMemo(
+    () => createPierreInlineEditors(session),
+    [session.apiUrl, session.bridge, session.review?.updatedAtMs],
+  );
+
+  const inlineEditorSessionId = session.config.reviewId;
+  const reviewFind = useReviewFindRegistration();
+
+  const ensureEditor = useCallback(async () => {
+    if (handleRef.current) return handleRef.current;
+
+    if (creationFailedRef.current) return null;
+    setShouldMount(true);
+
+    return new Promise<ReviewInlineEditorHandle | null>((resolve) => {
+      handleWaitersRef.current.push(resolve);
+    });
+  }, []);
+
+  const setFindQuery = useCallback(
+    async (query: ReviewFindQuery) => {
+      latestFindQueryRef.current = query;
+      const handle = handleRef.current;
+
+      if (handle) return handle.setFindQuery(query);
+
+      return inlineEditorFactory.find({ path, side, pins, ranges }, query);
+    },
+    [inlineEditorFactory, path, rangesKey, side, pinsKey],
+  );
+
+  const revealFindMatch = useCallback(
+    async (index: number) => {
+      const query = latestFindQueryRef.current;
+
+      if (!query) return;
+      const handle = await ensureEditor();
+
+      if (!handle) return;
+      await handle.setFindQuery(query);
+      handle.revealFindMatch(index);
+    },
+    [ensureEditor],
+  );
+
+  const clearFind = useCallback(() => {
+    latestFindQueryRef.current = null;
+    handleRef.current?.clearFind();
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!container || !reviewFind) return;
+
+    return reviewFind.register({
+      container,
+      setFindQuery,
+      revealFindMatch,
+      clearFind,
+      getHandle: () => handleRef.current,
+      expand: () => {
+        container
+          .closest(".review-section--collapsed")
+          ?.dispatchEvent(new CustomEvent("review-section-expand"));
+      },
+    });
+  }, [clearFind, container, revealFindMatch, reviewFind, setFindQuery]);
+
+  useLayoutEffect(() => {
+    if (active) setShouldMount(true);
+  }, [active]);
+
+  useLayoutEffect(() => {
+    if (!container || shouldMount) return;
+
+    // jsdom and legacy hosts lack IntersectionObserver; mounting eagerly
+    // beats never mounting.
+    if (typeof IntersectionObserver === "undefined") {
+      setShouldMount(true);
+
+      return;
+    }
+
+    // Mount a viewport-margin early so scrolling never reveals an empty host.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setShouldMount(true);
+      },
+      { rootMargin: "600px 0px" },
+    );
+
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [container, shouldMount]);
+
+  useLayoutEffect(() => {
+    if (!container || !shouldMount) return;
+    setError(null);
+    creationFailedRef.current = false;
+    let handle: ReviewInlineEditorHandle;
+
+    try {
+      handle = inlineEditorFactory.create({
+        progress: progressRef.current,
+        container,
+        path,
+        title,
+        description,
+        side,
+        pins,
+        ranges,
+        heightMode,
+        active,
+
+        countRanges,
+        onDidFocus: handleFocus,
+        onDidOpen: handleOpen,
+        onDidNavigate: handleNavigation,
+        onDidShowHover: handleHover,
+      });
+    } catch (caught) {
+      creationFailedRef.current = true;
+      setError(caught instanceof Error ? caught.message : String(caught));
+
+      for (const resolve of handleWaitersRef.current.splice(0)) resolve(null);
+
+      return;
+    }
+
+    handle.setCollapsed(collapsedRef.current);
+    handleRef.current = handle;
+
+    for (const resolve of handleWaitersRef.current.splice(0)) resolve(handle);
+    setHeight(handle.height);
+    const findQuery = latestFindQueryRef.current;
+
+    if (findQuery) void handle.setFindQuery(findQuery);
+    const heightSubscription = handle.onDidChangeHeight(setHeight);
+    const errorSubscription = handle.onDidError(setError);
+
+    return () => {
+      if (handleRef.current === handle) handleRef.current = null;
+      handle.clearFind();
+      errorSubscription.dispose();
+      heightSubscription.dispose();
+      handle.dispose();
+    };
+  }, [
+    container,
+    description,
+    countRangesKey,
+    handleFocus,
+    handleHover,
+    handleNavigation,
+    handleOpen,
+    heightMode,
+    inlineEditorFactory,
+    inlineEditorSessionId,
+    path,
+    pinsKey,
+    rangesKey,
+    shouldMount,
+    side,
+    title,
+  ]);
+
+  useLayoutEffect(() => {
+    handleRef.current?.setActive(active);
+  }, [active]);
+
+  useLayoutEffect(() => {
+    handleRef.current?.setProgress?.(progressRef.current);
+  }, [lenses?.progress, countRangesKey, rangesKey, path, side]);
+
+  useLayoutEffect(() => {
+    handleRef.current?.setCollapsed(collapsed);
+  }, [collapsed]);
+
+  useLayoutEffect(
+    () => () => {
+      for (const resolve of handleWaitersRef.current.splice(0)) resolve(null);
+    },
+    [],
+  );
+
+  return (
+    <>
+      <div
+        ref={setContainer}
+        {...stylex.props(styles.editor)}
+        data-review-inline-editor={path}
+        data-review-inline-editor-active={active ? "true" : "false"}
+        style={{ height }}
+      />
+      {error ? (
+        <div {...stylex.props(styles.error)} title={error}>
+          Inline preview unavailable
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function estimatedHeight(
+  ranges: readonly ReviewInlineEditorRange[],
+  heightMode: ReviewInlineEditorHeightMode,
+): number {
+  const lineCount = ranges.reduce((total, range) => {
+    const contextBefore = Math.min(3, Math.max(0, range.startLine - 1));
+
+    return total + range.endLine - range.startLine + 1 + contextBefore + 3;
+  }, 0);
+
+  const lines =
+    heightMode === "content"
+      ? lineCount
+      : Math.min(MAX_VISIBLE_LINES, lineCount);
+
+  return Math.max(1, lines) * LINE_HEIGHT + INLINE_HEADER_HEIGHT;
+}
+
+const styles = stylex.create({
+  editor: {
+    position: "relative",
+    width: "100%",
+    minWidth: 0,
+    overflow: "hidden",
+    contentVisibility: "auto",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: tokens.rule,
+    borderRadius: radius.control,
+    backgroundColor: tokens.bg,
+  },
+  error: {
+    display: "flex",
+    alignItems: "center",
+    padding: "0 10px",
+    borderColor: tokens.ruleSoft,
+    backgroundColor: tokens.surface,
+    color: tokens.inkFaint,
+    font: `${fontSize.small}/1 ${tokens.fontMono}`,
+  },
+});

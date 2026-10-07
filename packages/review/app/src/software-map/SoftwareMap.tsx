@@ -1,42 +1,42 @@
-import { CodePeekGroup } from "@canvas/CodePeek";
+import { createDiagramNavigationStore } from "@canvas/diagrams/diagram-navigation-store";
+import { diagramStyles } from "@canvas/diagrams/diagram-styles";
+import { hasTextSelectionWithin } from "@canvas/diagrams/diagram-text-selection";
+import { flowLayer } from "@canvas/diagrams/flow-layers.stylex";
+import { CodePeekGroup } from "@canvas/diff/CodePeek";
+import { useReviewSession } from "@canvas/host/review-session";
+import { useCanvasScrollLock } from "@canvas/lib/use-canvas-scroll-lock";
+import { useReviewContainer } from "@canvas/review/review-root-context";
+import { useRightPanelResize } from "@canvas/review/side-panel-resizer";
 import {
   type ReviewNodeTint,
   type ReviewTheme,
   useReviewDebugSettings,
-} from "@canvas/debug-settings";
-import { createDiagramNavigationStore } from "@canvas/diagram-navigation-store";
-import { diagramStyles } from "@canvas/diagram-styles";
-import { hasTextSelectionWithin } from "@canvas/diagram-text-selection";
-import { flowLayer } from "@canvas/flow-layers.stylex";
-import { useReviewSession } from "@canvas/host/review-session";
-import { CloseIcon, RefreshIcon } from "@canvas/icons";
+} from "@canvas/settings/debug-settings";
 import {
   appMarker,
   codeInspectorMarker,
   documentMarker,
   mapFrameMarker,
-} from "@canvas/markers.stylex";
-import { useReviewContainer } from "@canvas/review-root-context";
+} from "@canvas/styles/markers.stylex";
 import {
   fontSize,
   fontWeight,
   motion,
   radius,
   tracking,
-} from "@canvas/scale.stylex";
-import { shellStyles } from "@canvas/shell-styles";
-import { useRightPanelResize } from "@canvas/side-panel-resizer";
-import { withClass } from "@canvas/stylex-props";
-import { themeStyles } from "@canvas/theme-styles";
-import { tokens } from "@canvas/tokens.stylex";
-import { captureUiEvent } from "@canvas/ui-telemetry";
+} from "@canvas/styles/scale.stylex";
+import { shellStyles } from "@canvas/styles/shell-styles";
+import { withClass } from "@canvas/styles/stylex-props";
+import { themeStyles } from "@canvas/styles/theme-styles";
+import { tokens } from "@canvas/styles/tokens.stylex";
+import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import { IconButton } from "@canvas/ui/button";
 import { Chip } from "@canvas/ui/chip";
 import { EmptyState } from "@canvas/ui/empty-state";
+import { CloseIcon, RefreshIcon } from "@canvas/ui/icons";
 import { surfaceStyles } from "@canvas/ui/surface";
 import { textStyles } from "@canvas/ui/text";
-import { useCanvasScrollLock } from "@canvas/use-canvas-scroll-lock";
-import { codePeekSource } from "@review/source";
+import { codePeekSource } from "@review/documents/source";
 import * as stylex from "@stylexjs/stylex";
 import {
   Background,

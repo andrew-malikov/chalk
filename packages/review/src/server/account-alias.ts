@@ -1,5 +1,5 @@
 import { StoreClient, readStoreAuth } from "@dev.fast/trace-core";
-import type { ReviewTelemetry } from "@review/review-telemetry";
+import type { ReviewTelemetry } from "@review/telemetry/review-telemetry";
 
 /**
  * After a login, link this install to the signed-in account by a hash of its

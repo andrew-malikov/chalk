@@ -1,4 +1,4 @@
-import { testReviewSession } from "@canvas/review-session-test-utils";
+import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import type { ReviewInlineEditorHandle } from "@dev.fast/review-protocol";
 import { afterEach, expect, it, vi } from "vitest";
 

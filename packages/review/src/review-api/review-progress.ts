@@ -3,9 +3,15 @@ import {
   comparisonKey,
   resolveDiffSelection,
   selectionKey,
-} from "@review/lens-selection.js";
-import { type FileLineRange, fileLineRangeSchema } from "@review/source.js";
-import { type CoverageFile, emptyCoverage } from "@review/viewed-coverage.js";
+} from "@review/documents/lens-selection.js";
+import {
+  type FileLineRange,
+  fileLineRangeSchema,
+} from "@review/documents/source.js";
+import {
+  type CoverageFile,
+  emptyCoverage,
+} from "@review/documents/viewed-coverage.js";
 import { z } from "zod";
 
 import type { ComparisonCoverage } from "./comparison-coverage.js";

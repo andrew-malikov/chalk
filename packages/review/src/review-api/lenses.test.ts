@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { selectSource } from "@review/lens-selection.js";
+import { selectSource } from "@review/documents/lens-selection.js";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { type AuthoringTool, callAuthoringTool } from "./agent-client.js";

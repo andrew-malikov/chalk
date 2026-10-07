@@ -1,5 +1,5 @@
-import { fontSize, fontWeight, tracking } from "@canvas/scale.stylex";
-import { tokens } from "@canvas/tokens.stylex";
+import { fontSize, fontWeight, tracking } from "@canvas/styles/scale.stylex";
+import { tokens } from "@canvas/styles/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 
 // Type roles shared by elements of every kind. Sites keep their own layout

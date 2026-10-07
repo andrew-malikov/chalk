@@ -1,0 +1,1316 @@
+import {
+  AskDeleteThreadButton,
+  AskOpenThreadProvider,
+} from "@canvas/ask/ask-delete";
+import { AskHistoryButton, AskHistoryList } from "@canvas/ask/ask-history-list";
+import { AskPanelContent } from "@canvas/ask/ask-panel";
+import {
+  AskPill,
+  type AskPresence,
+  AskSlot,
+  AskWindow,
+} from "@canvas/ask/ask-window";
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import { CodePeekCard } from "@canvas/diff/CodePeek";
+import { AuthoredCodeSurface } from "@canvas/documents/authored-code-surface";
+import { documentStyles } from "@canvas/documents/document-styles";
+import { documentType } from "@canvas/documents/document-type.stylex";
+import { findWhitespaceNormalizedSpan } from "@canvas/documents/highlighted-text";
+import { newTabLinkProps } from "@canvas/documents/link-props";
+import type { ReviewSectionSummary } from "@canvas/documents/review-section-summary";
+import { drawStyles } from "@canvas/drawing/draw-styles";
+import {
+  useOptionalReviewSession,
+  useReviewSession,
+} from "@canvas/host/review-session";
+import {
+  activeTargetForScroll,
+  scrollTailHeight,
+} from "@canvas/lib/scroll-active-tracking";
+import { useTooltip } from "@canvas/lib/use-tooltip";
+import { controlStyles } from "@canvas/styles/controls-styles";
+import { chevronMarker, documentMarker } from "@canvas/styles/markers.stylex";
+import { fontSize, fontWeight } from "@canvas/styles/scale.stylex";
+import { shellStyles } from "@canvas/styles/shell-styles";
+import { withClass } from "@canvas/styles/stylex-props";
+import { tokens } from "@canvas/styles/tokens.stylex";
+import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
+import { TraceDocument } from "@canvas/traces/trace-document";
+import { traceStyles } from "@canvas/traces/trace-styles";
+import { useAgentTrace } from "@canvas/traces/use-agent-trace";
+import { useTutorialSection } from "@canvas/tutorial/tutorial-section-context";
+import { IconButton } from "@canvas/ui/button";
+import {
+  CloseIcon,
+  DisclosureChevron,
+  MapPinIcon,
+  PopOutIcon,
+} from "@canvas/ui/icons";
+import { textStyles } from "@canvas/ui/text";
+import { extractTraceEventText } from "@dev.fast/trace-protocol";
+import type { ReviewComponentProps } from "@review/documents/review-document-data";
+import * as stylex from "@stylexjs/stylex";
+import type {
+  CSSProperties,
+  ComponentPropsWithoutRef,
+  ReactElement,
+  ReactNode,
+  Ref,
+} from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+
+import { useReviewActions } from "./review-context";
+import { useOptionalReviewPanelStore, useReviewPanel } from "./review-panel";
+import type {
+  GuidedTour,
+  GuidedTourStop,
+  PeekAnchor,
+  ReviewPeekContent,
+} from "./review-panel-model";
+import { askShown } from "./review-panel-store";
+import { useReviewRoots } from "./review-root-context";
+import { useReviewUiState } from "./review-ui-state";
+import { useBottomSheetResize } from "./side-panel-resizer";
+import { panelStyles, tourStyles } from "./side-panel-styles";
+
+const TOUR_ACTIVE_TOP_SLACK_PX = 18;
+
+/**
+ * Shared shell for everything that docks into the right panel slot: side
+ * peeks, commit diffs, and guided tours. Provides the uniform header (kicker,
+ * title, close button), closes on Escape, and slides in with
+ * the same animation everywhere. The panel occupies a grid column, so the
+ * document reflows next to it instead of being overlaid.
+ */
+function ReviewPanelFrame({
+  label,
+  title,
+  onClose,
+  closeLabel,
+  titleAccessory,
+  headerActions,
+  floatingFooter,
+  bodyRef,
+  onBodyScroll,
+  tour = false,
+  docked = false,
+  tray = false,
+  children,
+}: {
+  label: string;
+  title?: string;
+  onClose: () => void;
+  closeLabel: string;
+  titleAccessory?: ReactNode;
+  /** Buttons beside the close button. */
+  headerActions?: ReactNode;
+  floatingFooter?: ReactNode;
+  bodyRef?: Ref<HTMLDivElement>;
+  onBodyScroll?: () => void;
+  tour?: boolean;
+  docked?: boolean;
+  /** On the tray, as a conversation is, with a quieter kicker. */
+  tray?: boolean;
+  children: ReactNode;
+}) {
+  const appRef = useReviewRoots()?.appRef;
+  const panelMotion = useReviewPanel((state) => state.motion);
+
+  const sheet = useBottomSheetResize({
+    stateKey: "bottomSheetFraction",
+    label: "Resize panel height",
+    containerRef: appRef,
+  });
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || !appRef?.current) return;
+      event.preventDefault();
+      onClose();
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [appRef, onClose]);
+
+  // SAFETY: `--side-panel-bottom-fraction` is a CSS custom property, which
+  // React forwards to style.setProperty; the CSSProperties typings only omit
+  // custom names.
+  const panelStyle = {
+    "--side-panel-bottom-fraction": sheet.fraction,
+  } as CSSProperties;
+
+  return (
+    <aside
+      {...withClass(
+        "side-panel",
+        panelStyles.panel,
+        panelMotion === "restored" && panelStyles.restored,
+        tour && panelStyles.tour,
+        docked && panelStyles.docked,
+        tray && panelStyles.tray,
+      )}
+      role="complementary"
+      aria-label={title ?? label}
+      style={panelStyle}
+    >
+      <div
+        {...stylex.props(shellStyles.sheetResizer)}
+        {...sheet.separatorProps}
+      />
+      <header {...stylex.props(panelStyles.header, tray && panelStyles.tray)}>
+        <div {...stylex.props(panelStyles.title)}>
+          <span
+            {...stylex.props(
+              textStyles.eyebrow,
+              panelStyles.kicker,
+              tray && panelStyles.trayKicker,
+            )}
+          >
+            {label}
+          </span>
+          {title && <h2 {...stylex.props(panelStyles.heading)}>{title}</h2>}
+          {titleAccessory}
+        </div>
+        <div {...stylex.props(panelStyles.actions)}>
+          {headerActions}
+          <IconButton
+            size="large"
+            xstyle={panelStyles.close}
+            onClick={onClose}
+            aria-label={closeLabel}
+          >
+            <CloseIcon xstyle={controlStyles.inertIcon} />
+          </IconButton>
+        </div>
+      </header>
+      <div
+        ref={bodyRef}
+        {...stylex.props(panelStyles.body, tray && panelStyles.trayBody)}
+        onScroll={onBodyScroll}
+      >
+        {children}
+      </div>
+      {floatingFooter}
+    </aside>
+  );
+}
+
+/**
+ * Collapsible document section. The section owns its heading: it renders
+ * `title` as the H2, with the id the projection pass assigned (or the heading
+ * slug on the JSON path), and treats every child as body. Collapse state persists
+ * per document+section in localStorage; sections marked `[collapsed]` in the
+ * MDX start collapsed for first-time readers.
+ */
+export function ReviewSection({
+  stateKey,
+  title,
+  defaultCollapsed = false,
+  id,
+  children,
+  summary,
+}: ReviewComponentProps<"ReviewSection"> & {
+  stateKey?: string;
+  id?: string;
+  summary?: ReviewSectionSummary;
+  children?: ReactNode;
+}) {
+  const [collapsed, setCollapsed] = useReviewUiState(
+    stateKey ?? title,
+    defaultCollapsed,
+    {
+      scope: "session",
+      namespace: "section",
+    },
+  );
+
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const tutorialSection = useTutorialSection(title);
+
+  // The active tutorial chapter opens itself. Other chapters keep the
+  // reader's own collapse state.
+  useEffect(() => {
+    if (tutorialSection.state === "active") setCollapsed(false);
+  }, [setCollapsed, tutorialSection.state]);
+
+  const toggleCollapsed = () => setCollapsed((current) => !current);
+
+  // The table of contents (and anchor navigation) expands a collapsed
+  // section before scrolling to a heading inside it.
+  useEffect(() => {
+    const bodyElement = bodyRef.current;
+    const sectionElement = bodyElement?.parentElement;
+
+    if (!sectionElement) return;
+    const expand = () => setCollapsed(false);
+    sectionElement.addEventListener("review-section-expand", expand);
+
+    return () => {
+      sectionElement.removeEventListener("review-section-expand", expand);
+    };
+  }, []);
+
+  // The classes are markers: find, the code view and the section ring look
+  // for a (collapsed) section, and the tutorial targets a section's body.
+  return (
+    <section
+      {...withClass(
+        collapsed
+          ? "review-section review-section--collapsed"
+          : "review-section",
+        sectionStyles.section,
+        drawStyles.blockChild,
+        drawStyles.sectionRing,
+      )}
+      data-review-section={title}
+      data-tutorial-chapter-state={tutorialSection.state ?? undefined}
+    >
+      <div
+        {...stylex.props(
+          sectionStyles.header,
+          tutorialSection.state === "complete" && sectionStyles.complete,
+        )}
+      >
+        <IconButton
+          size="small"
+          xstyle={[chevronMarker, sectionStyles.toggle]}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? `Expand ${title}` : `Collapse ${title}`}
+          onClick={toggleCollapsed}
+        >
+          <DisclosureChevron expanded={!collapsed} />
+        </IconButton>
+        <div {...withClass("review-section-heading", sectionStyles.heading)}>
+          <h2
+            id={id}
+            data-review-copy-prose
+            {...stylex.props(
+              sectionStyles.title,
+              tutorialSection.state === "active" && sectionStyles.titleActive,
+              collapsed && sectionStyles.titleCollapsed,
+              drawStyles.retitledHeading,
+            )}
+          >
+            {title}
+          </h2>
+        </div>
+        {collapsed && summary && (
+          <span {...stylex.props(sectionStyles.meta)}>
+            {reviewSectionSummaryLabel(summary)}
+          </span>
+        )}
+      </div>
+      <div
+        ref={bodyRef}
+        className="review-section-body"
+        hidden={collapsed || undefined}
+      >
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function reviewSectionSummaryLabel(summary: ReviewSectionSummary): string {
+  const parts: string[] = [];
+
+  if (summary.diagrams > 0) {
+    parts.push(
+      summary.diagrams === 1 ? "1 diagram" : `${summary.diagrams} diagrams`,
+    );
+  }
+
+  if (summary.codeRefs > 0) {
+    parts.push(
+      summary.codeRefs === 1 ? "1 code ref" : `${summary.codeRefs} code refs`,
+    );
+  }
+
+  if (parts.length === 0 && summary.paragraphs > 0) {
+    parts.push(
+      summary.paragraphs === 1
+        ? "1 paragraph"
+        : `${summary.paragraphs} paragraphs`,
+    );
+  }
+
+  return parts.join(" · ");
+}
+
+interface ProsePeekAnchorProps {
+  href: string;
+  isOpen: boolean;
+  onOpen: (text: string) => void;
+  onAlreadyOpen?: () => void;
+  xstyle?: stylex.StyleXStyles;
+  anchorId?: string;
+  inertFallback?: ReactNode;
+  children: ReactNode;
+}
+
+/**
+ * Shared prose side-peek anchor primitive for AnchorLink and TraceQuote.
+ * Renders an inline anchor with open-state styling, telemetry, and visibility retention.
+ */
+export function ProsePeekAnchor({
+  href,
+  isOpen,
+  onOpen,
+  onAlreadyOpen,
+  xstyle,
+  anchorId,
+  inertFallback,
+  children,
+}: ProsePeekAnchorProps) {
+  const panelStore = useOptionalReviewPanelStore();
+  const session = useOptionalReviewSession();
+
+  if (!panelStore && inertFallback !== undefined) {
+    return <>{inertFallback}</>;
+  }
+
+  return (
+    <a
+      href={href}
+      {...stylex.props(documentStyles.link, xstyle)}
+      data-review-anchor-id={anchorId}
+      data-review-anchor-open={isOpen ? "true" : undefined}
+      onClick={(event) => {
+        event.preventDefault();
+
+        if (isOpen && onAlreadyOpen) {
+          onAlreadyOpen();
+
+          return;
+        }
+
+        if (session) {
+          captureUiEvent(session, "peek_opened", { via: "prose_link" });
+        }
+
+        onOpen(event.currentTarget.textContent?.trim() ?? "");
+        keepAnchorLinkVisible(event.currentTarget);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
+export function AnchorLink({
+  anchor,
+  children,
+}: ReviewComponentProps<"AnchorLink"> & { children?: ReactNode }) {
+  const openPeek = useReviewPanel((state) => state.openPeek);
+
+  const peekOpen = useReviewPanel(
+    (state) =>
+      state.active?.kind === "peek" && state.active.anchor?.id === anchor.id,
+  );
+
+  return (
+    <ProsePeekAnchor
+      href={`#review-anchor-${anchor.id}`}
+      anchorId={anchor.id}
+      isOpen={peekOpen}
+      onOpen={(text) => {
+        openPeek({
+          kind: "peek",
+          anchor: { ...anchor, title: text || anchor.title },
+          content: { kind: "source", source: anchor.peek },
+        });
+      }}
+    >
+      {children}
+    </ProsePeekAnchor>
+  );
+}
+
+export function a({
+  href,
+  children,
+  target,
+  rel,
+  ...props
+}: ComponentPropsWithoutRef<"a">) {
+  const linkProps = newTabLinkProps(href, { ...props, target, rel });
+
+  return (
+    <a href={href} target={target} rel={rel} {...props} {...linkProps}>
+      {children}
+    </a>
+  );
+}
+
+/**
+ * Opening the side panel narrows the document column and reflows the prose,
+ * which can push the clicked anchor link out of the viewport. Once the panel
+ * has slid in, scroll the link back into view if the reflow moved it away.
+ */
+function keepAnchorLinkVisible(link: HTMLElement) {
+  window.setTimeout(() => {
+    const rect = link.getBoundingClientRect();
+
+    const visible =
+      rect.top >= 0 &&
+      rect.bottom <= window.innerHeight &&
+      rect.left >= 0 &&
+      rect.right <= window.innerWidth;
+
+    if (!visible) {
+      link.scrollIntoView({ block: "center", behavior: "instant" });
+    }
+  }, 240);
+}
+
+/** The only top-level renderer for Review's side peek. */
+export function ReviewPanelHost() {
+  const activePanel = useReviewPanel((state) => state.active);
+  const close = useReviewPanel((state) => state.close);
+
+  return (
+    <>
+      {activePanel ? (
+        <ReviewPeekPanel
+          anchor={activePanel.anchor}
+          content={activePanel.content}
+          onClose={close}
+        />
+      ) : null}
+      <AskHost />
+    </>
+  );
+}
+
+const historyPresence: AskPresence = {
+  agentName: "Ask",
+  status: "Conversations",
+  tone: "quiet",
+};
+
+/**
+ * The open conversation, in the side panel, its window or the pill. It
+ * renders once, into an element of its own that moves between them, so
+ * popping out, docking or minimizing never restarts it.
+ */
+function AskHost() {
+  const ask = useReviewPanel((state) => state.ask);
+  const shown = useReviewPanel(askShown);
+  const closeAsk = useReviewPanel((state) => state.closeAsk);
+  const popOutAsk = useReviewPanel((state) => state.popOutAsk);
+  const popOutTooltip = useTooltip("Pop out");
+  const [node] = useState(() => document.createElement("div"));
+
+  const [header, setHeader] = useState<HTMLDivElement | null>(null);
+
+  const [presence, setPresence] = useState<AskPresence>({
+    agentName: "Ask",
+    status: "New question",
+    tone: "quiet",
+  });
+
+  if (!ask || !shown) return null;
+
+  const actions = (
+    <>
+      <AskDeleteThreadButton />
+      <AskHistoryButton view={ask.view} />
+    </>
+  );
+
+  return (
+    <AskOpenThreadProvider key={ask.key}>
+      {createPortal(
+        ask.view.type === "history" ? (
+          <AskHistoryList passage={ask.view.passage} />
+        ) : (
+          <AskPanelContent
+            selection={ask.view.selection}
+            agent={ask.view.agent}
+            savedThreadId={
+              ask.view.type === "saved" ? ask.view.threadId : undefined
+            }
+            onPresence={setPresence}
+            header={header}
+          />
+        ),
+        node,
+      )}
+      {shown === "panel" ? (
+        <ReviewPanelFrame
+          tray
+          label="Ask"
+          titleAccessory={
+            <div ref={setHeader} {...stylex.props(panelStyles.title)} />
+          }
+          onClose={closeAsk}
+          closeLabel="Close Ask"
+          headerActions={
+            <>
+              {actions}
+              <IconButton
+                ref={popOutTooltip}
+                size="large"
+                aria-label="Pop out Ask"
+                onClick={popOutAsk}
+              >
+                <PopOutIcon
+                  xstyle={[controlStyles.inertIcon, controlStyles.chromeIcon]}
+                />
+              </IconButton>
+            </>
+          }
+        >
+          <AskSlot node={node} />
+        </ReviewPanelFrame>
+      ) : shown === "window" ? (
+        <AskWindow
+          actions={actions}
+          titleAccessory={
+            <div ref={setHeader} {...stylex.props(panelStyles.title)} />
+          }
+        >
+          <AskSlot node={node} />
+        </AskWindow>
+      ) : (
+        <AskPill
+          presence={ask.view.type === "history" ? historyPresence : presence}
+        />
+      )}
+    </AskOpenThreadProvider>
+  );
+}
+
+function TraceQuotePeekPanel({
+  sessionId,
+  trace,
+  event,
+  quote,
+  onClose,
+}: {
+  sessionId: string;
+  trace?: string;
+  event?: number;
+  quote: string;
+  onClose: () => void;
+}) {
+  const { openTraceSession } = useReviewActions();
+  const data = useAgentTrace(sessionId, trace);
+
+  const traceEvents = data.status === "loaded" ? data.trace.events : undefined;
+
+  const targetEventIndex = useMemo(() => {
+    if (!traceEvents) return -1;
+
+    if (event !== undefined && event >= 0 && event < traceEvents.length) {
+      const e = traceEvents[event];
+      const text = extractTraceEventText(e);
+
+      if (findWhitespaceNormalizedSpan(text, quote)) {
+        return event;
+      }
+    }
+
+    for (let i = 0; i < traceEvents.length; i++) {
+      const text = extractTraceEventText(traceEvents[i]);
+
+      if (findWhitespaceNormalizedSpan(text, quote)) {
+        return i;
+      }
+    }
+
+    return -1;
+  }, [traceEvents, event, quote]);
+
+  const picks = useMemo(() => {
+    if (!traceEvents || targetEventIndex === -1) return undefined;
+    let turnStart = 0;
+
+    for (let index = targetEventIndex; index >= 0; index -= 1) {
+      if (traceEvents[index].kind === "user") {
+        turnStart = index;
+        break;
+      }
+    }
+
+    let nextUserIndex = -1;
+
+    for (
+      let index = targetEventIndex + 1;
+      index < traceEvents.length;
+      index += 1
+    ) {
+      if (traceEvents[index].kind === "user") {
+        nextUserIndex = index;
+        break;
+      }
+    }
+
+    const turnEnd =
+      nextUserIndex === -1 ? traceEvents.length - 1 : nextUserIndex - 1;
+
+    const events: [number, number] = [turnStart, turnEnd];
+
+    return [{ events }];
+  }, [traceEvents, targetEventIndex]);
+
+  if (data.status === "loading" || data.status === "idle") {
+    return (
+      <ReviewPanelFrame
+        label="Agent trace"
+        title={
+          trace ? `${sessionId.slice(0, 8)} · ${trace}` : sessionId.slice(0, 8)
+        }
+        onClose={onClose}
+        closeLabel="Close side peek"
+      >
+        <div {...stylex.props(panelStyles.peekBody)}>
+          <p {...stylex.props(traceStyles.note)}>Loading trace…</p>
+        </div>
+      </ReviewPanelFrame>
+    );
+  }
+
+  if (data.status === "error") {
+    return (
+      <ReviewPanelFrame
+        label="Agent trace"
+        title={sessionId.slice(0, 8)}
+        onClose={onClose}
+        closeLabel="Close side peek"
+      >
+        <div {...stylex.props(panelStyles.peekBody)}>
+          <p {...stylex.props(traceStyles.note, traceStyles.noteError)}>
+            {data.error}
+          </p>
+        </div>
+      </ReviewPanelFrame>
+    );
+  }
+
+  const loadedTrace = data.trace;
+  const events = loadedTrace.events;
+
+  const headerAccessory = (
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
+      type="button"
+      {...stylex.props(traceStyles.peekOpenFull)}
+      onClick={() => {
+        openTraceSession?.({
+          sessionId,
+          trace,
+          eventIndex: targetEventIndex >= 0 ? targetEventIndex : undefined,
+        });
+        onClose();
+      }}
+    >
+      Full Trace ↗
+    </ButtonPrimitive>
+  );
+
+  return (
+    <ReviewPanelFrame
+      label="Agent trace"
+      title={
+        loadedTrace.title ??
+        (trace ? `${sessionId.slice(0, 8)} · ${trace}` : sessionId.slice(0, 8))
+      }
+      titleAccessory={headerAccessory}
+      onClose={onClose}
+      closeLabel="Close side peek"
+    >
+      <div {...stylex.props(panelStyles.peekBody)}>
+        {targetEventIndex === -1 ? (
+          <p {...stylex.props(traceStyles.note)}>
+            Quote not found in this session transcript.
+          </p>
+        ) : (
+          <TraceDocument
+            key={`${sessionId}-${trace ?? ""}-${targetEventIndex}-${quote}`}
+            events={events}
+            targetEventIndex={targetEventIndex}
+            highlightQuote={quote}
+            picks={picks}
+            scoped
+          />
+        )}
+      </div>
+    </ReviewPanelFrame>
+  );
+}
+
+function ReviewPeekPanel({
+  anchor,
+  content,
+  onClose,
+}: {
+  anchor?: PeekAnchor;
+  content: ReviewPeekContent;
+  onClose: () => void;
+}) {
+  if (content.kind === "trace-quote") {
+    return (
+      <TraceQuotePeekPanel
+        sessionId={content.sessionId}
+        trace={content.trace}
+        event={content.event}
+        quote={content.quote}
+        onClose={onClose}
+      />
+    );
+  }
+
+  if (!anchor) return null;
+
+  return (
+    <CodeReviewPeekPanel anchor={anchor} content={content} onClose={onClose} />
+  );
+}
+
+function CodeReviewPeekPanel({
+  anchor,
+  content,
+  onClose,
+}: {
+  anchor: PeekAnchor;
+  content: Extract<
+    ReviewPeekContent,
+    { kind: "source" | "inline-code" | "explanation" }
+  >;
+  onClose: () => void;
+}) {
+  const { softwareMapEnabled, openSoftwareMapElement } = useReviewActions();
+
+  return (
+    <ReviewPanelFrame
+      label="Peek"
+      title={anchor.title}
+      onClose={onClose}
+      closeLabel="Close side peek"
+    >
+      <div {...stylex.props(panelStyles.peekBody)}>
+        {softwareMapEnabled && anchor.softwareMapPath ? (
+          <div {...stylex.props(panelStyles.peekActions)}>
+            <IconButton
+              size="large"
+              onClick={() => {
+                openSoftwareMapElement(anchor.softwareMapPath!);
+                onClose();
+              }}
+              aria-label={`Show ${anchor.title} in software map`}
+            >
+              <MapPinIcon xstyle={controlStyles.inertIcon} />
+            </IconButton>
+          </div>
+        ) : null}
+
+        <div {...stylex.props(panelStyles.peekContent)}>
+          <ReviewPeekContentView
+            anchor={anchor}
+            content={content}
+            reportOutcome
+          />
+        </div>
+      </div>
+    </ReviewPanelFrame>
+  );
+}
+
+export function GuidedTourPanel({
+  tour,
+  activeAnchor,
+  revealRequest,
+  onActiveAnchorChange,
+  onClose,
+  docked = false,
+}: {
+  tour: GuidedTour;
+  activeAnchor: string;
+  revealRequest: number;
+  onActiveAnchorChange: (anchor: string, options: { reveal: boolean }) => void;
+  onClose: () => void;
+  /** Keeps the panel in its column at every width (a diagram tour's pane). */
+  docked?: boolean;
+}) {
+  const session = useReviewSession();
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const sectionRefs = useRef(new Map<string, HTMLElement>());
+  const handledRevealRequestRef = useRef(0);
+
+  const activeIndex = tour.stops.findIndex(
+    (stop) => stop.anchor.id === activeAnchor,
+  );
+
+  const activeIndexRef = useRef(activeIndex);
+  activeIndexRef.current = activeIndex;
+  const previousActiveIndexRef = useRef(activeIndex);
+  const completedTourIdRef = useRef<string | null>(null);
+  const tailRef = useRef<HTMLDivElement | null>(null);
+  const [tailHeight, setTailHeight] = useState(0);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    completedTourIdRef.current = null;
+    previousActiveIndexRef.current = activeIndexRef.current;
+    setHasScrolled(false);
+  }, [tour.id]);
+
+  useEffect(() => {
+    const previousIndex = previousActiveIndexRef.current;
+    previousActiveIndexRef.current = activeIndex;
+
+    if (activeIndex <= previousIndex || activeIndex < 0) return;
+    captureUiEvent(session, "tour_step_advanced", {
+      step: activeIndex + 1,
+      steps: tour.stops.length,
+    });
+  }, [activeIndex, session, tour.stops.length]);
+
+  const captureAbandoned = useEffectEvent((step: number, steps: number) => {
+    captureUiEvent(session, "tour_abandoned", { step, steps });
+  });
+
+  useEffect(() => {
+    let armed = false;
+
+    const timer = window.setTimeout(() => {
+      armed = true;
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      const index = activeIndexRef.current;
+
+      if (
+        !armed ||
+        tour.stops.length === 0 ||
+        index >= tour.stops.length - 1 ||
+        completedTourIdRef.current === tour.id
+      ) {
+        return;
+      }
+
+      captureAbandoned(Math.max(0, index) + 1, tour.stops.length);
+    };
+  }, [session.appSessionId, tour.id, tour.stops.length]);
+
+  // Scroll-syncing activates a stop when its top crosses the active line, so
+  // the last stop must be able to reach it: the tail spacer grants exactly
+  // the missing scroll room. Sized here because a CSS percentage cannot see
+  // the scroller's height from inside auto-height feed content.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+
+    if (!scroller) return;
+    const lastStop = tour.stops[tour.stops.length - 1];
+
+    if (!lastStop) return;
+
+    const measure = () => {
+      const section = sectionRefs.current.get(lastStop.anchor.id);
+      const tail = tailRef.current;
+
+      if (!section || !tail) return;
+
+      const lastTopInContent =
+        section.getBoundingClientRect().top -
+        scroller.getBoundingClientRect().top +
+        scroller.scrollTop;
+
+      setTailHeight(
+        scrollTailHeight({
+          lastTargetTop: lastTopInContent,
+          slack: TOUR_ACTIVE_TOP_SLACK_PX,
+          viewportHeight: scroller.clientHeight,
+          contentHeightSansTail: scroller.scrollHeight - tail.offsetHeight,
+        }),
+      );
+    };
+
+    measure();
+
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(scroller);
+    const content = scroller.firstElementChild;
+
+    if (content) observer.observe(content);
+
+    return () => observer.disconnect();
+  }, [tour]);
+
+  useEffect(() => {
+    if (
+      tour.stops.length === 0 ||
+      activeIndex < tour.stops.length - 1 ||
+      completedTourIdRef.current === tour.id
+    ) {
+      return;
+    }
+
+    completedTourIdRef.current = tour.id;
+    captureUiEvent(session, "tour_completed", { steps: tour.stops.length });
+  }, [activeIndex, session, tour]);
+
+  useEffect(() => {
+    if (handledRevealRequestRef.current === revealRequest) return;
+    handledRevealRequestRef.current = revealRequest;
+    const scroller = scrollerRef.current;
+    const section = sectionRefs.current.get(activeAnchor);
+
+    if (!section || !scroller) return;
+
+    const frame = requestAnimationFrame(() => {
+      const scrollerTop = scroller.getBoundingClientRect().top;
+      const sectionTop = section.getBoundingClientRect().top;
+      // The tail's active line.
+      scroller.scrollTo({
+        top:
+          scroller.scrollTop +
+          sectionTop -
+          scrollerTop -
+          TOUR_ACTIVE_TOP_SLACK_PX,
+      });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [activeAnchor, revealRequest]);
+
+  const displayIndex = Math.max(0, activeIndex);
+  const lastIndex = tour.stops.length - 1;
+
+  const stepTo = (index: number) => {
+    const stop = tour.stops[index];
+
+    if (!stop) return;
+    onActiveAnchorChange(stop.anchor.id, { reveal: true });
+  };
+
+  const showIntroPill =
+    !hasScrolled && displayIndex === 0 && tour.stops.length > 1;
+
+  // The stop being read follows the shared scroll-tracking rule (see
+  // scroll-active-tracking.ts), the same one the contents rail uses.
+  const syncActiveStopToScroll = () => {
+    setHasScrolled(true);
+    const scroller = scrollerRef.current;
+
+    if (!scroller) return;
+    const scrollerRect = scroller.getBoundingClientRect();
+
+    const nextAnchor = activeTargetForScroll(
+      tour.stops.flatMap((stop) => {
+        const section = sectionRefs.current.get(stop.anchor.id);
+
+        return section
+          ? [{ id: stop.anchor.id, top: section.getBoundingClientRect().top }]
+          : [];
+      }),
+      scrollerRect.top,
+      scrollerRect.top + scrollerRect.height / 2,
+    );
+
+    if (nextAnchor === null || nextAnchor === activeAnchor) return;
+    onActiveAnchorChange(nextAnchor, { reveal: false });
+  };
+
+  return (
+    <ReviewPanelFrame
+      tour
+      docked={docked}
+      label="Tour"
+      title={tour.title ?? "Guided tour"}
+      onClose={onClose}
+      closeLabel="Close guided tour"
+      floatingFooter={
+        tour.stops.length > 0 ? (
+          <div {...stylex.props(tourStyles.floatingFooter)}>
+            {showIntroPill ? (
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
+                type="button"
+                {...stylex.props(tourStyles.pill, tourStyles.pillIntro)}
+                onClick={() => {
+                  setHasScrolled(true);
+                  stepTo(1);
+                }}
+              >
+                <span>{tour.stops.length - 1} more steps</span>
+                <span
+                  {...stylex.props(tourStyles.pillChevron)}
+                  aria-hidden="true"
+                >
+                  ↓
+                </span>
+              </ButtonPrimitive>
+            ) : (
+              <div
+                {...stylex.props(tourStyles.pill)}
+                role="group"
+                aria-label="Tour steps"
+              >
+                <IconButton
+                  xstyle={tourStyles.pillButton}
+                  aria-label="Previous step"
+                  disabled={displayIndex === 0}
+                  onClick={() => stepTo(displayIndex - 1)}
+                >
+                  ↑
+                </IconButton>
+                <span className="tour-pill-count" aria-live="polite">
+                  {displayIndex + 1}/{tour.stops.length}
+                </span>
+                <IconButton
+                  xstyle={tourStyles.pillButton}
+                  aria-label="Next step"
+                  disabled={displayIndex === lastIndex}
+                  onClick={() => stepTo(displayIndex + 1)}
+                >
+                  ↓
+                </IconButton>
+              </div>
+            )}
+          </div>
+        ) : null
+      }
+      bodyRef={scrollerRef}
+      onBodyScroll={syncActiveStopToScroll}
+    >
+      <div {...stylex.props(tourStyles.feedShell)}>
+        <div {...stylex.props(panelStyles.peekBody, tourStyles.feed)}>
+          {tour.stops.map((stop, index) => {
+            const isActive = stop.anchor.id === activeAnchor;
+
+            return (
+              <section
+                key={stop.anchor.id}
+                ref={(node) => {
+                  if (node) sectionRefs.current.set(stop.anchor.id, node);
+                  else sectionRefs.current.delete(stop.anchor.id);
+                }}
+                {...stylex.props(tourStyles.stop)}
+                data-review-anchor-id={stop.anchor.id}
+              >
+                <div {...stylex.props(tourStyles.rail)}>
+                  <div
+                    {...stylex.props(
+                      tourStyles.railNumber,
+                      isActive && tourStyles.railNumberActive,
+                    )}
+                  >
+                    {index + 1}
+                  </div>
+                </div>
+                <GuidedTourStopMain
+                  stop={stop}
+                  index={index}
+                  total={tour.stops.length}
+                  active={isActive}
+                  onNativeFocus={() => {
+                    if (stop.anchor.id === activeAnchor) return;
+                    onActiveAnchorChange(stop.anchor.id, { reveal: false });
+                  }}
+                  onClose={onClose}
+                />
+              </section>
+            );
+          })}
+          {tour.stops.length > 0 && (
+            <>
+              <div {...stylex.props(tourStyles.endCap)}>
+                <span>End of tour</span>
+                <ButtonPrimitive
+                  variant="ghost"
+                  size="xs"
+                  type="button"
+                  {...stylex.props(tourStyles.endCapButton)}
+                  onClick={() => stepTo(0)}
+                >
+                  ↑ Back to step 1
+                </ButtonPrimitive>
+              </div>
+              <div
+                ref={tailRef}
+                {...stylex.props(tourStyles.scrollTail)}
+                style={{ height: tailHeight }}
+                aria-hidden="true"
+              />
+            </>
+          )}
+        </div>
+      </div>
+    </ReviewPanelFrame>
+  );
+}
+
+function GuidedTourStopMain({
+  stop,
+  index,
+  total,
+  active,
+  onNativeFocus,
+  onClose,
+}: {
+  stop: GuidedTourStop;
+  index: number;
+  total: number;
+  active: boolean;
+  onNativeFocus: () => void;
+  onClose: () => void;
+}): ReactElement {
+  const { softwareMapEnabled, openSoftwareMapElement } = useReviewActions();
+
+  return (
+    <div {...stylex.props(tourStyles.main, active && tourStyles.mainActive)}>
+      <header {...stylex.props(tourStyles.header)}>
+        <div>
+          <div {...stylex.props(textStyles.eyebrow, textStyles.count)}>
+            Step {index + 1} of {total}
+          </div>
+          <div {...stylex.props(tourStyles.titleRow)}>
+            <h3
+              {...stylex.props(
+                tourStyles.title,
+                active && tourStyles.titleActive,
+              )}
+            >
+              {stop.label}
+            </h3>
+          </div>
+          {stop.detail && (
+            <p {...stylex.props(tourStyles.detail)}>{stop.detail}</p>
+          )}
+        </div>
+        {softwareMapEnabled && stop.anchor.softwareMapPath ? (
+          <div {...stylex.props(panelStyles.peekActions)}>
+            <IconButton
+              size="large"
+              aria-label={`Show ${stop.anchor.title} in software map`}
+              onClick={() => {
+                openSoftwareMapElement(stop.anchor.softwareMapPath!);
+                onClose();
+              }}
+            >
+              <MapPinIcon xstyle={controlStyles.inertIcon} />
+            </IconButton>
+          </div>
+        ) : null}
+      </header>
+
+      <div {...stylex.props(panelStyles.peekContent, tourStyles.content)}>
+        <ReviewPeekContentView
+          anchor={stop.anchor}
+          content={stop.content}
+          active={active}
+          onNativeFocus={onNativeFocus}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ReviewPeekContentView({
+  anchor,
+  content,
+  active,
+  onNativeFocus,
+  reportOutcome = false,
+}: {
+  anchor: PeekAnchor;
+  content: ReviewPeekContent;
+  active?: boolean;
+  onNativeFocus?: () => void;
+  reportOutcome?: boolean;
+}) {
+  if (content.kind === "explanation") return <p>{content.text}</p>;
+
+  if (content.kind === "source") {
+    return (
+      <CodePeekCard
+        source={content.source}
+        active={active}
+        heightMode="content"
+        onNativeFocus={onNativeFocus}
+        reportOutcome={reportOutcome}
+      />
+    );
+  }
+
+  if (content.kind === "inline-code") {
+    return (
+      <AuthoredCodeSurface
+        anchor={anchor}
+        code={content.text}
+        language={content.language}
+      />
+    );
+  }
+
+  return null;
+}
+
+const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
+
+const sectionStyles = stylex.create({
+  section: {
+    position: "relative",
+    width: "100%",
+  },
+  header: {
+    position: "relative",
+    display: "flex",
+    alignItems: "baseline",
+    gap: "12px",
+    width: `min(100%, ${tokens.reviewProseMaxWidth})`,
+    maxWidth: `calc(100cqi - 2 * ${tokens.reviewDocumentPaddingInline})`,
+    marginBlock: "40px 12px",
+    marginInline: "auto",
+  },
+  // A finished tutorial chapter says so at the end of its heading row.
+  complete: {
+    "::after": {
+      content: "'Complete ✓'",
+      marginLeft: "auto",
+      color: tokens.tutorialRing,
+      font: `${fontSize.micro}/16px ${tokens.fontMono}`,
+    },
+  },
+  // Expanded sections keep a faint chevron so "this collapses" is legible
+  // without hovering the header first.
+  toggle: {
+    position: "absolute",
+    top: "4px",
+    left: "-29px",
+  },
+  heading: {
+    minWidth: 0,
+  },
+  title: {
+    scrollMarginTop: { default: null, [inDocument()]: "24px" },
+    margin: 0,
+    color: { default: null, [inDocument()]: tokens.ink },
+    fontFamily: { default: null, [inDocument()]: tokens.fontSerif },
+    fontSize: { default: null, [inDocument()]: documentType.h2 },
+    fontWeight: { default: null, [inDocument()]: fontWeight.medium },
+    lineHeight: { default: null, [inDocument()]: "32px" },
+  },
+  titleActive: {
+    color: tokens.ink,
+  },
+  titleCollapsed: {
+    color: tokens.ghost,
+  },
+  meta: {
+    flex: "0 0 auto",
+    color: tokens.inkFaint,
+    fontFamily: tokens.fontMono,
+    fontSize: fontSize.small,
+    whiteSpace: "nowrap",
+  },
+});

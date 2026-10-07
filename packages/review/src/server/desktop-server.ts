@@ -33,29 +33,29 @@ import {
   resetCliInstall,
   resolveCliInstallStatus,
   skipCliInstall,
-} from "@review/cli-install";
-import {
-  REVIEW_INSTANCE_ENV,
-  type ReviewInstanceIdentity,
-} from "@review/desktop-discovery";
+} from "@review/cli/cli-install";
 import { readReviewPackageVersion } from "@review/package-paths";
 import { createReviewApi } from "@review/review-api/http.js";
 import type { LocalReviewData } from "@review/review-api/local-data.js";
 import type { ReviewStore } from "@review/review-api/store.js";
 import {
+  REVIEW_INSTANCE_ENV,
+  type ReviewInstanceIdentity,
+} from "@review/server/desktop-discovery";
+import type { SharedReviewStore } from "@review/sharing/import.js";
+import {
   devReviewHome,
   reviewInstanceDiscoveryPath,
   reviewLegacyDiscoveryPath,
-} from "@review/review-home-paths";
+} from "@review/storage/review-home-paths";
 import {
   readScratchpadEnabled,
   writeScratchpadEnabled,
-} from "@review/review-preferences";
+} from "@review/storage/review-preferences";
 import {
   ReviewTelemetry,
   type ReviewTelemetryContext,
-} from "@review/review-telemetry";
-import type { SharedReviewStore } from "@review/sharing/import.js";
+} from "@review/telemetry/review-telemetry";
 import { z } from "zod";
 
 import { aliasInstallationToAccount } from "./account-alias";

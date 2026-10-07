@@ -1,7 +1,7 @@
-import { ReviewDebugSettingsProvider } from "@canvas/debug-settings";
-import { settled } from "@canvas/fixture-review-bridge";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
-import { testReviewSession } from "@canvas/review-session-test-utils";
+import { ReviewDebugSettingsProvider } from "@canvas/settings/debug-settings";
+import { settled } from "@canvas/test/fixture-review-bridge";
+import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";

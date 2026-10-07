@@ -8,8 +8,8 @@ import {
   type ShareManifest,
   shareManifestSchema,
 } from "@dev.fast/review-share-protocol";
-import { sourceAnchors } from "@review/lens-selection.js";
-import { markdownNodes, parseMarkdown } from "@review/markdown.js";
+import { sourceAnchors } from "@review/documents/lens-selection.js";
+import { markdownNodes, parseMarkdown } from "@review/documents/markdown.js";
 import { lensSelections } from "@review/review-api/diff-lenses.js";
 import { ReviewInputError } from "@review/review-api/document.js";
 import {

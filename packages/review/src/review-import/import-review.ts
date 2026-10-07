@@ -4,8 +4,14 @@ import path from "node:path";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
 import { errorMessage, loadReviewAgentTrace } from "@dev.fast/trace-core";
-import { textIncludesQuote } from "@review/evidence";
-import { isMissingFileError } from "@review/fs-utils";
+import { textIncludesQuote } from "@review/documents/evidence";
+import {
+  reviewDocumentDataSchema,
+  upgradeReviewDocumentJson,
+} from "@review/documents/review-document-data";
+import { isMissingFileError } from "@review/lib/fs-utils";
+import { REVIEW_DOCUMENT_BUNDLE_DIR } from "@review/publishing/review-bundle";
+import { evaluateSealedReviewDocument } from "@review/publishing/review-sealed-document";
 import {
   type Block,
   type Pins,
@@ -19,19 +25,13 @@ import type {
   ReviewStore,
   SnapshotOrigin,
 } from "@review/review-api/store";
-import { REVIEW_DOCUMENT_BUNDLE_DIR } from "@review/review-bundle";
-import {
-  reviewDocumentDataSchema,
-  upgradeReviewDocumentJson,
-} from "@review/review-document-data";
+import { readReviewSoftwareMapBundle } from "@review/software-map/software-map-bundle";
 import {
   type StoredReview,
   parseAnyStoredReviewRecord,
-} from "@review/review-home";
-import { evaluateSealedReviewDocument } from "@review/review-sealed-document";
-import { type ReviewVcsLogEntry, reviewVcs } from "@review/review-vcs";
-import { readReviewSoftwareMapBundle } from "@review/software-map-bundle";
-import { legacySoftwareMapBundle } from "@review/stored-review-migration";
+} from "@review/storage/review-home";
+import { legacySoftwareMapBundle } from "@review/storage/stored-review-migration";
+import { type ReviewVcsLogEntry, reviewVcs } from "@review/vcs/review-vcs";
 
 import {
   type ImageRequest,

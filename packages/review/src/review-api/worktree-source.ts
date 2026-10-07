@@ -4,7 +4,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 
 import { type LocalVcs, gitCommonDir } from "@dev.fast/local-vcs";
-import { isMissingFileError } from "@review/fs-utils.js";
+import { isMissingFileError } from "@review/lib/fs-utils.js";
 
 import { checkoutFs } from "./checkout-fs.js";
 import { ReviewInputError } from "./document.js";

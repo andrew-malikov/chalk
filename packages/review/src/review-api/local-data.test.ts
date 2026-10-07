@@ -23,7 +23,7 @@ import {
   REVIEW_CLIENT_HEADER,
   REVIEW_CLIENT_REMOTE,
 } from "@dev.fast/review-protocol";
-import { selectSource } from "@review/lens-selection";
+import { selectSource } from "@review/documents/lens-selection";
 import { createGlobalReviewServer } from "@review/server/desktop-server.js";
 import { Hono } from "hono";
 import sharp from "sharp";

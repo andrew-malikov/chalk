@@ -1,4 +1,4 @@
-import { fontSize } from "@canvas/scale.stylex";
+import { fontSize } from "@canvas/styles/scale.stylex";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { textStyles } from "@canvas/ui/text";
 import type {
@@ -9,20 +9,23 @@ import type {
 import * as stylex from "@stylexjs/stylex";
 import { createRoot } from "react-dom/client";
 
-import { ApiCanvas } from "./api-canvas";
+import { ReviewHome } from "./home/review-home-view";
+import { WelcomePage } from "./home/welcome-page";
 import { CanvasUiContext } from "./host/canvas-ui";
-import { type ReviewFindHost, createReviewFindHost } from "./review-find";
-import { ReviewHome } from "./review-home-view";
-import { ReviewContainerProvider } from "./review-root-context";
-import { SettingsPage } from "./settings-page";
-import { shellStyles } from "./shell-styles";
-import { themeStyles } from "./theme-styles";
-import { tokens } from "./tokens.stylex";
-import { WelcomePage } from "./welcome-page";
+import { ApiCanvas } from "./review/api-canvas";
+import {
+  type ReviewFindHost,
+  createReviewFindHost,
+} from "./review/review-find";
+import { ReviewContainerProvider } from "./review/review-root-context";
+import { SettingsPage } from "./settings/settings-page";
+import { shellStyles } from "./styles/shell-styles";
+import { themeStyles } from "./styles/theme-styles";
+import { tokens } from "./styles/tokens.stylex";
 
 import "./styles.css";
 
-export { clearPersistedReviewViewState as clearReviewViewState } from "./review-view-state";
+export { clearPersistedReviewViewState as clearReviewViewState } from "./review/review-view-state";
 
 export function reviewCanvasThemeClass(theme: "dark" | "light"): string {
   const light = theme === "light";

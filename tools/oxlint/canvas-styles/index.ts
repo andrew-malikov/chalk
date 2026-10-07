@@ -155,7 +155,7 @@ const scaleLiteralsRule = defineRule({
     type: "suggestion",
     docs: {
       description:
-        "Use the scales in packages/review/app/src/scale.stylex.ts instead of literal values.",
+        "Use the scales in packages/review/app/src/styles/scale.stylex.ts instead of literal values.",
     },
     messages: {
       literal: "Use a `{{scale}}` step from scale.stylex.ts instead of `{{value}}`.",

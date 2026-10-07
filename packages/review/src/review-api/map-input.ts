@@ -1,5 +1,5 @@
-import { softwareDataStoreCollectionInputSchema } from "@review/authoring.js";
-import type { SoftwareModelInput } from "@review/software-map-model.js";
+import { softwareDataStoreCollectionInputSchema } from "@review/documents/authoring.js";
+import type { SoftwareModelInput } from "@review/software-map/software-map-model.js";
 import { z } from "zod";
 
 // Decode the existing map authoring format at the HTTP boundary. The existing

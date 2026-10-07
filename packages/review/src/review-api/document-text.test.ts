@@ -1,4 +1,4 @@
-import { selectSource } from "@review/lens-selection.js";
+import { selectSource } from "@review/documents/lens-selection.js";
 import { expect, it } from "vitest";
 
 import { documentText } from "./document-text.js";

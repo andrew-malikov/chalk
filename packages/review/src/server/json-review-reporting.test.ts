@@ -3,7 +3,7 @@ import { gunzipSync } from "node:zlib";
 
 import type { JsonValue } from "@dev.fast/review-protocol";
 import { ReviewStore } from "@review/review-api/store";
-import type { ReviewTelemetry } from "@review/telemetry";
+import type { ReviewTelemetry } from "@review/telemetry/telemetry";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { type BugReportPayload, submitReviewBugReport } from "./bug-report";

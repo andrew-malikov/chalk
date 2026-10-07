@@ -3,8 +3,8 @@ import {
   ReviewBugReportRequestSchema,
   parseZod,
 } from "@dev.fast/review-protocol";
-import type { ReviewTabTelemetryEvent } from "@review/telemetry";
-import { REVIEW_TELEMETRY_TABS } from "@review/ui-telemetry-events";
+import type { ReviewTabTelemetryEvent } from "@review/telemetry/telemetry";
+import { REVIEW_TELEMETRY_TABS } from "@review/telemetry/ui-telemetry-events";
 import { z } from "zod";
 
 import { HttpJsonError } from "./http-json";

@@ -7,8 +7,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { openLocalReviewStore } from "@review/review-api/local-data.js";
-import { ReviewTelemetry } from "@review/review-telemetry.js";
-import { reviewServerDiscoveryPath } from "@review/server-discovery.js";
+import { reviewServerDiscoveryPath } from "@review/server/server-discovery.js";
+import { ReviewTelemetry } from "@review/telemetry/review-telemetry.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createGlobalReviewServer } from "./desktop-server.js";

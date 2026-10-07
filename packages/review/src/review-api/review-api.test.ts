@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { selectSource } from "@review/lens-selection.js";
+import { selectSource } from "@review/documents/lens-selection.js";
 import { createGlobalReviewServer } from "@review/server/desktop-server.js";
 import { GlobalReviewDesktopVerbRelay } from "@review/server/global-verb-relay.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -2317,7 +2317,10 @@ it("still reports structural read failures", async () => {
 
 it("textual coverage uses Git ranges without launching diffr", async () => {
   const { createReviewApi } = await import("./http.js");
-  const { coverageProgress } = await import("@review/viewed-coverage.js");
+
+  const { coverageProgress } =
+    await import("@review/documents/viewed-coverage.js");
+
   const { reviewId } = await create();
   const data = new LocalReviewData(store);
   vi.spyOn(data, "resolveSource").mockImplementation(async (snapshot) => ({
@@ -2417,7 +2420,10 @@ it("textual coverage uses Git ranges without launching diffr", async () => {
 
 it("resolves file lenses to whole changed files, preserves empty groups, and shares viewed coverage", async () => {
   const { reviewProgress } = await import("./review-progress.js");
-  const { coverageProgress } = await import("@review/viewed-coverage.js");
+
+  const { coverageProgress } =
+    await import("@review/documents/viewed-coverage.js");
+
   const { reviewId } = await create();
 
   for (const [title, patterns] of [
@@ -2509,7 +2515,7 @@ it("validates range lens evidence and scopes progress and Uncategorized to disti
   const { reviewProgress } = await import("./review-progress.js");
 
   const { coverageProgress, scopedCoverage } =
-    await import("@review/viewed-coverage.js");
+    await import("@review/documents/viewed-coverage.js");
 
   const { reviewId } = await create();
 
@@ -2815,7 +2821,7 @@ it("logs a provider failure and names its kind without returning its local detai
 
 it("makes a diagram step's selection usable before an unrelated file finishes counting", async () => {
   const { createReviewApi } = await import("./http.js");
-  const { selectionKey } = await import("@review/lens-selection.js");
+  const { selectionKey } = await import("@review/documents/lens-selection.js");
   const { reviewId } = await create();
 
   const refs = ["a.ts", "b.ts"].map((file) =>

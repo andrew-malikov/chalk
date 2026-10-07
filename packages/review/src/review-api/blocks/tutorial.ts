@@ -1,7 +1,7 @@
 import {
   type TutorialAuthoringConversation,
   tutorialAuthoringConversationSchema,
-} from "@review/tutorial-conversation.js";
+} from "@review/tutorial/tutorial-conversation.js";
 import { z } from "zod";
 
 import { type BlockDefinition, defineBlock } from "./definition.js";

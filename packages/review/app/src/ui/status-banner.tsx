@@ -1,5 +1,5 @@
-import { fontSize } from "@canvas/scale.stylex";
-import { tokens } from "@canvas/tokens.stylex";
+import { fontSize } from "@canvas/styles/scale.stylex";
+import { tokens } from "@canvas/styles/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import type { ReactElement, ReactNode } from "react";
 

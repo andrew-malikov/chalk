@@ -8,8 +8,8 @@ import {
   parseReviewBugReportResponse,
 } from "@dev.fast/review-protocol";
 import { readReviewPackageVersion } from "@review/package-paths";
-import { type PostHogCaptureProperties } from "@review/posthog-capture-client";
-import { type ReviewDiffFilesResult } from "@review/review-diff-files";
+import { type PostHogCaptureProperties } from "@review/telemetry/posthog-capture-client";
+import { type ReviewDiffFilesResult } from "@review/vcs/review-diff-files";
 
 const BUG_REPORT_URL = "https://bug.dev.fast/api/v2/reports";
 

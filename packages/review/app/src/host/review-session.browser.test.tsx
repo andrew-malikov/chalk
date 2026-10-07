@@ -1,4 +1,4 @@
-import { testReviewSession } from "@canvas/review-session-test-utils";
+import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import type { ReviewVerbRequest } from "@dev.fast/review-protocol";
 import { act, useState } from "react";
 import { createRoot } from "react-dom/client";

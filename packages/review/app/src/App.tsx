@@ -11,7 +11,7 @@ import {
 import {
   type SoftwareMapTopologyDiff,
   diffSoftwareMaps,
-} from "@review/software-map-topology-diff";
+} from "@review/software-map/software-map-topology-diff";
 import * as stylex from "@stylexjs/stylex";
 import {
   type CSSProperties,
@@ -25,27 +25,75 @@ import {
   useState,
 } from "react";
 
-import { AgentSelectionProvider, useAgentSelection } from "./agent-selection";
-import { observeAgentTextSelection } from "./agent-text-selection";
-import { AskHistoryProvider } from "./ask-history";
-import { AskHistoryControl } from "./ask-history-list";
-import { AskThreadMarks } from "./ask-marks";
+import {
+  AgentSelectionProvider,
+  useAgentSelection,
+} from "./ask/agent-selection";
+import { observeAgentTextSelection } from "./ask/agent-text-selection";
+import { AskHistoryProvider } from "./ask/ask-history";
+import { AskHistoryControl } from "./ask/ask-history-list";
+import { AskThreadMarks } from "./ask/ask-marks";
+import { DiffLayoutControl } from "./diff/diff-layout-control";
+import { ReviewDiffView } from "./diff/DiffView";
+import { ReviewCommitsView } from "./diff/ReviewCommitsView";
+import { useDocumentEmbedScroll } from "./documents/document-embed-scroll";
+import { documentStyles } from "./documents/document-styles";
+import { ReviewDocumentBoundary } from "./documents/review-document-boundary";
+import { reportReviewDocumentRenderError } from "./documents/review-document-error-report";
+import { useReviewSession } from "./host/review-session";
+import { useTooltip } from "./lib/use-tooltip";
 import {
   AuthoringActivityBadge,
   ReviewSurfaceLabel,
-} from "./authoring-activity";
-import { controlStyles } from "./controls-styles";
+} from "./review/authoring-activity";
+import { MissingCheckoutBanner } from "./review/missing-checkout-banner";
+import { ReviewPanelHost } from "./review/review-components";
+import {
+  ReviewProvider,
+  type ReviewSubmissionOutcome,
+  useReview,
+} from "./review/review-context";
+import { ReviewCornerAction } from "./review/review-corner-action";
+import { useReviewDiffFiles } from "./review/review-diff-files-context";
+import { ReviewDiffFilesProvider } from "./review/review-diff-files-context";
+import {
+  type ReviewFindHost,
+  ReviewFindProvider,
+  useReviewFindRegistration,
+} from "./review/review-find";
+import { useReviewLenses } from "./review/review-lenses";
+import {
+  useReviewPanel,
+  useReviewPanelStore,
+  useSuppressPanelMotionOnCanvasResume,
+} from "./review/review-panel";
+import { type ReviewDiffScope, askShown } from "./review/review-panel-store";
+import {
+  ReviewRootsProvider,
+  useReviewContainer,
+} from "./review/review-root-context";
+import { ReviewStackSelector } from "./review/review-stack-selector";
+import { ReviewToc } from "./review/review-toc";
+import {
+  offeredReviewViews,
+  reviewViewLabel,
+} from "./review/review-view-route";
+import { useReviewViewStateSync } from "./review/review-view-state";
+import { useRightPanelResize } from "./review/side-panel-resizer";
+import { useReviewTabTelemetry } from "./review/use-review-tab-telemetry";
 import {
   ReviewDebugSettingsProvider,
   type ReviewNodeTint,
   useReviewDebugSettings,
-} from "./debug-settings";
-import { DiffLayoutControl } from "./diff-layout-control";
-import { ReviewDiffView } from "./DiffView";
-import { useDocumentEmbedScroll } from "./document-embed-scroll";
-import { documentStyles } from "./document-styles";
-import { useReviewSession } from "./host/review-session";
-import { MarkerUnderline, SettingsSlidersIcon } from "./icons";
+} from "./settings/debug-settings";
+import type {
+  NormalizedSoftwareElement,
+  NormalizedSoftwareModel,
+} from "./software-map/model";
+import { SoftwareMapTopologyUnavailable } from "./software-map/software-map-absence";
+import { selectActiveSoftwareMapModel } from "./software-map/software-map-selection";
+import { SoftwareMap } from "./software-map/SoftwareMap";
+import { controlStyles } from "./styles/controls-styles";
 import {
   appMarker,
   detailHostMarker,
@@ -54,64 +102,25 @@ import {
   segmentMarker,
   topbarActionsMarker,
   topbarTabsMarker,
-} from "./markers.stylex";
-import { MissingCheckoutBanner } from "./missing-checkout-banner";
-import { ReviewPanelHost } from "./review-components";
-import {
-  ReviewProvider,
-  type ReviewSubmissionOutcome,
-  useReview,
-} from "./review-context";
-import { ReviewCornerAction } from "./review-corner-action";
-import { useReviewDiffFiles } from "./review-diff-files-context";
-import { ReviewDiffFilesProvider } from "./review-diff-files-context";
-import { ReviewDocumentBoundary } from "./review-document-boundary";
-import { reportReviewDocumentRenderError } from "./review-document-error-report";
-import {
-  type ReviewFindHost,
-  ReviewFindProvider,
-  useReviewFindRegistration,
-} from "./review-find";
-import { useReviewLenses } from "./review-lenses";
-import {
-  useReviewPanel,
-  useReviewPanelStore,
-  useSuppressPanelMotionOnCanvasResume,
-} from "./review-panel";
-import { type ReviewDiffScope, askShown } from "./review-panel-store";
-import { ReviewRootsProvider, useReviewContainer } from "./review-root-context";
-import { ReviewStackSelector } from "./review-stack-selector";
-import { ReviewToc } from "./review-toc";
-import { offeredReviewViews, reviewViewLabel } from "./review-view-route";
-import { useReviewViewStateSync } from "./review-view-state";
-import { ReviewCommitsView } from "./ReviewCommitsView";
-import { ReviewTraceView } from "./ReviewTraceView";
+} from "./styles/markers.stylex";
 import {
   elevation,
   fontSize,
   fontWeight,
   motion,
   radius,
-} from "./scale.stylex";
-import { shellStyles } from "./shell-styles";
-import { useRightPanelResize } from "./side-panel-resizer";
-import { selectActiveSoftwareMapModel } from "./software-map-selection";
-import type {
-  NormalizedSoftwareElement,
-  NormalizedSoftwareModel,
-} from "./software-map/model";
-import { SoftwareMapTopologyUnavailable } from "./software-map/software-map-absence";
-import { SoftwareMap } from "./software-map/SoftwareMap";
-import { withClass } from "./stylex-props";
-import { themeStyles } from "./theme-styles";
-import { tokens } from "./tokens.stylex";
-import { traceStyles } from "./trace-styles";
-import { useTutorial } from "./tutorial-context";
-import { TutorialExperienceProvider } from "./tutorial-experience";
-import { captureUiEvent } from "./ui-telemetry";
-import { useReviewTabTelemetry } from "./use-review-tab-telemetry";
-import { useTooltip } from "./use-tooltip";
-import { useTraceList } from "./use-trace-list";
+} from "./styles/scale.stylex";
+import { shellStyles } from "./styles/shell-styles";
+import { withClass } from "./styles/stylex-props";
+import { themeStyles } from "./styles/theme-styles";
+import { tokens } from "./styles/tokens.stylex";
+import { captureUiEvent } from "./telemetry/ui-telemetry";
+import { ReviewTraceView } from "./traces/ReviewTraceView";
+import { traceStyles } from "./traces/trace-styles";
+import { useTraceList } from "./traces/use-trace-list";
+import { useTutorial } from "./tutorial/tutorial-context";
+import { TutorialExperienceProvider } from "./tutorial/tutorial-experience";
+import { MarkerUnderline, SettingsSlidersIcon } from "./ui/icons";
 
 const DEFAULT_SIDE_PEEK_WIDTH = 560;
 
@@ -166,10 +175,10 @@ export interface RenderedReviewDocument {
   filePath: string;
   anchors: ReadonlyMap<
     string,
-    import("@review/review-document-data").DocumentAnchor
+    import("@review/documents/review-document-data").DocumentAnchor
   >;
   documentSoftwareModels: NormalizedSoftwareModel[];
-  tocEntries?: import("./review-document-headings").ReviewTocEntry[];
+  tocEntries?: import("./documents/review-document-headings").ReviewTocEntry[];
   /** True while the document has no blocks at all, as right after creation. */
   empty?: boolean;
   header: boolean;

@@ -1,5 +1,5 @@
 import { Button as ShadcnButton } from "@canvas/components/ui/button";
-import { type StyleArg, withClass } from "@canvas/stylex-props";
+import { type StyleArg, withClass } from "@canvas/styles/stylex-props";
 import type { ComponentProps } from "react";
 
 type NativeButtonProps = Omit<ComponentProps<"button">, "className" | "style">;

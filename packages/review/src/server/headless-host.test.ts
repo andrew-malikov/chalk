@@ -21,7 +21,7 @@ import {
   REVIEW_CLIENT_REMOTE,
   parseReviewDesktopVerbFrame,
 } from "@dev.fast/review-protocol";
-import { runReviewCli } from "@review/cli-runner.js";
+import { runReviewCli } from "@review/cli/cli-runner.js";
 import {
   connectReviewApi,
   connectReviewInstance,
@@ -32,15 +32,15 @@ import { createReviewApi } from "@review/review-api/http.js";
 import { serveReviewMcp } from "@review/review-api/mcp.js";
 import { openReviewProfile } from "@review/review-api/profile.js";
 import type { Result, Snapshot } from "@review/review-api/store.js";
-import { writeScratchpadEnabled } from "@review/review-preferences.js";
-import { ReviewTelemetry } from "@review/review-telemetry.js";
 import {
   type ReviewServerDiscovery,
   headlessServerLockPath,
   readReviewServerDiscovery,
   reviewServerDiscoveryPath,
   reviewServerIsHealthy,
-} from "@review/server-discovery.js";
+} from "@review/server/server-discovery.js";
+import { writeScratchpadEnabled } from "@review/storage/review-preferences.js";
+import { ReviewTelemetry } from "@review/telemetry/review-telemetry.js";
 import sharp from "sharp";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";

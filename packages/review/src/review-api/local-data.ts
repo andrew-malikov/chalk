@@ -31,23 +31,23 @@ import type {
   StructuralDiffEvent,
 } from "@dev.fast/review-protocol";
 import { writePrivateJsonAtomic } from "@dev.fast/trace-core";
-import { textIncludesQuote } from "@review/evidence.js";
-import { isMissingFileError } from "@review/fs-utils.js";
-import { reviewManagedCheckoutRoot } from "@review/review-checkout-paths.js";
-import { ensureReviewPinnedCheckout } from "@review/review-head-checkout.js";
-import { StructuralComparisons } from "@review/server/structural-comparisons.js";
-import { resolveSoftwareMapDiffCounts } from "@review/software-map-diff-counts.js";
-import {
-  type NormalizedSoftwareModel,
-  SoftwareModelValidationError,
-  defineSoftwareMap,
-} from "@review/software-map-model.js";
+import { textIncludesQuote } from "@review/documents/evidence.js";
 import {
   SourceRangeError,
   checkSourcePath,
   requireVisibleSource,
   sliceSourceRange,
-} from "@review/source.js";
+} from "@review/documents/source.js";
+import { isMissingFileError } from "@review/lib/fs-utils.js";
+import { StructuralComparisons } from "@review/server/structural-comparisons.js";
+import { resolveSoftwareMapDiffCounts } from "@review/software-map/software-map-diff-counts.js";
+import {
+  type NormalizedSoftwareModel,
+  SoftwareModelValidationError,
+  defineSoftwareMap,
+} from "@review/software-map/software-map-model.js";
+import { reviewManagedCheckoutRoot } from "@review/vcs/review-checkout-paths.js";
+import { ensureReviewPinnedCheckout } from "@review/vcs/review-head-checkout.js";
 import { z } from "zod";
 
 import { checkoutFs } from "./checkout-fs.js";

@@ -10,7 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { coverageProgress } from "@review/viewed-coverage";
+import { coverageProgress } from "@review/documents/viewed-coverage";
 import { expect, it } from "vitest";
 
 import { createReviewApi } from "./http";

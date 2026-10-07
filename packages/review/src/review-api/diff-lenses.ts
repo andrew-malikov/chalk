@@ -1,5 +1,8 @@
-import { type LensSource, lensSourceSchema } from "@review/lens-selection.js";
-import type { FileLineRange } from "@review/source.js";
+import {
+  type LensSource,
+  lensSourceSchema,
+} from "@review/documents/lens-selection.js";
+import type { FileLineRange } from "@review/documents/source.js";
 import { z } from "zod";
 
 import { label } from "./blocks/definition.js";

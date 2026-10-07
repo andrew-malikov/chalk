@@ -3,6 +3,11 @@ import path from "node:path";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
 import {
+  type ReviewNode,
+  reviewDocumentDataSchema,
+  upgradeReviewDocumentJson,
+} from "@review/documents/review-document-data";
+import {
   LEGACY_REVIEW_FIXTURES_ROOT,
   listLegacyReviewFixtures,
 } from "@review/fixtures/legacy-reviews/legacy-review-fixture";
@@ -12,11 +17,6 @@ import {
   elements,
   resourceReferences,
 } from "@review/review-api/document";
-import {
-  type ReviewNode,
-  reviewDocumentDataSchema,
-  upgradeReviewDocumentJson,
-} from "@review/review-document-data";
 import { describe, expect, it } from "vitest";
 
 import { el, footnoteTraceQuoteSection, text } from "./import-test-utils";

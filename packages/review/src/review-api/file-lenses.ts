@@ -1,14 +1,14 @@
 import { posix } from "node:path";
 
-import { type LensSource } from "@review/lens-selection.js";
-import type { FileLineRange } from "@review/source.js";
+import { type LensSource } from "@review/documents/lens-selection.js";
+import type { FileLineRange } from "@review/documents/source.js";
 import {
   type CoverageFile,
   coverageSources,
   scopedCoverage,
   subtractIntervals,
   unionIntervals,
-} from "@review/viewed-coverage.js";
+} from "@review/documents/viewed-coverage.js";
 
 import type { Lens } from "./diff-lenses.js";
 

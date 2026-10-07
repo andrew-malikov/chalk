@@ -10,7 +10,7 @@ import {
 } from "@review/review-api/document";
 import type { LocalReviewData } from "@review/review-api/local-data";
 import type { ReviewStore, Snapshot } from "@review/review-api/store";
-import { devReviewHome } from "@review/review-home-paths";
+import { devReviewHome } from "@review/storage/review-home-paths";
 import { z } from "zod";
 
 const authoredSchema = z.strictObject({

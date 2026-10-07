@@ -1,4 +1,4 @@
-import { lensSourceSchema } from "@review/lens-selection.js";
+import { lensSourceSchema } from "@review/documents/lens-selection.js";
 import { z } from "zod";
 
 import { codeFields } from "./code.js";

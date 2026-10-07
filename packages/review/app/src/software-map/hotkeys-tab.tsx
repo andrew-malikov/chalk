@@ -1,7 +1,12 @@
-import { MinusIcon, PlusIcon } from "@canvas/icons";
-import { fontSize, fontWeight, motion, radius } from "@canvas/scale.stylex";
 import { dockShadow } from "@canvas/software-map/hotkeys-tab.stylex";
-import { tokens } from "@canvas/tokens.stylex";
+import {
+  fontSize,
+  fontWeight,
+  motion,
+  radius,
+} from "@canvas/styles/scale.stylex";
+import { tokens } from "@canvas/styles/tokens.stylex";
+import { MinusIcon, PlusIcon } from "@canvas/ui/icons";
 import { Kbd } from "@canvas/ui/kbd";
 import * as stylex from "@stylexjs/stylex";
 import {

@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { type JsonValue, parseJsonText } from "@dev.fast/review-protocol";
+import { selectSource } from "@review/documents/lens-selection.js";
 import {
   FIXTURE_IMAGE_ID,
   FIXTURE_MAP_ID,
@@ -12,7 +13,6 @@ import {
   FIXTURE_TRACE_ID,
   readBlockFixtures,
 } from "@review/fixtures/blocks/fixtures.js";
-import { selectSource } from "@review/lens-selection.js";
 import type { Hono } from "hono";
 import sharp from "sharp";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

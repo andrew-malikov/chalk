@@ -1,5 +1,5 @@
-import { bundleReviewSoftwareMap } from "@review/software-map-bundle";
-import { defineSoftwareMap } from "@review/software-map-model";
+import { bundleReviewSoftwareMap } from "@review/software-map/software-map-bundle";
+import { defineSoftwareMap } from "@review/software-map/software-map-model";
 import { describe, expect, it } from "vitest";
 
 import {

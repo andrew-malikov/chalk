@@ -1,4 +1,4 @@
-import { testReviewBridge } from "@canvas/review-session-test-utils";
+import { testReviewBridge } from "@canvas/test/review-session-test-utils";
 import { expect, it, vi } from "vitest";
 
 import { createReviewSession } from "./review-session";

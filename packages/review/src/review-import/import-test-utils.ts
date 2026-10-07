@@ -9,15 +9,18 @@ import {
   jsonObject,
   parseJsonText,
 } from "@dev.fast/review-protocol";
+import type {
+  ProseTag,
+  ReviewNode,
+} from "@review/documents/review-document-data";
 import { LEGACY_REVIEW_FIXTURES_ROOT } from "@review/fixtures/legacy-reviews/legacy-review-fixture";
 import { openLocalReviewStore } from "@review/review-api/local-data";
-import type { ProseTag, ReviewNode } from "@review/review-document-data";
+import { REVIEW_SOFTWARE_MAP_BUNDLE_DIR } from "@review/software-map/software-map-bundle";
 import {
   type StoredReview,
   parseStoredReviewRecord,
-} from "@review/review-home";
-import type { ReviewVcsLogEntry } from "@review/review-vcs";
-import { REVIEW_SOFTWARE_MAP_BUNDLE_DIR } from "@review/software-map-bundle";
+} from "@review/storage/review-home";
+import type { ReviewVcsLogEntry } from "@review/vcs/review-vcs";
 import { onTestFinished } from "vitest";
 
 import {

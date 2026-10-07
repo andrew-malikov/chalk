@@ -1,5 +1,13 @@
+import { useAgentSelection } from "@canvas/ask/agent-selection";
 import { NativeSelect } from "@canvas/components/ui/native-select";
-import { fontSize } from "@canvas/scale.stylex";
+import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
+import {
+  readReviewUiState,
+  useReviewUiState,
+  writeReviewUiState,
+} from "@canvas/review/review-ui-state";
+import { fontSize } from "@canvas/styles/scale.stylex";
+import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button, IconButton } from "@canvas/ui/button";
 import type {
   ReviewCommitScope,
@@ -34,23 +42,15 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { useAgentSelection } from "../agent-selection";
-import { DiffCount } from "../diff-count";
 import { useReviewSession } from "../host/review-session";
-import { useReviewDiffFiles } from "../review-diff-files-context";
-import {
-  readReviewUiState,
-  useReviewUiState,
-  writeReviewUiState,
-} from "../review-ui-state";
-import { tokens } from "../tokens.stylex";
-import { ViewedButton } from "../viewed-button";
+import { DiffCount } from "./diff-count";
 import {
   type PierreComparisonEntry,
   loadPierreComparison,
   loadPierreFile,
 } from "./pierre-comparison";
 import { selectedPierreDiff } from "./pierre-selection";
+import { ViewedButton } from "./viewed-button";
 
 interface Props {
   scope?: ReviewCommitScope;

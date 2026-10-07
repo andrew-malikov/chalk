@@ -5,9 +5,9 @@ import {
 } from "@review/review-api/document";
 import { readQuerySchemas } from "@review/review-api/read-schemas";
 import { ReviewStore, type Snapshot } from "@review/review-api/store";
-import { resolveReviewDiffFiles } from "@review/review-diff-files";
 import type { SharedReviewStore } from "@review/sharing/import.js";
-import type { ReviewTelemetry } from "@review/telemetry";
+import type { ReviewTelemetry } from "@review/telemetry/telemetry";
+import { resolveReviewDiffFiles } from "@review/vcs/review-diff-files";
 import { Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 

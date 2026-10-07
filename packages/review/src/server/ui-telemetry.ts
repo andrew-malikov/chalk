@@ -4,15 +4,15 @@ import {
   isJsonObject,
   jsonString,
 } from "@dev.fast/review-protocol";
-import { mergeErrorTelemetryProperties } from "@review/error-telemetry";
+import { mergeErrorTelemetryProperties } from "@review/telemetry/error-telemetry";
 import type {
   ReviewTabTelemetryEvent,
   ReviewTelemetryContext,
-} from "@review/telemetry";
+} from "@review/telemetry/telemetry";
 import {
   REVIEW_APP_SESSION_ID_HEADER,
   sanitizeUiTelemetryEvent,
-} from "@review/ui-telemetry-events";
+} from "@review/telemetry/ui-telemetry-events";
 import { z } from "zod";
 
 import { ClientErrorBudget } from "./client-error-budget";

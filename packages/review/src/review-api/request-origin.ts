@@ -1,7 +1,7 @@
 import {
   type ReviewSessionAgent,
   SESSION_AGENT_KIND,
-} from "@review/ui-telemetry-events.js";
+} from "@review/telemetry/ui-telemetry-events.js";
 import { z } from "zod";
 
 /**

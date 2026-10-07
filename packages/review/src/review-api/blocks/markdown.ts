@@ -1,4 +1,4 @@
-import { sourcePinsSchema } from "@review/source.js";
+import { sourcePinsSchema } from "@review/documents/source.js";
 
 import { defineBlock, text } from "./definition.js";
 

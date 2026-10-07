@@ -1,5 +1,5 @@
-import { elevation, radius } from "@canvas/scale.stylex";
-import { tokens } from "@canvas/tokens.stylex";
+import { elevation, radius } from "@canvas/styles/scale.stylex";
+import { tokens } from "@canvas/styles/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 
 // The box of anything that floats over the canvas. Sites keep their own

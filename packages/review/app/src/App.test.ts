@@ -2,9 +2,9 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { a as ReviewMdxLink } from "./review-components";
-import { selectActiveSoftwareMapModel } from "./software-map-selection";
+import { a as ReviewMdxLink } from "./review/review-components";
 import { defineSoftwareModel } from "./software-map/model";
+import { selectActiveSoftwareMapModel } from "./software-map/software-map-selection";
 
 describe("review app software map selection", () => {
   it("selects the model that contains a side-peek map focus target", () => {

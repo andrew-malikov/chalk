@@ -1,5 +1,5 @@
-import { fontSize, fontWeight, radius } from "@canvas/scale.stylex";
-import { tokens } from "@canvas/tokens.stylex";
+import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
+import { tokens } from "@canvas/styles/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 
 // An in-page menu: a manual popover that useAnchoredPopover puts in the top

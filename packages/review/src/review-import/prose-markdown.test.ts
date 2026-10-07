@@ -2,18 +2,18 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
-import {
-  LEGACY_REVIEW_FIXTURES_ROOT,
-  listLegacyReviewFixtures,
-} from "@review/fixtures/legacy-reviews/legacy-review-fixture";
-import { selectSource } from "@review/lens-selection";
-import { markdownNodes, parseMarkdown } from "@review/markdown";
-import { sourceReferences } from "@review/review-api/document";
+import { selectSource } from "@review/documents/lens-selection";
+import { markdownNodes, parseMarkdown } from "@review/documents/markdown";
 import {
   type ReviewNode,
   reviewDocumentDataSchema,
   upgradeReviewDocumentJson,
-} from "@review/review-document-data";
+} from "@review/documents/review-document-data";
+import {
+  LEGACY_REVIEW_FIXTURES_ROOT,
+  listLegacyReviewFixtures,
+} from "@review/fixtures/legacy-reviews/legacy-review-fixture";
+import { sourceReferences } from "@review/review-api/document";
 import { describe, expect, it } from "vitest";
 
 import { el, footnoteTraceQuoteSection, text } from "./import-test-utils";

@@ -1,4 +1,4 @@
-import { diffSelectionSchema } from "@review/lens-selection.js";
+import { diffSelectionSchema } from "@review/documents/lens-selection.js";
 
 import { defineBlock, text } from "./definition.js";
 

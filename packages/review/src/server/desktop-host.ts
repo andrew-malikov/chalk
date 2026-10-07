@@ -3,13 +3,13 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
-import { reviewInstanceIdentity } from "@review/desktop-discovery";
 import { findReviewPackageRoot } from "@review/package-paths";
 import { openReviewProfile } from "@review/review-api/profile";
-import { devReviewHome } from "@review/review-home-paths";
-import { ReviewTelemetry } from "@review/review-telemetry";
+import { reviewInstanceIdentity } from "@review/server/desktop-discovery";
 import { SharedReviewStore } from "@review/sharing/import.js";
-import { reviewTelemetryChannel } from "@review/telemetry-config";
+import { devReviewHome } from "@review/storage/review-home-paths";
+import { ReviewTelemetry } from "@review/telemetry/review-telemetry";
+import { reviewTelemetryChannel } from "@review/telemetry/telemetry-config";
 
 import { listenForDesktopHostShutdown } from "./desktop-host-shutdown";
 import { createGlobalReviewServer } from "./desktop-server";

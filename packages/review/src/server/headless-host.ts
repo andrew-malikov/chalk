@@ -12,7 +12,7 @@ import {
   type ReviewServerDiscovery,
   headlessServerLockPath,
   reviewServerDiscoveryPath,
-} from "@review/server-discovery.js";
+} from "@review/server/server-discovery.js";
 import { mountSharingPublisher } from "@review/sharing/host.js";
 
 import { GlobalReviewDesktopVerbRelay } from "./global-verb-relay.js";

@@ -1,4 +1,7 @@
-import { selectSource, sourceAnchors } from "@review/lens-selection.js";
+import {
+  selectSource,
+  sourceAnchors,
+} from "@review/documents/lens-selection.js";
 import { expect, it } from "vitest";
 
 import {

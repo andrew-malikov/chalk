@@ -1,7 +1,7 @@
-import { drawStyles } from "@canvas/draw-styles";
-import { documentMarker } from "@canvas/markers.stylex";
-import { withClass } from "@canvas/stylex-props";
-import { tokens } from "@canvas/tokens.stylex";
+import { drawStyles } from "@canvas/drawing/draw-styles";
+import { documentMarker } from "@canvas/styles/markers.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
+import { tokens } from "@canvas/styles/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 
 const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);

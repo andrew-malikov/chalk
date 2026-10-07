@@ -6,7 +6,7 @@ import path from "node:path";
 import { parseReviewDesktopVerbFrame } from "@dev.fast/review-protocol";
 import { connectReviewApi } from "@review/review-api/agent-client.js";
 import { openLocalReviewStore } from "@review/review-api/local-data.js";
-import { ReviewTelemetry } from "@review/review-telemetry.js";
+import { ReviewTelemetry } from "@review/telemetry/review-telemetry.js";
 import { expect, it } from "vitest";
 
 import { createGlobalReviewServer } from "./desktop-server.js";

@@ -12,7 +12,7 @@ import {
   mountReviewCanvas,
   reviewCanvasThemeClass,
 } from "@canvas/desktop-entry";
-import { createReviewAppSessionId } from "@canvas/tab-dwell-telemetry";
+import { createReviewAppSessionId } from "@canvas/telemetry/tab-dwell-telemetry";
 import {
   REVIEW_CANVAS_RESUME_EVENT,
   REVIEW_DISCORD_URL,

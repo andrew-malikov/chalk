@@ -1,6 +1,6 @@
 import type { NormalizedSoftwareModel } from "@canvas/software-map/model";
 import type { PinnedSoftwareMapData } from "@canvas/software-map/SoftwareMap";
-import { createReviewAppSessionId } from "@canvas/tab-dwell-telemetry";
+import { createReviewAppSessionId } from "@canvas/telemetry/tab-dwell-telemetry";
 import type {
   ReviewCanvasBridge,
   ReviewCanvasDiagnostic,

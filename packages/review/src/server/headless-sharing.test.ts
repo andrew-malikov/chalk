@@ -5,9 +5,9 @@ import path from "node:path";
 import { PassThrough } from "node:stream";
 
 import { shareManifestSchema } from "@dev.fast/review-share-protocol";
-import { runReviewCli } from "@review/cli-runner.js";
+import { runReviewCli } from "@review/cli/cli-runner.js";
 import { ReviewApiClient } from "@review/review-api/client.js";
-import type { ReviewServerDiscovery } from "@review/server-discovery.js";
+import type { ReviewServerDiscovery } from "@review/server/server-discovery.js";
 import * as repository from "@review/sharing/repository.js";
 import { afterEach, expect, it, vi } from "vitest";
 

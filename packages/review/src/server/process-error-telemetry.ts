@@ -21,9 +21,9 @@ import {
   type JsonValue,
   parseJsonText,
 } from "@dev.fast/review-protocol";
-import { mergeErrorTelemetryProperties } from "@review/error-telemetry";
-import { devReviewHome } from "@review/review-home-paths";
-import { sanitizeUiTelemetryEvent } from "@review/ui-telemetry-events";
+import { devReviewHome } from "@review/storage/review-home-paths";
+import { mergeErrorTelemetryProperties } from "@review/telemetry/error-telemetry";
+import { sanitizeUiTelemetryEvent } from "@review/telemetry/ui-telemetry-events";
 
 import {
   type ReviewTelemetryCapture,

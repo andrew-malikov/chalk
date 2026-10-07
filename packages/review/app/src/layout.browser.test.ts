@@ -4,14 +4,18 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { scopeReviewCanvasCss } from "../desktop-css-scope";
-import { MarkdownContent } from "./agent-markdown";
-import { documentStyles } from "./document-styles";
-import { appMarker, documentMarker, proseMarker } from "./markers.stylex";
+import { MarkdownContent } from "./documents/agent-markdown";
+import { documentStyles } from "./documents/document-styles";
 import {
   softwareMapFrameProps,
   softwareMapOverlayProps,
 } from "./software-map/SoftwareMap";
-import { TraceQuote } from "./trace-quote";
+import {
+  appMarker,
+  documentMarker,
+  proseMarker,
+} from "./styles/markers.stylex";
+import { TraceQuote } from "./traces/trace-quote";
 
 import canvasCss from "./styles.css?inline";
 import "./styles.css";

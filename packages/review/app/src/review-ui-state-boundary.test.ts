@@ -8,7 +8,7 @@ describe("review UI state boundary", () => {
   it("keeps browser storage access in the UI state module", () => {
     const root = path.dirname(fileURLToPath(import.meta.url));
     const offenders: string[] = [];
-    const allowed = new Set(["review-ui-state.ts"]);
+    const allowed = new Set(["review/review-ui-state.ts"]);
 
     const walk = (directory: string): void => {
       for (const entry of readdirSync(directory, { withFileTypes: true })) {

@@ -6,25 +6,25 @@ import {
   jsonObject,
   parseJsonText,
 } from "@dev.fast/review-protocol";
+import type { ReviewDocumentData } from "@review/documents/review-document-data";
 import {
   LEGACY_REVIEW_FIXTURES_ROOT,
   extractLegacyReviewFixture,
   listLegacyReviewFixtures,
   normalizeMigratedRecord,
 } from "@review/fixtures/legacy-reviews/legacy-review-fixture";
-import type { Block } from "@review/review-api/document";
 import {
   readReviewDocumentBundle,
   reviewDocumentBundleData,
-} from "@review/review-bundle";
-import type { ReviewDocumentData } from "@review/review-document-data";
-import { materializeReviewRevision } from "@review/review-home";
+} from "@review/publishing/review-bundle";
+import type { Block } from "@review/review-api/document";
 import { legacyDocumentToBlocks } from "@review/review-import/legacy-blocks";
 import {
   type ReviewSoftwareMapBundle,
   readReviewSoftwareMapBundle,
-} from "@review/software-map-bundle";
-import { migrateStoredReview } from "@review/stored-review-migration";
+} from "@review/software-map/software-map-bundle";
+import { materializeReviewRevision } from "@review/storage/review-home";
+import { migrateStoredReview } from "@review/storage/stored-review-migration";
 
 async function writeGolden(
   name: string,

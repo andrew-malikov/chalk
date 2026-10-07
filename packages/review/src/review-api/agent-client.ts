@@ -2,13 +2,13 @@ import {
   healthyReviewInstance,
   reviewInstanceUnavailable,
   selectReviewInstance,
-} from "@review/desktop-discovery.js";
+} from "@review/server/desktop-discovery.js";
 import {
   readReviewServerDiscovery,
   reviewServerIsHealthy,
   reviewServerStateDir,
   serverNotReady,
-} from "@review/server-discovery.js";
+} from "@review/server/server-discovery.js";
 
 import { ReviewApiClient, ReviewApiError } from "./client.js";
 

@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { type JsonObject, isJsonObject } from "@dev.fast/review-protocol";
-import { selectSource } from "@review/lens-selection";
+import { selectSource } from "@review/documents/lens-selection";
 import { ReviewInputError } from "@review/review-api/document.js";
 import { createReviewApi } from "@review/review-api/http.js";
 import { openLocalReviewStore } from "@review/review-api/local-data.js";

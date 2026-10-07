@@ -1,10 +1,10 @@
 import { jsonObject, parseJsonText } from "@dev.fast/review-protocol";
 import type { loadReviewAgentTrace } from "@dev.fast/trace-core";
-import type { ReviewSoftwareMapBundle } from "@review/software-map-bundle";
+import type { ReviewSoftwareMapBundle } from "@review/software-map/software-map-bundle";
 import {
   hydrateSoftwareModel,
   softwareModelDataSchema,
-} from "@review/software-map-model";
+} from "@review/software-map/software-map-model";
 
 type LoadedTrace = NonNullable<
   Awaited<ReturnType<typeof loadReviewAgentTrace>>

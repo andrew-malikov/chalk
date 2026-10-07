@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { selectSource } from "@review/lens-selection";
+import { selectSource } from "@review/documents/lens-selection";
 import type { Block } from "@review/review-api/document";
 import { openLocalReviewStore } from "@review/review-api/local-data";
 import sharp from "sharp";

@@ -8,17 +8,17 @@ import {
   type ReviewApiSummary,
   SCRATCHPAD_REVIEW_ID,
 } from "@dev.fast/review-protocol";
-import { sourceAnchors } from "@review/lens-selection.js";
-import {
-  liftFileLenses,
-  migrateStoredDocument,
-} from "@review/stored-document-migration.js";
+import { sourceAnchors } from "@review/documents/lens-selection.js";
 import {
   type Coverage,
   coverageSchema,
   emptyCoverage,
   updateCoverage,
-} from "@review/viewed-coverage.js";
+} from "@review/documents/viewed-coverage.js";
+import {
+  liftFileLenses,
+  migrateStoredDocument,
+} from "@review/storage/stored-document-migration.js";
 import { z } from "zod";
 
 import { type LeaseScope, ReviewActivity } from "./activity.js";

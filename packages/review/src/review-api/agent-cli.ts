@@ -4,12 +4,12 @@ import { traceMachineEnabled } from "@dev.fast/trace-core";
 import {
   REVIEW_INSTANCE_ENV,
   selectReviewInstance,
-} from "@review/desktop-discovery.js";
-import { devReviewHome } from "@review/review-home-paths.js";
+} from "@review/server/desktop-discovery.js";
+import { devReviewHome } from "@review/storage/review-home-paths.js";
 import {
   type ReviewToolCall,
   reviewSessionAgent,
-} from "@review/review-telemetry.js";
+} from "@review/telemetry/review-telemetry.js";
 
 import {
   type AuthoringTool,

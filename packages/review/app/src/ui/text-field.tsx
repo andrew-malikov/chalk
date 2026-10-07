@@ -1,7 +1,7 @@
 import { Input } from "@canvas/components/ui/input";
-import { fontSize, radius } from "@canvas/scale.stylex";
-import { type StyleArg, withClass } from "@canvas/stylex-props";
-import { tokens } from "@canvas/tokens.stylex";
+import { fontSize, radius } from "@canvas/styles/scale.stylex";
+import { type StyleArg, withClass } from "@canvas/styles/stylex-props";
+import { tokens } from "@canvas/styles/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import type { ComponentProps } from "react";
 

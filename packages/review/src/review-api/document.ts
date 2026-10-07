@@ -2,18 +2,18 @@ import {
   type LensSource,
   selectSource,
   sourceAnchors,
-} from "@review/lens-selection.js";
+} from "@review/documents/lens-selection.js";
 import {
   markdownNodes,
   markdownText,
   parseMarkdown,
-} from "@review/markdown.js";
+} from "@review/documents/markdown.js";
 import {
   type FileLineRange,
   type SourcePins,
   fileLineRangeSchema,
   sourcePinsSchema,
-} from "@review/source.js";
+} from "@review/documents/source.js";
 import { z } from "zod";
 
 import {

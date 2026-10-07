@@ -1,4 +1,4 @@
-import { tokens } from "@canvas/tokens.stylex";
+import { tokens } from "@canvas/styles/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 
 export function ProgressRing({

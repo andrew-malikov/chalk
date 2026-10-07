@@ -7,9 +7,8 @@ import {
   type StructuralVisibility,
   structuralRows,
 } from "@dev.fast/review-protocol";
-import type { AlignmentRow } from "@review/lens-selection.js";
-import type { FileLineRange } from "@review/source.js";
-import { parseUnifiedPatch } from "@review/unified-diff.js";
+import type { AlignmentRow } from "@review/documents/lens-selection.js";
+import type { FileLineRange } from "@review/documents/source.js";
 import {
   type Coverage,
   type CoverageFile,
@@ -18,7 +17,8 @@ import {
   intersectIntervals,
   subtractIntervals,
   unionIntervals,
-} from "@review/viewed-coverage.js";
+} from "@review/documents/viewed-coverage.js";
+import { parseUnifiedPatch } from "@review/vcs/unified-diff.js";
 
 import type { Pins } from "./document.js";
 import { textualRows } from "./lens-alignment.js";

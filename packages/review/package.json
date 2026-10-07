@@ -58,8 +58,8 @@
     "fixtures:legacy-review-goldens": "bun scripts/generate-legacy-review-goldens.ts",
     "test": "bun --bun run vitest run --config vitest.config.ts",
     "test:node": "bun --bun run vitest run --config vitest.config.ts --project shared-module-graph",
-    "test:legacy-corpus": ": \"${REVIEW_LEGACY_CORPUS:?set REVIEW_LEGACY_CORPUS to a directory of legacy Review UUID folders}\" && bun --bun run vitest run --config vitest.config.ts src/legacy-review-corpus.test.ts",
-    "test:telemetry-privacy": "bun --bun run vitest run --config vitest.config.ts src/ui-telemetry-events.test.ts src/error-telemetry.test.ts",
+    "test:legacy-corpus": ": \"${REVIEW_LEGACY_CORPUS:?set REVIEW_LEGACY_CORPUS to a directory of legacy Review UUID folders}\" && bun --bun run vitest run --config vitest.config.ts src/review-import/legacy-review-corpus.test.ts",
+    "test:telemetry-privacy": "bun --bun run vitest run --config vitest.config.ts src/telemetry/ui-telemetry-events.test.ts src/telemetry/error-telemetry.test.ts",
     "typecheck": "bun --bun run tsc --noEmit -p ../review",
     "test:integration:diffr": "bun run build:workspace-deps && bun run ensure:diffr --required && bun --bun run vitest run --config vitest.integration.config.ts",
     "blackboard": "bun src/cli.ts"

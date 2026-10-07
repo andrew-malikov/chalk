@@ -1,6 +1,11 @@
-import { fontSize, fontWeight, radius, tracking } from "@canvas/scale.stylex";
-import { type StyleArg, withClass } from "@canvas/stylex-props";
-import { tokens } from "@canvas/tokens.stylex";
+import {
+  fontSize,
+  fontWeight,
+  radius,
+  tracking,
+} from "@canvas/styles/scale.stylex";
+import { type StyleArg, withClass } from "@canvas/styles/stylex-props";
+import { tokens } from "@canvas/styles/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import type { ComponentProps } from "react";
 

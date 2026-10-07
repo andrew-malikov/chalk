@@ -15,7 +15,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { runPrepareCommand } from "@review/review-prepare.js";
+import { runPrepareCommand } from "@review/vcs/review-prepare.js";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { z } from "zod";
 

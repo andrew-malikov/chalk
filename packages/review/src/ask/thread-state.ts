@@ -1,4 +1,4 @@
-import { AgentSelectionSchema } from "@review/agent-selection.js";
+import { AgentSelectionSchema } from "@review/ask/agent-selection.js";
 import { z } from "zod";
 
 // The canvas imports this module, so it stays free of Node APIs.

@@ -24,7 +24,7 @@ import {
   shareIdSchema,
   shareManifestSchema,
 } from "@dev.fast/review-share-protocol";
-import { textIncludesQuote } from "@review/evidence.js";
+import { textIncludesQuote } from "@review/documents/evidence.js";
 import { lensSchema } from "@review/review-api/diff-lenses.js";
 import { ReviewInputError } from "@review/review-api/document.js";
 import {
@@ -41,11 +41,11 @@ import { traceSchema } from "@review/review-api/trace-schema.js";
 import {
   normalizedSoftwareElementSchema,
   normalizedSoftwareRelationshipSchema,
-} from "@review/software-map-model.js";
+} from "@review/software-map/software-map-model.js";
 import {
   liftFileLenses,
   migrateStoredDocument,
-} from "@review/stored-document-migration.js";
+} from "@review/storage/stored-document-migration.js";
 import { z } from "zod";
 
 import {

@@ -6,11 +6,11 @@ import path from "node:path";
 
 import { git, gitCommonDir } from "@dev.fast/local-vcs";
 import { errorMessage, processIsAlive } from "@dev.fast/trace-core";
-import { reviewManagedCheckoutRoot } from "@review/review-checkout-paths.js";
+import { reviewManagedCheckoutRoot } from "@review/vcs/review-checkout-paths.js";
 import {
   ensureReviewPinnedCheckout,
   removeReviewManagedCheckouts,
-} from "@review/review-head-checkout.js";
+} from "@review/vcs/review-head-checkout.js";
 import {
   markerMatches,
   prepareReviewPinnedCheckout,
@@ -18,7 +18,7 @@ import {
   reviewPrepareCommandsHash,
   reviewPrepareLogPath,
   reviewPrepareMarkerPath,
-} from "@review/review-prepare.js";
+} from "@review/vcs/review-prepare.js";
 
 import { type Pins, ReviewInputError } from "./document.js";
 import type { ReviewStore } from "./store.js";

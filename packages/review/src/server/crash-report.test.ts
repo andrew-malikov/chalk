@@ -5,7 +5,7 @@ import path from "node:path";
 import { gunzipSync } from "node:zlib";
 
 import { openLocalReviewStore } from "@review/review-api/local-data";
-import { ReviewTelemetry } from "@review/review-telemetry";
+import { ReviewTelemetry } from "@review/telemetry/review-telemetry";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {

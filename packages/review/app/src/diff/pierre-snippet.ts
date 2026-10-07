@@ -1,7 +1,7 @@
 import {
   compileReviewFindQuery,
   regularExpressionMatches,
-} from "@canvas/review-find-query";
+} from "@canvas/review/review-find-query";
 import type {
   ReviewDiffSide,
   ReviewFindQuery,

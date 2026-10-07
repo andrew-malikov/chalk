@@ -11,7 +11,7 @@ import {
   type AgentSelection,
   AgentSelectionSchema,
   selectionMarkdown,
-} from "@review/agent-selection.js";
+} from "@review/ask/agent-selection.js";
 import type { AskAgentStatus } from "@review/ask/agents.js";
 import { checkoutFiles, mentionableFiles } from "@review/ask/checkout-files.js";
 import { parseFileRef, resolveFileRefs } from "@review/ask/file-refs.js";
@@ -24,8 +24,8 @@ import {
 } from "@review/ask/thread-state.js";
 import type { AskThreads } from "@review/ask/threads.js";
 import { watchAskThread } from "@review/ask/watch.js";
-import { fuzzyRank } from "@review/fuzzy-match.js";
-import { resolveReviewStackLayers } from "@review/review-stack.js";
+import { scopedCoverage } from "@review/documents/viewed-coverage.js";
+import { fuzzyRank } from "@review/lib/fuzzy-match.js";
 import { readBoundedRequestJson } from "@review/server/hono-http.js";
 import { HttpJsonError } from "@review/server/http-json.js";
 import {
@@ -34,8 +34,8 @@ import {
 } from "@review/sharing/host.js";
 import type { SharedReviewStore } from "@review/sharing/import.js";
 import { SharedReviewData } from "@review/sharing/routes.js";
-import type { ReviewSessionAgent } from "@review/ui-telemetry-events.js";
-import { scopedCoverage } from "@review/viewed-coverage.js";
+import type { ReviewSessionAgent } from "@review/telemetry/ui-telemetry-events.js";
+import { resolveReviewStackLayers } from "@review/vcs/review-stack.js";
 import { type Context, Hono, type MiddlewareHandler } from "hono";
 import { z } from "zod";
 

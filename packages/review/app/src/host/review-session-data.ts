@@ -1,4 +1,4 @@
-import type { LoadedAgentTrace } from "@canvas/use-agent-trace";
+import type { LoadedAgentTrace } from "@canvas/traces/use-agent-trace";
 import type { ReviewStackLayer } from "@dev.fast/review-protocol";
 
 export interface ReviewSessionData {

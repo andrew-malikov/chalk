@@ -8,7 +8,10 @@ import type {
   StructuralDiffEvent,
   StructuralRegion,
 } from "@dev.fast/review-protocol";
-import { coverageProgress, coverageSources } from "@review/viewed-coverage.js";
+import {
+  coverageProgress,
+  coverageSources,
+} from "@review/documents/viewed-coverage.js";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { ReviewApiClient } from "./client.js";

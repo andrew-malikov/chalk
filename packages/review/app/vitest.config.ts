@@ -95,8 +95,10 @@ export default defineConfig({
             deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
           },
           name: "browser",
+          maxWorkers: 1,
           include: ["src/**/*.browser.test.{ts,tsx}"],
-          isolate: process.env.CI === "true",
+          // Keep module mocks and browser state scoped to each test file.
+          isolate: true,
           setupFiles: ["src/browser-test-setup.ts"],
           testTimeout: 15_000,
           browser: {

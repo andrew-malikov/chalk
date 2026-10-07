@@ -6,14 +6,14 @@ import { createServer } from "node:http";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { afterAll, beforeAll, describe, test } from "vitest";
-
-import { stageDiffrBinary } from "../../../scripts/stage-review-assets.mjs";
 import {
   cleanupTempDirs,
   gitRepository,
   tempDir,
-} from "../src/review-test-utils.ts";
+} from "@review/test/review-test-utils.ts";
+import { afterAll, beforeAll, describe, test } from "vitest";
+
+import { stageDiffrBinary } from "../../../scripts/stage-review-assets.mjs";
 
 let structuralDiff,
   readDiffrConfig,

@@ -1,4 +1,4 @@
-import { loadElk } from "@canvas/elk";
+import { loadElk } from "@canvas/diagrams/elk";
 import {
   type ElkGraph as LibavoidElkGraph,
   init as initLibavoidEdgeRouter,

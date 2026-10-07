@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { selectionKey } from "@review/lens-selection";
+import { selectionKey } from "@review/documents/lens-selection";
 import { expect, it } from "vitest";
 
 import { createReviewApi } from "./http";

@@ -1,3 +1,8 @@
+import { AgentSelectionProvider } from "@canvas/ask/agent-selection";
+import { ReviewDiffFilesProvider } from "@canvas/review/review-diff-files-context";
+import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
+import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import * as clipboard from "@canvas/ui/copy-text";
 import type {
   ReviewDiffFileWire,
   ReviewDiffLens,
@@ -7,15 +12,10 @@ import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
-import { AgentSelectionProvider } from "../agent-selection";
-import { TestCanvasQuery } from "../canvas-query-test-utils";
-import * as clipboard from "../copy-text";
 import { ReviewSessionProvider } from "../host/review-session";
-import { ReviewDiffFilesProvider } from "../review-diff-files-context";
-import { testReviewSession } from "../review-session-test-utils";
 import { PierreDiffView } from "./PierreDiffView";
 
-vi.mock("../copy-text", () => ({ copyText: vi.fn(async () => true) }));
+vi.mock("@canvas/ui/copy-text", () => ({ copyText: vi.fn(async () => true) }));
 
 let root: ReturnType<typeof createRoot> | undefined;
 afterEach(async () => {

@@ -2,7 +2,7 @@ import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { selectSource } from "@review/lens-selection";
+import { selectSource } from "@review/documents/lens-selection";
 import {
   elements,
   resourceReferences,
