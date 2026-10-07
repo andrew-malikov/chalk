@@ -36,8 +36,8 @@ V8: Local reviews expose no GitLab panel/mutations. Historical/shared reviews ca
 
 id|status|goal|cites
 ---|---|---|---
-T1|.|GitLab protocol, URL/transport/source mapping + meaningful tests|V1,V5,V7,I.create,I.ui
-T2|.|Durable GitLab state + posting/refresh service + managed MR creation + API tests|V2,V3,V4,V5,V6,V7,I.create,I.state,I.drafts,I.post
+T1|x|GitLab protocol, URL/transport/source mapping + meaningful tests|V1,V5,V7,I.create,I.ui
+T2|~|Durable GitLab state + posting/refresh service + managed MR creation + API tests|V2,V3,V4,V5,V6,V7,I.create,I.state,I.drafts,I.post
 T3|.|Integrate production discussions panel, selection drafting, code markers/navigation + interaction tests|V3,V5,V8,I.ui
 T4|.|Run affected tests, typecheck, lint, build + whole-suite regression checks; record limits|V1,V2,V3,V4,V5,V6,V7,V8
 
