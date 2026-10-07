@@ -5,6 +5,7 @@ import {
   REVIEW_CLIENT_HEADER,
   REVIEW_CLIENT_REMOTE,
   type ReviewStructuralDiffEvent,
+  gitLabSaveDraftSchema,
 } from "@dev.fast/review-protocol";
 import { errorMessage } from "@dev.fast/trace-core";
 import {
@@ -322,6 +323,87 @@ export function createReviewApi(
     return context.json(
       await renderInstructions(topic, await instructionContext()),
     );
+  });
+  app.get("/:id/gitlab", (context) =>
+    context.json(store.gitlab.read(context.req.param("id"))),
+  );
+  app.post("/:id/gitlab/:action", async (context) => {
+    if (!data)
+      throw new ReviewInputError("GitLab source service is unavailable.", 409);
+    const id = context.req.param("id");
+
+    if (isShared(id))
+      throw new ReviewInputError("Shared reviews cannot modify GitLab.", 409);
+    const snapshot = store.read(id);
+    const version = context.req.query("version");
+
+    if (
+      snapshot.shared ||
+      (version !== undefined && Number(version) !== snapshot.version)
+    )
+      throw new ReviewInputError(
+        "Historical or shared reviews cannot modify GitLab. Open the current review.",
+        409,
+      );
+
+    if (!snapshot.origin?.gitlab)
+      throw new ReviewInputError("This review has no GitLab MR.", 404);
+    const action = context.req.param("action");
+
+    if (action === "refresh")
+      return context.json(await data.gitlab.refresh(id));
+    const input = await readBoundedRequestJson(context.req.raw);
+
+    if (action === "drafts")
+      return context.json(
+        await data.gitlab.save(id, gitLabSaveDraftSchema.parse(input)),
+      );
+    const draftInput = z.strictObject({ id: z.uuid() });
+
+    if (action === "discard") {
+      store.gitlab.discard(id, draftInput.parse(input).id);
+
+      return context.json(store.gitlab.read(id));
+    }
+
+    if (action === "post")
+      return context.json(
+        await data.gitlab.post(
+          id,
+          z.strictObject({ id: z.uuid().optional() }).parse(input).id,
+        ),
+      );
+
+    if (action === "resolve")
+      return context.json(
+        await data.gitlab.resolve(
+          id,
+          z.strictObject({ discussionId: z.string().min(1) }).parse(input)
+            .discussionId,
+        ),
+      );
+
+    if (action === "recover") {
+      const recovery = z
+        .strictObject({
+          id: z.uuid(),
+          verified: z.literal(true),
+          posted: z.boolean(),
+          noteId: z.number().int().positive().optional(),
+        })
+        .parse(input);
+
+      return context.json(
+        await data.gitlab.recover(
+          id,
+          recovery.id,
+          recovery.posted,
+          recovery.noteId,
+        ),
+      );
+    }
+
+    throw new ReviewInputError("Unknown GitLab action.", 404);
   });
   app.get("/:id/progress", async (context) => {
     if (!data) throw new ReviewInputError("Source data is unavailable.", 409);

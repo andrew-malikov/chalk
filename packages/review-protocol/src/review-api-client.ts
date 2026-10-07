@@ -1,5 +1,7 @@
 import type { JsonValue } from "@dev.fast/json";
 
+import type { GitLabIdentity } from "./gitlab.js";
+
 /** List metadata for the authenticated local catalog; document contents stay in snapshots. */
 export interface ReviewApiSummary {
   reviewId: string;
@@ -24,6 +26,7 @@ export interface ReviewApiSummary {
   firstCreatedAt?: string;
   /** Import and managed-document metadata retained on full snapshots. */
   origin?: {
+    gitlab?: GitLabIdentity;
     tutorial?: boolean;
     branch?: string;
     baseRef?: string;

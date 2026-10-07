@@ -137,6 +137,21 @@ const positionSchema = remoteRefsSchema.extend({
   old_line: z.number().int().positive().nullable().optional(),
   new_line: z.number().int().positive().nullable().optional(),
   position_type: z.string().optional(),
+  line_range: z
+    .object({
+      start: z.object({
+        type: z.enum(["new", "old"]),
+        old_line: z.number().int().positive().nullable().optional(),
+        new_line: z.number().int().positive().nullable().optional(),
+      }),
+      end: z.object({
+        type: z.enum(["new", "old"]),
+        old_line: z.number().int().positive().nullable().optional(),
+        new_line: z.number().int().positive().nullable().optional(),
+      }),
+    })
+    .nullable()
+    .optional(),
 });
 
 const noteSchema = z.object({
@@ -170,6 +185,7 @@ export class GitLabClient {
 
     if (input)
       args.push("--input", "-", "--header", "Content-Type: application/json");
+
     const text = await this.run("glab", args, {
       timeoutMs: 30_000,
       input: input ? JSON.stringify(input) : undefined,
@@ -229,7 +245,15 @@ export class GitLabClient {
 
         if (!notes.length) continue;
         const remote = notes.find((note) => note.position)?.position;
-        const side = remote?.new_line ? "head" : "base";
+
+        const side = remote?.line_range
+          ? remote.line_range.end.type === "new"
+            ? "head"
+            : "base"
+          : remote?.new_line
+            ? "head"
+            : "base";
+
         const line = remote?.new_line ?? remote?.old_line;
         result.push({
           id: discussion.id,
@@ -250,8 +274,14 @@ export class GitLabClient {
                   oldPath: remote.old_path,
                   newPath: remote.new_path,
                   side,
-                  from: line,
-                  to: line,
+                  from:
+                    (side === "head"
+                      ? remote.line_range?.start.new_line
+                      : remote.line_range?.start.old_line) ?? line,
+                  to:
+                    (side === "head"
+                      ? remote.line_range?.end.new_line
+                      : remote.line_range?.end.old_line) ?? line,
                 }
               : undefined,
           comments: notes.map((note) => ({
@@ -275,10 +305,12 @@ export class GitLabClient {
     position?: GitLabPosition,
   ) {
     const route = `projects/${projectId}/merge_requests/${iid}/discussions`;
+
     const input = {
       body,
       ...(position && { position: remotePosition(position) }),
     };
+
     const response = await this.request(
       discussionId
         ? `${route}/${encodeURIComponent(discussionId)}/notes`
@@ -286,6 +318,7 @@ export class GitLabClient {
       "POST",
       input,
     );
+
     const parsed = (discussionId ? noteSchema : discussionSchema).safeParse(
       response,
     );
@@ -321,6 +354,7 @@ export class GitLabClient {
 function remotePosition(position: GitLabPosition) {
   const file = position.side === "head" ? position.newPath : position.oldPath;
   const hash = createHash("sha1").update(file).digest("hex");
+
   const entry = (number: number, opposite: number | undefined) => ({
     type: position.side === "head" ? "new" : "old",
     line_code: `${hash}_${position.side === "base" ? number : (opposite ?? 0)}_${position.side === "head" ? number : (opposite ?? 0)}`,

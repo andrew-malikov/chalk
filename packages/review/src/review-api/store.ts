@@ -5,6 +5,8 @@ import { isDeepStrictEqual } from "node:util";
 
 import { resolveRepoContextSync } from "@dev.fast/local-vcs";
 import {
+  type GitLabIdentity,
+  type GitLabState,
   type ReviewApiSummary,
   SCRATCHPAD_REVIEW_ID,
 } from "@dev.fast/review-protocol";
@@ -54,6 +56,8 @@ import {
   sourceReferences,
   summarizeEdit,
 } from "./document.js";
+import { GitLabStorage } from "./gitlab-state.js";
+import { mergeRequestUrlSchema } from "./gitlab.js";
 import { pullRequestKey, pullRequestUrl, setPullRequest } from "./origin.js";
 
 const reviewId = z.string().min(1);
@@ -91,6 +95,11 @@ export const commandSchema = z.strictObject({
       pins: pinsSchema.optional(),
       target: reviewTargetSchema.optional(),
       pullRequestUrl: pullRequestUrl.optional(),
+      mergeRequestUrl: mergeRequestUrlSchema
+        .optional()
+        .describe(
+          "GitLab MR URL; uses an independent managed clone and reopens the same MR review. Requires glab and Git authentication.",
+        ),
       /** With pullRequestUrl and no target: the checkout to fetch the PR into. */
       repositoryId: z
         .string()
@@ -148,6 +157,7 @@ export interface LegacyImportProgress {
 
 /** Source identity displayed in the review header and Home, alongside immutable pins. */
 export interface SnapshotOrigin {
+  gitlab?: GitLabIdentity;
   /** Managed tutorial; readable by ID but excluded from the user catalog. */
   tutorial?: boolean;
   branch?: string;
@@ -227,6 +237,9 @@ export interface ResolvedPullRequest {
 }
 
 export interface ReviewProviders {
+  resolveMergeRequest?(
+    url: string,
+  ): Promise<ResolvedPullRequest & { gitlab: GitLabState }>;
   headBranch?(pins: Pins, headRef?: string): Promise<string | undefined>;
   projectSource?(snapshot: Snapshot, pins: Pins): Promise<Snapshot>;
   /** Fetch a PR into a registered checkout: the named one, else the first
@@ -266,6 +279,7 @@ export interface ReviewProviders {
 export class ReviewStore {
   readonly activity: ReviewActivity;
   readonly askHistory: AskHistory;
+  readonly gitlab: GitLabStorage;
   private readonly db: Database;
   private pending: Promise<unknown> = Promise.resolve();
   private closing = false;
@@ -462,6 +476,7 @@ export class ReviewStore {
     this.db.exec("DROP TABLE IF EXISTS authoring_drafts");
     this.activity = new ReviewActivity(this.db, (id) => this.assertExists(id));
     this.askHistory = new AskHistory(this.db);
+    this.gitlab = new GitLabStorage(this.db);
 
     // Homes written before map resumption lack the column.
     if (
@@ -1041,6 +1056,32 @@ export class ReviewStore {
 
     // Network and fetch time stay out of the write queue. A replayed command
     // never uses this: its receipt answers first, below.
+    if (
+      command.operation.type === "create" &&
+      command.operation.mergeRequestUrl &&
+      (command.operation.pins ||
+        command.operation.target ||
+        command.operation.repositoryId ||
+        command.operation.pullRequestUrl ||
+        command.operation.kind ||
+        command.operation.reuseExisting === false)
+    )
+      throw new ReviewInputError(
+        "mergeRequestUrl cannot be combined with local source, GitHub PR, scratchpad, or reuseExisting:false.",
+      );
+
+    const mergeRequest =
+      command.operation.type === "create" &&
+      command.operation.mergeRequestUrl &&
+      !this.db
+        .query("SELECT 1 FROM receipts WHERE command_id=?")
+        .get(command.commandId)
+        ? this.providers.resolveMergeRequest?.(
+            command.operation.mergeRequestUrl,
+          )
+        : undefined;
+
+    mergeRequest?.catch(() => {});
     const pullRequest = this.startPullRequest(command);
 
     pullRequest?.catch(() => {});
@@ -1104,7 +1145,7 @@ export class ReviewStore {
             "Supply exactly one of target or legacy pins.",
           );
 
-        if (!op.pins && !op.target && !op.pullRequestUrl)
+        if (!op.pins && !op.target && !op.pullRequestUrl && !op.mergeRequestUrl)
           throw new ReviewInputError(
             "Supply a target, legacy pins, or a pullRequestUrl.",
           );
@@ -1123,7 +1164,31 @@ export class ReviewStore {
           ? op.target
           : undefined;
 
-      const fromPullRequest = await pullRequest;
+      const fromMergeRequest = await mergeRequest;
+
+      if (op.type === "create" && op.mergeRequestUrl && !fromMergeRequest)
+        throw new ReviewInputError("GitLab MR targets are unavailable.");
+
+      if (fromMergeRequest) {
+        const existing = this.gitlab.find(fromMergeRequest.gitlab.identity);
+
+        if (existing) {
+          const result: Result = {
+            reviewId: existing,
+            version: this.read(existing).version,
+          };
+
+          this.db
+            .query(
+              "INSERT INTO receipts(command_id,request,response) VALUES(?,?,?)",
+            )
+            .run(command.commandId, request, JSON.stringify(result));
+
+          return result;
+        }
+      }
+
+      const fromPullRequest = fromMergeRequest ?? (await pullRequest);
 
       const resolvedTarget = requestedTarget
         ? await this.providers.resolveTarget?.(requestedTarget)
@@ -1173,6 +1238,7 @@ export class ReviewStore {
           result,
           () => {
             for (const table of [
+              "gitlab_reviews",
               "ask_conversations",
               "authoring_sessions",
               "review_coverage",
@@ -1305,6 +1371,11 @@ export class ReviewStore {
               assignFreshIds(block, (prefix) => `${prefix}-${++nextId}`);
           }
 
+          if (fromMergeRequest)
+            snapshot.origin = {
+              ...snapshot.origin,
+              gitlab: fromMergeRequest.gitlab.identity,
+            };
           setPullRequest(snapshot, op.pullRequestUrl);
           break;
         case "rename":
@@ -1458,6 +1529,8 @@ export class ReviewStore {
               "INSERT INTO reviews(id,version,next_id) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,next_id=excluded.next_id",
             )
             .run(id, snapshot.version, nextId);
+
+          if (fromMergeRequest) this.gitlab.seed(id, fromMergeRequest.gitlab);
           this.db
             .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
               "INSERT INTO versions(review_id,version,snapshot) VALUES(?,?,?)",

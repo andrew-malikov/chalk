@@ -71,6 +71,7 @@ import {
   pinsSchema,
   sourceReferences,
 } from "./document.js";
+import { type GitLabOptions, GitLabReviews } from "./gitlab-reviews.js";
 import { decodeImage } from "./image-decode.js";
 import { mapInputSchema } from "./map-input.js";
 import { budgetPatches } from "./numbered-patch.js";
@@ -151,6 +152,7 @@ interface RepositoryVcs {
 
 /** Local source/resource boundary, including Desktop-only local language context. */
 export class LocalReviewData {
+  readonly gitlab: GitLabReviews;
   private readonly workspaceManager?: ReviewWorkspaces;
 
   get workspaces(): ReviewWorkspaces {
@@ -537,8 +539,11 @@ export class LocalReviewData {
       watch?: typeof watch;
       /** gh, git and GitHub API access for pull request targets. */
       pullRequests?: PullRequestDeps;
+      gitlab?: GitLabOptions;
     } = {},
   ) {
+    this.gitlab = new GitLabReviews(store, options.gitlab);
+
     if (options.manageWorkspaces !== false)
       this.workspaceManager = new ReviewWorkspaces(
         options.workspaceDatabase ?? ":memory:",
@@ -1435,16 +1440,20 @@ export class LocalReviewData {
   /** One complete Git patch for a renderer; never number or truncate its rows. */
   async rawFilePatch(pins: Pins, file: string, contextLines?: number) {
     checkRelativePath(file);
+
     const summary = (await this.summaries(pins)).find(
       (entry) => entry.path === file || entry.previousPath === file,
     );
+
     if (!summary) return "";
+
     const patch = await this.rawPatch(pins, {
       paths: summary.previousPath
         ? [summary.previousPath, summary.path]
         : [summary.path],
       contextLines,
     });
+
     // Even a literal Git pathspec includes descendants if a file becomes a directory.
     return splitGitPatchFiles(patch)
       .filter(
@@ -1815,10 +1824,12 @@ export function openLocalReviewStore(
     manageWorkspaces?: boolean;
     watch?: typeof watch;
     pullRequests?: PullRequestDeps;
+    gitlab?: GitLabOptions;
   } = {},
 ) {
   const store: ReviewStore = new ReviewStore(databasePath, {
     projectSource: (snapshot, pins) => data.projectSource(snapshot, pins),
+    resolveMergeRequest: (url) => data.gitlab.create(url),
     resolveTarget: (target, pinned) => data.resolveTarget(target, pinned),
     resolvePullRequest: (url, repository) =>
       data.resolvePullRequest(url, repository),
