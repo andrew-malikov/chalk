@@ -18,6 +18,7 @@ export function MissingCheckoutBanner({
       action={
         !submissionOutcome && (
           <Button
+            loading={busy}
             disabled={busy}
             onClick={async () => {
               setBusy(true);

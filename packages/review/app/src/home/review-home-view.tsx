@@ -427,6 +427,7 @@ function RestoreReviewButton({ review }: { review: ReviewApiSummary }) {
   return (
     <Button
       xstyle={styles.restore}
+      loading={busy}
       disabled={busy}
       onClick={(event) => {
         event.stopPropagation();
@@ -817,6 +818,7 @@ function DismissReviewButton({ review }: { review: ReviewApiSummary }) {
       xstyle={styles.dismiss}
       aria-label={`Dismiss ${title}`}
       title="Dismiss session"
+      loading={busy}
       disabled={busy}
       onKeyDown={(event) => event.stopPropagation()}
       onClick={(event) => {
@@ -848,6 +850,7 @@ function DeleteReviewButton({
       xstyle={styles.delete}
       aria-label={`Delete ${reviewTitle(review)}`}
       title="Delete session"
+      loading={busy}
       disabled={busy || !ui?.confirmDelete}
       onKeyDown={(event) => event.stopPropagation()}
       onClick={(event) => {

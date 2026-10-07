@@ -39,7 +39,7 @@ credentials that can clone the project. The configured glab Git protocol selects
 SSH or HTTPS. Set `BLACKBOARD_GITLAB_CLONES_DIR` before starting the host to choose
 where new MR clones go; existing reviews retain their registered checkout paths.
 
-Open **GitLab discussions** in the review toolbar. The panel shows the account,
+Open **Discussions** on the right of the review toolbar. The panel shows the account,
 host, open threads, expandable resolved threads, and durable local drafts. Select
 code and choose **GitLab comment** to draft inline. **Post** and **Post all** send
 comments; **Resolve** preserves the reply draft. Refresh runs on opening and from

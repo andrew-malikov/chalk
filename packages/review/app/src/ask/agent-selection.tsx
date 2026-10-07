@@ -374,21 +374,28 @@ export function AgentSelectionProvider({
                             )
                               return;
                             const target = selection.target;
-                            gitlab.compose({
-                              kind: "inline",
-                              position: {
-                                ...gitlab.state.refs,
-                                oldPath:
-                                  selection.selectedDiff?.oldPath ||
-                                  target.path,
-                                newPath:
-                                  selection.selectedDiff?.newPath ||
-                                  target.path,
-                                side: target.side,
-                                from: target.startLine,
-                                to: target.endLine,
+                            gitlab.compose(
+                              {
+                                kind: "inline",
+                                position: {
+                                  ...gitlab.state.refs,
+                                  oldPath:
+                                    selection.selectedDiff?.oldPath ||
+                                    target.path,
+                                  newPath:
+                                    selection.selectedDiff?.newPath ||
+                                    target.path,
+                                  side: target.side,
+                                  from: target.startLine,
+                                  to: target.endLine,
+                                },
                               },
-                            });
+                              selection.anchorContainer?.closest(
+                                "[data-pierre-diff]",
+                              )
+                                ? "inline"
+                                : "panel",
+                            );
                             select(null);
                           }}
                         >

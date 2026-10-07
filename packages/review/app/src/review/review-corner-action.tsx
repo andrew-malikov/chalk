@@ -57,7 +57,7 @@ export function ReviewCornerAction(): ReactElement | null {
 
   return (
     <div ref={control} {...stylex.props(shellStyles.topbarItem, styles.action)}>
-      <Button disabled={busy} onClick={() => void dismiss()}>
+      <Button loading={busy} disabled={busy} onClick={() => void dismiss()}>
         <ArchiveIcon xstyle={styles.icon} />
         <span>Dismiss</span>
       </Button>

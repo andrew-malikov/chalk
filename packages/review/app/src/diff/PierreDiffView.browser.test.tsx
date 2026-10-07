@@ -1,9 +1,11 @@
 import { AgentSelectionProvider } from "@canvas/ask/agent-selection";
+import { GitLabProvider } from "@canvas/gitlab/gitlab-context";
+import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDiffFilesProvider } from "@canvas/review/review-diff-files-context";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
-import * as clipboard from "@canvas/ui/copy-text";
 import type {
+  GitLabState,
   ReviewDiffFileWire,
   ReviewDiffLens,
 } from "@dev.fast/review-protocol";
@@ -12,18 +14,222 @@ import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
-import { ReviewSessionProvider } from "../host/review-session";
 import { PierreDiffView } from "./PierreDiffView";
 
-vi.mock("@canvas/ui/copy-text", () => ({ copyText: vi.fn(async () => true) }));
-
 let root: ReturnType<typeof createRoot> | undefined;
+
 afterEach(async () => {
   await act(async () => root?.unmount());
   root = undefined;
   document.body.replaceChildren();
   localStorage.clear();
   vi.restoreAllMocks();
+});
+
+it("reads and replies to GitLab threads inside the diff, preserves failed saves, and resolves without losing drafts", async () => {
+  const file: ReviewDiffFileWire = {
+    path: "new.ts",
+    previousPath: "old.ts",
+    status: "renamed",
+    additions: 1,
+    deletions: 1,
+  };
+
+  const state: GitLabState = {
+    identity: {
+      host: "gitlab.test",
+      url: "https://gitlab.test/a/b/-/merge_requests/1",
+      projectId: 1,
+      projectPath: "a/b",
+      iid: 1,
+      cloneUrl: "https://gitlab.test/a/b.git",
+    },
+    account: { id: 7, username: "andrew", name: "Andrew" },
+    refs: {
+      baseSha: "a".repeat(40),
+      startSha: "a".repeat(40),
+      headSha: "b".repeat(40),
+    },
+    discussions: [
+      {
+        id: "thread",
+        resolved: false,
+        resolvable: true,
+        location: { file: "old.ts", side: "base", from: 1, to: 1 },
+        comments: [
+          {
+            id: 1,
+            body: "Can we preserve this behavior?",
+            author: { id: 8, username: "reviewer", name: "Reviewer" },
+            createdAt: "2026-10-07T10:00:00Z",
+          },
+        ],
+      },
+      {
+        id: "general",
+        resolved: false,
+        resolvable: false,
+        comments: [
+          {
+            id: 2,
+            body: "General review feedback",
+            author: { id: 8, username: "reviewer", name: "Reviewer" },
+            createdAt: "2026-10-07T10:00:00Z",
+          },
+        ],
+      },
+    ],
+    drafts: [],
+  };
+
+  const session = testReviewSession(
+    {},
+    {
+      diffView: { files: async () => [file] },
+      request: async () =>
+        new Response(
+          "diff --git a/old.ts b/new.ts\n--- a/old.ts\n+++ b/new.ts\n@@ -1 +1 @@\n-before\n+after\n",
+        ),
+    },
+  );
+
+  session.review = {
+    ...session.review!,
+    gitlab: state.identity,
+    pins: {
+      ...session.review!.pins!,
+      base: state.refs.baseSha,
+      head: state.refs.headSha,
+    },
+  };
+  let failSave = true;
+  const posts: string[] = [];
+  session.fetch = async (endpoint, init) => {
+    const input = init?.body ? JSON.parse(String(init.body)) : {};
+
+    if (endpoint === "/gitlab/drafts") {
+      if (failSave)
+        return Response.json({ error: "Disk unavailable" }, { status: 409 });
+      const previous = state.drafts.find((d) => d.id === input.id);
+
+      const draft = {
+        ...input,
+        status: "saved",
+        version: (previous?.version ?? 0) + 1,
+      };
+
+      state.drafts = [...state.drafts.filter((d) => d.id !== draft.id), draft];
+
+      return Response.json(draft);
+    }
+
+    if (endpoint === "/gitlab/post") {
+      const draft = state.drafts.find((d) => d.id === input.id)!;
+      posts.push(draft.text);
+      state.discussions[0]!.comments.push({
+        ...state.discussions[0]!.comments[0]!,
+        id: 3,
+        body: draft.text,
+        author: state.account!,
+      });
+      draft.status = "sent";
+      draft.noteId = 3;
+    }
+
+    if (endpoint === "/gitlab/resolve") state.discussions[0]!.resolved = true;
+
+    if (endpoint === "/gitlab/discard")
+      state.drafts = state.drafts.filter((d) => d.id !== input.id);
+
+    return Response.json(state);
+  };
+
+  const container = document.createElement("div");
+  container.className = "review-canvas-root review-document";
+  container.style.cssText = "height:800px;width:1000px;display:flex";
+  document.body.append(container);
+  root = createRoot(container);
+
+  const render = async (historicalRevision: string | null = null) =>
+    act(async () =>
+      root!.render(
+        <TestCanvasQuery>
+          <ReviewSessionProvider
+            session={{
+              ...session,
+              review: { ...session.review!, historicalRevision },
+            }}
+          >
+            <GitLabProvider>
+              <AgentSelectionProvider revision="gitlab">
+                <ReviewDiffFilesProvider documentKey="gitlab">
+                  <PierreDiffView inWorkspace />
+                </ReviewDiffFilesProvider>
+              </AgentSelectionProvider>
+            </GitLabProvider>
+          </ReviewSessionProvider>
+        </TestCanvasQuery>,
+      ),
+    );
+
+  await render();
+
+  const thread = () =>
+    container.querySelector<HTMLElement>(
+      '[aria-label="GitLab discussion thread"]',
+    )!;
+
+  await vi.waitFor(() =>
+    expect(thread()?.textContent).toContain("Can we preserve this behavior?"),
+  );
+  expect(container.textContent).not.toContain("General review feedback");
+
+  const click = async (label: string) =>
+    userEvent.click(
+      [...thread().querySelectorAll("button")].find(
+        (b) => b.textContent === label,
+      )!,
+    );
+
+  await click("Reply");
+  await vi.waitFor(() =>
+    expect(thread().querySelector("textarea")).not.toBeNull(),
+  );
+  await userEvent.fill(
+    thread().querySelector("textarea")!,
+    "Preserved with a regression check",
+  );
+  await click("Post");
+  await vi.waitFor(() =>
+    expect(thread().textContent).toContain("Disk unavailable"),
+  );
+  expect(posts).toEqual([]);
+  expect(thread().querySelector("textarea")!.value).toBe(
+    "Preserved with a regression check",
+  );
+  failSave = false;
+  await click("Post");
+  await vi.waitFor(() =>
+    expect(thread().textContent).toContain("Preserved with a regression check"),
+  );
+  expect(posts).toEqual(["Preserved with a regression check"]);
+  await vi.waitFor(() => expect(thread().querySelector("textarea")).toBeNull());
+  await click("Reply");
+  await userEvent.fill(thread().querySelector("textarea")!, "Follow-up draft");
+  await click("Resolve");
+  await vi.waitFor(() => expect(state.discussions[0]!.resolved).toBe(true));
+  expect(state.drafts.find((d) => d.status === "saved")?.text).toBe(
+    "Follow-up draft",
+  );
+  expect(thread().querySelector("textarea")!.value).toBe("Follow-up draft");
+  await click("Discard");
+  await vi.waitFor(() =>
+    expect(thread().querySelector("details")?.open).toBe(false),
+  );
+  await userEvent.click(thread().querySelector("summary")!);
+  expect(thread().querySelector("details")!.open).toBe(true);
+  await render("historic");
+  await vi.waitFor(() => expect(thread()).toBeNull());
 });
 
 it("shows real Git rows progressively, navigates files, marks viewed, and switches the shared layout", async () => {
@@ -33,25 +239,35 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
     additions: 1,
     deletions: 1,
   }));
+
   let release!: () => void;
+
   const pending = new Promise<void>((resolve) => {
     release = resolve;
   });
+
   let layout: "split" | "unified" = "split";
   let onLayout = () => {};
-  const request = vi.fn(async (source: string, init?: RequestInit) => {
+
+  const request = vi.fn<
+    (source: string, init?: RequestInit) => Promise<Response>
+  >(async (source, init) => {
     expect(new Headers(init?.headers).get("x-review-token")).toBe(
       "secret-token",
     );
     const url = new URL(source);
     expect(url.searchParams.get("commit")).toBe("commit-a");
+
     if (url.searchParams.get("format") !== "raw") return Response.json(files);
     const file = url.searchParams.get("file")!;
+
     if (file === "b.ts") await pending;
+
     return new Response(
       `diff --git a/${file} b/${file}\n--- a/${file}\n+++ b/${file}\n@@ -1 +1 @@\n-before ${file}\n+after ${file}\n`,
     );
   });
+
   const session = testReviewSession(
     {},
     {
@@ -59,29 +275,35 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
       currentDiffLayout: () => layout,
       onDidChangeDiffLayout: (listener) => {
         onLayout = () => listener(layout);
+
         return { dispose() {} };
       },
     },
   );
-  const copy = vi.mocked(clipboard.copyText);
+
+  const copy = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
   const apiUrl = session.apiUrl;
   session.apiUrl = (endpoint, options) => {
     const url = new URL(apiUrl(endpoint, options));
     url.searchParams.set("version", "7");
+
     return url.href;
   };
+
   const context = vi
     .spyOn(session, "fetch")
     .mockImplementation(
       async () => new Response(JSON.stringify({ text: "selected Git patch" })),
     );
+
   const container = document.createElement("div");
   const tree = document.createElement("div");
   container.style.cssText = "height:500px;width:1000px;display:flex";
   container.className = "review-canvas-root review-document";
   document.body.append(tree, container);
   root = createRoot(container);
-  const toggleViewed = vi.fn();
+  const toggleViewed = vi.fn<(path: string) => void>();
+
   const progress = {
     files: files.map((file) => ({
       path: file.path,
@@ -92,6 +314,7 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
       state: "unread" as const,
     })),
   };
+
   await act(async () =>
     root!.render(
       <TestCanvasQuery>
@@ -109,10 +332,12 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
       </TestCanvasQuery>,
     ),
   );
+
   const code = () =>
     [...container.querySelectorAll("diffs-container")].flatMap((host) => [
       ...host.shadowRoot!.querySelectorAll("code"),
     ]);
+
   await vi.waitFor(() =>
     expect(
       code().some((node) => node.textContent?.includes("after a.ts")),
@@ -126,19 +351,24 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
       code().some((node) => node.textContent?.includes("after b.ts")),
     ).toBe(true),
   );
+
   const wrap = container.querySelector<HTMLButtonElement>(
     '[aria-pressed="false"]',
   )!;
+
   await userEvent.click(wrap);
   expect(wrap.getAttribute("aria-pressed")).toBe("true");
+
   const added = code().find(
     (node) =>
       node.hasAttribute("data-additions") &&
       node.textContent?.includes("after a.ts"),
   )!;
+
   const gutter = added.querySelector<HTMLElement>(
     '[data-gutter] [data-column-number="1"]',
   )!;
+
   await userEvent.click(gutter);
   await vi.waitFor(() =>
     expect(container.querySelector('[aria-label="Copy ref"]')).not.toBeNull(),
@@ -162,9 +392,11 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
     { kind: "added", text: "after a.ts" },
   ]);
   expect(selection.apiSource.commit).toBe("commit-a");
+
   const viewed = tree.querySelector<HTMLButtonElement>(
     '[aria-label="Mark viewed: b.ts"]',
   )!;
+
   viewed.click();
   expect(toggleViewed).toHaveBeenCalledWith("b.ts");
   await act(async () => {
@@ -180,9 +412,11 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
       ),
     ).toBe(true),
   );
+
   const collapse = container.querySelector<HTMLButtonElement>(
     '[aria-label="Collapse a.ts"]',
   )!;
+
   collapse.click();
   await vi.waitFor(() =>
     expect(
@@ -199,17 +433,21 @@ it("keeps renamed lens files visible in worktrees without expanding from live so
     additions: 1,
     deletions: 1,
   };
-  const request = vi.fn(
+
+  const request = vi.fn<() => Promise<Response>>(
     async () =>
       new Response(
         "diff --git a/old.ts b/new.ts\n--- a/old.ts\n+++ b/new.ts\n@@ -10 +10 @@\n-before\n+after\n",
       ),
   );
-  const post = vi.fn(async () => ({ ok: true as const }));
+
+  const post = vi.fn<() => Promise<{ ok: true }>>(async () => ({ ok: true }));
+
   const session = testReviewSession(
     {},
     { request, post, diffView: { files: async () => [file] } },
   );
+
   session.review = { ...session.review!, targetKind: "worktree" };
   const container = document.createElement("div");
   const tree = document.createElement("div");
@@ -275,25 +513,30 @@ it("keeps renamed lens files visible in worktrees without expanding from live so
 function changedFile(path: string): ReviewDiffFileWire {
   return { path, status: "modified", additions: 100, deletions: 100 };
 }
+
 function fullPatch(path: string) {
   return `diff --git a/${path} b/${path}\n--- a/${path}\n+++ b/${path}\n@@ -1,100 +1,100 @@\n${Array.from({ length: 100 }, (_, i) => `-before ${i + 1}\n`).join("")}${Array.from({ length: 100 }, (_, i) => `+after ${i + 1}\n`).join("")}`;
 }
+
 async function readingFixture({
   missingAnchor = false,
   lens,
 }: { missingAnchor?: boolean; lens?: ReviewDiffLens } = {}) {
   const files = (lens ? ["a.ts", "b.ts", "c.ts"] : ["a.ts"]).map(changedFile);
+
   const session = testReviewSession(
     {},
     {
       request: async (input) => {
         const url = new URL(input);
+
         return url.searchParams.get("format") === "raw"
           ? new Response(fullPatch(url.searchParams.get("file")!))
           : Response.json(files);
       },
     },
   );
+
   if (missingAnchor) {
     const key = session.storageKey(
       "pierre-diff-view",
@@ -304,6 +547,7 @@ async function readingFixture({
         "all",
       ]),
     );
+
     localStorage.setItem(
       key,
       JSON.stringify({
@@ -312,9 +556,11 @@ async function readingFixture({
       }),
     );
   }
+
   const container = document.createElement("div");
   container.style.cssText = "height:400px;width:1000px;display:flex";
   document.body.append(container);
+
   async function render() {
     root = createRoot(container);
     await act(async () =>
@@ -333,38 +579,46 @@ async function readingFixture({
       ),
     );
   }
+
   function scroller() {
     let node = container.querySelector("diffs-container")?.parentElement;
+
     while (
       node &&
       node !== container &&
       !["auto", "scroll"].includes(getComputedStyle(node).overflowY)
     )
       node = node.parentElement;
+
     if (!node || node === container)
       throw new Error("scrollable comparison not ready");
+
     return node;
   }
+
   function readingLine(path = "a.ts") {
     const top = scroller().getBoundingClientRect().top + 50;
+
     const host = [...container.querySelectorAll("diffs-container")].find(
       (host) => host.shadowRoot?.textContent?.includes(path),
     );
+
     return Math.min(
       ...[
         ...(host?.shadowRoot?.querySelectorAll<HTMLElement>("[data-line]") ??
           []),
-      ]
-        .filter(
-          (row) =>
-            row.getBoundingClientRect().height < 100 &&
-            row.getBoundingClientRect().bottom > top,
-        )
-        .map((row) => Number(row.dataset.line)),
+      ].flatMap((row) =>
+        row.getBoundingClientRect().height < 100 &&
+        row.getBoundingClientRect().bottom > top
+          ? [Number(row.dataset.line)]
+          : [],
+      ),
     );
   }
+
   await render();
   await vi.waitFor(() => expect(scroller().scrollHeight).toBeGreaterThan(1000));
+
   return { render, scroller, readingLine };
 }
 
@@ -374,6 +628,7 @@ it.each([false, true])(
     const { render, scroller, readingLine } = await readingFixture({
       missingAnchor,
     });
+
     await act(async () => {
       scroller().scrollTop = 900;
       scroller().dispatchEvent(new Event("scroll"));
@@ -403,6 +658,7 @@ it("reveals a lens source line in a file initially outside the viewport", async 
       { file: "b.ts", side: "head", fromLine: 1, toLine: 2 },
     ],
   };
+
   const { readingLine } = await readingFixture({ lens });
   await vi.waitFor(() => {
     expect(readingLine("c.ts")).toBeGreaterThanOrEqual(78);

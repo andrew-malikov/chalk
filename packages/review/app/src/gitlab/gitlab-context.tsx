@@ -43,12 +43,16 @@ interface GitLabContextValue {
   editors: Record<string, Editor>;
   editable: boolean;
   busy: boolean;
+  pending: {
+    action: "refresh" | "post" | "discard" | "resolve" | "recover";
+    input: ActionInput;
+  } | null;
   error: string | null;
   open: boolean;
   selected: string | null;
   toggle(): void;
   edit(id: string, text: string): void;
-  compose(target: GitLabTarget): void;
+  compose(target: GitLabTarget, placement?: "inline" | "panel"): void;
   select(discussion: GitLabDiscussion): void;
   run(
     action: "refresh" | "post" | "discard" | "resolve" | "recover",
@@ -90,7 +94,9 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
   const stateRef = useRef(state);
   stateRef.current = state;
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<GitLabContextValue["pending"]>(null);
+  const pendingRef = useRef(pending);
+  const busy = pending !== null;
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [reveal, setReveal] = useState<GitLabContextValue["reveal"]>(null);
@@ -213,8 +219,9 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
   };
 
   const run: GitLabContextValue["run"] = async (action, input = {}) => {
-    if (!editable || busy) return;
-    setBusy(true);
+    if (!editable || pendingRef.current) return;
+    pendingRef.current = { action, input };
+    setPending(pendingRef.current);
     setError(null);
 
     try {
@@ -232,7 +239,9 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       if (mounted.current) setError(message(error));
     } finally {
-      if (mounted.current) setBusy(false);
+      pendingRef.current = null;
+
+      if (mounted.current) setPending(null);
     }
   };
 
@@ -241,6 +250,8 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
 
     if (enabled && !loaded.current) {
       loaded.current = true;
+      pendingRef.current = { action: "refresh", input: {} };
+      setPending(pendingRef.current);
       void serialize(async () => {
         try {
           receive(gitLabStateSchema.parse(await request("/gitlab")));
@@ -251,6 +262,10 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
             );
         } catch (error) {
           if (mounted.current) setError(message(error));
+        } finally {
+          pendingRef.current = null;
+
+          if (mounted.current) setPending(null);
         }
       });
     }
@@ -303,7 +318,10 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
     }, 400);
   };
 
-  const compose = (target: GitLabTarget) => {
+  const compose: GitLabContextValue["compose"] = (
+    target,
+    placement = "panel",
+  ) => {
     if (!editable || busy) return;
 
     const existing =
@@ -328,7 +346,10 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
     }
 
     setSelected(id);
-    show();
+
+    if (placement === "inline") {
+      setOpen(false);
+    } else show();
   };
 
   const select = (discussion: GitLabDiscussion) => {
@@ -351,6 +372,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
       editors,
       editable,
       busy,
+      pending,
       error,
       open,
       selected,
@@ -376,6 +398,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
       editors,
       editable,
       busy,
+      pending,
       error,
       open,
       selected,

@@ -1,3 +1,5 @@
+import "@canvas/global.css";
+import "@canvas/ui.css";
 import { AgentSelectionProvider } from "@canvas/ask/agent-selection";
 import { PierreDiffView } from "@canvas/diff/PierreDiffView";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
@@ -16,7 +18,7 @@ import { userEvent } from "vitest/browser";
 import { GitLabProvider } from "./gitlab-context";
 import { GitLabDiscussionContent } from "./gitlab-discussions";
 
-it("drafts from selected Git lines and updates markers on resolve while retaining the reply", async () => {
+it("V10: drafts from hovered/selected Git lines and resolves with stable loading feedback while retaining the reply", async () => {
   const state: GitLabState = {
     identity: {
       host: "gitlab.test",
@@ -52,7 +54,7 @@ it("drafts from selected Git lines and updates markers on resolve while retainin
   };
 
   const files: ReviewDiffFileWire[] = [
-    { path: "a.ts", status: "modified", additions: 1, deletions: 1 },
+    { path: "a.ts", status: "modified", additions: 2, deletions: 2 },
   ];
 
   const session = testReviewSession(
@@ -64,7 +66,7 @@ it("drafts from selected Git lines and updates markers on resolve while retainin
 
         if (source.searchParams.get("format") === "raw")
           return new Response(
-            "diff --git a/a.ts b/a.ts\n--- a/a.ts\n+++ b/a.ts\n@@ -1 +1 @@\n-before\n+after\n",
+            "diff --git a/a.ts b/a.ts\n--- a/a.ts\n+++ b/a.ts\n@@ -1,2 +1,2 @@\n-before\n-before second\n+after\n+after second\n",
           );
 
         return Response.json(files);
@@ -73,6 +75,8 @@ it("drafts from selected Git lines and updates markers on resolve while retainin
   );
 
   session.review!.gitlab = state.identity;
+  const resolveRequest = Promise.withResolvers<void>();
+  let resolveCalls = 0;
   session.fetch = async (endpoint, init) => {
     const input = init?.body ? JSON.parse(String(init.body)) : {};
 
@@ -90,7 +94,14 @@ it("drafts from selected Git lines and updates markers on resolve while retainin
       return Response.json(draft);
     }
 
-    if (endpoint === "/gitlab/resolve") state.discussions[0]!.resolved = true;
+    if (endpoint === "/gitlab/resolve") {
+      resolveCalls++;
+      await resolveRequest.promise;
+      state.discussions[0]!.resolved = true;
+    }
+
+    if (endpoint === "/gitlab/discard")
+      state.drafts = state.drafts.filter((d) => d.id !== input.id);
 
     return Response.json(state);
   };
@@ -127,8 +138,14 @@ it("drafts from selected Git lines and updates markers on resolve while retainin
         </TestCanvasQuery>,
       ),
     );
+
+    const thread = () =>
+      container.querySelector<HTMLElement>(
+        '[aria-label="GitLab discussion thread"]',
+      )!;
+
     await vi.waitFor(() =>
-      expect(container.textContent).toContain("GitLab · @andrew · Open"),
+      expect(thread()?.textContent).toContain("Check cancellation"),
     );
 
     const code = [...container.querySelectorAll("diffs-container")].flatMap(
@@ -141,19 +158,73 @@ it("drafts from selected Git lines and updates markers on resolve while retainin
         node.textContent?.includes("after"),
     )!;
 
+    // The hover utility must target the actual diff side, including deleted lines.
+    for (const side of ["head", "base"] as const) {
+      const column = code.find((node) =>
+        node.hasAttribute(
+          side === "head" ? "data-additions" : "data-deletions",
+        ),
+      )!;
+
+      await userEvent.hover(column.querySelector<HTMLElement>("[data-line]")!);
+      await userEvent.click(
+        container.querySelector<HTMLButtonElement>(
+          '[aria-label="Add comment in a.ts"]',
+        )!,
+      );
+
+      const hovered = () =>
+        container.querySelector<HTMLTextAreaElement>(
+          '[aria-label^="GitLab draft"] textarea',
+        );
+
+      await vi.waitFor(() => expect(hovered()).not.toBeNull());
+      await userEvent.fill(hovered()!, `Hovered ${side}`);
+      await vi.waitFor(() =>
+        expect(state.drafts[0]?.target).toMatchObject({
+          kind: "inline",
+          position: { oldPath: "a.ts", newPath: "a.ts", side, from: 1, to: 1 },
+        }),
+      );
+      await userEvent.click(
+        container
+          .querySelector<HTMLElement>('[aria-label^="GitLab draft"]')!
+          .querySelectorAll("button")[1]!,
+      );
+      await vi.waitFor(() => expect(hovered()).toBeNull());
+    }
+
     await userEvent.click(
       added.querySelector<HTMLElement>(
         '[data-gutter] [data-column-number="1"]',
       )!,
     );
+    await userEvent.keyboard("{Shift>}");
+    await userEvent.click(
+      added.querySelector<HTMLElement>(
+        '[data-gutter] [data-column-number="2"]',
+      )!,
+    );
+    await userEvent.keyboard("{/Shift}");
     await vi.waitFor(() => expect(button("GitLab comment")).toBeDefined());
     await userEvent.click(button("GitLab comment"));
     await vi.waitFor(() =>
-      expect(container.querySelector("textarea")).not.toBeNull(),
+      expect(
+        container.querySelector('[aria-label^="GitLab draft"] textarea'),
+      ).not.toBeNull(),
     );
-    const inline = container.querySelector("textarea")!;
+
+    const inline = container.querySelector<HTMLTextAreaElement>(
+      '[aria-label^="GitLab draft"] textarea',
+    )!;
+
+    expect(document.activeElement).toBe(inline);
     await userEvent.fill(inline, "Inline text");
     await vi.waitFor(() => expect(state.drafts[0]?.text).toBe("Inline text"));
+    expect(
+      container.querySelector('[aria-label^="GitLab draft"] textarea'),
+    ).toBe(inline);
+    expect(document.activeElement).toBe(inline);
     expect(state.drafts[0]?.target).toMatchObject({
       kind: "inline",
       position: {
@@ -161,21 +232,41 @@ it("drafts from selected Git lines and updates markers on resolve while retainin
         newPath: "a.ts",
         side: "head",
         from: 1,
-        to: 1,
+        to: 2,
       },
     });
-    await userEvent.click(button("Reply"));
-    const reply = [...container.querySelectorAll("textarea")].at(-1)!;
+
+    const threadButton = (label: string) =>
+      [...thread().querySelectorAll("button")].find(
+        (b) => b.textContent === label,
+      )!;
+
+    await userEvent.click(threadButton("Reply"));
+    const reply = thread().querySelector("textarea")!;
     await userEvent.fill(reply, "Keep this reply");
-    await userEvent.click(button("Resolve"));
+    const resolveButton = threadButton("Resolve");
+    const resolveWidth = resolveButton.getBoundingClientRect().width;
+    await userEvent.click(threadButton("Resolve"));
     await vi.waitFor(() =>
-      expect(container.textContent).toContain("GitLab · @andrew · Resolved"),
+      expect(resolveButton.getAttribute("aria-busy")).toBe("true"),
+    );
+    expect(resolveButton.disabled).toBe(true);
+    expect(resolveButton.getBoundingClientRect().width).toBe(resolveWidth);
+    expect(threadButton("Reply").hasAttribute("aria-busy")).toBe(false);
+    expect(reply.value).toBe("Keep this reply");
+    expect(resolveCalls).toBe(1);
+    resolveRequest.resolve();
+    await vi.waitFor(() =>
+      expect(thread().querySelector("summary")?.textContent).toContain(
+        "Resolved",
+      ),
     );
     expect(reply.value).toBe("Keep this reply");
     expect(state.drafts.find((d) => d.target.kind === "reply")?.text).toBe(
       "Keep this reply",
     );
   } finally {
+    resolveRequest.resolve();
     await act(async () => root.unmount());
     container.remove();
     localStorage.clear();

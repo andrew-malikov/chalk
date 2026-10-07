@@ -399,6 +399,7 @@ export function LegacySkillsRow({
           <Button
             size="large"
             xstyle={styles.legacyButton}
+            loading={busy}
             disabled={busy}
             onClick={() => void removeSkills()}
           >

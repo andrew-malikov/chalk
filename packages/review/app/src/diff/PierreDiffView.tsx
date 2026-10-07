@@ -1,6 +1,11 @@
 import { useAgentSelection } from "@canvas/ask/agent-selection";
 import { NativeSelect } from "@canvas/components/ui/native-select";
 import { useGitLab } from "@canvas/gitlab/gitlab-context";
+import {
+  type GitLabInlineAnnotation,
+  GitLabInlineContent,
+  useGitLabDrafts,
+} from "@canvas/gitlab/gitlab-discussions";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
 import {
@@ -8,10 +13,10 @@ import {
   useReviewUiState,
   writeReviewUiState,
 } from "@canvas/review/review-ui-state";
-import { fontSize } from "@canvas/styles/scale.stylex";
+import { loadingStyles } from "@canvas/styles/loading.stylex";
+import { fontSize, radius } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button, IconButton } from "@canvas/ui/button";
-import type { GitLabDiscussion } from "@dev.fast/review-protocol";
 import type {
   ReviewCommitScope,
   ReviewDiffFileWire,
@@ -21,6 +26,7 @@ import type {
 import type {
   CodeViewItem,
   CodeViewLineSelection,
+  DiffLineAnnotation,
   FileDiffMetadata,
   NumericScrollLineAnchor,
 } from "@pierre/diffs";
@@ -31,6 +37,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   ExternalLinkIcon,
+  PlusIcon,
   WrapTextIcon,
 } from "lucide-react";
 import {
@@ -134,7 +141,7 @@ export function PierreDiffView(props: Props) {
 
   if (!files)
     return (
-      <p {...stylex.props(styles.notice)} role="status">
+      <p {...stylex.props(styles.notice, loadingStyles.text)} role="status">
         Loading changed files…
       </p>
     );
@@ -176,6 +183,7 @@ function Comparison({
 }) {
   const session = useReviewSession();
   const gitlab = useGitLab();
+  const drafts = useGitLabDrafts();
   const queryClient = useQueryClient();
   const select = useAgentSelection();
   const preferred = useRef(revealFile);
@@ -255,7 +263,9 @@ function Comparison({
     new WeakMap<FileDiffMetadata, FileDiffMetadata>(),
   );
 
-  const viewer = useRef<CodeViewHandle<GitLabDiscussion, undefined>>(null);
+  const viewer =
+    useRef<CodeViewHandle<GitLabInlineAnnotation, undefined>>(null);
+
   const container = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const restored = useRef(false);
@@ -294,8 +304,50 @@ function Comparison({
     () => session.theme(),
   );
 
+  const annotations: (DiffLineAnnotation<GitLabInlineAnnotation> & {
+    file: string;
+  })[] = [];
+
+  if (
+    !scope &&
+    session.review?.historicalRevision === null &&
+    session.review?.pins?.base === gitlab?.state?.refs.baseSha &&
+    session.review?.pins?.head === gitlab?.state?.refs.headSha
+  ) {
+    for (const discussion of gitlab?.state?.discussions ?? []) {
+      if (!discussion.location) continue;
+      annotations.push({
+        file: discussion.location.file,
+        lineNumber: discussion.location.to,
+        side: discussion.location.side === "head" ? "additions" : "deletions",
+        metadata: { kind: "discussion", id: discussion.id },
+      });
+    }
+
+    for (const draft of drafts) {
+      const target = draft.target;
+
+      if (
+        draft.status === "sent" ||
+        target.kind !== "inline" ||
+        target.unmapped ||
+        target.position.baseSha !== gitlab?.state?.refs.baseSha ||
+        target.position.headSha !== gitlab?.state?.refs.headSha
+      )
+        continue;
+      const p = target.position;
+      annotations.push({
+        file: p.side === "head" ? p.newPath : p.oldPath,
+        lineNumber: p.to,
+        side: p.side === "head" ? "additions" : "deletions",
+        metadata: { kind: "draft", id: draft.id },
+      });
+    }
+  }
+
   const annotationRevision = useRef({ key: "", version: 0 });
-  const annotationKey = JSON.stringify(gitlab?.state?.discussions);
+  // Editor text lives in GitLab context; typing must not recreate Pierre's slots.
+  const annotationKey = JSON.stringify(annotations);
 
   if (annotationRevision.current.key !== annotationKey)
     annotationRevision.current = {
@@ -304,7 +356,7 @@ function Comparison({
     };
   const annotationVersion = annotationRevision.current.version;
 
-  const items = useMemo<CodeViewItem<GitLabDiscussion>[]>(
+  const items = useMemo<CodeViewItem<GitLabInlineAnnotation>[]>(
     () =>
       visible.flatMap((entry) => {
         if (!entry.diff) return [];
@@ -320,30 +372,17 @@ function Comparison({
             id: entry.file.path,
             type: "diff" as const,
             fileDiff: diff,
-            annotations:
-              scope || session.review?.historicalRevision !== null
-                ? []
-                : gitlab?.state?.discussions
-                    .filter(
-                      (d) =>
-                        d.location &&
-                        (d.location.file === entry.file.path ||
-                          d.location.file === entry.file.previousPath),
-                    )
-                    .map((d) => ({
-                      lineNumber: d.location!.from,
-                      side:
-                        d.location!.side === "head"
-                          ? ("additions" as const)
-                          : ("deletions" as const),
-                      metadata: d,
-                    })),
+            annotations: annotations.filter(
+              (a) =>
+                a.file === entry.file.path ||
+                a.file === entry.file.previousPath,
+            ),
             version: Number(collapsed.has(entry.file.path)) + annotationVersion,
             collapsed: collapsed.has(entry.file.path),
           },
         ];
       }),
-    [visible, collapsed, gitlab?.state, scope, annotationVersion],
+    [visible, collapsed, annotationKey, annotationVersion],
   );
 
   const save = useCallback(() => {
@@ -552,6 +591,14 @@ function Comparison({
     session.review?.targetKind !== "worktree" ||
     session.review?.historicalRevision !== null;
 
+  const canComment = !!(
+    gitlab?.editable &&
+    !scope &&
+    session.review?.historicalRevision === null &&
+    session.review?.pins?.base === gitlab.state?.refs.baseSha &&
+    session.review?.pins?.head === gitlab.state?.refs.headSha
+  );
+
   const sourceRequests = useMemo(() => new Set<AbortController>(), [url]);
   useEffect(
     () => () => {
@@ -570,10 +617,11 @@ function Comparison({
       themeType: theme === "light" ? ("light" as const) : ("dark" as const),
       preferredHighlighter: "shiki-js" as const,
       enableLineSelection: true,
+      enableGutterUtility: canComment,
       overflow: wrap ? ("wrap" as const) : ("scroll" as const),
       stickyHeaders: true,
       unsafeCSS:
-        ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}",
+        ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}[data-diffs-header]{box-shadow:inset 0 1px var(--rule)}",
       onPostRender: restore,
       loadDiffFiles:
         committed && !structural
@@ -600,6 +648,7 @@ function Comparison({
       sourceRequests,
       restore,
       structural,
+      canComment,
     ],
   );
 
@@ -765,7 +814,13 @@ function Comparison({
           role={chosen.error ? "alert" : "status"}
         >
           <strong>{chosen.file.path}</strong>
-          <p>{chosen.error ?? chosen.notice ?? "Loading diff…"}</p>
+          <p
+            {...stylex.props(
+              !chosen.error && !chosen.notice && loadingStyles.text,
+            )}
+          >
+            {chosen.error ?? chosen.notice ?? "Loading diff…"}
+          </p>
           {(chosen.error || chosen.notice) && (
             <div {...stylex.props(styles.noticeActions)}>
               {structural && chosen.error && (
@@ -788,15 +843,64 @@ function Comparison({
         selectedLines={selection}
         style={{ flex: 1, minHeight: 0, width: "100%", overflowY: "auto" }}
         renderAnnotation={(annotation) => (
-          <Button
-            variant="ghost"
-            onClick={() => gitlab?.select(annotation.metadata)}
-            aria-label={`Open GitLab discussion ${annotation.metadata.id}`}
-          >
-            GitLab · @{annotation.metadata.comments[0]?.author.username} ·{" "}
-            {annotation.metadata.resolved ? "Resolved" : "Open"}
-          </Button>
+          <GitLabInlineContent annotation={annotation.metadata} />
         )}
+        renderGutterUtility={
+          canComment
+            ? (getHoveredLine, item) => (
+                <button
+                  type="button"
+                  aria-label={`Add comment in ${item.id}`}
+                  title="Add comment"
+                  disabled={gitlab?.busy}
+                  {...stylex.props(styles.addComment)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    const line = getHoveredLine();
+
+                    if (
+                      !line ||
+                      !("side" in line) ||
+                      item.type !== "diff" ||
+                      !gitlab?.state
+                    )
+                      return;
+
+                    const range =
+                      selection?.id === item.id &&
+                      selection.range.side === line.side &&
+                      (!selection.range.endSide ||
+                        selection.range.endSide === line.side)
+                        ? selection.range
+                        : null;
+
+                    gitlab.compose(
+                      {
+                        kind: "inline",
+                        position: {
+                          ...gitlab.state.refs,
+                          oldPath: item.fileDiff.prevName || item.fileDiff.name,
+                          newPath: item.fileDiff.name,
+                          side: line.side === "deletions" ? "base" : "head",
+                          from: range
+                            ? Math.min(range.start, range.end)
+                            : line.lineNumber,
+                          to: range
+                            ? Math.max(range.start, range.end)
+                            : line.lineNumber,
+                        },
+                      },
+                      "inline",
+                    );
+                    setSelection(null);
+                    select(null);
+                  }}
+                >
+                  <PlusIcon size={16} aria-hidden="true" />
+                </button>
+              )
+            : undefined
+        }
         renderHeaderPrefix={(item) => (
           <IconButton
             aria-label={`${item.collapsed ? "Expand" : "Collapse"} ${item.id}`}
@@ -975,6 +1079,23 @@ const styles = stylex.create({
     position: "relative",
   },
   workspace: { minHeight: 0, flex: 1 },
+  addComment: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    width: 20,
+    height: 20,
+    padding: 0,
+    marginInlineEnd: -12,
+    borderWidth: 0,
+    borderRadius: radius.small,
+    backgroundColor: tokens.link,
+    color: tokens.onAccent,
+    cursor: { default: "pointer", ":disabled": "wait" },
+    opacity: { default: 1, ":disabled": 0.5 },
+    outlineOffset: 2,
+  },
   notice: {
     padding: 16,
     color: tokens.inkMuted,

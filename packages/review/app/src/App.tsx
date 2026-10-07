@@ -538,15 +538,6 @@ function ReviewLayoutContent({
           scrollRegionRef={scrollRegionRef}
         >
           <header {...stylex.props(shellStyles.topbar)}>
-            {gitlab && (
-              <Button
-                variant="ghost"
-                aria-expanded={gitlabShown}
-                onClick={gitlab.toggle}
-              >
-                GitLab discussions
-              </Button>
-            )}
             <div {...stylex.props(shellStyles.topbarLeft, topbarTabsMarker)}>
               <div
                 {...stylex.props(
@@ -674,6 +665,16 @@ function ReviewLayoutContent({
               <AskHistoryControl />
               <ReviewBatonChip outcome={review.submissionOutcome} />
               <DiffLayoutControl />
+              {gitlab && (
+                <Button
+                  variant="ghost"
+                  xstyle={shellStyles.topbarItem}
+                  aria-expanded={gitlabShown}
+                  onClick={gitlab.toggle}
+                >
+                  Discussions
+                </Button>
+              )}
               {!scratchpad &&
                 !review.historicalRevision &&
                 !review.submissionOutcome && (

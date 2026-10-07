@@ -141,6 +141,7 @@ export const themeStyles = stylex.create({
     "--vscode-list-inactiveFocusOutline": "transparent",
     "--vscode-inputOption-activeBorder": "transparent",
     "--accent": "#262626",
+    "--link": "var(--vscode-textLink-foreground, #0969da)",
     "--accent-soft": "#f0f0f0",
     "--on-accent": "#ffffff",
     "--on-accent-wash": "rgba(255, 255, 255, 0.34)",

@@ -1,10 +1,12 @@
 import { Button as ShadcnButton } from "@canvas/components/ui/button";
 import { type StyleArg, withClass } from "@canvas/styles/stylex-props";
+import { LoaderCircleIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 
 type NativeButtonProps = Omit<ComponentProps<"button">, "className" | "style">;
 
 type ButtonProps = NativeButtonProps & {
+  loading?: boolean;
   variant?: "ghost" | "secondary" | "primary" | "warning";
   size?: "default" | "large";
   className?: string;
@@ -12,6 +14,7 @@ type ButtonProps = NativeButtonProps & {
 };
 
 type IconButtonProps = NativeButtonProps & {
+  loading?: boolean;
   "aria-label": string;
   size?: "small" | "default" | "large";
   className?: string;
@@ -26,6 +29,9 @@ export function Button({
   className,
   xstyle,
   type = "button",
+  loading = false,
+  disabled,
+  children,
   ...props
 }: ButtonProps) {
   return (
@@ -40,9 +46,11 @@ export function Button({
       }
       size="xs"
       {...props}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...withClass(
         [
-          "tw:font-[family-name:var(--chrome-font)] tw:gap-1.5 tw:px-2.5 tw:has-[>svg]:px-2.5 tw:[&_svg:not([class*='size-'])]:size-[var(--chrome-icon-size)]",
+          "tw:relative tw:font-[family-name:var(--chrome-font)] tw:gap-1.5 tw:px-2.5 tw:has-[>svg]:px-2.5 tw:[&_svg:not([class*='size-'])]:size-[var(--chrome-icon-size)]",
           size === "large" && "tw:h-7",
           variant === "ghost" && "tw:text-muted-foreground",
           variant === "warning" &&
@@ -53,7 +61,13 @@ export function Button({
           .join(" "),
         xstyle,
       )}
-    />
+    >
+      {loading ? (
+        <LoadingButtonContent>{children}</LoadingButtonContent>
+      ) : (
+        children
+      )}
+    </ShadcnButton>
   );
 }
 
@@ -62,6 +76,9 @@ export function IconButton({
   className,
   xstyle,
   type = "button",
+  loading = false,
+  disabled,
+  children,
   ...props
 }: IconButtonProps) {
   return (
@@ -70,9 +87,11 @@ export function IconButton({
       variant="ghost"
       size="icon-xs"
       {...props}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...withClass(
         [
-          "tw:text-muted-foreground tw:[&_svg:not([class*='size-'])]:size-[var(--chrome-icon-size)]",
+          "tw:relative tw:text-muted-foreground tw:[&_svg:not([class*='size-'])]:size-[var(--chrome-icon-size)]",
           size === "small" && "tw:size-5",
           size === "large" && "tw:size-[30px]",
           className,
@@ -81,6 +100,30 @@ export function IconButton({
           .join(" "),
         xstyle,
       )}
-    />
+    >
+      {loading ? (
+        <LoadingButtonContent>{children}</LoadingButtonContent>
+      ) : (
+        children
+      )}
+    </ShadcnButton>
+  );
+}
+
+function LoadingButtonContent({
+  children,
+}: Pick<NativeButtonProps, "children">) {
+  return (
+    <>
+      <span className="tw:opacity-0 tw:inline-flex tw:items-center tw:gap-1.5">
+        {children}
+      </span>
+      <span
+        className="tw:absolute tw:inset-0 tw:flex tw:items-center tw:justify-center"
+        aria-hidden="true"
+      >
+        <LoaderCircleIcon className="tw:animate-spin tw:motion-reduce:animate-none" />
+      </span>
+    </>
   );
 }

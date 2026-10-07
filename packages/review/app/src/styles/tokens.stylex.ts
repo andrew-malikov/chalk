@@ -57,6 +57,7 @@ export const tokens = stylex.defineConsts({
   inkFaint: "var(--ink-faint)",
   inkMuted: "var(--ink-muted)",
   linkOpenWash: "var(--link-open-wash)",
+  link: "var(--link)",
   mapStorageBorder: "var(--map-storage-border)",
   markerGlow: "var(--marker-glow)",
   markerTint: "var(--marker-tint)",

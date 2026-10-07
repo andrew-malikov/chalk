@@ -1,4 +1,6 @@
 import { ReviewPanelFrame } from "@canvas/review/review-components";
+import { loadingStyles } from "@canvas/styles/loading.stylex";
+import { resolvedDiscussionMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button } from "@canvas/ui/button";
@@ -8,7 +10,8 @@ import type {
   GitLabTarget,
 } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
-import { useEffect, useRef, useState } from "react";
+import { ChevronRightIcon, CornerDownRightIcon } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { useGitLab } from "./gitlab-context";
 
@@ -25,6 +28,7 @@ export function GitLabDiscussionPanel() {
       closeLabel="Close GitLab discussions"
       headerActions={
         <Button
+          loading={gitlab.pending?.action === "refresh"}
           disabled={!gitlab.editable || gitlab.busy}
           onClick={() => void gitlab.run("refresh")}
         >
@@ -37,13 +41,13 @@ export function GitLabDiscussionPanel() {
   );
 }
 
-export function GitLabDiscussionContent() {
+export function useGitLabDrafts(): GitLabDraft[] {
   const gitlab = useGitLab();
 
-  if (!gitlab) return null;
+  if (!gitlab) return [];
   const { state, editors } = gitlab;
 
-  const drafts = [
+  return [
     ...(state?.drafts ?? []),
     ...Object.entries(editors)
       .filter(([id]) => !state?.drafts.some((d) => d.id === id))
@@ -57,6 +61,14 @@ export function GitLabDiscussionContent() {
         }),
       ),
   ];
+}
+
+export function GitLabDiscussionContent() {
+  const gitlab = useGitLab();
+  const drafts = useGitLabDrafts();
+
+  if (!gitlab) return null;
+  const { state } = gitlab;
 
   const open = state?.discussions.filter((d) => !d.resolved) ?? [];
   const resolved = state?.discussions.filter((d) => d.resolved) ?? [];
@@ -78,7 +90,9 @@ export function GitLabDiscussionContent() {
           </span>
         </div>
       ) : (
-        <p role="status">Loading GitLab discussions…</p>
+        <p role="status" {...stylex.props(loadingStyles.text)}>
+          Loading GitLab discussions…
+        </p>
       )}
       {!gitlab.editable && (
         <p>Open the current local review to draft or post comments.</p>
@@ -94,6 +108,9 @@ export function GitLabDiscussionContent() {
           New comment
         </Button>
         <Button
+          loading={
+            gitlab.pending?.action === "post" && !gitlab.pending.input.id
+          }
           disabled={
             !gitlab.editable ||
             gitlab.busy ||
@@ -147,23 +164,99 @@ function targetLabel(target: GitLabTarget) {
   return `${p.side === "head" ? p.newPath : p.oldPath}:${p.from}${p.to !== p.from ? `–${p.to}` : ""} · ${p.side}`;
 }
 
-function Discussion({ discussion }: { discussion: GitLabDiscussion }) {
+export type GitLabInlineAnnotation =
+  | { kind: "discussion"; id: string }
+  | { kind: "draft"; id: string };
+
+export function GitLabInlineContent({
+  annotation,
+}: {
+  annotation: GitLabInlineAnnotation;
+}) {
+  const gitlab = useGitLab();
+  const drafts = useGitLabDrafts();
+
+  if (!gitlab) return null;
+
+  const discussion =
+    annotation.kind === "discussion"
+      ? gitlab.state?.discussions.find((d) => d.id === annotation.id)
+      : undefined;
+
+  const local = drafts.filter(
+    (d) =>
+      d.status !== "sent" &&
+      (annotation.kind === "draft"
+        ? d.id === annotation.id
+        : d.target.kind === "reply" && d.target.discussionId === annotation.id),
+  );
+
+  if (!discussion && local.length === 0) return null;
+
+  const content = (
+    <>
+      {discussion && <Discussion discussion={discussion} inline />}
+      {local.map((draft) => (
+        <DraftEditor key={draft.id} draft={draft} inline />
+      ))}
+    </>
+  );
+
+  return (
+    <section
+      {...stylex.props(styles.inline)}
+      aria-label={`GitLab ${annotation.kind} ${annotation.id}`}
+    >
+      {gitlab.error && <p role="alert">{gitlab.error}</p>}
+      {discussion?.resolved ? (
+        <details
+          {...stylex.props(styles.resolvedDetails, resolvedDiscussionMarker)}
+          open={
+            local.length > 0 || gitlab.selected === discussion.id
+              ? true
+              : undefined
+          }
+        >
+          <summary {...stylex.props(styles.resolvedSummary)}>
+            <ChevronRightIcon
+              {...stylex.props(styles.resolvedChevron)}
+              aria-hidden="true"
+            />
+            Resolved · @{discussion.comments[0]?.author.username}
+          </summary>
+          {content}
+        </details>
+      ) : (
+        content
+      )}
+    </section>
+  );
+}
+
+function Discussion({
+  discussion,
+  inline = false,
+}: {
+  discussion: GitLabDiscussion;
+  inline?: boolean;
+}) {
   const gitlab = useGitLab()!;
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (gitlab.selected === discussion.id)
+    if (!inline && gitlab.selected === discussion.id)
       ref.current?.scrollIntoView?.({ block: "nearest" });
-  }, [gitlab.selected, discussion.id]);
+  }, [gitlab.selected, discussion.id, inline]);
 
   return (
     <div
       ref={ref}
       {...stylex.props(
         styles.card,
+        inline && styles.inlineCard,
         gitlab.selected === discussion.id && styles.selected,
       )}
     >
-      {discussion.location ? (
+      {inline ? null : discussion.location ? (
         <Button variant="ghost" onClick={() => gitlab.select(discussion)}>
           {discussion.location.file}:{discussion.location.from}
           {discussion.location.to !== discussion.location.from
@@ -178,29 +271,61 @@ function Discussion({ discussion }: { discussion: GitLabDiscussion }) {
             : "General discussion"}
         </span>
       )}
-      {discussion.comments.map((note) => (
-        <div key={note.id}>
-          <div {...stylex.props(styles.meta)}>
-            @{note.author.username}
-            {note.author.bot ? " · bot" : ""} ·{" "}
-            <time dateTime={note.createdAt}>
-              {new Date(note.createdAt).toLocaleDateString()}
-            </time>
+      {discussion.comments.map((note, index) => (
+        <div
+          key={note.id}
+          {...stylex.props(styles.comment, index > 0 && styles.reply)}
+        >
+          <span {...stylex.props(styles.avatar)} aria-hidden="true">
+            {(note.author.name || note.author.username)
+              .slice(0, 2)
+              .toUpperCase()}
+          </span>
+          <div {...stylex.props(styles.commentContent)}>
+            <div {...stylex.props(styles.byline)}>
+              <strong title={`@${note.author.username}`}>
+                {note.author.id === gitlab.state?.account?.id
+                  ? "You"
+                  : note.author.name || note.author.username}
+              </strong>
+              {note.author.bot && (
+                <span {...stylex.props(styles.meta)}>bot</span>
+              )}
+              <time
+                {...stylex.props(styles.meta)}
+                dateTime={note.createdAt}
+                title={new Date(note.createdAt).toLocaleString()}
+              >
+                {relativeTime(note.createdAt)}
+              </time>
+            </div>
+            <p {...stylex.props(styles.body)}>{note.body}</p>
           </div>
-          <p {...stylex.props(styles.body)}>{note.body}</p>
         </div>
       ))}
-      <div {...stylex.props(styles.actions)}>
+      <div {...stylex.props(styles.actions, styles.threadActions)}>
         <Button
+          variant="ghost"
+          xstyle={styles.textAction}
           disabled={!gitlab.editable || gitlab.busy}
           onClick={() =>
-            gitlab.compose({ kind: "reply", discussionId: discussion.id })
+            gitlab.compose(
+              { kind: "reply", discussionId: discussion.id },
+              inline ? "inline" : "panel",
+            )
           }
         >
+          <CornerDownRightIcon aria-hidden="true" />
           Reply
         </Button>
         {discussion.resolvable && !discussion.resolved && (
           <Button
+            variant="ghost"
+            xstyle={styles.textAction}
+            loading={
+              gitlab.pending?.action === "resolve" &&
+              gitlab.pending.input.discussionId === discussion.id
+            }
             disabled={!gitlab.editable || gitlab.busy}
             onClick={() =>
               void gitlab.run("resolve", { discussionId: discussion.id })
@@ -209,15 +334,32 @@ function Discussion({ discussion }: { discussion: GitLabDiscussion }) {
             Resolve
           </Button>
         )}
+        {inline && (
+          <a
+            {...stylex.props(styles.sourceLink)}
+            href={gitlab.state?.identity.url}
+            target="_blank"
+            rel="noreferrer"
+          >
+            View on GitLab
+          </a>
+        )}
       </div>
     </div>
   );
 }
 
-function DraftEditor({ draft }: { draft: GitLabDraft }) {
+function DraftEditor({
+  draft,
+  inline = false,
+}: {
+  draft: GitLabDraft;
+  inline?: boolean;
+}) {
   const gitlab = useGitLab()!;
   const editor = gitlab.editors[draft.id];
   const input = useRef<HTMLTextAreaElement>(null);
+  const inputId = useId();
   const [verified, setVerified] = useState(false);
   const [noteId, setNoteId] = useState("");
   useEffect(() => {
@@ -231,13 +373,46 @@ function DraftEditor({ draft }: { draft: GitLabDraft }) {
       ? gitlab.state?.discussions.find((d) => d.id === target.discussionId)
       : undefined;
 
-  return (
-    <div {...stylex.props(styles.card)}>
-      <label htmlFor={`gitlab-draft-${draft.id}`}>
-        {targetLabel(editor?.target ?? draft.target)}
-      </label>
+  const saveStatus = (
+    <span
+      {...stylex.props(
+        styles.meta,
+        styles.saveStatus,
+        editor?.dirty && !editor.error && loadingStyles.text,
+      )}
+      role="status"
+    >
+      {editor?.error
+        ? "Unsaved"
+        : editor?.dirty
+          ? "Saving…"
+          : draft.status === "sending"
+            ? "Post interrupted or in progress; verify on GitLab"
+            : draft.status === "uncertain"
+              ? "Unconfirmed post"
+              : draft.status === "failed"
+                ? "Post failed"
+                : "Saved locally"}
+    </span>
+  );
 
-      {thread && (
+  return (
+    <div {...stylex.props(styles.card, inline && styles.inlineCard)}>
+      <div {...stylex.props(styles.draftHeader)}>
+        <label htmlFor={inputId}>
+          {targetLabel(editor?.target ?? draft.target)}
+        </label>
+        {inline && (
+          <span {...stylex.props(styles.meta)}>
+            {gitlab.state?.account
+              ? `Posting as @${gitlab.state.account.username}`
+              : "Posting account unavailable"}{" "}
+            · {gitlab.state?.identity.host}
+          </span>
+        )}
+      </div>
+
+      {thread && !inline && (
         <Button variant="ghost" onClick={() => gitlab.select(thread)}>
           {thread.location
             ? `${thread.location.file}:${thread.location.from}`
@@ -252,33 +427,24 @@ function DraftEditor({ draft }: { draft: GitLabDraft }) {
       )}
       <textarea
         ref={input}
-        id={`gitlab-draft-${draft.id}`}
-        {...stylex.props(styles.editor)}
+        id={inputId}
+        {...stylex.props(styles.editor, inline && styles.inlineEditor)}
         value={editor?.text ?? draft.text}
         onChange={(event) => gitlab.edit(draft.id, event.target.value)}
         disabled={!gitlab.editable || gitlab.busy || locked}
         placeholder="Write your comment…"
       />
-      <span {...stylex.props(styles.meta)} role="status">
-        {editor?.error
-          ? "Unsaved"
-          : editor?.dirty
-            ? "Saving…"
-            : draft.status === "sending"
-              ? "Post interrupted or in progress; verify on GitLab"
-              : draft.status === "uncertain"
-                ? "Unconfirmed post"
-                : draft.status === "failed"
-                  ? "Post failed"
-                  : "Saved locally"}
-      </span>
       {(editor?.error || draft.error) && (
         <p role="alert">{editor?.error ?? draft.error}</p>
       )}
       {!locked ? (
-        <div {...stylex.props(styles.actions)}>
+        <div {...stylex.props(styles.actions, styles.draftActions)}>
           <Button
             variant="primary"
+            loading={
+              gitlab.pending?.action === "post" &&
+              gitlab.pending.input.id === draft.id
+            }
             disabled={
               !gitlab.editable ||
               gitlab.busy ||
@@ -290,6 +456,10 @@ function DraftEditor({ draft }: { draft: GitLabDraft }) {
             Post
           </Button>
           <Button
+            loading={
+              gitlab.pending?.action === "discard" &&
+              gitlab.pending.input.id === draft.id
+            }
             disabled={!gitlab.editable || gitlab.busy}
             onClick={() => void gitlab.run("discard", { id: draft.id })}
           >
@@ -303,9 +473,11 @@ function DraftEditor({ draft }: { draft: GitLabDraft }) {
               Retry save
             </Button>
           )}
+          {saveStatus}
         </div>
       ) : (
         <div {...stylex.props(styles.recovery)}>
+          {saveStatus}
           <label>
             <input
               type="checkbox"
@@ -316,6 +488,11 @@ function DraftEditor({ draft }: { draft: GitLabDraft }) {
             I checked this MR on GitLab and verified the outcome
           </label>
           <Button
+            loading={
+              gitlab.pending?.action === "recover" &&
+              gitlab.pending.input.id === draft.id &&
+              gitlab.pending.input.posted === false
+            }
             disabled={!verified || !gitlab.editable || gitlab.busy}
             onClick={() =>
               void gitlab.run("recover", {
@@ -337,6 +514,11 @@ function DraftEditor({ draft }: { draft: GitLabDraft }) {
             />
           </label>
           <Button
+            loading={
+              gitlab.pending?.action === "recover" &&
+              gitlab.pending.input.id === draft.id &&
+              gitlab.pending.input.posted === true
+            }
             disabled={
               !verified ||
               !Number.isSafeInteger(Number(noteId)) ||
@@ -361,7 +543,37 @@ function DraftEditor({ draft }: { draft: GitLabDraft }) {
   );
 }
 
+function relativeTime(date: string) {
+  const minutes = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(date).getTime()) / 60_000),
+  );
+
+  if (minutes < 1) return "now";
+
+  if (minutes < 60) return `${minutes}m`;
+
+  if (minutes < 1440) return `${Math.floor(minutes / 60)}h`;
+
+  return new Date(date).toLocaleDateString();
+}
+
 const styles = stylex.create({
+  inline: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    padding: 12,
+    margin: 0,
+    color: tokens.ink,
+    backgroundColor: tokens.surfaceRaised,
+    fontFamily: tokens.chromeFont,
+    fontSize: fontSize.ui,
+    whiteSpace: "normal",
+    minWidth: 0,
+    width: "100%",
+    boxSizing: "border-box",
+  },
   content: {
     display: "flex",
     flexDirection: "column",
@@ -397,7 +609,81 @@ const styles = stylex.create({
     minWidth: 0,
   },
   selected: { borderColor: tokens.inkFaint },
+  inlineCard: {
+    backgroundColor: tokens.surface,
+    maxWidth: 820,
+    gap: 12,
+  },
+  resolvedDetails: { maxWidth: 820 },
+  resolvedSummary: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    paddingBlock: 8,
+    paddingInline: 4,
+    listStyle: "none",
+    color: { default: tokens.inkMuted, ":hover": tokens.ink },
+    cursor: "pointer",
+    "::marker": { content: "''" },
+    "::-webkit-details-marker": { display: "none" },
+  },
+  resolvedChevron: {
+    width: 14,
+    height: 14,
+    flexShrink: 0,
+    transform: {
+      default: "rotate(0deg)",
+      [stylex.when.ancestor("[open]", resolvedDiscussionMarker)]:
+        "rotate(90deg)",
+    },
+  },
+  draftHeader: {
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 8,
+    overflowWrap: "anywhere",
+  },
+  comment: { display: "flex", alignItems: "flex-start", gap: 12, minWidth: 0 },
+  reply: { marginInlineStart: 44 },
+  avatar: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 32,
+    height: 32,
+    flexShrink: 0,
+    borderRadius: radius.round,
+    backgroundColor: `color-mix(in srgb, ${tokens.link} 12%, transparent)`,
+    color: tokens.link,
+    fontSize: fontSize.small,
+    fontWeight: fontWeight.semibold,
+  },
+  commentContent: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+    minWidth: 0,
+    flex: 1,
+  },
+  byline: { display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: 8 },
+  threadActions: { marginInlineStart: 44, alignItems: "center" },
+  textAction: {
+    color: tokens.link,
+    paddingInline: 0,
+    backgroundColor: "transparent",
+    fontSize: fontSize.ui,
+  },
+  sourceLink: {
+    color: tokens.inkFaint,
+    fontSize: fontSize.small,
+    marginInlineStart: "auto",
+    textDecorationLine: { default: "none", ":hover": "underline" },
+  },
   actions: { display: "flex", flexWrap: "wrap", gap: 8 },
+  draftActions: { alignItems: "center" },
+  saveStatus: { marginInlineStart: "auto" },
   body: {
     whiteSpace: "pre-wrap",
     overflowWrap: "anywhere",
@@ -421,5 +707,6 @@ const styles = stylex.create({
     fontSize: fontSize.ui,
     outlineOffset: 2,
   },
+  inlineEditor: { minHeight: 72 },
   recovery: { display: "flex", flexDirection: "column", gap: 8 },
 });

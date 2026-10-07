@@ -19,7 +19,7 @@ I.create: existing review_create gains mergeRequestUrl; incompatible with local 
 I.state: GET /:id/gitlab → cached identity/account/discussions/drafts + connection/source issues. POST /:id/gitlab/refresh → API + safe fetch/reacquisition; no background polling.
 I.drafts: POST /:id/gitlab/drafts → save id/text/target with optimistic revision; POST /:id/gitlab/discard → explicit local discard. Targets: general; reply by discussion ID; inline by file/side/line range + diff_refs.
 I.post: POST /:id/gitlab/post → one draft or all unsent; confirmed note receipt persisted; failures saved; interrupted/unacknowledged attempts visibly uncertain. Separate POST /:id/gitlab/resolve preserves replies. Explicit uncertainty recovery requires user's verification, never text-matching guesses.
-I.ui: GitLab context under ReviewSession; integrated panel + code markers + manual inline action on code selection; mapped thread reveals local code. General/unmapped threads stay accessible. Account + MR host visible.
+I.ui: GitLab context under ReviewSession; integrated panel + inline discussion cards + hover gutter add-comment action + manual inline action on code selection; mapped thread reveals local code. General/unmapped threads stay accessible. Account + MR host visible.
 
 ## §V
 
@@ -32,6 +32,7 @@ V6: Refresh refuses dirty checkout or committed HEAD deviation; no forced reset/
 V7: Inline remapping requires exact unambiguous context correspondence; otherwise preserve text + original target flagged unmapped. Reply IDs stable; general targets untouched. Range targets use current GitLab diff refs; no guessed positions.
 V8: Local reviews expose no GitLab panel/mutations. Historical/shared reviews cannot publish GitLab drafts. Autosave ordering flushes before post/discard; failed save stays visible with unsaved editor text.
 V9: Imported thread replies/resolution/refresh update both panel + code markers without reloading the review.
+V10: Async GitLab actions show feedback for active action/target; loading buttons preserve dimensions + accessible names, prevent repeat activation. Autosave/loading text shimmers; reduced-motion disables looping animation. Hover comment uses displayed file/side/current refs; historical/scoped/mismatched refs cannot compose inline.
 
 ## §T
 
@@ -52,3 +53,4 @@ B3|2026-10-07|Diff annotation cache ignored changed discussion metadata when ite
 B4|2026-10-07|Inline target retained client-supplied opposite file path, allowing unrelated-file hunks in coordinate calculation|V1,V7; derive both paths from actual Git name-status data + integration assertion
 B5|2026-10-07|Posting compared MR refs with cache but omitted the draft position after a concurrent refresh skipped remapping|V4,V7; compare draft refs with displayed pins + current refs before remote write, keep preflight failures editable
 B6|2026-10-07|Reacquisition derived checkout from current clone-root config while review pins retained the original repository path|V2,V6; reuse registered managed path, prevent MR source reassignment, reopen/reacquire regression
+B7|2026-10-07|Loading-button width assertion omitted production utility CSS, rendering spinner in normal flow; direct Bun checks omitted project runtime/JIT settings|V10; browser check loads production CSS + holds resolve request, asserts stable width and preserved reply; Bun 1.4.2 with project JIT setting
