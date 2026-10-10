@@ -1,7 +1,5 @@
-import { fontSize, radius } from "@canvas/styles/scale.stylex";
-import type { StyleArg } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
+import { Kbd as KbdPrimitive } from "@canvas/components/ui/kbd";
+import { type StyleArg, withClass } from "@canvas/styles/stylex-props";
 import type { ComponentProps } from "react";
 
 type KbdProps = Omit<ComponentProps<"kbd">, "className" | "style"> & {
@@ -10,24 +8,13 @@ type KbdProps = Omit<ComponentProps<"kbd">, "className" | "style"> & {
 
 /** One key of a hotkey hint on the canvas. */
 export function Kbd({ xstyle, ...props }: KbdProps) {
-  return <kbd {...props} {...stylex.props(styles.key, xstyle)} />;
+  return (
+    <KbdPrimitive
+      {...props}
+      {...withClass(
+        "tw:h-[17px] tw:min-w-4 tw:border tw:border-input tw:bg-background tw:text-[10px] tw:font-normal tw:leading-none tw:text-foreground",
+        xstyle,
+      )}
+    />
+  );
 }
-
-const styles = stylex.create({
-  key: {
-    display: "inline-grid",
-    placeItems: "center",
-    minWidth: "16px",
-    height: "17px",
-    padding: "0 4px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.small,
-    backgroundColor: tokens.bg,
-    color: tokens.ink,
-    fontFamily: tokens.fontMono,
-    fontSize: fontSize.micro,
-    lineHeight: 1,
-  },
-});

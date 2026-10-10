@@ -2,9 +2,14 @@
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme) prefix(tw);
 @import "tailwindcss/utilities.css" layer(utilities) prefix(tw) source(none);
-@source "./components";
-@source "./ui";
+@source ".";
+@source "../../../../apps/review-electrobun/src";
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-review-theme="dark"], [data-review-theme="dark"] *));
+
+@theme {
+  --z-index-popover: 120;
+  --z-index-dialog: 10000;
+}
 
 @theme inline {
   --color-background: var(--bg);
@@ -14,6 +19,9 @@
   --color-secondary: var(--well);
   --color-secondary-foreground: var(--ink);
   --color-muted-foreground: var(--ink-muted);
+  --color-muted: var(--well);
+  --color-popover: var(--surface-raised);
+  --color-popover-foreground: var(--ink);
   --color-accent: var(--well);
   --color-accent-foreground: var(--ink);
   --color-destructive: var(--diff-removed);
@@ -35,6 +43,10 @@
     color: inherit;
     background-color: transparent;
     cursor: pointer;
+  }
+  input[data-slot],
+  textarea[data-slot] {
+    font-family: inherit;
   }
   button[data-slot] {
     padding: 0;

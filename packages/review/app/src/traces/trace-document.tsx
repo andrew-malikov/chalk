@@ -1,4 +1,5 @@
 import { AgentChatUserMessage } from "@canvas/ask/agent-chat";
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { AgentMarkdown } from "@canvas/documents/agent-markdown";
 import {
   HighlightedText,
@@ -11,6 +12,7 @@ import {
   traceToolMarker,
   traceWorkedMarker,
 } from "@canvas/styles/markers.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
 import { Chip, chipStyles } from "@canvas/ui/chip";
 import { textStyles } from "@canvas/ui/text";
 import type { ReviewAgentTraceEvent } from "@dev.fast/review-protocol";
@@ -654,15 +656,21 @@ export function ElidedMessage({
             <QuoteMark>{segment.text}</QuoteMark>
           </span>
         ) : (
-          <button
+          <ButtonPrimitive
+            variant="ghost"
+            size="xs"
             key={index}
             type="button"
-            {...stylex.props(chipStyles.pill, styles.lensChip)}
+            {...withClass(
+              "tw:h-auto tw:whitespace-normal tw:font-normal",
+              chipStyles.pill,
+              styles.lensChip,
+            )}
             title="Show the hidden text"
             onClick={onExpand}
           >
             ⋯
-          </button>
+          </ButtonPrimitive>
         ),
       )}
     </span>
@@ -707,10 +715,16 @@ export function TraceGapChip({
   onExpand: () => void;
 }) {
   return (
-    <button
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
       key={`gap-${from}`}
       type="button"
-      {...stylex.props(styles.lensRow, traceRowMarker)}
+      {...withClass(
+        "tw:h-auto tw:whitespace-normal tw:font-normal",
+        styles.lensRow,
+        traceRowMarker,
+      )}
       data-trace-gap={from}
       onClick={onExpand}
     >
@@ -723,7 +737,7 @@ export function TraceGapChip({
         ⋯ {count} hidden {count === 1 ? "event" : "events"}
       </Chip>
       <span {...stylex.props(styles.lensLine)} />
-    </button>
+    </ButtonPrimitive>
   );
 }
 
@@ -742,9 +756,15 @@ export function TraceCollapseRow({
   onCollapse: () => void;
 }) {
   return (
-    <button
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
       type="button"
-      {...stylex.props(styles.lensRow, traceRowMarker)}
+      {...withClass(
+        "tw:h-auto tw:whitespace-normal tw:font-normal",
+        styles.lensRow,
+        traceRowMarker,
+      )}
       onClick={onCollapse}
     >
       <span {...stylex.props(styles.lensLine, styles.lensLineSolid)} />
@@ -771,7 +791,7 @@ export function TraceCollapseRow({
         collapse {span.count} {span.count === 1 ? "event" : "events"}
       </Chip>
       <span {...stylex.props(styles.lensLine, styles.lensLineSolid)} />
-    </button>
+    </ButtonPrimitive>
   );
 }
 

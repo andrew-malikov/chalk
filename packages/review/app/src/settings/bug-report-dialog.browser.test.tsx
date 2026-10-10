@@ -99,10 +99,10 @@ describe("BugReportControl", () => {
     expect(sendButton().disabled).toBe(true);
   });
 
-  it("maps the Review checkbox to both wire flags", async () => {
+  it("toggles the Session attachment through its label and maps both wire flags", async () => {
     await renderAndOpen();
 
-    await act(async () => checkbox("Session").click());
+    await act(async () => checkboxLabel("Session").click());
     await act(async () => sendButton().click());
 
     expect(reportBody()).toMatchObject({
@@ -201,14 +201,14 @@ describe("BugReportControl", () => {
     return button;
   }
 
-  function checkbox(labelText: string) {
-    const input = [...container.querySelectorAll("label")]
-      .find((label) => label.textContent?.trim() === labelText)
-      ?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+  function checkboxLabel(labelText: string) {
+    const label = [...container.querySelectorAll("label")].find(
+      (label) => label.textContent?.trim() === labelText,
+    );
 
-    if (!input) throw new Error(labelText + " checkbox not found");
+    if (!label) throw new Error(labelText + " checkbox label not found");
 
-    return input;
+    return label;
   }
 
   function reportBody(): JsonObject {

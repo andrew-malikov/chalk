@@ -1,4 +1,5 @@
 import { useAgentSelection } from "@canvas/ask/agent-selection";
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { NativeSelect } from "@canvas/components/ui/native-select";
 import { useGitLab } from "@canvas/gitlab/gitlab-context";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@canvas/review/review-ui-state";
 import { loadingStyles } from "@canvas/styles/loading.stylex";
 import { fontSize, radius } from "@canvas/styles/scale.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button, IconButton } from "@canvas/ui/button";
 import type {
@@ -773,9 +775,14 @@ function Comparison({
           <nav {...stylex.props(styles.tree)} aria-label="Changed files">
             {visible.map((entry) => (
               <div key={entry.file.path} {...stylex.props(styles.treeRow)}>
-                <button
+                <ButtonPrimitive
+                  variant="ghost"
+                  size="xs"
                   type="button"
-                  {...stylex.props(styles.fileButton)}
+                  {...withClass(
+                    "tw:h-auto tw:whitespace-normal tw:font-normal",
+                    styles.fileButton,
+                  )}
                   aria-current={
                     entry.file.path === selectedPath ? "true" : undefined
                   }
@@ -787,7 +794,7 @@ function Comparison({
                   }
                 >
                   {entry.file.path}
-                </button>
+                </ButtonPrimitive>
                 <DiffCount
                   additions={entry.file.additions}
                   deletions={entry.file.deletions}
@@ -848,12 +855,17 @@ function Comparison({
         renderGutterUtility={
           canComment
             ? (getHoveredLine, item) => (
-                <button
+                <ButtonPrimitive
+                  variant="ghost"
+                  size="xs"
                   type="button"
                   aria-label={`Add comment in ${item.id}`}
                   title="Add comment"
                   disabled={gitlab?.busy}
-                  {...stylex.props(styles.addComment)}
+                  {...withClass(
+                    "tw:h-auto tw:whitespace-normal tw:font-normal",
+                    styles.addComment,
+                  )}
                   onClick={(event) => {
                     event.stopPropagation();
                     const line = getHoveredLine();
@@ -897,7 +909,7 @@ function Comparison({
                   }}
                 >
                   <PlusIcon size={16} aria-hidden="true" />
-                </button>
+                </ButtonPrimitive>
               )
             : undefined
         }

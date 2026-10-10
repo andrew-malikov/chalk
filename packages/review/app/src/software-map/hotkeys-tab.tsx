@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { dockShadow } from "@canvas/software-map/hotkeys-tab.stylex";
 import {
   fontSize,
@@ -5,6 +6,7 @@ import {
   motion,
   radius,
 } from "@canvas/styles/scale.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { MinusIcon, PlusIcon } from "@canvas/ui/icons";
 import { Kbd } from "@canvas/ui/kbd";
@@ -151,22 +153,31 @@ export function SoftwareMapHotkeysTab({
             </div>
           ))}
         </div>
-        <button
+        <ButtonPrimitive
+          variant="ghost"
+          size="xs"
           ref={toggleRef}
           type="button"
-          {...stylex.props(styles.button, styles.toggle)}
+          {...withClass(
+            "tw:h-auto tw:whitespace-normal tw:font-normal",
+            styles.button,
+            styles.toggle,
+          )}
           aria-label="Minimize software map hotkeys"
           aria-expanded="true"
           tabIndex={open ? 0 : -1}
           onClick={() => onOpenChange(false)}
         >
           <MinusIcon xstyle={styles.icon} />
-        </button>
+        </ButtonPrimitive>
       </div>
-      <button
+      <ButtonPrimitive
+        variant="ghost"
+        size="xs"
         ref={collapsedButtonRef}
         type="button"
-        {...stylex.props(
+        {...withClass(
+          "tw:h-auto tw:whitespace-normal tw:font-normal",
           styles.button,
           styles.collapsedButton,
           !open && styles.collapsedButtonShown,
@@ -178,7 +189,7 @@ export function SoftwareMapHotkeysTab({
       >
         <span>Hotkeys</span>
         <PlusIcon xstyle={styles.icon} />
-      </button>
+      </ButtonPrimitive>
     </aside>
   );
 }

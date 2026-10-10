@@ -1,3 +1,4 @@
+import { Switch } from "@canvas/components/ui/switch";
 import { ConnectCard, LegacySkillsRow } from "@canvas/home/connect-card";
 import { homeStyles } from "@canvas/home/home-styles";
 import { withClass } from "@canvas/styles/stylex-props";
@@ -177,17 +178,15 @@ export function SettingsPage({
               label="Share anonymous usage data"
               description="Counts and timings only. Never code, file paths, or repository names."
             >
-              <label
+              <div
                 {...stylex.props(styles.toggle)}
                 aria-label="Share anonymous usage data"
               >
-                <input
-                  {...stylex.props(styles.checkbox)}
-                  type="checkbox"
+                <Switch
+                  aria-label="Share anonymous usage data"
                   checked={telemetryEnabled}
                   disabled={busy !== null}
-                  onChange={(event) => {
-                    const enabled = event.target.checked;
+                  onCheckedChange={(enabled) => {
                     void run(
                       "telemetry",
                       () => settings.setTelemetryEnabled(enabled),
@@ -195,7 +194,7 @@ export function SettingsPage({
                     );
                   }}
                 />
-              </label>
+              </div>
             </Row>
           </Section>
 
@@ -302,29 +301,24 @@ export function SettingsPage({
               label="Structural Diffs"
               description="Structural rendering is temporarily unavailable. Your preference is saved."
             >
-              <label {...stylex.props(styles.toggle)}>
-                <input
-                  {...stylex.props(styles.checkbox)}
-                  type="checkbox"
+              <div {...stylex.props(styles.toggle)}>
+                <Switch
                   aria-label="Structural Diffs"
                   checked={structuralDiffEnabled}
                   disabled
                 />
-              </label>
+              </div>
             </Row>
             <Row
               label="Software Map"
               description="Show the experimental Software Map view in sessions."
             >
-              <label {...stylex.props(styles.toggle)}>
-                <input
-                  {...stylex.props(styles.checkbox)}
-                  type="checkbox"
+              <div {...stylex.props(styles.toggle)}>
+                <Switch
                   aria-label="Software Map"
                   checked={softwareMapEnabled}
                   disabled={busy !== null}
-                  onChange={(event) => {
-                    const enabled = event.target.checked;
+                  onCheckedChange={(enabled) => {
                     void run(
                       "software-map",
                       () => settings.setSoftwareMapEnabled(enabled),
@@ -332,21 +326,18 @@ export function SettingsPage({
                     );
                   }}
                 />
-              </label>
+              </div>
             </Row>
             <Row
               label="Scratchpad"
               description="Show the experimental scratchpad on Home. Agents draw on it through Blackboard's MCP tools."
             >
-              <label {...stylex.props(styles.toggle)}>
-                <input
-                  {...stylex.props(styles.checkbox)}
-                  type="checkbox"
+              <div {...stylex.props(styles.toggle)}>
+                <Switch
                   aria-label="Scratchpad"
                   checked={scratchpadEnabled}
                   disabled={busy !== null}
-                  onChange={(event) => {
-                    const enabled = event.target.checked;
+                  onCheckedChange={(enabled) => {
                     void run(
                       "scratchpad",
                       () => settings.setScratchpadEnabled(enabled),
@@ -354,7 +345,7 @@ export function SettingsPage({
                     );
                   }}
                 />
-              </label>
+              </div>
             </Row>
             {install ? (
               <TraceCaptureSection

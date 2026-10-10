@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { ElementCountsText } from "@canvas/diff/lens-counts";
 import { useMotionPhase } from "@canvas/drawing/draw-queue-provider";
 import { drawStyles } from "@canvas/drawing/draw-styles";
@@ -226,12 +227,14 @@ export function FlowGraph({
         >
           {moved ? (
             <Panel position="top-right">
-              <button
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
                 {...withClass("diagram-tour-button", diagramStyles.control)}
                 onClick={() => setMovedLayout(undefined)}
               >
                 Reset view
-              </button>
+              </ButtonPrimitive>
             </Panel>
           ) : (
             <FitToLayout layout={layout} frame={frame} />

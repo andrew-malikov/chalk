@@ -1,23 +1,20 @@
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@canvas/components/ui/popover";
 import { useOptionalReviewSession } from "@canvas/host/review-session";
-import { useAnchoredPopover } from "@canvas/lib/use-anchored-popover";
-import { useDismissOnOutside } from "@canvas/lib/use-dismiss-on-outside";
 import { useTooltip } from "@canvas/lib/use-tooltip";
 import { controlStyles } from "@canvas/styles/controls-styles";
-import { topbarActionsMarker } from "@canvas/styles/markers.stylex";
-import { layer } from "@canvas/styles/scale.stylex";
-import { shellStyles } from "@canvas/styles/shell-styles";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import { Button, IconButton } from "@canvas/ui/button";
 import { copyText } from "@canvas/ui/copy-text";
 import { ShareIcon } from "@canvas/ui/icons";
-import { surfaceStyles } from "@canvas/ui/surface";
 import { TextField } from "@canvas/ui/text-field";
 import {
   type ReviewApiClient,
   ReviewApiError,
 } from "@review/review-api/client";
-import * as stylex from "@stylexjs/stylex";
 import {
   skipToken,
   useMutation,
@@ -67,7 +64,6 @@ export function ShareControl() {
   const [copyError, setCopyError] = useState<string>();
   const [copied, setCopied] = useState(false);
   const popover = useRef<HTMLDivElement>(null);
-  const popoverRef = useAnchoredPopover(open, popover);
   const shared = context?.reviewId.startsWith("shared-");
   const accountKey = canvasQueryKeys.sharingAccount();
 
@@ -157,8 +153,6 @@ export function ShareControl() {
     });
   };
 
-  useDismissOnOutside(popover, open, setOpen);
-
   // Upload once per opening; a failure waits for Retry or a new sign-in.
   useEffect(() => {
     if (open && signedIn && target && publish.isIdle && !link) upload(target);
@@ -192,20 +186,12 @@ export function ShareControl() {
   };
 
   return (
-    <div
-      ref={popover}
-      {...stylex.props(shellStyles.topbarItem)}
-      style={{ position: "relative" }}
-    >
-      <IconButton
-        ref={tooltip}
-        aria-label={label}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => {
-          // An upload of this version in flight keeps its request.
+    <div ref={popover} className="tw:relative">
+      <Popover
+        open={open}
+        onOpenChange={(next) => {
           if (
-            !open &&
+            next &&
             !(publish.isPending && target?.version === context.version)
           ) {
             setTarget({
@@ -218,32 +204,37 @@ export function ShareControl() {
             setCopied(false);
           }
 
-          setOpen(!open);
+          setOpen(next);
         }}
       >
-        <ShareIcon xstyle={controlStyles.chromeIcon} />
-      </IconButton>
-      {open && (
-        <div
-          ref={popoverRef}
-          popover="manual"
-          role="dialog"
+        <PopoverTrigger asChild>
+          <IconButton
+            ref={tooltip}
+            aria-label={label}
+            aria-haspopup="dialog"
+            aria-expanded={open}
+          >
+            <ShareIcon xstyle={controlStyles.chromeIcon} />
+          </IconButton>
+        </PopoverTrigger>
+        <PopoverContent
+          container={
+            popover.current?.closest<HTMLElement>(".review-app") ??
+            popover.current
+          }
+          align="end"
           aria-label={shared ? "Shared review" : "Share review"}
-          {...stylex.props(
-            shellStyles.topbarPopover,
-            surfaceStyles.popover,
-            styles.popover,
-          )}
+          className="tw:flex tw:w-[280px] tw:flex-col tw:gap-2 tw:px-3 tw:py-2.5 tw:font-[family-name:var(--chrome-font)] tw:text-xs"
         >
           {(error || accountError || account?.error) && (
-            <p {...stylex.props(styles.paragraph, styles.error)} role="alert">
+            <p className="tw:m-0 tw:text-destructive" role="alert">
               {error ?? accountError ?? account?.error}
             </p>
           )}
           {shared ? (
             <>
-              <p {...stylex.props(styles.paragraph, styles.status)}>{label}</p>
-              <p {...stylex.props(styles.paragraph, styles.status)}>
+              <p className="tw:m-0 tw:text-muted-foreground">{label}</p>
+              <p className="tw:m-0 tw:text-muted-foreground">
                 This is a read-only snapshot, available offline.
               </p>
             </>
@@ -251,7 +242,7 @@ export function ShareControl() {
             link ? (
               <>
                 <TextField
-                  xstyle={styles.link}
+                  className="tw:w-full"
                   aria-label="Share link"
                   readOnly
                   value={link}
@@ -269,9 +260,7 @@ export function ShareControl() {
                 Retry
               </Button>
             ) : (
-              <p {...stylex.props(styles.paragraph, styles.status)}>
-                Uploading…
-              </p>
+              <p className="tw:m-0 tw:text-muted-foreground">Uploading…</p>
             )
           ) : (
             account && (
@@ -293,47 +282,8 @@ export function ShareControl() {
               </>
             )
           )}
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
-
-const inTopbarActions = () =>
-  stylex.when.ancestor(":is(*)", topbarActionsMarker);
-
-const styles = stylex.create({
-  // Hovered, the open button keeps the topbar button hover colors.
-  // In the topbar action row the shared anchoring (shellStyles.topbarPopover)
-  // places it; these are its own values anywhere else.
-  popover: {
-    position: { default: "absolute", [inTopbarActions()]: "fixed" },
-    zIndex: layer.popover,
-    top: {
-      default: "calc(100% + 4px)",
-      [inTopbarActions()]: "calc(anchor(bottom) + 4px)",
-    },
-    right: { default: 0, [inTopbarActions()]: "anchor(right)" },
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    width: "280px",
-    margin: 0,
-    padding: "10px 12px",
-    color: tokens.chromeFg,
-    fontFamily: tokens.chromeFont,
-    fontSize: tokens.chromeFontSize,
-  },
-  paragraph: {
-    margin: 0,
-  },
-  status: {
-    color: tokens.chromeFgMuted,
-  },
-  error: {
-    color: "var(--vscode-errorForeground, #f48771)",
-  },
-  link: {
-    width: "100%",
-  },
-});

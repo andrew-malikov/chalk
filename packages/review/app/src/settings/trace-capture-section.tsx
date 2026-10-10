@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { promptStyles } from "@canvas/home/prompt-styles";
 import { fontSize } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
@@ -172,7 +173,10 @@ export function TraceCaptureSection({
         </div>
       )}
       {status.trace.enabled ? (
-        <button
+        <ButtonPrimitive
+          className="tw:h-auto tw:whitespace-normal tw:font-normal"
+          variant="ghost"
+          size="xs"
           type="button"
           disabled={busy !== null}
           onClick={() =>
@@ -180,10 +184,13 @@ export function TraceCaptureSection({
           }
         >
           {busy === "trace-remove" ? "Disabling…" : "Disable"}
-        </button>
+        </ButtonPrimitive>
       ) : null}
       {hosted ? null : (
-        <button
+        <ButtonPrimitive
+          className="tw:h-auto tw:whitespace-normal tw:font-normal"
+          variant="ghost"
+          size="xs"
           type="button"
           disabled={busy !== null}
           onClick={() =>
@@ -216,7 +223,7 @@ export function TraceCaptureSection({
             : status.trace.enabled
               ? "Repair"
               : "Enable"}
-        </button>
+        </ButtonPrimitive>
       )}
       {error ? <p {...stylex.props(promptStyles.error)}>{error}</p> : null}
     </div>

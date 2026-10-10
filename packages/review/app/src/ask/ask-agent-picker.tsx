@@ -1,14 +1,20 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import { Input } from "@canvas/components/ui/input";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverTrigger,
+} from "@canvas/components/ui/popover";
 import type { ReviewSession } from "@canvas/host/review-session";
-import { useAnchoredPopover } from "@canvas/lib/use-anchored-popover";
-import { useDismissOnOutside } from "@canvas/lib/use-dismiss-on-outside";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { fontSize } from "@canvas/styles/scale.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button } from "@canvas/ui/button";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { CheckIcon, ChevronDownIcon, SearchIcon } from "@canvas/ui/icons";
 import { menuStyles } from "@canvas/ui/menu";
-import { surfaceStyles } from "@canvas/ui/surface";
 import { textStyles } from "@canvas/ui/text";
 import { fieldStyles } from "@canvas/ui/text-field";
 import {
@@ -309,68 +315,72 @@ export function AskAgentMenu({
   onPick: (agent: AskAgentId) => void;
   onDismiss: () => void;
 }): ReactElement {
-  const menu = useAnchoredPopover(true, within);
-
-  useDismissOnOutside(within, true, onDismiss, true);
-
-  useEffect(() => {
-    if (!autoFocus) return;
-    menu.current
-      ?.querySelector<HTMLButtonElement>('[aria-checked="true"], button')
-      ?.focus();
-  }, [autoFocus, menu]);
+  const menu = useRef<HTMLDivElement>(null);
 
   return (
-    <div
-      ref={menu}
-      popover="manual"
-      role="menu"
-      tabIndex={-1}
-      aria-label="Answer with"
-      {...stylex.props(
-        surfaceStyles.popover,
-        menuStyles.popover,
-        styles.agentMenu,
-      )}
-      onKeyDown={(event) => {
-        if (event.key !== "Escape") return;
-        // Escape closes the menu, not the panel behind it.
-        event.stopPropagation();
-        onDismiss();
+    <Popover
+      open
+      onOpenChange={(open) => {
+        if (!open) onDismiss();
       }}
     >
-      <div
-        {...stylex.props(textStyles.eyebrow, menuStyles.label)}
-        aria-hidden="true"
+      <PopoverAnchor virtualRef={within} />
+      <PopoverContent
+        ref={menu}
+        container={
+          within.current?.closest<HTMLElement>(".review-app") ?? within.current
+        }
+        role="menu"
+        align="start"
+        aria-label="Answer with"
+        className="tw:flex tw:w-[300px] tw:flex-col tw:gap-0.5 tw:p-1"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+
+          if (autoFocus)
+            menu.current
+              ?.querySelector<HTMLElement>('[aria-checked="true"], button')
+              ?.focus();
+        }}
+        onEscapeKeyDown={(event) => event.stopPropagation()}
       >
-        Answer with
-      </div>
-      {agents
-        .filter((candidate) => candidate.available)
-        .map((candidate) => (
-          <button
-            key={candidate.id}
-            type="button"
-            role="menuitemradio"
-            aria-checked={candidate.id === current}
-            {...stylex.props(
-              menuStyles.item,
-              candidate.id === current && menuStyles.itemCurrent,
-            )}
-            onClick={() => onPick(candidate.id)}
-          >
-            <span {...stylex.props(styles.logo)}>
-              {logos[candidate.id]({})}
-            </span>
-            <span {...stylex.props(styles.name)}>{candidate.name}</span>
-            {candidate.id === current ? (
-              <CheckIcon
-                xstyle={[controlStyles.inlineIcon, menuStyles.check]}
-              />
-            ) : null}
-          </button>
-        ))}
-    </div>
+        <div
+          {...stylex.props(textStyles.eyebrow, menuStyles.label)}
+          aria-hidden="true"
+        >
+          Answer with
+        </div>
+        {agents
+          .filter((candidate) => candidate.available)
+          .map((candidate) => (
+            <ButtonPrimitive
+              variant="ghost"
+              size="xs"
+              key={candidate.id}
+              type="button"
+              role="menuitemradio"
+              tabIndex={0}
+              aria-checked={candidate.id === current}
+              {...withClass(
+                "tw:h-auto tw:whitespace-normal tw:font-normal",
+                menuStyles.item,
+                candidate.id === current && menuStyles.itemCurrent,
+              )}
+              onClick={() => onPick(candidate.id)}
+            >
+              <span {...stylex.props(styles.logo)}>
+                {logos[candidate.id]({})}
+              </span>
+              <span {...stylex.props(styles.name)}>{candidate.name}</span>
+              {candidate.id === current ? (
+                <CheckIcon
+                  xstyle={[controlStyles.inlineIcon, menuStyles.check]}
+                />
+              ) : null}
+            </ButtonPrimitive>
+          ))}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -475,19 +485,8 @@ export function AskChoicePicker({
   const anchor = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const dismiss = useMenuClose(setOpen, trigger);
-  const menu = useAnchoredPopover(open, anchor);
+  const menu = useRef<HTMLDivElement>(null);
   const chosen = select.options.find((option) => option.value === current);
-
-  useDismissOnOutside(anchor, open, dismiss, true);
-
-  useEffect(() => {
-    if (!open) return;
-    (
-      menu.current?.querySelector<HTMLElement>("input") ??
-      menu.current?.querySelector<HTMLElement>('[aria-checked="true"]') ??
-      menu.current?.querySelector<HTMLElement>("button")
-    )?.focus();
-  }, [open, menu]);
 
   const searchable = select.options.length > SEARCH_FROM;
 
@@ -499,47 +498,57 @@ export function AskChoicePicker({
 
   return (
     <div ref={anchor} {...stylex.props(styles.anchor)}>
-      <Button
-        ref={trigger}
-        variant={quiet ? "ghost" : "secondary"}
-        size={quiet ? "default" : "large"}
-        xstyle={[styles.trigger, styles.choice, quiet && styles.quiet]}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={`${label}: ${chosen?.name ?? current}`}
-        title={
-          disabled ? `${label} can change once the agent finishes.` : label
-        }
-        disabled={disabled}
-        onClick={() => setOpen((value) => !value)}
-      >
-        {icon}
-        <span {...stylex.props(styles.choiceName)}>
-          {chosen?.name ?? current}
-        </span>
-        {/* Under the composer it reads as text; pointing at it shows it
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            ref={trigger}
+            variant={quiet ? "ghost" : "secondary"}
+            size={quiet ? "default" : "large"}
+            xstyle={[styles.trigger, styles.choice, quiet && styles.quiet]}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label={`${label}: ${chosen?.name ?? current}`}
+            title={
+              disabled ? `${label} can change once the agent finishes.` : label
+            }
+            disabled={disabled}
+          >
+            {icon}
+            <span {...stylex.props(styles.choiceName)}>
+              {chosen?.name ?? current}
+            </span>
+            {/* Under the composer it reads as text; pointing at it shows it
             opens. */}
-        {quiet ? null : <ChevronDownIcon />}
-      </Button>
-      {open ? (
-        <div
+            {quiet ? null : <ChevronDownIcon />}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
           ref={menu}
-          popover="manual"
+          container={
+            anchor.current?.closest<HTMLElement>(".review-app") ??
+            anchor.current
+          }
           role="menu"
-          tabIndex={-1}
+          align={end ? "end" : "start"}
+          side={quiet ? "top" : "bottom"}
           aria-label={label}
-          {...stylex.props(
-            surfaceStyles.popover,
-            menuStyles.popover,
-            quiet && menuStyles.above,
-            end && menuStyles.end,
-            searchable ? styles.searchMenu : styles.choiceMenu,
-          )}
-          onKeyDown={(event) => {
-            if (event.key !== "Escape") return;
-            // Escape closes the menu, not the panel behind it.
+          className={`tw:flex tw:max-h-[min(420px,calc(100vh-16px))] tw:flex-col tw:gap-0.5 tw:p-1 ${searchable ? "tw:w-[240px] tw:overflow-hidden" : "tw:w-max tw:min-w-[120px] tw:max-w-[260px] tw:overflow-y-auto"}`}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            (
+              menu.current?.querySelector<HTMLElement>("input") ??
+              menu.current?.querySelector<HTMLElement>(
+                '[aria-checked="true"]',
+              ) ??
+              menu.current?.querySelector<HTMLElement>("button")
+            )?.focus();
+          }}
+          onEscapeKeyDown={(event) => {
+            const input =
+              menu.current?.querySelector<HTMLInputElement>("input");
+
+            if (input?.value) event.preventDefault();
             event.stopPropagation();
-            dismiss();
           }}
         >
           {searchable ? (
@@ -567,8 +576,8 @@ export function AskChoicePicker({
               ))}
             </>
           )}
-        </div>
-      ) : null}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
@@ -595,13 +604,17 @@ function AskChoiceItem({
   onPoint?: () => void;
 }): ReactElement {
   return (
-    <button
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
       id={id}
       type="button"
       role="menuitemradio"
+      tabIndex={0}
       aria-checked={checked}
       data-highlighted={highlighted || undefined}
-      {...stylex.props(
+      {...withClass(
+        "tw:h-auto tw:whitespace-normal tw:font-normal",
         menuStyles.item,
         checked && menuStyles.itemCurrent,
         highlighted && menuStyles.itemHighlighted,
@@ -613,7 +626,7 @@ function AskChoiceItem({
       {checked ? (
         <CheckIcon xstyle={[controlStyles.inlineIcon, menuStyles.check]} />
       ) : null}
-    </button>
+    </ButtonPrimitive>
   );
 }
 
@@ -665,7 +678,8 @@ function AskChoiceSearch({
         {...stylex.props(fieldStyles.box, fieldStyles.shell, styles.search)}
       >
         <SearchIcon xstyle={[controlStyles.inlineIcon, styles.searchIcon]} />
-        <input
+        <Input
+          className="tw:h-auto tw:border-0 tw:p-0 tw:shadow-none tw:focus-visible:ring-0"
           {...stylex.props(styles.searchInput)}
           value={query}
           placeholder={`Search ${noun}s`}
@@ -733,20 +747,6 @@ function AskChoiceSearch({
 }
 
 const styles = stylex.create({
-  agentMenu: {
-    width: "300px",
-  },
-  choiceMenu: {
-    width: "max-content",
-    minWidth: "120px",
-    maxWidth: "260px",
-  },
-  // A field above results that scroll beneath it, at one width so the menu
-  // does not jump as they change.
-  searchMenu: {
-    width: "240px",
-    overflowY: "hidden",
-  },
   search: {
     display: "flex",
     flex: "0 0 auto",

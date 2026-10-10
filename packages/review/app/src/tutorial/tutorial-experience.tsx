@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { documentType } from "@canvas/documents/document-type.stylex";
 import { useReview } from "@canvas/review/review-context";
 import {
@@ -363,7 +364,9 @@ export function TutorialExperienceProvider({
               <TutorialTargetRing key={ring.key} ring={ring} />
             ))}
           {dismissed ? (
-            <button
+            <ButtonPrimitive
+              variant="ghost"
+              size="xs"
               type="button"
               {...stylex.props(styles.pill)}
               aria-label="Show tutorial"
@@ -371,7 +374,7 @@ export function TutorialExperienceProvider({
               onClick={tutorial.reopen}
             >
               <TutorialIcon xstyle={styles.pillIcon} />
-            </button>
+            </ButtonPrimitive>
           ) : (
             <TutorialGuide experience={experience} />
           )}

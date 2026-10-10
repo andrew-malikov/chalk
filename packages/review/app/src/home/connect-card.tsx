@@ -1,8 +1,10 @@
 import { AGENT_LOGOS } from "@canvas/ask/agent-logos";
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { newTabLinkProps } from "@canvas/documents/link-props";
 import { cliInstallReady } from "@canvas/settings/cli-install-status";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { fontSize, radius } from "@canvas/styles/scale.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button } from "@canvas/ui/button";
 import { CopyIcon, copyText } from "@canvas/ui/copy-text";
@@ -154,10 +156,13 @@ export function ConnectCard({
           const Logo = AGENT_LOGOS[tab];
 
           return (
-            <button
+            <ButtonPrimitive
+              variant="ghost"
+              size="xs"
               key={tab}
               type="button"
-              {...stylex.props(
+              {...withClass(
+                "tw:h-auto tw:whitespace-normal tw:font-normal",
                 controlStyles.segment,
                 controlStyles.segmentLarge,
                 target === tab && controlStyles.segmentActive,
@@ -167,7 +172,7 @@ export function ConnectCard({
             >
               <Logo xstyle={styles.logo} />
               {TARGET_LABELS[tab]}
-            </button>
+            </ButtonPrimitive>
           );
         })}
         <OtherAgentMenu
@@ -181,10 +186,13 @@ export function ConnectCard({
         aria-label="Setup method"
       >
         {MODES.map(({ mode: tab, label }) => (
-          <button
+          <ButtonPrimitive
+            variant="ghost"
+            size="xs"
             key={tab}
             type="button"
-            {...stylex.props(
+            {...withClass(
+              "tw:h-auto tw:whitespace-normal tw:font-normal",
               controlStyles.segment,
               mode === tab && controlStyles.segmentActive,
             )}
@@ -192,7 +200,7 @@ export function ConnectCard({
             onClick={() => selectMode(tab)}
           >
             {label}
-          </button>
+          </ButtonPrimitive>
         ))}
       </div>
       {text ? (
@@ -216,30 +224,45 @@ export function ConnectCard({
               )}
             </pre>
             {collapsed ? (
-              <button
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
                 type="button"
-                {...stylex.props(styles.expand)}
+                {...withClass(
+                  "tw:h-auto tw:whitespace-normal tw:font-normal",
+                  styles.expand,
+                )}
                 aria-expanded={false}
                 onClick={() => setExpanded(true)}
               >
                 Show full {noun}
-              </button>
+              </ButtonPrimitive>
             ) : null}
           </div>
           <div {...stylex.props(promptStyles.actions)}>
             {collapsible && expanded ? (
-              <button
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
                 type="button"
-                {...stylex.props(styles.collapse)}
+                {...withClass(
+                  "tw:h-auto tw:whitespace-normal tw:font-normal",
+                  styles.collapse,
+                )}
                 aria-expanded={true}
                 onClick={() => setExpanded(false)}
               >
                 Show less
-              </button>
+              </ButtonPrimitive>
             ) : null}
-            <button
+            <ButtonPrimitive
+              variant="ghost"
+              size="xs"
               type="button"
-              {...stylex.props(promptStyles.copy)}
+              {...withClass(
+                "tw:h-auto tw:whitespace-normal tw:font-normal",
+                promptStyles.copy,
+              )}
               aria-live="polite"
               aria-label={`${copied ? "Copied" : "Copy"} ${noun} for ${agent}`}
               onClick={() => copy(text)}
@@ -248,7 +271,7 @@ export function ConnectCard({
               {copied
                 ? "Copied"
                 : `Copy ${mode === "prompt" ? "prompt" : "command"}`}
-            </button>
+            </ButtonPrimitive>
           </div>
         </>
       ) : plugin.url ? (

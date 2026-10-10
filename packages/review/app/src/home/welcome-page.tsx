@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { newTabLinkProps } from "@canvas/documents/link-props";
 import { welcomeType } from "@canvas/home/welcome-page.stylex";
 import { cliInstallReady } from "@canvas/settings/cli-install-status";
@@ -419,9 +420,15 @@ export function WelcomePage({
                     data-state={step.done ? "done" : "todo"}
                     data-open={open}
                   >
-                    <button
+                    <ButtonPrimitive
+                      variant="ghost"
+                      size="xs"
                       type="button"
-                      {...stylex.props(chevronMarker, styles.stepHeader)}
+                      {...withClass(
+                        "tw:h-auto tw:whitespace-normal tw:font-normal",
+                        chevronMarker,
+                        styles.stepHeader,
+                      )}
                       disabled={step.disabled}
                       aria-expanded={open}
                       aria-label={`${open ? "Collapse" : "Expand"} ${step.label ?? step.title}`}
@@ -449,7 +456,7 @@ export function WelcomePage({
                         expanded={open}
                         xstyle={styles.stepChevron}
                       />
-                    </button>
+                    </ButtonPrimitive>
                     {open ? (
                       <div {...stylex.props(styles.stepBody)}>{step.body}</div>
                     ) : null}

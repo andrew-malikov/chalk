@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { AgentMarkdown } from "@canvas/documents/agent-markdown";
 import { settleStreamingMarkdown } from "@canvas/documents/streaming-markdown";
 import { CourierFigure } from "@canvas/drawing/courier-figure";
@@ -5,6 +6,7 @@ import { useTooltip } from "@canvas/lib/use-tooltip";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { chevronMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, radius } from "@canvas/styles/scale.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { CheckIcon, CloseIcon, DisclosureChevron } from "@canvas/ui/icons";
 import type { AskEntry, AskThreadState } from "@review/ask/thread-state";
@@ -310,9 +312,12 @@ function AskToolItem({ activity }: { activity: Activity }): ReactElement {
   return (
     <li {...stylex.props(styles.tool)}>
       {detail ? (
-        <button
+        <ButtonPrimitive
+          variant="ghost"
+          size="xs"
           type="button"
-          {...stylex.props(
+          {...withClass(
+            "tw:h-auto tw:whitespace-normal tw:font-normal",
             chevronMarker,
             styles.toolHead,
             styles.toolHeadButton,
@@ -322,7 +327,7 @@ function AskToolItem({ activity }: { activity: Activity }): ReactElement {
         >
           {head}
           <DisclosureChevron expanded={open} />
-        </button>
+        </ButtonPrimitive>
       ) : (
         <div {...stylex.props(styles.toolHead)}>{head}</div>
       )}
@@ -358,9 +363,12 @@ function AskToolGroup({
 
   return (
     <div {...stylex.props(styles.tools)}>
-      <button
+      <ButtonPrimitive
+        variant="ghost"
+        size="xs"
         type="button"
-        {...stylex.props(
+        {...withClass(
+          "tw:h-auto tw:whitespace-normal tw:font-normal",
           chevronMarker,
           styles.summary,
           failed && styles.summaryFailed,
@@ -370,7 +378,7 @@ function AskToolGroup({
       >
         <span>{summarize(activities)}</span>
         <DisclosureChevron expanded={open} xstyle={styles.summaryChevron} />
-      </button>
+      </ButtonPrimitive>
       {open ? (
         <ul {...stylex.props(styles.toolList)}>
           {activities.map((activity) => (

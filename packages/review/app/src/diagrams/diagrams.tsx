@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { flowLayer } from "@canvas/diagrams/flow-layers.stylex";
 import { useMotionPhase } from "@canvas/drawing/draw-queue-provider";
 import { drawStyles } from "@canvas/drawing/draw-styles";
@@ -577,7 +578,9 @@ function SequenceDiagramFigure({
           action={
             // The tour panel's header owns the close control fullscreen.
             onCloseTour ? null : (
-              <button
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
                 type="button"
                 {...withClass("diagram-tour-button", diagramStyles.control)}
                 onClick={(event) => {
@@ -587,7 +590,7 @@ function SequenceDiagramFigure({
                 }}
               >
                 Tour
-              </button>
+              </ButtonPrimitive>
             )
           }
         />
@@ -787,9 +790,12 @@ function SequenceMessageEdge(
         }}
       />
       <EdgeLabelRenderer>
-        <button
+        <ButtonPrimitive
+          variant="ghost"
+          size="xs"
           type="button"
-          {...stylex.props(
+          {...withClass(
+            "tw:h-auto tw:whitespace-normal tw:font-normal",
             styles.dot,
             data.active && styles.dotActive,
             stage && styles.stopBadge,
@@ -810,7 +816,7 @@ function SequenceMessageEdge(
           aria-label={data.message.label}
         >
           {data.stepNumber}
-        </button>
+        </ButtonPrimitive>
         <div
           {...stylex.props(
             styles.labelAnchor,

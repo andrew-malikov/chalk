@@ -1,3 +1,4 @@
+import { Badge } from "@canvas/components/ui/badge";
 import {
   fontSize,
   fontWeight,
@@ -26,12 +27,20 @@ export function Chip({
   ...props
 }: ChipProps) {
   return (
-    <span
+    <Badge
+      variant="secondary"
       {...props}
       {...withClass(
-        className,
-        chipStyles[variant],
-        size === "large" && chipStyles.large,
+        [
+          "tw:h-[18px] tw:border-0 tw:py-0 tw:leading-none tw:text-muted-foreground",
+          variant === "tag"
+            ? "tw:rounded-sm tw:px-[5px] tw:text-[10px] tw:font-semibold tw:tracking-[0.06em] tw:uppercase"
+            : "tw:gap-1.5 tw:px-2 tw:text-[11px] tw:font-normal",
+          size === "large" && "tw:h-[22px]",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" "),
         xstyle,
       )}
     />

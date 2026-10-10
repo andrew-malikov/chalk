@@ -7,7 +7,7 @@ Authors + reviewers → create GitLab MR review through MCP; inspect discussions
 ## §C
 
 C1: Existing Local reviews + GitHub PR imports preserve behavior. No conversion of Local reviews.
-C2: Bun/TypeScript/React/StyleX; existing SQLite + review API; no new dependencies. No README.md edits.
+C2: Bun/TypeScript/React/Tailwind/shadcn; existing StyleX surfaces migrate incrementally; existing SQLite + review API; reuse installed dependencies. No README.md edits.
 C3: GitLab.com + HTTPS self-hosted GitLab; canonical MR URL incl nested groups + port. User glab/Git auth; no stored tokens, login UI, agent drafting, remote pending drafts, or editing/deleting remote comments.
 C4: Clone root `BLACKBOARD_GITLAB_CLONES_DIR`, else `<devReviewHome>/gitlab-clones`; independent clone per MR identity. Source disposable; review state durable. Clone-root changes apply to new reviews; existing MR reviews keep their registered clone path. No automatic cleanup; missing clone reacquired on refresh.
 C5: API v4 Discussions + MR diff_refs via installed glab `api --hostname`; app process inherits PATH/environment, glab resolves its saved credentials. No historic-version guarantee; missing CLI/auth/API capabilities explain recovery without discarding state.
@@ -33,6 +33,7 @@ V7: Inline remapping requires exact unambiguous context correspondence; otherwis
 V8: Local reviews expose no GitLab panel/mutations. Historical/shared reviews cannot publish GitLab drafts. Autosave ordering flushes before post/discard; failed save stays visible with unsaved editor text.
 V9: Imported thread replies/resolution/refresh update both panel + code markers without reloading the review.
 V10: Async GitLab actions show feedback for active action/target; loading buttons preserve dimensions + accessible names, prevent repeat activation. Autosave/loading text shimmers; reduced-motion disables looping animation. Hover comment uses displayed file/side/current refs; historical/scoped/mismatched refs cannot compose inline.
+V11: Standard UI controls use shared shadcn primitives + Tailwind; preserve action payloads, drafts, loading states, labels + keyboard access. Overlays inherit canvas theme, restore focus + dismiss safely. Native file inputs, authored content controls + canvas interaction targets remain specialized.
 
 ## §T
 
@@ -42,6 +43,9 @@ T1|x|GitLab protocol, URL/transport/source mapping + meaningful tests|V1,V5,V7,I
 T2|x|Durable GitLab state + posting/refresh service + managed MR creation + API tests|V2,V3,V4,V5,V6,V7,I.create,I.state,I.drafts,I.post
 T3|x|Integrate production discussions panel, selection drafting, code markers/navigation + interaction tests|V3,V5,V8,V9,I.ui
 T4|x|Run affected tests, typecheck, lint, build + whole-suite regression checks; record limits|V1,V2,V3,V4,V5,V6,V7,V8,V9
+T5|x|Migrate standard controls, menus + dialogs to shadcn/Tailwind; verify interaction + GitLab regressions|V3,V4,V8,V10,V11,I.ui
+
+T5 verification: canvas node 60 files/293 tests + desktop 4 files/33 tests pass; browser 63 files pass, 367/382 tests pass. Remaining 15 shell failures identical on HEAD baseline; obsolete tabs/Home expectations, outside migration. Bug-report label/payload rerun 6/6 pass. Canvas + desktop typecheck, changed-file lint/format, production desktop build pass. Dark/light overlay placement + theme checked in production preview. Existing StyleX layout + specialized drawing surfaces retained.
 
 ## §B
 
@@ -54,3 +58,9 @@ B4|2026-10-07|Inline target retained client-supplied opposite file path, allowin
 B5|2026-10-07|Posting compared MR refs with cache but omitted the draft position after a concurrent refresh skipped remapping|V4,V7; compare draft refs with displayed pins + current refs before remote write, keep preflight failures editable
 B6|2026-10-07|Reacquisition derived checkout from current clone-root config while review pins retained the original repository path|V2,V6; reuse registered managed path, prevent MR source reassignment, reopen/reacquire regression
 B7|2026-10-07|Loading-button width assertion omitted production utility CSS, rendering spinner in normal flow; direct Bun checks omitted project runtime/JIT settings|V10; browser check loads production CSS + holds resolve request, asserts stable width and preserved reply; Bun 1.4.2 with project JIT setting
+
+B8|2026-10-07|Bug-report regression clicked Radix hidden form input instead of visible checkbox; state did not change|V11; exercise accessible checkbox control and verify report payload
+B9|2026-10-07|Shadcn fixed-height button compressed rich history rows, allowing content overlap|V11; content buttons use auto height + normal wrapping; history hover/focus regression
+B10|2026-10-07|Deferred React overlay unmount let focus trap reclaim focus after host restored it|V11; restore focus after overlay cleanup unless another host overlay is active; keyboard + lifecycle browser checks
+
+B11|2026-10-07|Migrated confirmation test targeted native dialog; broad class replacement changed sidebar ID/ARIA reference; explicit attachment labels lacked checkbox IDs|V11 sufficient; accessible confirmation interaction, restore stable sidebar identifiers, connect label IDs + payload regression

@@ -690,6 +690,13 @@ it("asks with the model and effort the reviewer picks, and switches them between
         .querySelector<HTMLButtonElement>(`[aria-label^="${label}:"]`)!
         .click(),
     );
+    console.log(
+      "PICK DEBUG",
+      label,
+      name,
+      container.querySelector(`[aria-label^="${label}:"]`)?.outerHTML,
+      container.querySelectorAll('[role="menuitemradio"]').length,
+    );
     await act(async () =>
       [
         ...container.querySelectorAll<HTMLButtonElement>(

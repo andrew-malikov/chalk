@@ -1,5 +1,6 @@
 import { App } from "@canvas/App";
 import type { RenderedReviewDocument } from "@canvas/App";
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import {
   ApiDocument,
   type ApiDocumentData,
@@ -383,9 +384,14 @@ export function ApiCanvas({
               {error}
             </p>
             {version !== undefined && (
-              <button onClick={() => setVersion(undefined)}>
+              <ButtonPrimitive
+                className="tw:h-auto tw:whitespace-normal tw:font-normal"
+                variant="ghost"
+                size="xs"
+                onClick={() => setVersion(undefined)}
+              >
                 Back to latest version
-              </button>
+              </ButtonPrimitive>
             )}
           </>
         )}

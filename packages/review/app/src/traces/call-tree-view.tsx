@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { DiagramHeader } from "@canvas/diagrams/diagram-header";
 import {
   compactDiffCount as compact,
@@ -9,6 +10,7 @@ import { useReviewLenses } from "@canvas/review/review-lenses";
 import { useReviewPanel } from "@canvas/review/review-panel";
 import { callEdgeMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import type { DiffSelection } from "@review/documents/lens-selection";
@@ -73,14 +75,17 @@ export function CallTree({
                     onReveal(stop.callSite, stop.id, stop.anchorId);
                 }}
               />
-              <button
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
                 type="button"
                 disabled={unavailable}
                 style={{
                   paddingLeft: 14 + (stop.depth + 1) * 16,
                   opacity: unavailable ? 0.45 : undefined,
                 }}
-                {...stylex.props(
+                {...withClass(
+                  "tw:h-auto tw:whitespace-normal tw:font-normal",
                   styles.row,
                   stop.id === active && styles.rowCurrent,
                 )}
@@ -133,7 +138,7 @@ export function CallTree({
                     )}
                   </span>
                 )}
-              </button>
+              </ButtonPrimitive>
             </div>
           );
         })}

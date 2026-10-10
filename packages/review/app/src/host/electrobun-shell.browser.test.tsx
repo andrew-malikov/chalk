@@ -12,7 +12,7 @@ import {
 import { defineSoftwareMap } from "@review/software-map/software-map-model";
 import { act } from "react";
 import { afterEach, expect, test, vi } from "vitest";
-import { userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 
 // oxlint-disable no-restricted-imports -- Integration test imports the native app adapter alongside the canvas.
 import { createCanvasUi } from "../../../../../apps/review-electrobun/src/canvas-ui";
@@ -711,21 +711,28 @@ test("delete confirmation settles on cancel, approval and owner disposal", async
     () => {},
   );
 
-  const cancel = ui.confirmDelete!("Alpha");
-  container
-    .querySelector<HTMLDialogElement>("dialog")!
-    .dispatchEvent(new Event("cancel", { cancelable: true }));
+  let cancel!: Promise<boolean>;
+  await act(async () => {
+    cancel = ui.confirmDelete!("Alpha");
+  });
+  await act(async () => userEvent.keyboard("{Escape}"));
   expect(await cancel).toBe(false);
   expect(document.activeElement).toBe(trigger);
-  const approve = ui.confirmDelete!("Alpha");
-  container
-    .querySelector<HTMLButtonElement>("dialog button:last-child")!
-    .click();
+  let approve!: Promise<boolean>;
+  await act(async () => {
+    approve = ui.confirmDelete!("Alpha");
+  });
+  await act(async () =>
+    page.getByRole("button", { name: "Delete", exact: true }).click(),
+  );
   expect(await approve).toBe(true);
-  const pending = ui.confirmDelete!("Alpha");
-  ui.dispose();
+  let pending!: Promise<boolean>;
+  await act(async () => {
+    pending = ui.confirmDelete!("Alpha");
+  });
+  await act(async () => ui.dispose());
   expect(await pending).toBe(false);
-  expect(container.querySelector("dialog")).toBeNull();
+  expect(container.querySelector('[role="alertdialog"]')).toBeNull();
 });
 
 test("empty Home installs the command and unlocks agent setup and the tutorial", async () => {

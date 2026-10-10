@@ -1,9 +1,7 @@
+import { Checkbox } from "@canvas/components/ui/checkbox";
 import { useTooltip } from "@canvas/lib/use-tooltip";
-import { radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import type { CoverageProgress } from "@review/documents/viewed-coverage";
-import * as stylex from "@stylexjs/stylex";
-import { CheckIcon, MinusIcon } from "lucide-react";
+import { useId } from "react";
 
 /** Shared viewed checkbox for lenses, file lists and diff headers. */
 export function ViewedButton({
@@ -18,6 +16,7 @@ export function ViewedButton({
   /** What the box marks, e.g. the lens title. */
   label: string;
 }) {
+  const id = useId();
   const done = progress.state === "viewed";
   const empty = progress.total.additions + progress.total.deletions === 0;
 
@@ -31,56 +30,18 @@ export function ViewedButton({
   );
 
   return (
-    <button
-      ref={empty ? undefined : tooltip}
-      type="button"
-      {...stylex.props(styles.button, empty && styles.empty)}
-      role="checkbox"
-      aria-checked={progress.state === "partial" ? "mixed" : done}
-      aria-label={`${done ? "Mark unviewed" : "Mark viewed"}: ${label}`}
-      disabled={disabled || empty}
-      onClick={onClick}
+    <label
+      htmlFor={id}
+      className={`tw:inline-flex tw:size-7 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-sm tw:hover:bg-muted ${empty ? "tw:invisible" : ""}`}
     >
-      <span {...stylex.props(styles.box, done && styles.viewed)}>
-        {done ? (
-          <CheckIcon size={14} aria-hidden="true" />
-        ) : progress.state === "partial" ? (
-          <MinusIcon size={14} aria-hidden="true" />
-        ) : null}
-      </span>
-    </button>
+      <Checkbox
+        id={id}
+        ref={empty ? undefined : tooltip}
+        aria-label={`${done ? "Mark unviewed" : "Mark viewed"}: ${label}`}
+        checked={progress.state === "partial" ? "indeterminate" : done}
+        disabled={disabled || empty}
+        onClick={onClick}
+      />
+    </label>
   );
 }
-
-const styles = stylex.create({
-  button: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    width: 28,
-    height: 28,
-    padding: 0,
-    borderWidth: 0,
-    borderRadius: radius.small,
-    backgroundColor: { default: "transparent", ":hover": tokens.well },
-    color: tokens.inkMuted,
-    cursor: "pointer",
-    outline: { default: null, ":focus-visible": `2px solid ${tokens.accent}` },
-    outlineOffset: 2,
-  },
-  box: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxSizing: "border-box",
-    width: 16,
-    height: 16,
-    borderWidth: 1.5,
-    borderStyle: "solid",
-    borderColor: "currentColor",
-    borderRadius: radius.small,
-  },
-  viewed: { color: tokens.accent },
-  empty: { visibility: "hidden" },
-});

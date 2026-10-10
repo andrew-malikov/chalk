@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@canvas/components/ui/dialog";
+import { Input } from "@canvas/components/ui/input";
 import { NativeSelect } from "@canvas/components/ui/native-select";
 import {
   mountReviewCanvas,
@@ -71,8 +72,6 @@ import type {
   ShellPreferences,
 } from "./rpc";
 
-import "./shell.css";
-
 type Options = {
   state: Extract<HostState, { status: "ready" }>;
   rpc: AppRPCClient;
@@ -132,7 +131,12 @@ function Canvas({
     }
   }, [active]);
 
-  return <div className="review-shell-canvas" ref={element} />;
+  return (
+    <div
+      className="review-shell-canvas tw:h-full tw:min-h-0 tw:min-w-0 tw:flex-1"
+      ref={element}
+    />
+  );
 }
 
 export function mountElectrobunShell(container: HTMLElement, options: Options) {
@@ -900,12 +904,12 @@ function Shell(
       .map((review) => (
         <div
           key={review.id}
-          className="review-shell-review"
+          className="review-shell-review tw:mb-1 tw:flex tw:items-center tw:rounded-md tw:data-[active=true]:bg-muted"
           data-active={active.current === review.id}
         >
           <Button
             variant="ghost"
-            className="review-shell-review-link"
+            className="review-shell-review-link tw:h-auto tw:min-h-12 tw:min-w-0 tw:flex-1 tw:justify-start tw:p-2 tw:text-muted-foreground tw:aria-[current=page]:text-foreground"
             aria-current={active.current === review.id ? "page" : undefined}
             onClick={() => {
               void open(review.id).catch(fail);
@@ -917,9 +921,9 @@ function Shell(
             }}
           >
             <FileTextIcon aria-hidden="true" />
-            <span className="review-shell-review-label">
+            <span className="review-shell-review-label tw:flex tw:min-w-0 tw:flex-col tw:gap-1 tw:text-left tw:text-xs tw:[&_span]:truncate">
               <span title={review.title}>{review.title}</span>
-              <span className="review-shell-review-repository">
+              <span className="review-shell-review-repository tw:text-[11px] tw:text-[var(--ink-faint)]">
                 {review.repository}
               </span>
             </span>
@@ -927,7 +931,7 @@ function Shell(
           <Button
             variant="ghost"
             size="icon-sm"
-            className="review-shell-review-menu"
+            className="review-shell-review-menu tw:flex-none tw:text-muted-foreground"
             aria-label={`Actions for ${review.title}`}
             disabled={!connected}
             onClick={(event) =>
@@ -950,11 +954,14 @@ function Shell(
   return (
     <div
       ref={shellElement}
-      className={["review-shell", themeClass].join(" ")}
+      className={[
+        "review-shell tw:flex tw:h-full tw:min-h-0 tw:flex-col tw:bg-background tw:text-foreground tw:font-[family-name:var(--chrome-font)] tw:text-sm tw:antialiased",
+        themeClass,
+      ].join(" ")}
       data-theme={resolvedTheme}
     >
       <header
-        className="review-shell-titlebar electrobun-webkit-app-region-drag"
+        className="review-shell-titlebar electrobun-webkit-app-region-drag tw:flex tw:h-14 tw:flex-none tw:items-center tw:gap-4 tw:border-b tw:border-border tw:bg-[var(--tray)] tw:px-4 tw:select-none tw:[-webkit-app-region:drag] tw:data-[native-titlebar]:pl-[88px] tw:[&_button]:[-webkit-app-region:no-drag] tw:max-[760px]:gap-2 tw:max-[760px]:pr-2"
         data-native-titlebar={options.nativeTitlebar || undefined}
       >
         <Button
@@ -969,17 +976,20 @@ function Shell(
         >
           <PanelLeftIcon aria-hidden="true" />
         </Button>
-        <div className="review-shell-context" aria-label="Current review">
+        <div
+          className="review-shell-context tw:flex tw:min-w-0 tw:flex-1 tw:items-center tw:gap-3 tw:border-l tw:border-border tw:pl-4 tw:leading-5 tw:max-[760px]:gap-2 tw:max-[760px]:pl-2"
+          aria-label="Current review"
+        >
           {currentTab && (
             <>
               <span
-                className="review-shell-repository"
+                className="review-shell-repository tw:max-w-[180px] tw:truncate tw:text-muted-foreground tw:max-[760px]:max-w-24 tw:max-[480px]:hidden"
                 title={currentReview?.repositoryName}
               >
                 {currentReview?.repositoryName || "Reviews"}
               </span>
               <span
-                className="review-shell-context-separator"
+                className="review-shell-context-separator tw:text-[var(--ink-faint)] tw:max-[480px]:hidden"
                 aria-hidden="true"
               >
                 /
@@ -987,17 +997,17 @@ function Shell(
             </>
           )}
           <span
-            className="review-shell-current-title"
+            className="review-shell-current-title tw:truncate tw:font-medium"
             title={currentTab?.title || "Blackboard"}
           >
             {currentTab?.title || "Blackboard"}
           </span>
         </div>
-        <div className="review-shell-actions">
+        <div className="review-shell-actions tw:flex tw:flex-none tw:items-center tw:gap-1 tw:text-muted-foreground">
           {currentTab && (
             <Button
               variant="outline"
-              className="review-shell-editor"
+              className="review-shell-editor tw:mr-2 tw:border-border tw:text-xs tw:[&_span]:leading-5 tw:max-[760px]:mr-0 tw:max-[760px]:w-9 tw:max-[760px]:p-0 tw:max-[760px]:[&_span]:hidden"
               aria-label="Open in VS Code"
               title="Open review workspace in VS Code"
               disabled={!connected}
@@ -1033,12 +1043,18 @@ function Shell(
         </div>
       </header>
       {!connected && (
-        <div className="review-shell-notice" role="status">
+        <div
+          className="review-shell-notice tw:flex tw:items-center tw:justify-between tw:border-b tw:border-border tw:bg-[var(--tray)] tw:px-4 tw:py-2"
+          role="status"
+        >
           Reconnecting to review server…
         </div>
       )}
       {error && (
-        <div className="review-shell-notice" role="alert">
+        <div
+          className="review-shell-notice tw:flex tw:items-center tw:justify-between tw:border-b tw:border-border tw:bg-[var(--tray)] tw:px-4 tw:py-2"
+          role="alert"
+        >
           {error}
           <Button
             variant="ghost"
@@ -1050,10 +1066,10 @@ function Shell(
           </Button>
         </div>
       )}
-      <div className="review-shell-body">
+      <div className="review-shell-body tw:relative tw:flex tw:min-h-0 tw:flex-1">
         <aside
           id="review-shell-sidebar"
-          className="review-shell-sidebar"
+          className="review-shell-sidebar tw:flex tw:w-[272px] tw:min-h-0 tw:flex-none tw:flex-col tw:border-r tw:border-border tw:bg-[var(--tray)] tw:px-3 tw:pt-4 tw:pb-3 tw:[&[hidden]]:hidden tw:max-[760px]:absolute tw:max-[760px]:inset-y-0 tw:max-[760px]:left-0 tw:max-[760px]:z-3 tw:max-[760px]:w-[min(272px,calc(100%-56px))] tw:max-[760px]:shadow-[8px_0_24px_var(--backdrop)]"
           aria-label="Sidebar"
           hidden={sidebarHidden}
           onKeyDown={(event) => {
@@ -1063,10 +1079,13 @@ function Shell(
             }
           }}
         >
-          <div className="review-shell-sidebar-heading">Blackboard</div>
-          <div className="review-shell-sidebar-search">
+          <div className="review-shell-sidebar-heading tw:px-2 tw:pb-4 tw:text-sm tw:font-semibold tw:tracking-[-0.04em]">
+            Blackboard
+          </div>
+          <div className="review-shell-sidebar-search tw:mb-4 tw:flex tw:items-center tw:gap-2 tw:rounded-md tw:border tw:border-border tw:bg-background tw:p-2 tw:text-muted-foreground tw:[&_svg]:size-4 tw:[&_svg]:flex-none">
             <SearchIcon aria-hidden="true" />
-            <input
+            <Input
+              className="tw:h-auto tw:border-0 tw:bg-transparent tw:p-0 tw:text-xs tw:text-foreground tw:shadow-none tw:focus-visible:ring-0"
               ref={sidebarSearch}
               type="search"
               aria-label="Search reviews"
@@ -1076,14 +1095,16 @@ function Shell(
             />
           </div>
           <nav
-            className="review-shell-review-list"
+            className="review-shell-review-list tw:min-h-0 tw:flex-1 tw:overflow-y-auto tw:[scrollbar-width:thin]"
             aria-label="Reviews"
             inert={!connected}
           >
-            <div className="review-shell-sidebar-label">Reviews</div>
+            <div className="review-shell-sidebar-label tw:p-2 tw:text-xs tw:font-medium tw:text-muted-foreground tw:[&:is(summary)]:mt-4 tw:[&:is(summary)]:cursor-pointer">
+              Reviews
+            </div>
             {reviewRows(false)}
             {filtered.length === 0 && (
-              <p className="review-shell-sidebar-empty">
+              <p className="review-shell-sidebar-empty tw:p-2 tw:text-xs tw:text-muted-foreground">
                 {!loaded
                   ? "Loading reviews…"
                   : needle
@@ -1093,14 +1114,14 @@ function Shell(
             )}
             {filtered.some((review) => review.dismissed) && (
               <details open={needle ? true : undefined}>
-                <summary className="review-shell-sidebar-label">
+                <summary className="review-shell-sidebar-label tw:p-2 tw:text-xs tw:font-medium tw:text-muted-foreground tw:[&:is(summary)]:mt-4 tw:[&:is(summary)]:cursor-pointer">
                   Dismissed
                 </summary>
                 {reviewRows(true)}
               </details>
             )}
           </nav>
-          <div className="review-shell-sidebar-footer">
+          <div className="review-shell-sidebar-footer tw:flex tw:flex-none tw:flex-col tw:gap-1 tw:border-t tw:border-border tw:pt-3 tw:[&_button]:justify-start tw:[&_button]:text-xs tw:[&_button]:text-muted-foreground">
             <Button
               variant="ghost"
               disabled={!connected}
@@ -1123,20 +1144,23 @@ function Shell(
         </aside>
         {!sidebarHidden && (
           <button
-            className="review-shell-sidebar-backdrop"
+            className="review-shell-sidebar-backdrop tw:hidden tw:max-[760px]:absolute tw:max-[760px]:inset-0 tw:max-[760px]:z-2 tw:max-[760px]:block tw:max-[760px]:border-0 tw:max-[760px]:bg-[var(--backdrop)] tw:focus-visible:outline-2 tw:focus-visible:outline-ring"
             aria-label="Close sidebar"
             onClick={toggleSidebar}
           />
         )}
-        <main className="review-shell-content" inert={!connected}>
+        <main
+          className="review-shell-content tw:flex tw:min-h-0 tw:min-w-0 tw:flex-1 tw:flex-col tw:overflow-hidden"
+          inert={!connected}
+        >
           {!loaded ? (
-            <div className="review-shell-loading" role="status">
+            <div className="review-shell-loading tw:p-8" role="status">
               {error
                 ? "Unable to load reviews. Close and reopen Blackboard to retry."
                 : "Loading reviews…"}
             </div>
           ) : !currentTab ? (
-            <div className="review-shell-empty">
+            <div className="review-shell-empty tw:flex tw:flex-1 tw:flex-col tw:items-center tw:justify-center tw:p-8 tw:text-center tw:text-muted-foreground tw:[&>svg]:size-8 tw:[&_h1]:mt-4 tw:[&_h1]:text-lg tw:[&_h1]:text-foreground tw:[&_p]:mb-6 tw:[&_p]:max-w-[360px] tw:[&_p]:text-[13px] tw:[&_p]:leading-[1.6]">
               <FileTextIcon aria-hidden="true" />
               <h1>
                 {reviews.length
@@ -1161,7 +1185,7 @@ function Shell(
           ) : null}
           {[...tabs.current.values()].map((tab) => (
             <section
-              className="review-shell-review-panel"
+              className="review-shell-review-panel tw:relative tw:flex tw:min-h-0 tw:flex-1 tw:[&[hidden]]:hidden"
               aria-label={tab.title}
               key={tab.id}
               hidden={active.current !== tab.id}
@@ -1182,7 +1206,7 @@ function Shell(
         <Dialog open onOpenChange={setSetup}>
           <DialogContent
             container={shellElement.current}
-            className="review-shell-setup"
+            className="review-shell-setup tw:flex tw:h-[min(720px,calc(100%-64px))] tw:w-[min(860px,calc(100%-32px))] tw:max-w-[860px] tw:flex-col tw:overflow-hidden"
             onCloseAutoFocus={(event) => {
               event.preventDefault();
               setupButton.current?.focus();
@@ -1253,7 +1277,7 @@ function SettingsDialog({
     >
       <DialogContent
         container={container}
-        className="review-shell-settings"
+        className="review-shell-settings tw:max-w-[min(420px,calc(100%-32px))] tw:font-[family-name:var(--chrome-font)] tw:text-sm"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           const previous = previousFocus.current;
@@ -1266,7 +1290,7 @@ function SettingsDialog({
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>Make Blackboard feel at home.</DialogDescription>
         </DialogHeader>
-        <div className="review-shell-settings-fields">
+        <div className="review-shell-settings-fields tw:grid tw:gap-4 tw:py-3 tw:[&_label]:flex tw:[&_label]:items-center tw:[&_label]:justify-between tw:[&_label]:gap-4 tw:[&_select]:min-w-[132px]">
           <label htmlFor="shell-appearance">
             <span>Appearance</span>
             <NativeSelect

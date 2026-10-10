@@ -1,7 +1,13 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@canvas/components/ui/popover";
+import { Switch } from "@canvas/components/ui/switch";
+import { Choice } from "@canvas/settings/settings-choice";
 import { Button, IconButton } from "@canvas/ui/button";
 import { StatusBanner } from "@canvas/ui/status-banner";
-import { surfaceStyles } from "@canvas/ui/surface";
 import { textStyles } from "@canvas/ui/text";
 import {
   type ReviewCanvasRange,
@@ -977,40 +983,27 @@ function MapSettingsControl(): ReactElement {
   const controlRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const closeOnOutsidePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-
-      if (target instanceof Node && controlRef.current?.contains(target))
-        return;
-      setIsOpen(false);
-    };
-
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsOpen(false);
-    };
-
-    document.addEventListener("pointerdown", closeOnOutsidePointerDown, true);
-    document.addEventListener("keydown", closeOnEscape);
-
-    return () => {
-      document.removeEventListener(
-        "pointerdown",
-        closeOnOutsidePointerDown,
-        true,
-      );
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [isOpen]);
-
   return (
-    <div ref={controlRef} {...stylex.props(mapSettingsStyles.control)}>
-      {isOpen && (
-        <section
-          {...stylex.props(surfaceStyles.popover, mapSettingsStyles.popover)}
+    <div ref={controlRef} className="tw:absolute tw:right-4 tw:bottom-4 tw:z-3">
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <IconButton
+            size="large"
+            className="tw:rounded-lg tw:border tw:border-input tw:bg-[var(--tray)] tw:shadow-md"
+            aria-label="Map settings"
+          >
+            <SettingsSlidersIcon />
+          </IconButton>
+        </PopoverTrigger>
+        <PopoverContent
+          container={
+            controlRef.current?.closest<HTMLElement>(".review-app") ??
+            controlRef.current
+          }
+          align="end"
+          side="top"
           aria-label="Map settings"
+          className="tw:w-[268px] tw:p-0"
         >
           <DebugSwitch
             label="Show modified nodes only"
@@ -1022,50 +1015,20 @@ function MapSettingsControl(): ReactElement {
             checked={showRemovedNodes}
             onChange={setShowRemovedNodes}
           />
-          <div
-            {...stylex.props(mapSettingsStyles.tints)}
-            role="group"
-            aria-label="Node tint"
-          >
-            <span
-              {...stylex.props(
-                textStyles.eyebrow,
-                mapSettingsStyles.groupLabel,
-              )}
-            >
+          <div className="tw:grid tw:gap-2 tw:p-2.5">
+            <span className="tw:text-xs tw:font-semibold tw:text-muted-foreground">
               Map node tint
             </span>
-            {(["none", "slate", "mineral"] as const).map((option) => (
-              <ButtonPrimitive
-                variant="ghost"
-                size="xs"
-                key={option}
-                type="button"
-                {...stylex.props(
-                  mapSettingsStyles.tint,
-                  nodeTint === option && mapSettingsStyles.tintActive,
-                )}
-                aria-pressed={nodeTint === option}
-                onClick={() => setNodeTint(option)}
-              >
-                {nodeTintLabel(option)}
-              </ButtonPrimitive>
-            ))}
+            <Choice
+              label="Node tint"
+              value={nodeTint}
+              labels={{ none: "None", slate: "Slate", mineral: "Mineral" }}
+              disabled={false}
+              onChange={setNodeTint}
+            />
           </div>
-        </section>
-      )}
-      <IconButton
-        size="large"
-        xstyle={[
-          mapSettingsStyles.trigger,
-          isOpen && mapSettingsStyles.triggerActive,
-        ]}
-        aria-label="Map settings"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((open) => !open)}
-      >
-        <SettingsSlidersIcon />
-      </IconButton>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
@@ -1080,29 +1043,11 @@ function DebugSwitch({
   onChange: (checked: boolean) => void;
 }): ReactElement {
   return (
-    <label {...stylex.props(mapSettingsStyles.switch)}>
+    <div className="tw:flex tw:min-h-[50px] tw:items-center tw:justify-between tw:gap-3.5 tw:border-b tw:border-border tw:px-3 tw:py-2.5 tw:text-[13px]">
       <span>{label}</span>
-      <input
-        type="checkbox"
-        {...stylex.props(mapSettingsStyles.switchInput)}
-        checked={checked}
-        onChange={(event) => onChange(event.currentTarget.checked)}
-      />
-      <i
-        {...stylex.props(
-          mapSettingsStyles.switchTrack,
-          checked && mapSettingsStyles.switchTrackOn,
-        )}
-        aria-hidden="true"
-      />
-    </label>
+      <Switch aria-label={label} checked={checked} onCheckedChange={onChange} />
+    </div>
   );
-}
-
-function nodeTintLabel(tint: ReviewNodeTint) {
-  if (tint === "none") return "None";
-
-  return tint === "slate" ? "Slate" : "Mineral";
 }
 
 export function applySoftwareMapTopologyStatuses(
@@ -1151,126 +1096,6 @@ const batonStyles = stylex.create({
 
 // Map settings float over the map canvas instead of sitting behind a topbar
 // gear, so map-only controls stay with the map.
-const mapSettingsStyles = stylex.create({
-  control: {
-    position: "absolute",
-    right: "16px",
-    bottom: "16px",
-    zIndex: 3,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-end",
-    gap: "8px",
-  },
-  // A floating corner control, so it keeps a border and lifts off the map.
-  trigger: {
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: { default: tokens.ruleSoft, ":hover": tokens.accent },
-    borderRadius: radius.surface,
-    backgroundColor: tokens.surfaceRaised,
-    boxShadow: elevation.popover,
-  },
-  triggerActive: {
-    borderColor: tokens.accent,
-    color: tokens.ink,
-  },
-  popover: {
-    display: "flex",
-    width: "268px",
-    flexDirection: "column",
-  },
-  switch: {
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "14px",
-    minHeight: "50px",
-    padding: "10px 13px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.rule,
-    color: tokens.ink,
-    fontSize: fontSize.ui,
-  },
-  switchInput: {
-    position: "absolute",
-    opacity: 0,
-    pointerEvents: "none",
-  },
-  switchTrack: {
-    position: "relative",
-    flex: "0 0 auto",
-    width: "38px",
-    height: "22px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.pill,
-    backgroundColor: tokens.controlBg,
-    "::before": {
-      position: "absolute",
-      top: "3px",
-      left: "3px",
-      width: "14px",
-      height: "14px",
-      borderRadius: radius.pill,
-      backgroundColor: tokens.inkFaint,
-      transition: `transform ${motion.fast} ${motion.ease}, background ${motion.fast} ${motion.ease}`,
-      content: "''",
-    },
-  },
-  switchTrackOn: {
-    borderColor: tokens.accent,
-    backgroundColor: tokens.accentSoft,
-    "::before": {
-      backgroundColor: tokens.accent,
-      transform: "translateX(16px)",
-    },
-  },
-  tints: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "6px",
-    padding: "10px",
-  },
-  groupLabel: {
-    gridColumn: "1 / -1",
-    fontFamily: tokens.fontMono,
-  },
-  tint: {
-    minHeight: "32px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: {
-      default: tokens.rule,
-      ":hover": tokens.accent,
-      ":focus-visible": tokens.accent,
-    },
-    borderRadius: radius.control,
-    backgroundColor: {
-      default: tokens.tray,
-      ":hover": tokens.accentSoft,
-      ":focus-visible": tokens.accentSoft,
-    },
-    color: {
-      default: tokens.inkMuted,
-      ":hover": tokens.accent,
-      ":focus-visible": tokens.accent,
-    },
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
-    outline: { default: null, ":hover": "none", ":focus-visible": "none" },
-  },
-  tintActive: {
-    borderColor: tokens.accent,
-    backgroundColor: tokens.accentSoft,
-    color: tokens.accent,
-    outline: "none",
-  },
-});
-
 const mapViewStyles = stylex.create({
   view: {
     backgroundColor: tokens.bg,

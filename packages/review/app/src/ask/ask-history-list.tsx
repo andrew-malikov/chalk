@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { formatRelativeTime } from "@canvas/home/review-home-view";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useTooltip } from "@canvas/lib/use-tooltip";
@@ -7,6 +8,7 @@ import { useReviewRoots } from "@canvas/review/review-root-context";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { fontSize } from "@canvas/styles/scale.stylex";
 import { shellStyles } from "@canvas/styles/shell-styles";
+import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { IconButton } from "@canvas/ui/button";
 import { Chip } from "@canvas/ui/chip";
@@ -220,9 +222,14 @@ export function AskHistoryList({
                     styles.historyRow,
                   )}
                 >
-                  <button
+                  <ButtonPrimitive
+                    variant="ghost"
+                    size="xs"
                     type="button"
-                    {...stylex.props(styles.historyOpen)}
+                    {...withClass(
+                      "tw:h-auto tw:whitespace-normal tw:font-normal",
+                      styles.historyOpen,
+                    )}
                     onPointerEnter={() => {
                       history?.preview(entry.id);
                       history?.reveal(entry);
@@ -294,7 +301,7 @@ export function AskHistoryList({
                         ) : null}
                       </span>
                     </span>
-                  </button>
+                  </ButtonPrimitive>
                   <AskDeleteButton
                     xstyle={styles.historyForget}
                     label={`Delete “${title}”`}
@@ -306,16 +313,19 @@ export function AskHistoryList({
           </ul>
         ) : null}
         {passage && openHistory ? (
-          <button
+          <ButtonPrimitive
+            variant="ghost"
+            size="xs"
             type="button"
-            {...stylex.props(
+            {...withClass(
+              "tw:h-auto tw:whitespace-normal tw:font-normal",
               askPanelStyles.errorAction,
               styles.allConversations,
             )}
             onClick={openHistory}
           >
             All saved conversations
-          </button>
+          </ButtonPrimitive>
         ) : null}
       </div>
     </div>

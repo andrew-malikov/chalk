@@ -1,4 +1,6 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { controlStyles } from "@canvas/styles/controls-styles";
+import { withClass } from "@canvas/styles/stylex-props";
 import { CopyIcon, copyText } from "@canvas/ui/copy-text";
 import * as stylex from "@stylexjs/stylex";
 import { useEffect, useRef, useState } from "react";
@@ -80,10 +82,13 @@ export function PromptCard() {
         aria-label="What to review"
       >
         {PROMPT_KINDS.map(({ kind: tab, label }) => (
-          <button
+          <ButtonPrimitive
+            variant="ghost"
+            size="xs"
             key={tab}
             type="button"
-            {...stylex.props(
+            {...withClass(
+              "tw:h-auto tw:whitespace-normal tw:font-normal",
               controlStyles.segment,
               controlStyles.segmentLarge,
               kind === tab && controlStyles.segmentActive,
@@ -92,21 +97,26 @@ export function PromptCard() {
             onClick={() => selectKind(tab)}
           >
             {label}
-          </button>
+          </ButtonPrimitive>
         ))}
       </div>
       <pre {...stylex.props(promptStyles.body)}>{PROMPTS[kind]}</pre>
       <div {...stylex.props(promptStyles.actions)}>
-        <button
+        <ButtonPrimitive
+          variant="ghost"
+          size="xs"
           type="button"
-          {...stylex.props(promptStyles.copy)}
+          {...withClass(
+            "tw:h-auto tw:whitespace-normal tw:font-normal",
+            promptStyles.copy,
+          )}
           aria-live="polite"
           aria-label={copied ? "Prompt copied" : "Copy prompt"}
           onClick={copyPrompt}
         >
           <CopyIcon />
           {copied ? "Copied" : "Copy prompt"}
-        </button>
+        </ButtonPrimitive>
       </div>
     </section>
   );

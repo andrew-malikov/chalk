@@ -1,7 +1,11 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@canvas/components/ui/dropdown-menu";
 import { useReviewSession } from "@canvas/host/review-session";
-import { useAnchoredPopover } from "@canvas/lib/use-anchored-popover";
-import { useDismissOnOutside } from "@canvas/lib/use-dismiss-on-outside";
 import {
   fontSize,
   fontWeight,
@@ -13,7 +17,6 @@ import { shellStyles } from "@canvas/styles/shell-styles";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button } from "@canvas/ui/button";
 import { StackIcon } from "@canvas/ui/icons";
-import { surfaceStyles } from "@canvas/ui/surface";
 import type { ReviewStackLayer } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
 import { useQuery } from "@tanstack/react-query";
@@ -40,9 +43,6 @@ export function ReviewStackSelector(): ReactElement | null {
   const review = session.review!;
   const [open, setOpen] = useState(false);
   const container = useRef<HTMLDivElement>(null);
-  const popoverRef = useAnchoredPopover(open, container);
-
-  useDismissOnOutside(container, open, setOpen);
 
   // The pull request stack is optional context; a failed read is not shown.
   const layers =
@@ -83,39 +83,38 @@ export function ReviewStackSelector(): ReactElement | null {
 
   return (
     <div ref={container} {...stylex.props(shellStyles.topbarItem)}>
-      <Button
-        xstyle={styles.trigger}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={`Pull request stack, ${index + 1} of ${layers.length}`}
-        onClick={() => setOpen(!open)}
-      >
-        <StackIcon xstyle={styles.triggerIcon} />
-        <span {...stylex.props(styles.triggerNumber)}>
-          PR #{layers[index]!.pullRequestNumber}
-        </span>
-        <span {...stylex.props(styles.triggerPosition)}>
-          {index + 1}/{layers.length}
-        </span>
-        <svg
-          viewBox="0 0 12 12"
-          aria-hidden="true"
-          {...stylex.props(styles.chevron, open && styles.chevronOpen)}
-        >
-          <path d="m3 4.5 3 3 3-3" />
-        </svg>
-      </Button>
-      {open && (
-        <div
-          ref={popoverRef}
-          popover="manual"
-          role="menu"
+      <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            xstyle={styles.trigger}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label={`Pull request stack, ${index + 1} of ${layers.length}`}
+          >
+            <StackIcon xstyle={styles.triggerIcon} />
+            <span {...stylex.props(styles.triggerNumber)}>
+              PR #{layers[index]!.pullRequestNumber}
+            </span>
+            <span {...stylex.props(styles.triggerPosition)}>
+              {index + 1}/{layers.length}
+            </span>
+            <svg
+              viewBox="0 0 12 12"
+              aria-hidden="true"
+              {...stylex.props(styles.chevron, open && styles.chevronOpen)}
+            >
+              <path d="m3 4.5 3 3 3-3" />
+            </svg>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          container={
+            container.current?.closest<HTMLElement>(".review-app") ??
+            container.current
+          }
+          align="start"
           aria-label="Pull request stack"
-          {...stylex.props(
-            shellStyles.topbarPopover,
-            surfaceStyles.popover,
-            styles.menu,
-          )}
+          className="tw:min-w-[340px] tw:max-w-[calc(100vw-16px)] tw:p-2 tw:font-mono"
         >
           {layers.map((layer) => (
             <LayerRow
@@ -124,8 +123,8 @@ export function ReviewStackSelector(): ReactElement | null {
               onOpen={openLayer}
             />
           ))}
-        </div>
-      )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -179,25 +178,27 @@ function LayerRow({
   }
 
   return (
-    <ButtonPrimitive
-      variant="ghost"
-      size="xs"
-      {...stylex.props(styles.row, styles.rowButton)}
-      type="button"
-      data-relation={layer.relation}
-      disabled={disabled}
-      title={
-        disabled
-          ? "No generated session exists for this pull request"
-          : "Open session (Cmd/Ctrl-click to open in the background)"
-      }
-      onClick={(event) => onOpen(layer, event)}
-      onAuxClick={(event) => {
-        if (event.button === 1) onOpen(layer, event);
-      }}
-    >
-      {content}
-    </ButtonPrimitive>
+    <DropdownMenuItem asChild disabled={disabled}>
+      <ButtonPrimitive
+        variant="ghost"
+        size="xs"
+        {...stylex.props(styles.row, styles.rowButton)}
+        type="button"
+        data-relation={layer.relation}
+        disabled={disabled}
+        title={
+          disabled
+            ? "No generated session exists for this pull request"
+            : "Open session (Cmd/Ctrl-click to open in the background)"
+        }
+        onClick={(event) => onOpen(layer, event)}
+        onAuxClick={(event) => {
+          if (event.button === 1) onOpen(layer, event);
+        }}
+      >
+        {content}
+      </ButtonPrimitive>
+    </DropdownMenuItem>
   );
 }
 

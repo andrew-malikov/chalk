@@ -8,6 +8,7 @@ import type {
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 
 import { DisplayedReviewVersionContext } from "./displayed-review-version-context";
 import { ReviewStackSelector } from "./review-stack-selector";
@@ -16,9 +17,11 @@ let root: Root | null = null;
 
 const openMenu = (container: HTMLElement) =>
   act(async () => {
-    container
-      .querySelector<HTMLButtonElement>("button[aria-haspopup]")
-      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const trigger = container.querySelector<HTMLButtonElement>(
+      "button[aria-haspopup]",
+    );
+
+    if (trigger) await userEvent.click(trigger);
   });
 
 describe("ReviewStackSelector", () => {

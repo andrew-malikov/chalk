@@ -1,3 +1,5 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import { Input } from "@canvas/components/ui/input";
 import { documentType } from "@canvas/documents/document-type.stylex";
 import { CanvasUiContext, useCanvasMenu } from "@canvas/host/canvas-ui";
 import { ArchiveIcon } from "@canvas/review/review-corner-action";
@@ -327,7 +329,8 @@ function SearchBox({
   return (
     <div {...stylex.props(styles.search)}>
       <SearchIcon />
-      <input
+      <Input
+        className="tw:h-auto tw:border-0 tw:p-0 tw:shadow-none tw:focus-visible:ring-0"
         ref={input}
         {...stylex.props(styles.searchInput)}
         type="search"
@@ -344,9 +347,14 @@ function SearchBox({
         }}
       />
       {query ? (
-        <button
+        <ButtonPrimitive
+          variant="ghost"
+          size="xs"
           type="button"
-          {...stylex.props(styles.searchClear)}
+          {...withClass(
+            "tw:h-auto tw:whitespace-normal tw:font-normal",
+            styles.searchClear,
+          )}
           aria-label="Clear search"
           // Clearing unmounts this button, so hand focus back to the field
           // rather than letting it fall to the body.
@@ -356,7 +364,7 @@ function SearchBox({
           }}
         >
           <ClearIcon />
-        </button>
+        </ButtonPrimitive>
       ) : null}
     </div>
   );
@@ -384,26 +392,37 @@ function DismissedSection({
       {...stylex.props(styles.dismissed)}
       aria-label="Dismissed sessions"
     >
-      <button
+      <ButtonPrimitive
+        variant="ghost"
+        size="xs"
         type="button"
-        {...stylex.props(textStyles.eyebrow, styles.dismissedToggle)}
+        {...withClass(
+          "tw:h-auto tw:whitespace-normal tw:font-normal",
+          textStyles.eyebrow,
+          styles.dismissedToggle,
+        )}
         aria-expanded={expanded}
         onClick={onToggle}
       >
         <span>Dismissed</span>
         <span {...stylex.props(styles.dismissedCount)}>{reviews.length}</span>
-      </button>
+      </ButtonPrimitive>
       {expanded ? (
         <div {...stylex.props(styles.dismissedRows)}>
           {reviews.map((review) => (
             <div key={review.reviewId} {...stylex.props(styles.dismissedRow)}>
-              <button
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
                 type="button"
-                {...stylex.props(styles.dismissedOpen)}
+                {...withClass(
+                  "tw:h-auto tw:whitespace-normal tw:font-normal",
+                  styles.dismissedOpen,
+                )}
                 onClick={() => onOpen(review)}
               >
                 <MatchedText text={reviewTitle(review)} />
-              </button>
+              </ButtonPrimitive>
               <span {...stylex.props(styles.dismissedClock)}>kept</span>
               <RestoreReviewButton review={review} />
               {onDelete ? (
@@ -565,8 +584,13 @@ function ReviewTable({
                       : "—"}
                   </td>
                   <td {...stylex.props(styles.td, last && styles.lastRowCell)}>
-                    <button
-                      {...stylex.props(styles.tableOpen)}
+                    <ButtonPrimitive
+                      variant="ghost"
+                      size="xs"
+                      {...withClass(
+                        "tw:h-auto tw:whitespace-normal tw:font-normal",
+                        styles.tableOpen,
+                      )}
                       onClick={(event) => {
                         event.stopPropagation();
                         onOpen(review);
@@ -585,7 +609,7 @@ function ReviewTable({
                       >
                         <RepositoryName review={review} />
                       </span>
-                    </button>
+                    </ButtonPrimitive>
                   </td>
                   <td
                     {...stylex.props(styles.td, last && styles.lastRowCell)}
@@ -756,9 +780,14 @@ function ScratchpadGroup({
     <section {...stylex.props(styles.scratchpad)} aria-label="Scratchpad">
       <div {...stylex.props(styles.cards)}>
         <div {...stylex.props(styles.cardShell)}>
-          <button
+          <ButtonPrimitive
+            variant="ghost"
+            size="xs"
             type="button"
-            {...stylex.props(styles.card)}
+            {...withClass(
+              "tw:h-auto tw:whitespace-normal tw:font-normal",
+              styles.card,
+            )}
             onClick={() => onOpen(review)}
           >
             <span {...stylex.props(styles.cardMain)}>
@@ -780,7 +809,7 @@ function ScratchpadGroup({
                 </span>
               </span>
             </span>
-          </button>
+          </ButtonPrimitive>
         </div>
       </div>
     </section>

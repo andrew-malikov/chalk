@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { formatRelativeTime } from "@canvas/home/review-home-view";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useFollowLatest } from "@canvas/lib/use-follow-latest";
@@ -5,6 +6,7 @@ import { useTooltip } from "@canvas/lib/use-tooltip";
 import { useOptionalReviewPanelStore } from "@canvas/review/review-panel";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { fontSize, radius } from "@canvas/styles/scale.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
 import type { StyleArg } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { IconButton } from "@canvas/ui/button";
@@ -605,9 +607,14 @@ export function AskPanelContent({
                 {reconnect || retry || startOver ? (
                   <>
                     {" "}
-                    <button
+                    <ButtonPrimitive
+                      variant="ghost"
+                      size="xs"
                       type="button"
-                      {...stylex.props(askPanelStyles.errorAction)}
+                      {...withClass(
+                        "tw:h-auto tw:whitespace-normal tw:font-normal",
+                        askPanelStyles.errorAction,
+                      )}
                       onClick={reconnect ?? retry ?? startOver}
                     >
                       {reconnect
@@ -615,7 +622,7 @@ export function AskPanelContent({
                         : retry
                           ? "Try again"
                           : "Start a new conversation"}
-                    </button>
+                    </ButtonPrimitive>
                   </>
                 ) : null}
               </p>

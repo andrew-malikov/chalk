@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@canvas/lib/utils";
+import { useReviewContainer } from "@canvas/review/review-root-context";
 import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import * as React from "react";
@@ -38,7 +39,10 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
-      className={cn("tw:fixed tw:inset-0 tw:z-50 tw:bg-black/50", className)}
+      className={cn(
+        "tw:fixed tw:inset-0 tw:z-dialog tw:bg-black/50",
+        className,
+      )}
       {...props}
     />
   );
@@ -54,13 +58,18 @@ function DialogContent({
   showCloseButton?: boolean;
   container?: HTMLElement | null;
 }) {
+  const reviewContainer = useReviewContainer();
+
   return (
-    <DialogPortal data-slot="dialog-portal" container={container}>
+    <DialogPortal
+      data-slot="dialog-portal"
+      container={container ?? reviewContainer}
+    >
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "tw:fixed tw:top-[50%] tw:left-[50%] tw:z-50 tw:grid tw:w-full tw:max-w-[calc(100%-2rem)] tw:translate-x-[-50%] tw:translate-y-[-50%] tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-background tw:text-foreground tw:p-6 tw:shadow-lg tw:duration-200 tw:outline-none tw:sm:max-w-lg",
+          "tw:fixed tw:top-[50%] tw:left-[50%] tw:z-dialog tw:grid tw:w-full tw:max-w-[calc(100%-2rem)] tw:translate-x-[-50%] tw:translate-y-[-50%] tw:gap-4 tw:rounded-lg tw:border tw:border-border tw:bg-background tw:text-foreground tw:p-6 tw:shadow-lg tw:duration-200 tw:outline-none tw:sm:max-w-lg",
           className,
         )}
         {...props}

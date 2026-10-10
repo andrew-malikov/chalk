@@ -12,7 +12,18 @@ type TextFieldProps = Omit<ComponentProps<"input">, "className" | "style"> & {
 
 export function TextField({ className, xstyle, ...props }: TextFieldProps) {
   return (
-    <Input {...props} {...withClass(className, fieldStyles.box, xstyle)} />
+    <Input
+      {...props}
+      {...withClass(
+        [
+          "tw:h-[26px] tw:rounded-sm tw:bg-[var(--control-bg)] tw:px-2 tw:py-0 tw:font-[family-name:var(--chrome-font)] tw:text-xs",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" "),
+        xstyle,
+      )}
+    />
   );
 }
 

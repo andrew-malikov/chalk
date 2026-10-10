@@ -1,3 +1,5 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import { NativeSelect } from "@canvas/components/ui/native-select";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { useReviewSession } from "@canvas/host/review-session";
 import {
@@ -436,7 +438,7 @@ export function DatabaseLens(block: DatabaseLensProps) {
         <div {...stylex.props(styles.actions)}>
           {activeUseCase && (
             <div {...stylex.props(styles.selectTarget)}>
-              <select
+              <NativeSelect
                 {...stylex.props(diagramStyles.control, diagramStyles.select)}
                 aria-label="Database use case"
                 value={activeUseCase.id}
@@ -447,11 +449,13 @@ export function DatabaseLens(block: DatabaseLensProps) {
                     {databaseUseCaseOptionLabel(useCase)}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           )}
           {!stage && activeTourId && (
-            <button
+            <ButtonPrimitive
+              variant="ghost"
+              size="xs"
               type="button"
               {...withClass("diagram-tour-button", diagramStyles.control)}
               onClick={(event) => {
@@ -461,7 +465,7 @@ export function DatabaseLens(block: DatabaseLensProps) {
               }}
             >
               Tour
-            </button>
+            </ButtonPrimitive>
           )}
         </div>
       </header>

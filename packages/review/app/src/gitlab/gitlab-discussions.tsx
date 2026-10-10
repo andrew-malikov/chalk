@@ -1,3 +1,6 @@
+import { Checkbox } from "@canvas/components/ui/checkbox";
+import { Input } from "@canvas/components/ui/input";
+import { Textarea } from "@canvas/components/ui/textarea";
 import { ReviewPanelFrame } from "@canvas/review/review-components";
 import { loadingStyles } from "@canvas/styles/loading.stylex";
 import { resolvedDiscussionMarker } from "@canvas/styles/markers.stylex";
@@ -439,7 +442,7 @@ function DraftEditor({
           code to write a replacement comment.
         </p>
       )}
-      <textarea
+      <Textarea
         ref={input}
         id={inputId}
         {...stylex.props(styles.editor, inline && styles.inlineEditor)}
@@ -493,11 +496,11 @@ function DraftEditor({
         <div {...stylex.props(styles.recovery)}>
           {saveStatus}
           <label>
-            <input
-              type="checkbox"
+            <Checkbox
+              aria-label="I checked this MR on GitLab and verified the outcome"
               checked={verified}
               disabled={!gitlab.editable || gitlab.busy}
-              onChange={(e) => setVerified(e.target.checked)}
+              onCheckedChange={(checked) => setVerified(checked === true)}
             />{" "}
             I checked this MR on GitLab and verified the outcome
           </label>
@@ -520,7 +523,7 @@ function DraftEditor({
           </Button>
           <label>
             Posted note ID{" "}
-            <input
+            <Input
               type="number"
               min="1"
               value={noteId}

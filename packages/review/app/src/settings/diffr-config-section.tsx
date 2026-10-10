@@ -1,3 +1,14 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@canvas/components/ui/alert-dialog";
+import { Checkbox } from "@canvas/components/ui/checkbox";
+import { Switch } from "@canvas/components/ui/switch";
+import { Textarea } from "@canvas/components/ui/textarea";
 import { Button } from "@canvas/ui/button";
 import { TextField, fieldStyles } from "@canvas/ui/text-field";
 import {
@@ -161,13 +172,11 @@ export function DiffrConfigSection({
                 {displaySettings.map(([key, label]) => (
                   <div key={key}>
                     <SettingRow label={label}>
-                      <input
-                        type="checkbox"
+                      <Switch
                         aria-label={label}
                         checked={setting(config, key) === true}
                         disabled={busy || setting(config, key) === undefined}
-                        onChange={(event) => {
-                          const value = event.target.checked;
+                        onCheckedChange={(value) => {
                           void run(async () =>
                             saved(
                               await actions.set(
@@ -226,12 +235,12 @@ export function DiffrConfigSection({
                     {...stylex.props(styles.summaryFields)}
                   >
                     <SettingRow label="Enable summaries">
-                      <input
+                      <Switch
                         aria-label="Enable summaries"
-                        type="checkbox"
+                        disabled={busy || unavailable}
                         checked={draft.enabled}
-                        onChange={(event) =>
-                          setDraft({ ...draft, enabled: event.target.checked })
+                        onCheckedChange={(enabled) =>
+                          setDraft({ ...draft, enabled })
                         }
                       />
                     </SettingRow>
@@ -324,7 +333,7 @@ export function DiffrConfigSection({
                             : "Customized"}
                         </span>
                       </span>
-                      <textarea
+                      <Textarea
                         {...stylex.props(
                           fieldStyles.box,
                           fieldStyles.multiline,
@@ -359,12 +368,12 @@ export function DiffrConfigSection({
                         )}
                     </p>
                     <SettingRow label="Include tests">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         aria-label="Include tests"
+                        disabled={busy || unavailable}
                         checked={draft.tests}
-                        onChange={(event) =>
-                          setDraft({ ...draft, tests: event.target.checked })
+                        onCheckedChange={(checked) =>
+                          setDraft({ ...draft, tests: checked === true })
                         }
                       />
                     </SettingRow>
@@ -434,15 +443,23 @@ export function DiffrConfigSection({
           </Button>
         </p>
       )}
-      {confirmReload && (
-        <div role="alertdialog" aria-label="Discard summary changes?">
-          <p>Discard unsaved summary settings and reload?</p>
-          <Button disabled={busy} onClick={() => void run(reloadWindow)}>
-            Discard and reload
-          </Button>{" "}
-          <Button onClick={() => setConfirmReload(false)}>Cancel</Button>
-        </div>
-      )}
+      <AlertDialog open={confirmReload} onOpenChange={setConfirmReload}>
+        <AlertDialogContent>
+          <AlertDialogTitle>Discard summary changes?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Discard unsaved summary settings and reload?
+          </AlertDialogDescription>
+          <div className="tw:flex tw:justify-end tw:gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy}
+              onClick={() => void run(reloadWindow)}
+            >
+              Discard and reload
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

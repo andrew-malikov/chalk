@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { useTooltip } from "@canvas/lib/use-tooltip";
 import {
   useReviewPanel,
@@ -409,10 +410,13 @@ export function AskPill({ presence }: { presence: AskPresence }): ReactElement {
 
   return (
     <AskLayer>
-      <button
+      <ButtonPrimitive
+        variant="ghost"
+        size="xs"
         ref={pill}
         type="button"
-        {...stylex.props(
+        {...withClass(
+          "tw:h-auto tw:whitespace-normal tw:font-normal",
           surfaceStyles.popover,
           styles.pill,
           waiting && styles.pillWaiting,
@@ -463,7 +467,7 @@ export function AskPill({ presence }: { presence: AskPresence }): ReactElement {
         >
           {waiting ? "Review" : "Open"}
         </Chip>
-      </button>
+      </ButtonPrimitive>
     </AskLayer>
   );
 }

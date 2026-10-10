@@ -32,7 +32,7 @@ function render(state: HostState) {
   shell?.dispose();
   shell = undefined;
   const status = document.createElement("main");
-  status.className = "review-shell-loading";
+  status.className = "review-shell-loading tw:p-8";
   status.setAttribute("role", state.status === "starting" ? "status" : "alert");
   status.textContent = state.message ?? "Starting Blackboard…";
   container.replaceChildren(status);

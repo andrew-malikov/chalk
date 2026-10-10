@@ -1,15 +1,14 @@
+import { Checkbox } from "@canvas/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@canvas/components/ui/dialog";
+import { Textarea } from "@canvas/components/ui/textarea";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useTooltip } from "@canvas/lib/use-tooltip";
+import { useReviewContainer } from "@canvas/review/review-root-context";
 import { controlStyles } from "@canvas/styles/controls-styles";
-import { appMarker } from "@canvas/styles/markers.stylex";
-import {
-  fontSize,
-  fontWeight,
-  layer,
-  radius,
-} from "@canvas/styles/scale.stylex";
-import { shellStyles } from "@canvas/styles/shell-styles";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import {
   captureUiEvent,
   clientErrorName,
@@ -17,18 +16,16 @@ import {
 import { useTutorial } from "@canvas/tutorial/tutorial-context";
 import { Button, IconButton } from "@canvas/ui/button";
 import { BugIcon } from "@canvas/ui/icons";
-import { surfaceStyles } from "@canvas/ui/surface";
-import { fieldStyles } from "@canvas/ui/text-field";
 import { useToast } from "@canvas/ui/toast";
 import {
   type ReviewBugReportRequest,
   parseReviewBugReportResponse,
 } from "@dev.fast/review-protocol";
-import * as stylex from "@stylexjs/stylex";
 import {
   type ClipboardEvent,
   type DragEvent,
   type FormEvent,
+  useId,
   useRef,
   useState,
 } from "react";
@@ -49,6 +46,10 @@ export function BugReportControl({
   captureScreenshot?: typeof captureWindowScreenshot;
 } = {}) {
   const session = useReviewSession();
+  const id = useId();
+  const reviewContainer = useReviewContainer();
+  const portal = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const tutorial = useTutorial();
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
@@ -209,267 +210,160 @@ export function BugReportControl({
   };
 
   return (
-    <>
+    <div ref={portal} className="tw:contents">
       <IconButton
-        xstyle={shellStyles.topbarItem}
         aria-label="Report a bug"
-        ref={tooltip}
+        ref={(element) => {
+          trigger.current = element;
+
+          return tooltip(element);
+        }}
         disabled={tutorial !== null || capturing}
         onClick={() => void openDialog()}
       >
         <BugIcon xstyle={controlStyles.chromeIcon} />
       </IconButton>
-      {open && (
-        <div
-          {...stylex.props(shellStyles.topbarItem, styles.backdrop)}
-          onMouseDown={cancel}
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) cancel();
+        }}
+      >
+        <DialogContent
+          container={reviewContainer ?? portal.current}
+          showCloseButton={false}
+          aria-describedby={undefined}
+          className={`tw:max-h-[calc(100%-48px)] tw:overflow-y-auto tw:p-5 tw:sm:max-w-[540px] ${dropActive ? "tw:outline-2 tw:outline-dashed tw:outline-ring tw:outline-offset-[-7px]" : ""}`}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            trigger.current?.focus();
+          }}
+          onEscapeKeyDown={(event) => {
+            if (sending) event.preventDefault();
+          }}
+          onInteractOutside={(event) => {
+            if (sending) event.preventDefault();
+          }}
+          onPaste={pasteScreenshot}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setDropActive(true);
+          }}
+          onDragLeave={(event) => {
+            const next = event.relatedTarget;
+
+            if (next instanceof Node && event.currentTarget.contains(next)) {
+              return;
+            }
+
+            setDropActive(false);
+          }}
+          onDrop={dropScreenshot}
         >
-          <section
-            {...stylex.props(
-              surfaceStyles.dialog,
-              styles.dialog,
-              dropActive && styles.dropTarget,
-            )}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="bug-report-title"
-            onMouseDown={(event) => event.stopPropagation()}
-            onPaste={pasteScreenshot}
-            onDragOver={(event) => {
-              event.preventDefault();
-              setDropActive(true);
-            }}
-            onDragLeave={(event) => {
-              const next = event.relatedTarget;
-
-              if (next instanceof Node && event.currentTarget.contains(next)) {
-                return;
-              }
-
-              setDropActive(false);
-            }}
-            onDrop={dropScreenshot}
-          >
-            <form {...stylex.props(styles.form)} onSubmit={submit}>
-              <h2 {...stylex.props(styles.title)} id="bug-report-title">
-                Report a bug
-              </h2>
-              <label {...stylex.props(styles.description)}>
-                <span>What happened? (optional)</span>
-                <textarea
-                  {...stylex.props(
-                    fieldStyles.box,
-                    fieldStyles.multiline,
-                    styles.textarea,
-                  )}
-                  autoFocus
-                  rows={7}
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder="Describe what you expected and what happened."
-                />
-              </label>
-              <div
-                {...stylex.props(
-                  styles.byteCount,
-                  descriptionBytes > MAX_DESCRIPTION_BYTES &&
-                    styles.byteCountError,
-                )}
+          <form className="tw:grid tw:gap-3.5" onSubmit={submit}>
+            <DialogTitle id="bug-report-title">Report a bug</DialogTitle>
+            <label
+              htmlFor={`${id}-description`}
+              className="tw:grid tw:gap-2 tw:text-xs tw:font-semibold"
+            >
+              <span>What happened? (optional)</span>
+              <Textarea
+                id={`${id}-description`}
+                className="tw:resize-y tw:bg-[var(--control-bg)] tw:text-xs"
+                autoFocus
+                rows={7}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Describe what you expected and what happened."
+              />
+            </label>
+            <div
+              className={`tw:-mt-2.5 tw:text-right tw:font-mono tw:text-[10px] ${descriptionBytes > MAX_DESCRIPTION_BYTES ? "tw:text-[var(--diff-modified)]" : "tw:text-[var(--ink-faint)]"}`}
+            >
+              {descriptionBytes.toLocaleString()} / 65,536 bytes
+            </div>
+            <fieldset className="tw:m-0 tw:grid tw:gap-2 tw:rounded-sm tw:border tw:border-input tw:px-3 tw:pt-2.5 tw:pb-3">
+              <legend className="tw:font-mono tw:text-[11px] tw:leading-normal">
+                Include diagnostic attachments
+              </legend>
+              <label
+                htmlFor={`${id}-context`}
+                className="tw:flex tw:items-center tw:gap-2 tw:font-mono tw:text-[11px] tw:leading-normal"
               >
-                {descriptionBytes.toLocaleString()} / 65,536 bytes
+                <Checkbox
+                  id={`${id}-context`}
+                  checked={includeContext}
+                  onCheckedChange={(checked) =>
+                    setIncludeContext(checked === true)
+                  }
+                />
+                Session
+              </label>
+              <label
+                htmlFor={`${id}-diff`}
+                className="tw:flex tw:items-center tw:gap-2 tw:font-mono tw:text-[11px] tw:leading-normal"
+              >
+                <Checkbox
+                  id={`${id}-diff`}
+                  checked={includeDiff}
+                  onCheckedChange={(checked) =>
+                    setIncludeDiff(checked === true)
+                  }
+                />
+                Changed-file diffs used by CodePeeks
+              </label>
+              <div className="tw:flex tw:min-h-[54px] tw:items-center tw:gap-2 tw:rounded-sm tw:border tw:border-dashed tw:border-input tw:p-2">
+                {screenshot ? (
+                  <>
+                    <img
+                      className="tw:block tw:max-h-[72px] tw:max-w-[calc(100%-34px)] tw:rounded-sm tw:border tw:border-border"
+                      src={screenshot}
+                      alt="Screenshot preview"
+                    />
+                    <IconButton
+                      className="tw:border tw:border-border tw:bg-muted tw:text-base tw:font-normal"
+                      aria-label="Remove screenshot"
+                      title="Remove screenshot"
+                      onClick={() => setScreenshot(null)}
+                    >
+                      ×
+                    </IconButton>
+                  </>
+                ) : (
+                  <span className="tw:font-mono tw:text-[11px] tw:leading-normal tw:text-[var(--ink-faint)]">
+                    Paste or drop an image to attach a screenshot.
+                  </span>
+                )}
               </div>
-              <fieldset {...stylex.props(styles.fieldset)}>
-                <legend {...stylex.props(styles.small)}>
-                  Include diagnostic attachments
-                </legend>
-                <label {...stylex.props(styles.small, styles.option)}>
-                  <input
-                    type="checkbox"
-                    checked={includeContext}
-                    onChange={(event) =>
-                      setIncludeContext(event.target.checked)
-                    }
-                  />
-                  Session
-                </label>
-                <label {...stylex.props(styles.small, styles.option)}>
-                  <input
-                    type="checkbox"
-                    checked={includeDiff}
-                    onChange={(event) => setIncludeDiff(event.target.checked)}
-                  />
-                  Changed-file diffs used by CodePeeks
-                </label>
-                <div {...stylex.props(styles.screenshot)}>
-                  {screenshot ? (
-                    <>
-                      <img
-                        {...stylex.props(styles.screenshotImage)}
-                        src={screenshot}
-                        alt="Screenshot preview"
-                      />
-                      <IconButton
-                        xstyle={styles.screenshotRemove}
-                        aria-label="Remove screenshot"
-                        title="Remove screenshot"
-                        onClick={() => setScreenshot(null)}
-                      >
-                        ×
-                      </IconButton>
-                    </>
-                  ) : (
-                    <span {...stylex.props(styles.small, styles.faint)}>
-                      Paste or drop an image to attach a screenshot.
-                    </span>
-                  )}
-                </div>
-              </fieldset>
-              <p {...stylex.props(styles.small, styles.privacy)}>
-                Reports are sent securely to /dev/fast. Only authorized
-                /dev/fast team members can access them. Reports are deleted
-                after 90 days. The screenshot above is included unless you
-                remove it.
-              </p>
-              <div {...stylex.props(styles.actions)}>
-                <Button
-                  size="large"
-                  xstyle={styles.action}
-                  onClick={cancel}
-                  disabled={sending}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="large"
-                  xstyle={styles.action}
-                  disabled={!canSend}
-                >
-                  {sending ? "Sending..." : "Send"}
-                </Button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
+            </fieldset>
+            <p className="tw:m-0 tw:font-mono tw:text-[11px] tw:leading-normal tw:text-[var(--ink-faint)]">
+              Reports are sent securely to /dev/fast. Only authorized /dev/fast
+              team members can access them. Reports are deleted after 90 days.
+              The screenshot above is included unless you remove it.
+            </p>
+            <div className="tw:flex tw:justify-end tw:gap-2">
+              <Button
+                size="large"
+                className="tw:min-w-[76px]"
+                onClick={cancel}
+                disabled={sending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="large"
+                className="tw:min-w-[76px]"
+                disabled={!canSend}
+              >
+                {sending ? "Sending..." : "Send"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
       {toast}
-    </>
+    </div>
   );
 }
-
-// Only the app root defines the chrome tokens, and the border and font came
-// from shorthands that drop out without them: outside the app there are none.
-const inApp = () => stylex.when.ancestor(":is(*)", appMarker);
-
-const chromeBorder = () =>
-  ({
-    borderWidth: { default: 0, [inApp()]: "1px" },
-    borderStyle: { default: "none", [inApp()]: "solid" },
-    borderColor: tokens.chromeBorder,
-  }) as const;
-
-const styles = stylex.create({
-  backdrop: {
-    position: "fixed",
-    zIndex: layer.dialog,
-    inset: 0,
-    display: "grid",
-    placeItems: "center",
-    padding: "24px",
-    backgroundColor: tokens.backdrop,
-  },
-  dialog: {
-    width: "min(540px, 100%)",
-  },
-  dropTarget: {
-    outline: `2px dashed ${tokens.accent}`,
-    outlineOffset: "-7px",
-  },
-  form: {
-    display: "grid",
-    gap: "14px",
-    padding: "20px",
-  },
-  title: {
-    margin: 0,
-    fontSize: fontSize.heading,
-  },
-  description: {
-    display: "grid",
-    gap: "7px",
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.semibold,
-  },
-  textarea: {
-    width: "100%",
-  },
-  byteCount: {
-    marginTop: "-10px",
-    color: tokens.inkFaint,
-    font: `${fontSize.micro}/1.3 ${tokens.fontMono}`,
-    textAlign: "right",
-  },
-  byteCountError: {
-    color: tokens.diffModified,
-  },
-  fieldset: {
-    display: "grid",
-    gap: "8px",
-    margin: 0,
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.small,
-    padding: "10px 12px 12px",
-  },
-  small: {
-    font: `${fontSize.small}/1.45 ${tokens.fontMono}`,
-  },
-  option: {
-    display: "flex",
-    gap: "8px",
-    alignItems: "center",
-  },
-  screenshot: {
-    display: "flex",
-    minHeight: "54px",
-    alignItems: "center",
-    gap: "8px",
-    borderWidth: "1px",
-    borderStyle: "dashed",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.small,
-    padding: "8px",
-  },
-  screenshotImage: {
-    display: "block",
-    maxWidth: "calc(100% - 34px)",
-    maxHeight: "72px",
-    ...chromeBorder(),
-    borderRadius: radius.small,
-  },
-  screenshotRemove: {
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.chromeBorder,
-    backgroundColor: tokens.tray,
-    fontSize: fontSize.heading,
-    fontWeight: fontWeight.regular,
-  },
-  faint: {
-    color: tokens.inkFaint,
-  },
-  privacy: {
-    margin: 0,
-    color: tokens.inkFaint,
-  },
-  actions: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: "8px",
-  },
-  action: {
-    minWidth: "76px",
-  },
-});

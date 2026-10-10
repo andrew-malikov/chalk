@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { useReviewActions } from "@canvas/review/review-context";
 import { fontSize } from "@canvas/styles/scale.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
@@ -51,7 +52,9 @@ export function TutorialViewButton({
 
   // The class is the tutorial's target.
   return (
-    <button
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
       type="button"
       {...withClass("tutorial-view-button", styles.button)}
       data-tutorial-view={view}
@@ -61,7 +64,7 @@ export function TutorialViewButton({
       <span aria-hidden="true" {...stylex.props(styles.arrow)}>
         →
       </span>
-    </button>
+    </ButtonPrimitive>
   );
 }
 

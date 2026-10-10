@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import {
   Courier,
   LensCursorContext,
@@ -379,8 +380,11 @@ export function ReviewDiffView({
                       phase === "erasing" && drawStyles.rowErasing,
                     )}
                   >
-                    <button
-                      {...stylex.props(
+                    <ButtonPrimitive
+                      variant="ghost"
+                      size="xs"
+                      {...withClass(
+                        "tw:h-auto tw:whitespace-normal tw:font-normal",
                         lensToggleMarker,
                         styles.toggle,
                         empty && styles.toggleEmpty,
@@ -445,7 +449,7 @@ export function ReviewDiffView({
                           xstyle={styles.toggleCounts}
                         />
                       )}
-                    </button>
+                    </ButtonPrimitive>
                     <ViewedButton
                       progress={stats}
                       disabled={
@@ -664,8 +668,11 @@ function RailLens({
   });
 
   return (
-    <button
-      {...stylex.props(
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
+      {...withClass(
+        "tw:h-auto tw:whitespace-normal tw:font-normal",
         styles.railLens,
         empty && styles.toggleEmpty,
         selected && styles.railLensActive,
@@ -678,7 +685,7 @@ function RailLens({
       onClick={() => (selected ? lenses.clear() : lenses.select(item.id))}
     >
       <span ref={tooltip}>{number}</span>
-    </button>
+    </ButtonPrimitive>
   );
 }
 
@@ -702,14 +709,19 @@ function RailButton({
   const tooltip = useTooltip(label, { instant: true });
 
   return (
-    <button
+    <ButtonPrimitive
+      variant="ghost"
+      size="xs"
       ref={tooltip}
-      {...stylex.props(styles.railButton)}
+      {...withClass(
+        "tw:h-auto tw:whitespace-normal tw:font-normal",
+        styles.railButton,
+      )}
       aria-label={label}
       onClick={onClick}
     >
       {children}
-    </button>
+    </ButtonPrimitive>
   );
 }
 

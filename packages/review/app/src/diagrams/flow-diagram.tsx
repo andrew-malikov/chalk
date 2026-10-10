@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import {
   useReviewPanel,
@@ -114,7 +115,9 @@ export function FlowDiagram({
         title={node.title}
         meta={`${node.nodes.length} ${node.nodes.length === 1 ? "node" : "nodes"}`}
         action={
-          <button
+          <ButtonPrimitive
+            variant="ghost"
+            size="xs"
             {...withClass("diagram-tour-button", diagramStyles.control)}
             onClick={() => (fullscreen ? close() : open())}
             aria-label={
@@ -122,7 +125,7 @@ export function FlowDiagram({
             }
           >
             {fullscreen ? "Close" : "Expand"}
-          </button>
+          </ButtonPrimitive>
         }
       />
       {node.description && (

@@ -1,3 +1,4 @@
+import { Textarea } from "@canvas/components/ui/textarea";
 import { useAnchoredPopover } from "@canvas/lib/use-anchored-popover";
 import { useDismissOnOutside } from "@canvas/lib/use-dismiss-on-outside";
 import { useTooltip } from "@canvas/lib/use-tooltip";
@@ -550,7 +551,8 @@ export function AskComposer({
         ) : null}
 
         <div {...stylex.props(styles.inputRow)}>
-          <textarea
+          <Textarea
+            className="tw:min-h-0 tw:border-0 tw:p-0 tw:shadow-none tw:focus-visible:ring-0"
             ref={inputRef}
             {...stylex.props(styles.question)}
             value={draft}
