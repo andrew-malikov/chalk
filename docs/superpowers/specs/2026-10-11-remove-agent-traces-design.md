@@ -41,7 +41,7 @@ inside Blackboard and supports reopening a conversation. It remains part of Ask.
 Startup diagnostic spans and diagram drawing animations also remain; they do not
 capture agent session transcripts.
 
-## Retiring stored quotes
+## Retiring old trace reviews
 
 A current `trace_quote` block contains `text`, `traceId`, and `eventId`. For
 example, the fixture at `packages/review/src/fixtures/blocks/trace_quote.json`
@@ -49,21 +49,20 @@ contains the text "queue the order" plus IDs pointing to a trace resource. The
 snippet already belongs to the review document; its session link enables opening
 the surrounding transcript.
 
-Remove `trace_quote` from new authoring and from the normal renderer. At existing
-document compatibility boundaries, convert old blocks to ordinary Markdown
-quotes, preserving their text, nesting, order, and block IDs. Escape text so
-literal content cannot introduce unintended Markdown links or embedded elements.
-Inline `review-trace:` links become their visible text with no trace target.
-Use the existing stored-document migration path, which runs for current and
-historical SQLite snapshots, rather than rewriting or deleting saved history.
+The user subsequently chose to drop support for old trace reviews completely.
+Remove `trace_quote` and `TraceQuote` from authoring, rendering, migration, and
+legacy import support. Do not add quote conversion, a legacy trace decoder, or a
+separate received-share format that accepts trace resources. Old documents and
+shared bundles containing retired trace blocks/resources are unsupported and
+may fail validation. Do not silently discard their quotes and present the result
+as a complete review. Inline `review-trace:` targets have no navigation handler.
 
-Legacy review imports perform the same conversion without locating, downloading,
-or retaining a transcript. Saved and previously shared reviews with trace quotes
-must open without trace storage or credentials. Shared import compatibility
-continues to validate manifest integrity, object digests, source pins, and all
-supported resource types before exposing a review; retired quotes are ordinary
-unverified prose and are never represented as authenticated transcript evidence.
-New share exports contain no trace resources or trace references.
+Keep existing migrations and imports for reviews that use supported blocks and
+resources. A legacy trace review must be reported as unsupported and left intact
+without preventing the profile, other reviews, or Ask history from opening.
+Sharing continues to validate manifest integrity, object digests,
+source pins, and image/map resources. New exports contain no trace resources or
+trace references.
 
 Stored trace resource blobs and external transcripts are left in place but are
 not read, displayed, synced, or exported. There is no new purge operation.
@@ -109,12 +108,12 @@ instructions and installer compatibility paths for remaining capture guidance.
 
 1. A fresh desktop/profile exposes no trace view, settings, routes, tools,
    resource upload type, or CLI commands and installs no trace hooks.
-2. Existing reviews and historical versions containing standalone or inline
-   quotes preserve their visible text and document structure without requesting
-   trace resources or accessing transcript locations.
-3. Legacy and shared imports handle retired quotes while retaining supported
-   format validation, source checks, and image/map resource integrity checks.
-   New sharing exports contain no trace references or transcript blobs.
+2. Old reviews containing retired trace blocks/resources are unsupported;
+   loading them never accesses transcript locations or silently drops quote text.
+   Existing supported reviews, historical versions, and imports still open.
+3. Sharing rejects retired trace resources while retaining supported format
+   validation, source checks, and image/map resource integrity checks. New sharing
+   exports contain no trace references or transcript blobs.
 4. Managed upgrade cleanup removes owned hooks, restores chained Git hooks,
    preserves unrelated configuration, and behaves correctly on repeated runs
    and filesystem errors. Tests use isolated temporary directories.
