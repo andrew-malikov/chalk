@@ -1,5 +1,3 @@
-import { useReviewSession } from "@canvas/host/review-session";
-import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import type { ReviewDiffLens } from "@dev.fast/review-protocol";
 import {
   type LensSource,
@@ -86,7 +84,6 @@ export function ReviewLensesProvider({
   children: ReactNode;
 }) {
   const queryClient = useQueryClient();
-  const session = useReviewSession();
   const panelStore = useReviewPanelStore();
   const [changedPaths, setChangedPaths] = useState<string[]>([]);
 
@@ -310,10 +307,6 @@ export function ReviewLensesProvider({
       structuralDiffEnabled,
       select: (id) => {
         if (!lenses.some((item) => item.id === id && !item.unavailable)) return;
-        captureUiEvent(session, "diff_opened", {
-          kind: structuralDiffEnabled ? "structural" : "file",
-          via: "lens",
-        });
         panelStore
           .getState()
           .selectLens({ id, version: snapshot.version, mode });
@@ -370,7 +363,6 @@ export function ReviewLensesProvider({
       client,
       route,
       snapshot,
-      session,
       panelStore,
     ],
   );

@@ -7,16 +7,9 @@ import { findReviewPackageRoot } from "@review/package-paths";
 import { openReviewProfile } from "@review/review-api/profile";
 import { reviewInstanceIdentity } from "@review/server/desktop-discovery";
 import { devReviewHome } from "@review/storage/review-home-paths";
-import { ReviewTelemetry } from "@review/telemetry/review-telemetry";
-import { reviewTelemetryChannel } from "@review/telemetry/telemetry-config";
 
 import { listenForDesktopHostShutdown } from "./desktop-host-shutdown";
 import { createGlobalReviewServer } from "./desktop-server";
-import {
-  drainServerCrashReport,
-  installProcessErrorTelemetry,
-  serverCrashReportPath,
-} from "./process-error-telemetry";
 
 export async function runDesktopHost(
   env: NodeJS.ProcessEnv = process.env,
@@ -31,32 +24,6 @@ export async function runDesktopHost(
 
   const packageRoot = findReviewPackageRoot(import.meta.url);
   const toolingRoot = env.DEV_FAST_REVIEW_TOOLING_ROOT || packageRoot;
-  const telemetryEnv = { ...env };
-  delete telemetryEnv.DEV_FAST_REVIEW_TELEMETRY_DISABLED;
-
-  const telemetry = ReviewTelemetry.fromEnv(telemetryEnv, {
-    surface: "desktop",
-  });
-
-  installProcessErrorTelemetry(telemetry, {
-    appSessionId: env.DEV_FAST_REVIEW_APP_SESSION_ID,
-    crashReportPath: serverCrashReportPath(env),
-  });
-
-  await telemetry.setEnabled(
-    !isEnabledEnvValue(env.DEV_FAST_REVIEW_TELEMETRY_DISABLED),
-  );
-
-  // An unpackaged Desktop is ours; remember that so every later process on
-  // this machine, CLI included, reports internal.
-  if (reviewTelemetryChannel(env) === "dev") await telemetry.setInternal(true);
-  await telemetry.captureInstallationCreated().catch(() => undefined);
-  await telemetry.reconcileOpenSessions().catch(() => undefined);
-  await drainServerCrashReport(telemetry, serverCrashReportPath(env));
-  const installationId = await telemetry.getInstallationId();
-  // This value bootstraps the stored setting. Remove it after persistence so
-  // a later in-app enable also reaches telemetry instances created elsewhere.
-  delete env.DEV_FAST_REVIEW_TELEMETRY_DISABLED;
 
   const serverInput = {
     appPid,
@@ -66,7 +33,6 @@ export async function runDesktopHost(
     token: env.DEV_FAST_REVIEW_SERVER_TOKEN,
     instanceId: env.DEV_FAST_REVIEW_INSTANCE_ID,
     identity: reviewInstanceIdentity(env),
-    telemetry,
   };
 
   const home = devReviewHome(env);
@@ -97,7 +63,6 @@ export async function runDesktopHost(
     reviewStore: local.store,
     reviewData: local.data,
     cliRuntimePath: env.DEV_FAST_REVIEW_CLI_RUNTIME,
-    crashDumpsDir: env.DEV_FAST_REVIEW_CRASH_DUMPS_DIR,
   });
 
   try {
@@ -109,7 +74,7 @@ export async function runDesktopHost(
   }
 
   process.stdout.write(
-    `${JSON.stringify({ event: "ready", ...server.discovery, installationId })}\n`,
+    `${JSON.stringify({ event: "ready", ...server.discovery })}\n`,
   );
 
   let stopping: Promise<void> | null = null;
@@ -125,25 +90,15 @@ export async function runDesktopHost(
     return stopping;
   };
 
-  listenForDesktopHostShutdown(
-    process,
-    () => {
-      void stop().then(() => process.exit(0));
-    },
-    (enabled) => {
-      void telemetry.setEnabled(enabled).catch(() => undefined);
-    },
-  );
+  listenForDesktopHostShutdown(process, () => {
+    void stop().then(() => process.exit(0));
+  });
   process.once("SIGINT", () => {
     void stop().then(() => process.exit(0));
   });
   process.once("SIGTERM", () => {
     void stop().then(() => process.exit(0));
   });
-}
-
-function isEnabledEnvValue(value: string | undefined): boolean {
-  return value === "1" || value?.toLowerCase() === "true";
 }
 
 function requiredPort(value: string | undefined): number {

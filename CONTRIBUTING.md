@@ -115,7 +115,7 @@ description:
 - describe the behavior you added or changed;
 - explain how you validated it; and
 - call out anything reviewers should pay attention to, such as stored-data
-  migrations, telemetry changes, or desktop runtime changes.
+  migrations, data-sharing changes, or desktop runtime changes.
 
-If your change adds or changes telemetry, update
-[docs/telemetry.md](docs/telemetry.md) in the same pull request.
+If your change affects what data leaves the machine, update
+[docs/privacy.md](docs/privacy.md) in the same pull request.

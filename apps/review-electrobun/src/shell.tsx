@@ -13,7 +13,6 @@ import {
   mountReviewCanvas,
   reviewCanvasThemeClass,
 } from "@canvas/desktop-entry";
-import { createReviewAppSessionId } from "@canvas/telemetry/tab-dwell-telemetry";
 import {
   REVIEW_CANVAS_RESUME_EVENT,
   REVIEW_DISCORD_URL,
@@ -202,10 +201,7 @@ function Shell(
   if (!resources.current) {
     const abort = new AbortController();
 
-    const authenticated = createAuthenticatedRequest(
-      options.state.discovery,
-      options.state.appSessionId,
-    );
+    const authenticated = createAuthenticatedRequest(options.state.discovery);
 
     const request: typeof authenticated = (url, init) =>
       authenticated(url, {
@@ -488,7 +484,7 @@ function Shell(
   async function command(operation: CatalogMutation) {
     requireConnected();
     await api.post("/commands", {
-      commandId: createReviewAppSessionId(),
+      commandId: crypto.randomUUID(),
       operation,
     });
   }

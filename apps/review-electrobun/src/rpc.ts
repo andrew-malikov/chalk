@@ -45,7 +45,6 @@ export type HostState =
       status: "ready";
       discovery: ReviewDesktopDiscovery;
       preferences: ShellPreferences;
-      appSessionId: string;
     }
   | { status: "error" | "disconnected"; message: string };
 

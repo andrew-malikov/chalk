@@ -37,7 +37,7 @@ test("rejects foreign origins before attaching credentials and disables redirect
   );
 
   vi.stubGlobal("fetch", fetcher);
-  const request = createAuthenticatedRequest(discovery, "app");
+  const request = createAuthenticatedRequest(discovery);
   await expect(request("https://foreign.example/steal")).rejects.toThrow(
     /origin/,
   );
@@ -325,7 +325,7 @@ test("theme and layout subscribers ignore unrelated tab preferences", async () =
   const listeners = new Set<() => void>();
 
   const bridge = createCanvasBridge({
-    state: { status: "ready", discovery, appSessionId: "a", preferences },
+    state: { status: "ready", discovery, preferences },
     reviewId: "r",
     wasmUrl: "https://example.test/libavoid.wasm",
     request: async (url) => {

@@ -48,15 +48,8 @@ describe("ReviewProvider session facts", () => {
     });
   });
 
-  it("reports a topbar dismissal once the dismissal succeeds", async () => {
+  it("updates dismissal state only after dismissal succeeds", async () => {
     const session = testReviewSession();
-    const posted: unknown[] = [];
-    session.fetch = async (path, init) => {
-      if (path === "/telemetry/event")
-        posted.push(JSON.parse(String(init?.body)));
-
-      return new Response("{}");
-    };
 
     session.review!.dismiss = vi
       .fn<() => Promise<void>>()
@@ -66,12 +59,10 @@ describe("ReviewProvider session facts", () => {
     await renderProvider(session);
 
     await expect(requireReview().dismissReview()).rejects.toThrow("offline");
-    expect(posted).toEqual([]);
+    expect(requireReview().submissionOutcome).toBeNull();
 
     await act(() => requireReview().dismissReview());
-    expect(posted).toMatchObject([
-      { name: "review_dismissed", properties: { via: "review_topbar" } },
-    ]);
+    expect(requireReview().submissionOutcome).toBe("dismissed");
   });
 });
 

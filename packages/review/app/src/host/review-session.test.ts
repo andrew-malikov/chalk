@@ -3,7 +3,7 @@ import { expect, it, vi } from "vitest";
 
 import { createReviewSession } from "./review-session";
 
-it("sends JSON requests to the displayed version with authentication, including beacon delivery", async () => {
+it("sends JSON requests to the displayed version with authentication", async () => {
   const request = vi.fn<ReturnType<typeof testReviewBridge>["request"]>(
     async () => Response.json({ text: "copied" }),
   );
@@ -22,12 +22,8 @@ it("sends JSON requests to the displayed version with authentication, including 
   expect(new Headers(init?.headers).get("x-review-token")).toBe("secret-token");
 
   version = 3;
-  await session.fetch("/telemetry/event", { method: "POST" });
+  await session.fetch("/copy-context", { method: "POST" });
   expect(new URL(request.mock.calls[1]![0]).searchParams.get("version")).toBe(
     "3",
   );
-  const beacon = new URL(session.beaconUrl("/telemetry/tab"));
-  expect(beacon.pathname).toBe("/reviews-api/review%2Fid/telemetry/tab");
-  expect(beacon.searchParams.get("version")).toBe("3");
-  expect(beacon.searchParams.get("token")).toBe("secret-token");
 });

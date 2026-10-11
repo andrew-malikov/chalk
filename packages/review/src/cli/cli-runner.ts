@@ -11,6 +11,11 @@ import {
   humanStream,
   jsonRequestedInArgv,
 } from "@review/cli/cli-output";
+import {
+  emitReviewEvent,
+  serializeReviewError,
+} from "@review/diagnostics/review-logger";
+import { setTraceAttribute } from "@review/diagnostics/startup-trace";
 import { processIsAlive } from "@review/lib/with-file-lock";
 import {
   findReviewPackageRoot,
@@ -29,20 +34,6 @@ import {
   serverNotReady,
 } from "@review/server/server-discovery";
 import { DEV_REVIEW_HOME_ENV } from "@review/storage/review-home-paths";
-import {
-  emitReviewEvent,
-  serializeReviewError,
-} from "@review/telemetry/review-logger";
-import {
-  type ReviewCliCommand,
-  type ReviewCliCommandPath,
-  type ReviewCommandTelemetry,
-  ReviewTelemetry,
-  type ReviewTelemetryErrorCategory,
-  type ReviewTelemetryErrorName,
-} from "@review/telemetry/review-telemetry";
-import { setTraceAttribute, span } from "@review/telemetry/startup-trace";
-import type { ReviewTelemetrySurface } from "@review/telemetry/telemetry-config";
 import { Argument, Command, CommanderError, Option } from "commander";
 
 import {
@@ -87,7 +78,6 @@ export interface ReviewCliInput {
   stdin?: CliInputStream;
   stdout: Writable;
   stderr: Writable;
-  telemetry?: ReviewCommandTelemetry;
   runtime?: Partial<ReviewCliRuntime>;
 }
 
@@ -96,7 +86,7 @@ interface ReviewInfoOptions {
   session?: string;
 }
 
-type OutputSurface = ReviewCliCommand | "plain";
+type OutputSurface = "review" | "plain";
 
 interface CliRunState {
   exitCode: number;
@@ -113,7 +103,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     input.cliVersion ?? readReviewPackageVersion(import.meta.url);
 
   const runtime = reviewCliRuntime(input.runtime);
-  const telemetry = input.telemetry ?? ReviewTelemetry.fromEnv(env);
 
   const state: CliRunState = {
     exitCode: 0,
@@ -121,20 +110,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     parserErrorOutput: "",
     json: jsonRequestedInArgv(input.argv),
   };
-
-  let telemetryProperties: Record<
-    string,
-    boolean | number | string | null | undefined
-  > = {};
-
-  let activeTelemetry:
-    | {
-        command: ReviewCliCommandPath;
-        commandRunId: string;
-        startedAt: number;
-        finished: boolean;
-      }
-    | undefined;
 
   const configureOutput = <T extends Command>(
     command: T,
@@ -250,7 +225,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
         port,
         softwareMapEnabled: options.softwareMaps,
         signal: controller.signal,
-        telemetry,
         onReady: ({ url, serverPid }) => {
           input.stdout.write(
             options.json
@@ -654,8 +628,8 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
 
   // The JSON authoring surface is owned by review-api/agent-cli.ts. Commander
   // passes the tool name and JSON payload through untouched, so these commands
-  // share the top-level help, the leading `--json` form, and the telemetry
-  // hooks without a separate parser.
+  // share the top-level help and the leading `--json` form without a separate
+  // parser.
   for (const [name, description] of [
     ["api", "Call a JSON review authoring tool on the running server"],
     ["mcp", "Serve the JSON review authoring tools over stdio MCP"],
@@ -679,45 +653,22 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
         ...input,
         env: authoringEnv(),
         argv: [name, ...args],
-        onToolCall: (call) =>
-          attemptTelemetry(() => telemetry.captureToolCalled(call)),
       });
     });
   }
 
-  program.hook("preAction", async (_command, actionCommand) => {
+  program.hook("preAction", (_command, actionCommand) => {
     // The parsed option is authoritative once parsing succeeds. The argv scan
     // that seeded state.json only has to cover parse failures.
     if (actionCommand.optsWithGlobals().json === true) {
       state.json = true;
     }
 
-    const command = telemetryCommandPath(actionCommand);
+    const command = [actionCommand.parent?.name(), actionCommand.name()]
+      .filter((name) => name && name !== program.name())
+      .join(".");
 
-    if (!command) return;
-    const commandRunId = telemetry.createCommandRunId();
     setTraceAttribute("command", command);
-    setTraceAttribute("commandRunId", commandRunId);
-    telemetry.setSurface(commandSurface(command));
-    activeTelemetry = {
-      command,
-      commandRunId,
-      startedAt: Date.now(),
-      finished: false,
-    };
-    await attemptTelemetry(() => telemetry.captureInstallationCreated());
-    await attemptTelemetry(() =>
-      telemetry.captureCommandStarted({ command, commandRunId }),
-    );
-  });
-  program.hook("postAction", async () => {
-    await finishActiveTelemetry(
-      telemetry,
-      activeTelemetry,
-      state.exitCode,
-      undefined,
-      telemetryProperties,
-    );
   });
 
   try {
@@ -727,14 +678,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   } catch (error) {
     if (error instanceof CommanderError) {
       if (error.exitCode === 0) {
-        await captureOneOffCommand(
-          telemetry,
-          input.argv.includes("--version") || input.argv.includes("-V")
-            ? "version"
-            : "help",
-          0,
-        );
-
         return 0;
       }
 
@@ -759,18 +702,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
         );
       }
 
-      await finishActiveTelemetry(
-        telemetry,
-        activeTelemetry,
-        1,
-        error,
-        telemetryProperties,
-      );
-
-      if (!activeTelemetry) {
-        await captureOneOffCommand(telemetry, "invalid", 1, error);
-      }
-
       return 1;
     }
 
@@ -785,17 +716,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
       input.stderr.write(ensureTrailingNewline(formatCliError(error)));
     }
 
-    await finishActiveTelemetry(
-      telemetry,
-      activeTelemetry,
-      1,
-      error,
-      telemetryProperties,
-    );
-
     return 1;
-  } finally {
-    await attemptTelemetry(() => telemetry.shutdown(1_000));
   }
 }
 
@@ -871,157 +792,6 @@ function reviewTopLevelHelp(): string {
     "",
     "  Start concise and let me dig deeper through the canvas.",
   ].join("\n");
-}
-
-async function finishActiveTelemetry(
-  telemetry: ReviewCommandTelemetry,
-  active:
-    | {
-        command: ReviewCliCommandPath;
-        commandRunId: string;
-        startedAt: number;
-        finished: boolean;
-      }
-    | undefined,
-  exitCode: number,
-  cause?: unknown,
-  properties: Record<string, boolean | number | string | null | undefined> = {},
-): Promise<void> {
-  if (!active || active.finished) return;
-  active.finished = true;
-  const classification = errorClassification(active.command, cause);
-  await attemptTelemetry(() =>
-    exitCode === 0
-      ? telemetry.captureCommandSucceeded({
-          command: active.command,
-          commandRunId: active.commandRunId,
-          exitCode,
-          durationMs: Date.now() - active.startedAt,
-          properties,
-        })
-      : telemetry.captureCommandFailed({
-          command: active.command,
-          commandRunId: active.commandRunId,
-          exitCode,
-          durationMs: Date.now() - active.startedAt,
-          properties,
-          ...classification,
-        }),
-  );
-}
-
-async function captureOneOffCommand(
-  telemetry: ReviewCommandTelemetry,
-  command: ReviewCliCommandPath,
-  exitCode: number,
-  cause?: unknown,
-): Promise<void> {
-  const commandRunId = telemetry.createCommandRunId();
-  await attemptTelemetry(() => telemetry.captureInstallationCreated());
-  await attemptTelemetry(() =>
-    telemetry.captureCommandStarted({ command, commandRunId }),
-  );
-  const classification = errorClassification(command, cause);
-  await attemptTelemetry(() =>
-    exitCode === 0
-      ? telemetry.captureCommandSucceeded({
-          command,
-          commandRunId,
-          exitCode,
-          durationMs: 0,
-        })
-      : telemetry.captureCommandFailed({
-          command,
-          commandRunId,
-          exitCode,
-          durationMs: 0,
-          ...classification,
-        }),
-  );
-}
-
-function telemetryCommandPath(
-  command: Command,
-): ReviewCliCommandPath | undefined {
-  const name = command.name();
-  const parent = command.parent?.name();
-
-  if (parent === "migrate" && name === "apply") return "migrate.apply";
-
-  if (parent === "server" && name === "start") return "server.start";
-
-  if (name === "api" || name === "mcp" || name === "connect") return name;
-
-  if (parent === "app" && (name === "launch" || name === "pick")) {
-    return `app.${name}`;
-  }
-
-  if (parent === "instances" && (name === "use" || name === "clear"))
-    return `instances.${name}`;
-
-  if (name === "version" || name === "info" || name === "instances") {
-    return name;
-  }
-
-  // Bare `app` takes no --session; picking is only `app pick`.
-  if (name === "app") return "app.launch";
-
-  return undefined;
-}
-
-function commandSurface(command: ReviewCliCommandPath): ReviewTelemetrySurface {
-  if (command === "server.start") return "headless";
-
-  if (command === "mcp") return "mcp";
-
-  if (command === "api") return "api";
-
-  return "cli";
-}
-
-interface ErrorClassification {
-  errorName: ReviewTelemetryErrorName;
-  errorCategory: ReviewTelemetryErrorCategory;
-}
-
-function errorClassification(
-  command: ReviewCliCommandPath,
-  cause: unknown,
-): ErrorClassification {
-  if (cause instanceof CommanderError || command === "invalid") {
-    return { errorName: "usage_error", errorCategory: "user_input" };
-  }
-
-  const name = cause instanceof Error ? cause.name.toLowerCase() : "";
-
-  if (name.includes("notfound")) {
-    return { errorName: "review_not_found", errorCategory: "local_state" };
-  }
-
-  if (command.startsWith("app.")) {
-    return {
-      errorName: "desktop_connection_error",
-      errorCategory: "dependency",
-    };
-  }
-
-  if (command === "info") {
-    return { errorName: "review_state_error", errorCategory: "local_state" };
-  }
-
-  if (cause) {
-    return { errorName: "unexpected_error", errorCategory: "internal" };
-  }
-
-  return { errorName: "process_error", errorCategory: "dependency" };
-}
-
-async function attemptTelemetry(fn: () => Promise<void>): Promise<void> {
-  try {
-    await span("telemetry capture", fn);
-  } catch {
-    // Telemetry must never affect CLI behavior.
-  }
 }
 
 function commanderErrorMessage(error: CommanderError): string {

@@ -29,7 +29,6 @@ import { shellStyles } from "@canvas/styles/shell-styles";
 import { withClass } from "@canvas/styles/stylex-props";
 import { themeStyles } from "@canvas/styles/theme-styles";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import { IconButton } from "@canvas/ui/button";
 import { Chip } from "@canvas/ui/chip";
 import { EmptyState } from "@canvas/ui/empty-state";
@@ -854,7 +853,6 @@ export function SoftwareMapFrame({
   viewportFocusRequiresExpanded,
   onViewportFocusComplete,
 }: SoftwareMapFrameProps) {
-  const session = useReviewSession();
   const frameRef = useRef<HTMLElement | null>(null);
 
   const codeInspectorResize = useRightPanelResize({
@@ -897,29 +895,6 @@ export function SoftwareMapFrame({
     hasCodeInspector: inspectedNode !== null,
     hasRefreshAction: Boolean(onRefresh),
   });
-
-  const captureNodeExpansion = (node: SoftwareMapNodeSnapshot) => {
-    if (!node.expandable || node.expanded) return;
-    captureUiEvent(session, "map_expanded", {
-      level: mapExpansionLevelForNode(node),
-    });
-  };
-
-  const selectNodeWithTelemetry = (node: SoftwareMapNodeSnapshot) => {
-    captureUiEvent(session, "peek_opened", { via: "map" });
-    onSelectNode?.(node);
-  };
-
-  const expandNodeWithTelemetry = (node: SoftwareMapNodeSnapshot) => {
-    captureNodeExpansion(node);
-    captureUiEvent(session, "peek_opened", { via: "map" });
-    onExpandNode?.(node);
-  };
-
-  const toggleNodeExpansionWithTelemetry = (node: SoftwareMapNodeSnapshot) => {
-    captureNodeExpansion(node);
-    onToggleNodeExpansion?.(node);
-  };
 
   return (
     <figure
@@ -1007,10 +982,10 @@ export function SoftwareMapFrame({
             expanded={expanded}
             lens={variant === "lens"}
             interactionMode={interactionMode}
-            onSelectNode={selectNodeWithTelemetry}
-            onExpandNode={expandNodeWithTelemetry}
+            onSelectNode={onSelectNode}
+            onExpandNode={onExpandNode}
             onCollapseNode={onCollapseNode}
-            onToggleNodeExpansion={toggleNodeExpansionWithTelemetry}
+            onToggleNodeExpansion={onToggleNodeExpansion}
             onFocusNode={onFocusNode}
             relationshipStateById={relationshipStateById}
             onOpenRelationship={onOpenRelationship}
@@ -1148,24 +1123,6 @@ export function softwareMapFrameProps({
     variant === "view" && styles.frameView,
     variant === "lens" && styles.frameLens,
   );
-}
-
-function mapExpansionLevelForNode(
-  node: Pick<SoftwareMapNodeSnapshot, "type">,
-): "system" | "container" | "component" | "code" {
-  switch (node.type) {
-    case "person":
-      return "system";
-    case "softwareSystem":
-      return "container";
-    case "container":
-    case "dataStore":
-      return "component";
-    case "component":
-    case "dataStoreCollection":
-    case "codeElement":
-      return "code";
-  }
 }
 
 function C4MapCanvas({

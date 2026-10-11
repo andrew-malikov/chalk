@@ -40,7 +40,6 @@ import {
   reviewServerIsHealthy,
 } from "@review/server/server-discovery.js";
 import { writeScratchpadEnabled } from "@review/storage/review-preferences.js";
-import { ReviewTelemetry } from "@review/telemetry/review-telemetry.js";
 import sharp from "sharp";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
@@ -55,7 +54,6 @@ const stops: (() => Promise<void>)[] = [];
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), "review-headless-"));
   vi.stubEnv("DEV_REVIEW_HOME", root);
-  vi.stubEnv("DEV_FAST_REVIEW_TELEMETRY_DISABLED", "1");
 });
 
 afterEach(async () => {
@@ -1016,7 +1014,6 @@ it.each(["attached", "not yet attached"])(
       packageRoot: root,
       toolingRoot: root,
       port: 0,
-      telemetry: ReviewTelemetry.fromEnv(process.env),
     });
 
     stops.push(async () => {

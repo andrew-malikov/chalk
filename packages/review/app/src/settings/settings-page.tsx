@@ -63,10 +63,6 @@ export function SettingsPage({
 }: {
   settings: ReviewCanvasSettingsContent;
 }) {
-  const [telemetryEnabled, setTelemetryEnabled] = useState(
-    settings.telemetryEnabled,
-  );
-
   const [theme, setTheme] = useState(settings.theme);
   const [keymap, setKeymap] = useState(settings.keymap);
   const [ctrlTab, setCtrlTab] = useState(settings.ctrlTab);
@@ -171,31 +167,6 @@ export function SettingsPage({
               </Row>
             </Section>
           ) : null}
-
-          <Section label="Privacy">
-            <Row
-              label="Share anonymous usage data"
-              description="Counts and timings only. Never code, file paths, or repository names."
-            >
-              <div
-                {...stylex.props(styles.toggle)}
-                aria-label="Share anonymous usage data"
-              >
-                <Switch
-                  aria-label="Share anonymous usage data"
-                  checked={telemetryEnabled}
-                  disabled={busy !== null}
-                  onCheckedChange={(enabled) => {
-                    void run(
-                      "telemetry",
-                      () => settings.setTelemetryEnabled(enabled),
-                      setTelemetryEnabled,
-                    );
-                  }}
-                />
-              </div>
-            </Row>
-          </Section>
 
           <Section label="Editor">
             <Row label="Theme" description="How Blackboard looks.">

@@ -3,10 +3,6 @@ import { useReviewSession } from "@canvas/host/review-session";
 import { useTooltip } from "@canvas/lib/use-tooltip";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import {
-  captureClientError,
-  captureUiEvent,
-} from "@canvas/telemetry/ui-telemetry";
 import { IconButton } from "@canvas/ui/button";
 import { SlidersIcon } from "@canvas/ui/icons";
 import type { ReviewDiffLayout } from "@dev.fast/review-protocol";
@@ -56,13 +52,9 @@ export function DiffLayoutControl(): ReactElement {
 
   const chooseLayout = (next: ReviewDiffLayout) => {
     if (next === shownLayout) return;
-    captureUiEvent(session, "diff_layout_changed", { layout: next });
     setPending(next);
-    bridge.setDiffLayout(next).catch((error: Error) => {
+    bridge.setDiffLayout(next).catch(() => {
       setPending(null);
-      captureClientError(session, "settings", error, {
-        component: "diff_layout",
-      });
     });
   };
 

@@ -85,7 +85,6 @@ import {
 } from "./review/review-view-route";
 import { useReviewViewStateSync } from "./review/review-view-state";
 import { useRightPanelResize } from "./review/side-panel-resizer";
-import { useReviewTabTelemetry } from "./review/use-review-tab-telemetry";
 import {
   ReviewDebugSettingsProvider,
   type ReviewNodeTint,
@@ -119,7 +118,6 @@ import { shellStyles } from "./styles/shell-styles";
 import { withClass } from "./styles/stylex-props";
 import { themeStyles } from "./styles/theme-styles";
 import { tokens } from "./styles/tokens.stylex";
-import { captureUiEvent } from "./telemetry/ui-telemetry";
 import { useTutorial } from "./tutorial/tutorial-context";
 import { TutorialExperienceProvider } from "./tutorial/tutorial-experience";
 import { MarkerUnderline, SettingsSlidersIcon } from "./ui/icons";
@@ -186,17 +184,6 @@ export interface RenderedReviewDocument {
   header: boolean;
   databaseLens: boolean;
   width?: ReviewDocumentWidthChoice;
-}
-
-/** A commit-scoped diff stays "commit"; otherwise it follows the reader's
- * structural-diff setting. */
-function diffOpenedKind(
-  diffScope: ReviewDiffScope | null,
-  structuralDiffEnabled: boolean,
-): "commit" | "file" | "structural" {
-  if (diffScope) return "commit";
-
-  return structuralDiffEnabled ? "structural" : "file";
 }
 
 function ReviewLayout({
@@ -308,9 +295,6 @@ function ReviewLayoutContent({
   // The scratchpad is a document and nothing else: no source tree to browse,
   // nothing to dismiss.
   const scratchpad = session.review?.kind === "scratchpad";
-  useEffect(() => {
-    if (scratchpad) captureUiEvent(session, "scratchpad_opened");
-  }, [scratchpad, session]);
   const sourceTreeTooltip = useTooltip("Open full read-only source");
   const panelStore = useReviewPanelStore();
   useSuppressPanelMotionOnCanvasResume(appRef);
@@ -442,8 +426,6 @@ function ReviewLayoutContent({
 
   const lenses = useReviewLenses();
 
-  useReviewTabTelemetry(activeView);
-
   const tutorial = useTutorial() !== null;
 
   const tocEntries = document.tocEntries ?? [];
@@ -554,14 +536,6 @@ function ReviewLayoutContent({
                       activeView === view && controlStyles.segmentTopbarActive,
                     )}
                     onClick={() => {
-                      if (view === "diff")
-                        captureUiEvent(session, "diff_opened", {
-                          kind: diffOpenedKind(
-                            diffScope,
-                            Boolean(lenses?.structuralDiffEnabled),
-                          ),
-                          via: "topbar",
-                        });
                       showView(view);
                     }}
                   >
@@ -617,9 +591,6 @@ function ReviewLayoutContent({
                     aria-label="Source tree ↗"
                     ref={sourceTreeTooltip}
                     onClick={() => {
-                      captureUiEvent(session, "source_tree_opened", {
-                        via: "topbar",
-                      });
                       session.surface.post({
                         name: "openSourceTree",
                         args: {},
@@ -634,14 +605,6 @@ function ReviewLayoutContent({
                 )}
                 <AuthoringActivityBadge
                   onLocate={(view) => {
-                    if (view === "diff")
-                      captureUiEvent(session, "diff_opened", {
-                        kind: diffOpenedKind(
-                          diffScope,
-                          Boolean(lenses?.structuralDiffEnabled),
-                        ),
-                        via: "locate",
-                      });
                     showView(view);
                   }}
                 />
@@ -714,7 +677,6 @@ function ReviewLayoutContent({
                 >
                   <ReviewDocumentBoundary
                     key={documentRevision}
-                    session={session}
                     revision={documentRevision}
                     onError={(_revision, error) =>
                       reportReviewDocumentRenderError(session, error)
@@ -769,8 +731,7 @@ function ReviewLayoutContent({
               <ReviewCommitsView
                 commits={commits}
                 range={range}
-                onOpenDiff={(commit, via, file) => {
-                  captureUiEvent(session, "commit_diff_opened", { via });
+                onOpenDiff={(commit, file) => {
                   panelStore.getState().openCommitDiff({ commit, file });
                 }}
               />

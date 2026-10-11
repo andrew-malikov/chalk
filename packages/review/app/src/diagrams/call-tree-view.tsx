@@ -5,14 +5,12 @@ import {
   diffCountStyles,
 } from "@canvas/diff/diff-count";
 import { drawStyles } from "@canvas/drawing/draw-styles";
-import { useReviewSession } from "@canvas/host/review-session";
 import { useReviewLenses } from "@canvas/review/review-lenses";
 import { useReviewPanel } from "@canvas/review/review-panel";
 import { callEdgeMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import type { DiffSelection } from "@review/documents/lens-selection";
 import type { CallStackDiffBlock } from "@review/review-api/blocks/call_stack_diff";
 import * as stylex from "@stylexjs/stylex";
@@ -228,7 +226,6 @@ function TreeConnectors({
 
 /** Document host: the same tree, with source peeks instead of diff navigation. */
 export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
-  const session = useReviewSession();
   const openPeek = useReviewPanel((state) => state.openPeek);
 
   return (
@@ -240,8 +237,6 @@ export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
       <CallTree
         block={block}
         onReveal={(source, sectionId, anchorId) => {
-          captureUiEvent(session, "peek_opened", { via: "call_stack_frame" });
-
           const stop = callTreeStops(block).find(
             (stop) => stop.id === sectionId,
           )!;

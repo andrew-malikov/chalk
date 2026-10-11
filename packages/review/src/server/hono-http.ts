@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 
 import { type JsonValue, parseJsonText } from "@dev.fast/review-protocol";
-import { REVIEW_APP_SESSION_ID_HEADER } from "@review/telemetry/ui-telemetry-events";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import { StreamLimitError, readBoundedStream } from "./bounded-stream.js";
@@ -58,7 +57,7 @@ export function applyCorsHeaders(
 
   response.headers.set(
     "access-control-allow-headers",
-    `content-type, x-review-token, ${REVIEW_APP_SESSION_ID_HEADER}`,
+    "content-type, x-review-token",
   );
   response.headers.set(
     "access-control-allow-methods",

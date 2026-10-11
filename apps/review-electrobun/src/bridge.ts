@@ -25,7 +25,6 @@ import type { HostState, NativeOpenRequest, ShellPreferences } from "./rpc";
 
 export function createAuthenticatedRequest(
   discovery: ReviewDesktopDiscovery,
-  sessionId?: string,
 ): ReviewCanvasBridge["request"] {
   const origin = new URL(discovery.url).origin;
 
@@ -36,8 +35,6 @@ export function createAuthenticatedRequest(
       throw new Error("Refusing to send review credentials to another origin.");
     const headers = new Headers(init?.headers);
     headers.set("x-review-token", discovery.token);
-
-    if (sessionId) headers.set("x-review-app-session-id", sessionId);
 
     return fetch(url, { ...init, headers, redirect: "error" });
   };
@@ -229,7 +226,6 @@ export function createCanvasBridge(
   }
 
   return {
-    appSessionId: state.appSessionId,
     config: ReviewRuntimeConfigSchema.parse({
       serverUrl: state.discovery.url,
       token: state.discovery.token,

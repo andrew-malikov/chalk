@@ -43,10 +43,9 @@ described in [SECURITY.md](SECURITY.md). Questions? Ask on
 
 ## Privacy
 
-Blackboard runs against local checkouts. Anonymous telemetry does not include
-your code, diffs, Blackboard text, prompts, or model output. Read the
-[privacy overview](docs/privacy.md), inspect the complete
-[telemetry reference](docs/telemetry.md), or turn telemetry off at any time.
+Blackboard runs against local checkouts and does not collect or send product
+telemetry. Read the [privacy overview](docs/privacy.md) for local data and
+optional hosted agent traces, which require repository consent.
 
 ## License
 

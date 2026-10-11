@@ -13,22 +13,15 @@ import {
 
 import { GlobalReviewDesktopVerbRelay } from "./global-verb-relay.js";
 import {
-  drainServerCrashReport,
-  installProcessErrorTelemetry,
-} from "./process-error-telemetry.js";
-import {
   createReviewServerApp,
   relayReviewCallbacks,
 } from "./review-server-core.js";
-import type { ReviewTelemetryCapture } from "./ui-telemetry.js";
 
 interface HeadlessServerInput {
   stateDir: string;
   port?: number;
   softwareMapEnabled?: boolean;
   signal: AbortSignal;
-  /** The CLI's instance, already on the `headless` surface. */
-  telemetry?: Pick<ReviewTelemetryCapture, "captureUiEvent">;
   onReady(discovery: ReviewServerDiscovery): void;
 }
 
@@ -37,12 +30,9 @@ export async function runHeadlessServer(input: HeadlessServerInput) {
   await mkdir(input.stateDir, { recursive: true, mode: 0o700 });
   const stateDir = await realpath(input.stateDir);
 
-  const stopErrorTelemetry =
-    input.telemetry && installProcessErrorTelemetry(input.telemetry);
-
   const outcome = await withHeadlessServerLock(stateDir, () =>
     serve({ ...input, stateDir }),
-  ).finally(() => stopErrorTelemetry?.());
+  );
 
   if (!outcome.acquired)
     throw new Error(
@@ -72,8 +62,6 @@ export function withHeadlessServerLock<T>(
 
 async function serve(input: HeadlessServerInput) {
   if (input.signal.aborted) return;
-
-  if (input.telemetry) await drainServerCrashReport(input.telemetry);
 
   const local = await openReviewProfile(input.stateDir, {
     manageWorkspaces: false,

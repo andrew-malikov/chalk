@@ -8,7 +8,6 @@ import { controlStyles } from "@canvas/styles/controls-styles";
 import { chevronMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import { IconButton } from "@canvas/ui/button";
 import { CopyButton } from "@canvas/ui/copy-text";
 import { CodeIcon, DisclosureChevron } from "@canvas/ui/icons";
@@ -24,11 +23,7 @@ import { useMemo, useState } from "react";
 import { DiffCount } from "./diff-count";
 import { FileMark } from "./file-mark";
 
-type OpenCommitDiff = (
-  commit: ReviewCommitSummary,
-  via: "row" | "file",
-  file?: string,
-) => void;
+type OpenCommitDiff = (commit: ReviewCommitSummary, file?: string) => void;
 
 export function ReviewCommitsView({
   commits,
@@ -122,7 +117,6 @@ function CommitRow({
   const toggleExpanded = () => {
     const next = !expanded;
     setExpanded(next);
-    captureUiEvent(session, "commit_expanded", { expanded: next });
   };
 
   const visibleFiles = files.data ? visibleCommitFiles(files.data) : null;
@@ -157,7 +151,7 @@ function CommitRow({
             ref={openTooltip}
             className="review-commit-open"
             aria-label="Open commit diff"
-            onClick={() => onOpenDiff(commit, "row")}
+            onClick={() => onOpenDiff(commit)}
           >
             <CodeIcon xstyle={controlStyles.chromeIcon} />
           </IconButton>
@@ -186,7 +180,7 @@ function CommitRow({
               type="button"
               {...stylex.props(styles.file)}
               key={file.path}
-              onClick={() => onOpenDiff(commit, "file", file.path)}
+              onClick={() => onOpenDiff(commit, file.path)}
             >
               <FileMark status={file.status} />
               <span {...stylex.props(styles.filePath)}>{file.path}</span>
@@ -202,7 +196,7 @@ function CommitRow({
               size="xs"
               type="button"
               {...stylex.props(styles.filesFooter)}
-              onClick={() => onOpenDiff(commit, "row")}
+              onClick={() => onOpenDiff(commit)}
             >
               {countLabel(omittedFileCount, "more file")}
             </ButtonPrimitive>

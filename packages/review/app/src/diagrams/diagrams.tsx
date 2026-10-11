@@ -2,7 +2,6 @@ import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { flowLayer } from "@canvas/diagrams/flow-layers.stylex";
 import { useMotionPhase } from "@canvas/drawing/draw-queue-provider";
 import { drawStyles } from "@canvas/drawing/draw-styles";
-import { useReviewSession } from "@canvas/host/review-session";
 import {
   useReviewPanel,
   useReviewPanelStore,
@@ -13,7 +12,6 @@ import { appMarker, documentMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import type { Step } from "@review/review-api/document";
 import * as stylex from "@stylexjs/stylex";
 import {
@@ -163,7 +161,6 @@ export function createSequenceTourEntry(sequence: SequenceView): GuidedTour {
   return {
     id: sequence.id,
     title: sequence.title,
-    telemetryKind: "sequence" as const,
     stops: sequence.messages.map((message) => ({
       anchor: panelAnchor(message),
       label: message.label,
@@ -268,7 +265,6 @@ export function SequenceDiagram(block: SequenceDiagramProps) {
     [id, title, actors, steps],
   );
 
-  const session = useReviewSession();
   const { theme } = useReviewDebugSettings();
   const tour = useMemo(() => createSequenceTourEntry(sequence), [sequence]);
 
@@ -289,23 +285,15 @@ export function SequenceDiagram(block: SequenceDiagramProps) {
 
   const openTour = useCallback(
     (anchor?: string) => {
-      if (anchor) {
-        captureUiEvent(session, "peek_opened", { via: "diagram" });
-      }
-
       const nextAnchor = anchor ?? tourAnchor ?? tour.stops[0]?.anchor.id;
 
       if (!nextAnchor) return;
-
-      if (!tourOpen) {
-        captureUiEvent(session, "tour_started", { steps: tour.stops.length });
-      }
 
       panelStore
         .getState()
         .openOverlayTour({ tourId: tour.id, kind: "sequence" }, nextAnchor);
     },
-    [panelStore, session, tour, tourAnchor, tourOpen],
+    [panelStore, tour, tourAnchor],
   );
 
   const { closeOverlayTour: closeTour, moveOverlayTour: changeTourAnchor } =

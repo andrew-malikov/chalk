@@ -19,7 +19,6 @@ import { appMarker, documentMarker } from "@canvas/styles/markers.stylex";
 import { radius } from "@canvas/styles/scale.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import { Chip } from "@canvas/ui/chip";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { type JsonValue, isStringValue } from "@dev.fast/review-protocol";
@@ -387,20 +386,10 @@ export function DatabaseLens(block: DatabaseLensProps) {
     (anchor?: string) => {
       if (!activeTour) return;
 
-      if (anchor) {
-        captureUiEvent(session, "peek_opened", { via: "db_lens" });
-      }
-
       const nextAnchor =
         anchor ?? tourAnchor ?? activeUseCase?.operations[0]?.id;
 
       if (!nextAnchor) return;
-
-      if (!tourOpen) {
-        captureUiEvent(session, "tour_started", {
-          steps: activeUseCase?.operations.length ?? 0,
-        });
-      }
 
       panelStore
         .getState()
@@ -409,7 +398,7 @@ export function DatabaseLens(block: DatabaseLensProps) {
           nextAnchor,
         );
     },
-    [activeTour, activeUseCase, panelStore, session, tourAnchor, tourOpen],
+    [activeTour, activeUseCase, panelStore, tourAnchor],
   );
 
   const { closeOverlayTour: closeTour, moveOverlayTour: changeTourAnchor } =

@@ -68,7 +68,6 @@ function DocumentBody() {
   // App keys its boundary on the review id; this one recovers on the next version.
   return (
     <ReviewDocumentBoundary
-      session={session}
       revision={`${data.snapshot.reviewId}:${data.snapshot.version}:${data.snapshot.pins?.worktreeRevision ?? ""}`}
       onError={(_revision, error) =>
         reportReviewDocumentRenderError(session, error)

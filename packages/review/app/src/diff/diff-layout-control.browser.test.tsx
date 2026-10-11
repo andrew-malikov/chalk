@@ -20,7 +20,6 @@ describe("DiffLayoutControl", () => {
     typeof vi.fn<(next: ReviewDiffLayout) => Promise<void>>
   >;
 
-  let posted: unknown[];
   let session: ReturnType<typeof testReviewSession>;
 
   beforeEach(async () => {
@@ -30,7 +29,6 @@ describe("DiffLayoutControl", () => {
     root = createRoot(container);
     layout = "split";
     listeners = new Set();
-    posted = [];
     // The desktop writes the setting and reports back through the change
     // event, so the fake applies the write the same way.
     setDiffLayout = vi.fn<(next: ReviewDiffLayout) => Promise<void>>(
@@ -48,12 +46,6 @@ describe("DiffLayoutControl", () => {
           listeners.add(listener);
 
           return { dispose: () => listeners.delete(listener) };
-        },
-        request: async (url, init) => {
-          if (url.includes("/telemetry/event"))
-            posted.push(JSON.parse(String(init?.body)));
-
-          return Response.json({ ok: true });
         },
       },
     );
@@ -107,15 +99,6 @@ describe("DiffLayoutControl", () => {
     });
     await act(async () => trigger().click());
     expect(host.menu.items.find((item) => item.checked)?.id).toBe("split");
-    expect(posted).toContainEqual(
-      expect.objectContaining({
-        name: "client_error",
-        properties: expect.objectContaining({
-          error_source: "settings",
-          component: "diff_layout",
-        }),
-      }),
-    );
     await act(async () => {
       host.menu.onHide();
       confirm("unified");

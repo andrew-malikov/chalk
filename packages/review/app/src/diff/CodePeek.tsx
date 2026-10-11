@@ -11,8 +11,6 @@ import {
 } from "@canvas/styles/markers.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import { peekResolutionOutcome } from "@canvas/telemetry/peek-telemetry";
-import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import type {
   ReviewDiffSide,
   ReviewInlineEditorHeightMode,
@@ -26,7 +24,7 @@ import {
 import type { ReviewComponentProps } from "@review/documents/review-document-data";
 import { type FileLineRange, codePeekSource } from "@review/documents/source";
 import * as stylex from "@stylexjs/stylex";
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 
 /** The software-map inspector's peek input: a range on one diff side. */
 export interface CodePeekProps {
@@ -133,16 +131,12 @@ export function CodePeekCard({
   heightMode = "capped",
   onNativeFocus,
   lenses: lensesOverride,
-  reportOutcome = false,
 }: {
   source: DiffSelection;
   active?: boolean;
   heightMode?: ReviewInlineEditorHeightMode;
   onNativeFocus?: () => void;
   lenses?: ReviewLensView;
-  /** Report resolution telemetry. Only the panel the user opened sets this,
-   * so an authored document with many inline peeks sends one event, not N. */
-  reportOutcome?: boolean;
 }) {
   const session = useReviewSession();
   const contextLenses = useReviewLenses();
@@ -158,25 +152,11 @@ export function CodePeekCard({
 
   const key = selectionKey(source);
 
-  const outcome = peekResolutionOutcome({
-    resolvedCount: ranges.length,
-    complete: Boolean(lenses?.progress?.complete),
-    unavailable: Boolean(lenses?.progress?.unavailableSelections?.[key]),
-    error: Boolean(lenses?.error),
-  });
-
-  const reportedKey = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!reportOutcome || outcome === "pending" || reportedKey.current === key)
-      return;
-    reportedKey.current = key;
-    captureUiEvent(
-      session,
-      outcome === "resolved" ? "peek_resolved" : "peek_resolve_failed",
-      { root_kind: "range" },
-    );
-  }, [key, outcome, reportOutcome, session]);
+  const unavailable = Boolean(
+    lenses?.progress?.complete ||
+    lenses?.progress?.unavailableSelections?.[key] ||
+    lenses?.error,
+  );
 
   if (!ranges.length)
     return (
@@ -184,9 +164,7 @@ export function CodePeekCard({
         {...withClass("code-peek", styles.peek, drawStyles.blockChild)}
         role="status"
       >
-        {outcome === "failed"
-          ? "Diff selection unavailable"
-          : "Loading diff selection…"}
+        {unavailable ? "Diff selection unavailable" : "Loading diff selection…"}
       </section>
     );
 

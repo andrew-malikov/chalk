@@ -1,36 +1,13 @@
-import type { ReviewSession } from "@canvas/host/review-session";
-import { testReviewSession } from "@canvas/test/review-session-test-utils";
-import {
-  type JsonObject,
-  isJsonObject,
-  parseJsonText,
-} from "@dev.fast/review-protocol";
 import { StrictMode, act } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  type Mock,
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ReviewDocumentBoundary } from "./review-document-boundary";
-
-let request: Mock<(url: string, init?: RequestInit) => Promise<Response>>;
-
-let session: ReviewSession;
 
 const roots: Array<ReturnType<typeof createRoot>> = [];
 
 describe("ReviewDocumentBoundary", () => {
   beforeEach(() => {
-    request = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(
-      async () => jsonResponse({ ok: true }),
-    );
-    session = testReviewSession({}, { request });
     vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
 
@@ -58,7 +35,6 @@ describe("ReviewDocumentBoundary", () => {
             key="bad-1"
             revision="bad-1"
             onError={onError}
-            session={session}
           >
             <ThrowingDocument />
           </ReviewDocumentBoundary>
@@ -74,19 +50,6 @@ describe("ReviewDocumentBoundary", () => {
     );
     expect(onError).toHaveBeenCalledWith("bad-1", expect.any(TypeError));
     expect(onError).toHaveBeenCalledTimes(1);
-    expect(clientErrorReports()).toEqual([
-      expect.objectContaining({
-        name: "client_error",
-        properties: expect.objectContaining({
-          error_source: "render",
-          error_name: "TypeError",
-        }),
-        error: expect.objectContaining({
-          name: "TypeError",
-          message: "sequence actor exploded",
-        }),
-      }),
-    ]);
 
     await act(async () => {
       root.render(
@@ -96,7 +59,6 @@ describe("ReviewDocumentBoundary", () => {
             key="good-2"
             revision="good-2"
             onError={onError}
-            session={session}
           >
             <h1>Recovered document</h1>
           </ReviewDocumentBoundary>
@@ -113,24 +75,4 @@ describe("ReviewDocumentBoundary", () => {
 
 function ThrowingDocument(): never {
   throw new TypeError("sequence actor exploded");
-}
-
-function clientErrorReports(): JsonObject[] {
-  return request.mock.calls
-    .filter(([url]) => url.includes("/telemetry/event"))
-    .map(([, init]) => {
-      const body = parseJsonText(String(init?.body));
-
-      if (!isJsonObject(body)) {
-        throw new Error("Telemetry event body is not an object");
-      }
-
-      return body;
-    });
-}
-
-function jsonResponse(body: JsonObject): Response {
-  return new Response(JSON.stringify(body), {
-    headers: { "content-type": "application/json" },
-  });
 }

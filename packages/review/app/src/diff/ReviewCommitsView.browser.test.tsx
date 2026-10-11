@@ -125,5 +125,5 @@ it("opens a commit's diff at the file clicked in its file list", async () => {
 
   await act(async () => fileButton.click());
 
-  expect(onOpenDiff).toHaveBeenCalledWith(commit, "file", file.path);
+  expect(onOpenDiff).toHaveBeenCalledWith(commit, file.path);
 });

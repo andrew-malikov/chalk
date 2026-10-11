@@ -283,8 +283,8 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
 
   const copy = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
   const apiUrl = session.apiUrl;
-  session.apiUrl = (endpoint, options) => {
-    const url = new URL(apiUrl(endpoint, options));
+  session.apiUrl = (endpoint) => {
+    const url = new URL(apiUrl(endpoint));
     url.searchParams.set("version", "7");
 
     return url.href;

@@ -8,7 +8,6 @@ import { fileURLToPath } from "node:url";
 
 import { openLocalReviewStore } from "@review/review-api/local-data.js";
 import { reviewServerDiscoveryPath } from "@review/server/server-discovery.js";
-import { ReviewTelemetry } from "@review/telemetry/review-telemetry.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createGlobalReviewServer } from "./desktop-server.js";
@@ -25,7 +24,6 @@ const stops: (() => Promise<void>)[] = [];
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), "review-server-core-"));
   vi.stubEnv("DEV_REVIEW_HOME", root);
-  vi.stubEnv("DEV_FAST_REVIEW_TELEMETRY_DISABLED", "1");
 });
 
 afterEach(async () => {
@@ -51,7 +49,6 @@ const servers = {
       toolingRoot: root,
       port: 0,
       discoveryPath: path.join(root, "desktop-server.json"),
-      telemetry: ReviewTelemetry.fromEnv(process.env),
     });
 
     stops.push(async () => {
@@ -133,6 +130,36 @@ describe.each(["desktop", "headless"] as const)("the %s server", (kind) => {
 
     for (const route of ["/nothing-here", "/reviews-api/nothing/here/at/all"]) {
       const response = await fetch(`${server.url}${route}`, { headers });
+
+      expect({
+        route,
+        status: response.status,
+        body: await response.json(),
+      }).toEqual({
+        route,
+        status: 404,
+        body: { ok: false, error: "Not found." },
+      });
+    }
+  });
+
+  it("does not accept analytics events or automatic crash reports", async () => {
+    const server = await start();
+
+    for (const route of [
+      "/telemetry/event",
+      "/crash-reports",
+      "/reviews-api/00000000-0000-4000-8000-000000000001/telemetry/event",
+      "/reviews-api/00000000-0000-4000-8000-000000000001/telemetry/tab",
+    ]) {
+      const response = await fetch(`${server.url}${route}`, {
+        method: "POST",
+        headers: {
+          "x-review-token": server.token,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ name: "app_ready", properties: {} }),
+      });
 
       expect({
         route,
@@ -416,7 +443,6 @@ function spawnSource(
     env: {
       ...process.env,
       ...env,
-      DEV_FAST_REVIEW_TELEMETRY_DISABLED: "1",
       DEV_FAST_REVIEW_CLI_NO_DELEGATE: "1",
     },
     stdio: ["ignore", "pipe", "pipe"],

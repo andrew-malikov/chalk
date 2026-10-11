@@ -6,14 +6,12 @@ import { pathToFileURL } from "node:url";
 
 import { jsonString } from "@dev.fast/json";
 import {
-  type JsonObject,
   type JsonValue,
   REVIEW_DESKTOP_DISCOVERY_VERSION,
   type ReviewCliInstallApplyResponse,
   type ReviewDesktopDiscovery,
   type ReviewTutorialOpenResponse,
   isJsonObject,
-  isObjectValue,
   parseReviewCliInstallApplyRequest,
   reviewDiffrSummarizerInputSchema,
 } from "@dev.fast/review-protocol";
@@ -42,13 +40,8 @@ import {
   readScratchpadEnabled,
   writeScratchpadEnabled,
 } from "@review/storage/review-preferences";
-import {
-  ReviewTelemetry,
-  type ReviewTelemetryContext,
-} from "@review/telemetry/review-telemetry";
 import { z } from "zod";
 
-import { CrashReportRequestSchema, reportCrashDump } from "./crash-report";
 import {
   readDiffrConfig,
   saveDiffrSummarizer,
@@ -62,9 +55,6 @@ import {
 } from "./global-verb-relay";
 import { readBoundedRequestJson } from "./hono-http";
 import { ReviewServerError } from "./http-json";
-import { createJsonReviewReporting } from "./json-review-reporting";
-import { reviewLifecycleTelemetry } from "./review-lifecycle-telemetry";
-import { ReviewOpenWatchdog } from "./review-open-watchdog";
 import {
   createReviewServerApp,
   relayReviewCallbacks,
@@ -72,12 +62,8 @@ import {
 } from "./review-server-core";
 import { invalidateStructuralComparisons } from "./structural-comparisons.js";
 import { createTutorialService } from "./tutorial-service";
-import { captureSanitizedUiTelemetry } from "./ui-telemetry";
 
 const TUTORIAL_LIFECYCLE_LOCK_KEY = "tutorial-lifecycle";
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface GlobalReviewServerInput {
   /** The desktop host owns this shared database and closes it after the server. */
@@ -92,10 +78,7 @@ export interface GlobalReviewServerInput {
   instanceId?: string;
   identity?: ReviewInstanceIdentity;
   discoveryPath?: string;
-  telemetry?: ReviewTelemetry;
   relay?: ReviewDesktopVerbRelay;
-  /** Electron's Review crash dump directory; `/crash-reports` reads only inside it. */
-  crashDumpsDir?: string;
 }
 
 export interface GlobalReviewServer {
@@ -124,8 +107,6 @@ export function createGlobalReviewServer(
       ? [reviewInstanceDiscoveryPath("stable"), reviewLegacyDiscoveryPath()]
       : [reviewInstanceDiscoveryPath(identity.key)];
 
-  const telemetry = input.telemetry ?? ReviewTelemetry.fromEnv();
-
   // Each window attaches its own stream; one at a time keeps a verb from
   // opening in every window, and the next takes over when it goes.
   const relay =
@@ -134,19 +115,6 @@ export function createGlobalReviewServer(
   const reviewStore = input.reviewStore;
 
   const reviewLocks = new Map<string, Promise<void>>();
-
-  // A reload or a second window starts the workbench again, but the launch
-  // this server belongs to became ready once.
-  let appReadyReported = false;
-
-  const openWatchdog = new ReviewOpenWatchdog({
-    onTimeout: (context, elapsedMs) =>
-      void telemetry.captureEvent(
-        "review_open_timeout",
-        { elapsed_ms: elapsedMs },
-        context,
-      ),
-  });
 
   const tutorial = createTutorialService({
     packageRoot: input.packageRoot,
@@ -195,11 +163,6 @@ export function createGlobalReviewServer(
 
   app.route(
     "/reviews-api",
-    createJsonReviewReporting(input.reviewStore, telemetry),
-  );
-
-  app.route(
-    "/reviews-api",
     createReviewApi(
       input.reviewStore,
       input.reviewData,
@@ -221,7 +184,6 @@ export function createGlobalReviewServer(
           home: devReviewHome(),
         };
       },
-      reviewLifecycleTelemetry(telemetry),
     ),
   );
   app.get("/preferences/scratchpad", () =>
@@ -250,85 +212,6 @@ export function createGlobalReviewServer(
     });
 
     return serverJson(result.ok ? 200 : 409, result);
-  });
-  app.post("/telemetry/event", async (context) => {
-    try {
-      const body = await readBoundedRequestJson(context.req.raw, undefined, {});
-      const payload: JsonObject = isJsonObject(body) ? body : {};
-      let flushBeforeOptOut = false;
-
-      if (payload.name === "app_ready") {
-        if (appReadyReported) return serverJson(200, { ok: true });
-
-        appReadyReported = true;
-      }
-
-      // The workbench has no reader on the stored review; the server does, so
-      // `session_started`'s source_kind is filled in here rather than trusted
-      // from the client.
-      const eventProperties: JsonObject = isJsonObject(payload.properties)
-        ? { ...payload.properties }
-        : {};
-
-      if (payload.name === "session_started") {
-        // Both are server-derived only: a client can never assert its own
-        // source_kind or agent_kind, so a review the store cannot resolve
-        // must not fall back to whatever the client sent.
-        delete eventProperties.source_kind;
-        delete eventProperties.agent_kind;
-
-        const rawContext = isJsonObject(payload.context) ? payload.context : {};
-
-        const sourceKind = sessionStartedSourceKind(
-          reviewStore,
-          jsonString(rawContext.reviewUuid),
-        );
-
-        if (sourceKind) eventProperties.source_kind = sourceKind;
-      }
-
-      await captureSanitizedUiTelemetry(
-        telemetry,
-        context.req.raw,
-        payload.name,
-        eventProperties,
-        (event, eventContext) => {
-          flushBeforeOptOut =
-            event.event === "review_setting_changed" &&
-            event.properties.setting === "telemetry_enabled" &&
-            event.properties.enabled === false;
-          watchSessionOpen(openWatchdog, event.event, eventContext);
-        },
-        payload.error,
-        payload.context,
-        payload.occurredAt,
-      );
-
-      if (flushBeforeOptOut) await telemetry.flush(500);
-    } catch (error) {
-      console.error(error);
-    }
-
-    return serverJson(200, { ok: true });
-  });
-  app.post("/crash-reports", async (context) => {
-    const body = CrashReportRequestSchema.safeParse(
-      await readBoundedRequestJson(context.req.raw),
-    );
-
-    if (!body.success)
-      throw new ReviewServerError(
-        "dump_path, crashed_at and covered are required.",
-        400,
-      );
-
-    const result = await reportCrashDump(
-      telemetry,
-      body.data,
-      input.crashDumpsDir,
-    );
-
-    return serverJson(result.status, result.body);
   });
   app.get("/tutorial/status", async () =>
     serverJson(200, await tutorial.status()),
@@ -556,53 +439,10 @@ export function createGlobalReviewServer(
       for (const discoveryPath of discoveryPaths)
         await removeMatchingDiscovery(discoveryPath, discovery);
       relay.close();
-      openWatchdog.dispose();
 
       await httpServer?.stop(true);
-      await telemetry.shutdown(1_500);
     },
   };
-}
-
-function watchSessionOpen(
-  watchdog: ReviewOpenWatchdog,
-  event: string,
-  context: ReviewTelemetryContext | undefined,
-): void {
-  const reviewUuid = context?.reviewUuid;
-  const presentationSessionId = context?.presentationSessionId;
-
-  if (!reviewUuid || !presentationSessionId) return;
-
-  if (event === "review_session_started")
-    watchdog.started({ reviewUuid, presentationSessionId });
-  else if (
-    event === "review_review_presented" ||
-    event === "review_session_ended"
-  )
-    watchdog.presented(presentationSessionId);
-}
-
-/**
- * `session_started`'s `source_kind`: the opened review's target kind, or
- * `scratchpad` for the one scratchpad. Undefined when the review is gone (a
- * review deleted between open and the event arriving) or was left without a target.
- */
-export function sessionStartedSourceKind(
-  reviewStore: ReviewStore,
-  reviewUuid: string | undefined,
-): string | undefined {
-  if (!reviewUuid) return undefined;
-
-  try {
-    const snapshot = reviewStore.read(reviewUuid);
-
-    return snapshot.kind === "scratchpad"
-      ? snapshot.kind
-      : snapshot.target?.kind;
-  } catch {
-    return undefined;
-  }
 }
 
 async function removeMatchingDiscovery(

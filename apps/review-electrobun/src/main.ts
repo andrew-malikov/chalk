@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import path from "node:path";
 
@@ -30,8 +30,6 @@ const key = `dev-electrobun-${createHash("sha256")
   .update(checkout ?? "")
   .digest("hex")
   .slice(0, 12)}`;
-
-const appSessionId = randomUUID();
 
 const abort = new AbortController();
 
@@ -216,7 +214,6 @@ async function run() {
     runtimePath: process.env.REVIEW_ELECTROBUN_BUN,
     entry: process.env.DEV_FAST_REVIEW_SERVER_ENTRY,
     signal: abort.signal,
-    appSessionId,
     onState: setState,
   });
 
@@ -226,7 +223,6 @@ async function run() {
       status: "ready",
       discovery: host.discovery,
       preferences: preferences!.get(),
-      appSessionId,
     });
     console.log(`Review server: ${host.discovery.url}`);
   } catch (error) {

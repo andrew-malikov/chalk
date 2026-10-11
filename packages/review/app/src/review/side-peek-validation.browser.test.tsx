@@ -74,11 +74,7 @@ describe("side-peek validation boundary", () => {
           <ReviewDebugSettingsProvider>
             <ReviewProvider>
               <ReviewPanelProvider>
-                <ReviewDocumentBoundary
-                  revision="valid"
-                  onError={() => {}}
-                  session={session}
-                >
+                <ReviewDocumentBoundary revision="valid" onError={() => {}}>
                   <AnchorLink anchor={anchors.startup}>Startup</AnchorLink>
                 </ReviewDocumentBoundary>
                 <div

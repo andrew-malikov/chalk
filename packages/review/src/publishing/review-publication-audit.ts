@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
+import { span, startSpan } from "@review/diagnostics/startup-trace";
 import {
   type CallStackDiffProps,
   type CodePeekProps,
@@ -45,7 +46,6 @@ import {
   softwareModelData,
   softwareModelDataSchema,
 } from "@review/software-map/software-map-model";
-import { span, startSpan } from "@review/telemetry/startup-trace";
 
 import {
   type ReviewDocumentPublishAudit,

@@ -309,7 +309,6 @@ export interface ReviewTooltipOptions {
 }
 
 export interface ReviewCanvasBridge {
-  readonly appSessionId?: string;
   readonly config: ReviewRuntimeConfig;
   /** Legacy native host hook; React peeks use Pierre directly. */
   readonly inlineEditors?: ReviewInlineEditorFactory;
@@ -515,10 +514,6 @@ export interface ReviewDiffrConfigActions {
 }
 
 export interface ReviewCanvasSettingsContent {
-  // Backed by the `review.telemetry.enabled` workbench setting, which the
-  // review server and the CLI both read.
-  telemetryEnabled: boolean;
-  setTelemetryEnabled(enabled: boolean): Promise<boolean>;
   theme: ReviewThemeChoice;
   setTheme(choice: ReviewThemeChoice): Promise<ReviewThemeChoice>;
   keymap: ReviewKeymapChoice;

@@ -1,5 +1,4 @@
 import { useReviewSession } from "@canvas/host/review-session";
-import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import {
   type ReactNode,
   createContext,
@@ -62,9 +61,8 @@ export function ReviewProvider({
 
   const dismissReview = useCallback(async () => {
     await review.dismiss();
-    captureUiEvent(session, "review_dismissed", { via: "review_topbar" });
     setSubmissionOutcome("dismissed");
-  }, [review, session]);
+  }, [review]);
 
   const actions = useMemo<ReviewActionsValue>(
     () => ({

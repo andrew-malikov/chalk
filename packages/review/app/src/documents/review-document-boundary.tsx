@@ -1,5 +1,3 @@
-import type { ReviewSession } from "@canvas/host/review-session";
-import { captureClientError } from "@canvas/telemetry/ui-telemetry";
 import { EmptyState } from "@canvas/ui/empty-state";
 import * as stylex from "@stylexjs/stylex";
 import { Component, type ErrorInfo, type ReactNode } from "react";
@@ -7,7 +5,6 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { documentStyles } from "./document-styles";
 
 interface ReviewDocumentBoundaryProps {
-  session: ReviewSession;
   revision: string;
   onError: (revision: string, error: Error) => void;
   children: ReactNode;
@@ -48,7 +45,6 @@ export class ReviewDocumentBoundary extends Component<
   componentDidCatch(error: Error, _info: ErrorInfo): void {
     if (this.reportedRevision === this.props.revision) return;
     this.reportedRevision = this.props.revision;
-    captureClientError(this.props.session, "render", error);
     this.props.onError(this.props.revision, error);
   }
 

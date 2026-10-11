@@ -34,7 +34,7 @@ describe("review host client", () => {
 
     await reviewFetchUrl(
       injectedConfig,
-      jsonReviewApiUrl(injectedConfig, "review", "/telemetry/event"),
+      jsonReviewApiUrl(injectedConfig, "review", "/diff"),
     );
 
     expect(new Headers(requestInit?.headers).get("x-review-token")).toBe(
@@ -43,7 +43,7 @@ describe("review host client", () => {
   });
 });
 
-it("routes versioned diffs and authenticated beacons without legacy document parameters", () => {
+it("routes versioned diffs without legacy document parameters", () => {
   const diff = new URL(
     jsonReviewApiUrl(injectedConfig, "review/id", "/diff", {
       version: 0,
@@ -52,21 +52,4 @@ it("routes versioned diffs and authenticated beacons without legacy document par
 
   expect(diff.pathname).toBe("/reviews-api/review%2Fid/diff");
   expect([...diff.searchParams]).toEqual([["version", "0"]]);
-
-  const beacon = new URL(
-    jsonReviewApiUrl(
-      {
-        ...injectedConfig,
-        serverUrl: "http://localhost:5570/",
-        token: "a+b&c",
-      },
-      "review",
-      "/telemetry/tab",
-      { tokenInQuery: true },
-    ),
-  );
-
-  expect(beacon.pathname).toBe("/reviews-api/review/telemetry/tab");
-  expect(beacon.searchParams.get("token")).toBe("a+b&c");
-  expect(beacon.searchParams.has("document")).toBe(false);
 });

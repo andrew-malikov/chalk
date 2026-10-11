@@ -16,7 +16,6 @@ import {
 } from "@review/review-api/agent-selection.js";
 import { readBoundedRequestJson } from "@review/server/hono-http.js";
 import { HttpJsonError } from "@review/server/http-json.js";
-import type { ReviewSessionAgent } from "@review/telemetry/ui-telemetry-events.js";
 import { resolveReviewStackLayers } from "@review/vcs/review-stack.js";
 import { type Context, Hono, type MiddlewareHandler } from "hono";
 import { z } from "zod";
@@ -35,10 +34,6 @@ import {
   queryAnchor,
   readQuerySchemas,
 } from "./read-schemas.js";
-import {
-  type ReviewRequestVia,
-  reviewRequestOrigin,
-} from "./request-origin.js";
 import {
   type UncategorizedReport,
   coverageModeSchema,
@@ -65,20 +60,6 @@ export interface AuthoringCapabilities {
 const SCRATCHPAD_DISABLED =
   "The scratchpad is off. Turn it on in Blackboard Desktop Settings.";
 
-/**
- * What the host reports about reviews, for telemetry. `onReviewCreated` fires
- * again for a replayed create command; consumers dedupe by review id.
- */
-export interface ReviewApiHooks {
-  onReviewCreated?: (event: {
-    reviewId: string;
-    kind: "review" | "scratchpad";
-    blocks: number;
-    via: ReviewRequestVia;
-    agentKind?: ReviewSessionAgent;
-  }) => void;
-}
-
 /** A gateway forwarding from another machine; it gets no local paths. */
 const remoteCaller = (context: Context) =>
   context.req.header(REVIEW_CLIENT_HEADER) === REVIEW_CLIENT_REMOTE;
@@ -102,7 +83,6 @@ export function createReviewApi(
   scratchpadEnabled: () => boolean = () => false,
   /** Which server this is, for blackboard_status. */
   status: () => JsonObject = () => ({}),
-  hooks: ReviewApiHooks = {},
 ) {
   const app = new Hono();
   app.onError((error, context) => {
@@ -1220,16 +1200,6 @@ export function createReviewApi(
     }
 
     if (input.operation.type !== "create") return context.json(result);
-
-    // False when an existing review for the same PR came back. A replayed
-    // command returns its first receipt, so this can repeat for one review.
-    if (result.created !== false)
-      hooks.onReviewCreated?.({
-        reviewId: result.reviewId,
-        kind: input.operation.kind === "scratchpad" ? "scratchpad" : "review",
-        blocks: store.read(result.reviewId).document.length,
-        ...reviewRequestOrigin(context.req.raw.headers),
-      });
 
     return context.json({
       ...result,

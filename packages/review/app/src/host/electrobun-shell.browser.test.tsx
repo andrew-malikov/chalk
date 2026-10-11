@@ -190,7 +190,6 @@ async function setup(
       startedAt: 1,
     },
     preferences,
-    appSessionId: "test",
   };
 
   vi.stubGlobal("fetch", async (input: string | URL, init?: RequestInit) => {

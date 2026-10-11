@@ -1,7 +1,6 @@
 import {
   type JsonValue,
   isJsonObject,
-  jsonBoolean,
   jsonProperty,
   jsonString,
 } from "@dev.fast/review-protocol";
@@ -20,7 +19,6 @@ interface DesktopHostProcess {
 export function listenForDesktopHostShutdown(
   hostProcess: DesktopHostProcess,
   onShutdown: () => void,
-  onTelemetrySetting?: (enabled: boolean) => void,
   onStageRustAnalyzer?: (path: string) => void,
 ): () => void {
   const handleMessage = (message: JsonValue) => {
@@ -29,14 +27,6 @@ export function listenForDesktopHostShutdown(
 
     if (type === "shutdown") {
       onShutdown();
-
-      return;
-    }
-
-    if (type === "telemetry-setting") {
-      const enabled = jsonBoolean(jsonProperty(message, "enabled"));
-
-      if (enabled !== undefined) onTelemetrySetting?.(enabled);
 
       return;
     }

@@ -137,9 +137,8 @@ export function traceEvent(
   startSpan(name, options).end();
 }
 
-// Process-wide attributes (command path, command run id, review uuid) that
-// the harness uses to join this trace to telemetry and to the agent's tool
-// call.
+// Process-wide attributes that help the local profiling harness identify
+// the command and review this trace belongs to.
 export function setTraceAttribute(
   key: string,
   value: string | number | boolean,

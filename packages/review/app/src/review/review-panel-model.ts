@@ -27,7 +27,6 @@ export interface GuidedTour {
   id: string;
   title?: string;
   stops: GuidedTourStop[];
-  telemetryKind?: "sequence";
 }
 
 export interface PeekPanel {

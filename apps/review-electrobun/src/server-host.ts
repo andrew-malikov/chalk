@@ -26,7 +26,6 @@ export interface ServerOptions {
   startupTimeoutMs?: number;
   shutdownTimeoutMs?: number;
   signal?: AbortSignal;
-  appSessionId?: string;
   onState?(state: {
     status: "starting" | "error" | "disconnected";
     message: string;
@@ -134,10 +133,8 @@ export async function startServer(
       DEV_FAST_REVIEW_SERVER_TOKEN: token,
       DEV_FAST_REVIEW_INSTANCE_ID: instanceId,
       DEV_FAST_REVIEW_DESKTOP_HOST_AUTOSTART: "1",
-      DEV_FAST_REVIEW_TELEMETRY_DISABLED: "1",
       DEV_FAST_REVIEW_CLI_RUNTIME: options.runtimePath,
       DEV_FAST_REVIEW_RELEASE_CHANNEL: "dev",
-      DEV_FAST_REVIEW_APP_SESSION_ID: options.appSessionId ?? randomUUID(),
       DEV_FAST_REVIEW_APP_VERSION: "0.2.0",
     },
   });
