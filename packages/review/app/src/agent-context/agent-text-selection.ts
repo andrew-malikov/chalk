@@ -1,4 +1,4 @@
-import type { AgentSelection } from "@review/ask/agent-selection";
+import type { AgentSelection } from "@review/review-api/agent-selection";
 
 /** Authored document text participates; native code editors report their own selections. */
 export function observeAgentTextSelection(

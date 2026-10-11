@@ -11,12 +11,6 @@ const styles = create({
       backgroundColor: "var(--review-find-match-active-background)",
     },
   },
-  "ask-thread": {
-    "::highlight(ask-thread)": { backgroundColor: "var(--accent-wash)" },
-  },
-  "ask-thread-active": {
-    "::highlight(ask-thread-active)": { backgroundColor: "var(--marker-glow)" },
-  },
 });
 
 export function setCssHighlight(

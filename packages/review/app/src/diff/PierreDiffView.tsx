@@ -1,4 +1,4 @@
-import { useAgentSelection } from "@canvas/ask/agent-selection";
+import { useAgentSelection } from "@canvas/agent-context/agent-selection";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { NativeSelect } from "@canvas/components/ui/native-select";
 import { useGitLab } from "@canvas/gitlab/gitlab-context";

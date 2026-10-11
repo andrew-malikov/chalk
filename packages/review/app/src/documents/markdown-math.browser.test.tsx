@@ -2,7 +2,7 @@ import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { AgentMarkdown, MarkdownContent } from "./agent-markdown";
+import { MarkdownContent } from "./agent-markdown";
 
 let container: HTMLDivElement, root: Root;
 
@@ -97,15 +97,6 @@ describe("math in Markdown", () => {
 
     for (const selector of ["h1", "td", "li", "blockquote"])
       expect(container.querySelector(`${selector} .katex`)).not.toBeNull();
-  });
-
-  it("typesets math in agent messages", async () => {
-    await act(async () =>
-      root.render(<AgentMarkdown source={tex`The root is \(\sqrt{2}\).`} />),
-    );
-
-    expect(failures()).toEqual([]);
-    expect(equations()).toHaveLength(1);
   });
 
   it("typesets the new source when a message changes", async () => {

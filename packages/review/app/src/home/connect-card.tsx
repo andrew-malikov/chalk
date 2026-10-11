@@ -1,6 +1,6 @@
-import { AGENT_LOGOS } from "@canvas/ask/agent-logos";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { newTabLinkProps } from "@canvas/documents/link-props";
+import { AGENT_LOGOS } from "@canvas/home/agent-logos";
 import { cliInstallReady } from "@canvas/settings/cli-install-status";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { fontSize, radius } from "@canvas/styles/scale.stylex";

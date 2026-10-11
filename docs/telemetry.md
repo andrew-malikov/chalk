@@ -7,9 +7,9 @@ failing.
 This page is the complete public contract for Blackboard app and `blackboard`
 CLI telemetry.
 For a shorter overview of all product data, including local files, coding
-agents, and bug reports, see [Privacy](privacy.md).
+agents, and error reports, see [Privacy](privacy.md).
 
-Last checked against this repository: 2026-09-24.
+Last checked against this repository: 2026-10-11.
 
 ## The short version
 
@@ -26,8 +26,6 @@ Last checked against this repository: 2026-09-24.
 - Product errors may include a cleaned error message and stack frames from
   Blackboard's shipped program. Paths, web and email addresses, and recognizable secrets are removed
   on your machine before the event is accepted.
-- Sending a bug report is a separate, explicit action. You see and control its
-  attachments before anything is uploaded.
 
 Blackboard sends anonymous telemetry to PostHog. PostHog may derive a coarse
 location during ingestion; our project discards the source IP.
@@ -59,9 +57,6 @@ from the in-app setting, so setting that one variable in your shell does not
 turn off app telemetry. Use `DO_NOT_TRACK` or the setting instead.
 
 Tests also turn telemetry off with `VITEST=1` or `NODE_ENV=test`.
-
-An explicit bug report is still sent if you choose **Send** in the bug-report
-dialog. Bug reports do not pass through the passive telemetry system.
 
 ## What Blackboard collects
 
@@ -125,13 +120,6 @@ event to the queue. The CLI uses the same queue and transport.
 Blackboard app    ──┐
 Blackboard canvas ──┼─→ local allowlist ─→ disk queue ─→ PostHog
 blackboard CLI    ──┘
-```
-
-User-initiated bug reports take a separate path:
-
-```text
-Blackboard ─→ local server ─→ bug.dev.fast ─→ private Cloudflare R2
-                                      └─→ attachment-free PostHog metadata
 ```
 
 ## Inspect events during development
@@ -291,9 +279,6 @@ The server checks all properties in this table against
 | `review_update_started`           | Random `update_attempt_id`, `target_version`                                                                                                                                   | An update is downloaded and ready to install                                                               |
 | `review_update_completed`         | Start properties plus `duration_ms`                                                                                                                                            | The downloaded target launches after restart                                                               |
 | `review_update_failed`            | `phase` in check, download, install; `message_source` in electron, request, shipit, fallback; `error_name`; optional start properties and `duration_ms`; see "Error reports"   | An update check, download, or install fails                                                                |
-| `review_bug_report_dialog_opened` | None                                                                                                                                                                           | A user opens the bug report dialog                                                                         |
-| `review_bug_report_cancelled`     | None                                                                                                                                                                           | A user closes the dialog without a report                                                                  |
-| `review_bug_report_send_failed`   | Short `error_name`                                                                                                                                                             | A bug report request fails                                                                                 |
 | `review_setting_changed`          | `setting` in telemetry_enabled, keymap, software_map_enabled, scratchpad_enabled, diffr_config, structural_diff, theme, ctrl_tab, ready_notification, document_width; `enabled`; `value` in dark, light, system (theme only) | A user changes a Blackboard setting                                                                        |
 | `review_review_opened`            | `via` in home, other                                                                                                                                                           | A user opens a blackboard                                                                                  |
 | `review_diff_layout_changed`      | `layout` in split, unified                                                                                                                                                     | A user switches the diff layout                                                                            |
@@ -424,74 +409,6 @@ event already counted is reported as `review_crash` with `source: "minidump"`.
 Dumps older than seven days, or any dump with telemetry off, are deleted
 without upload. Uploaded dumps are kept for 30 days, and the Worker records a
 `review_crash_uploaded` event without the dump.
-
-## User-initiated bug reports
-
-The **Report a bug** dialog sends data only after the user selects **Send**. The
-description is optional. Under **Include diagnostic attachments**, two
-independent controls choose what else is attached:
-
-- **Session**: the current blackboard record and its software maps. On by
-  default.
-- **Changed-file diffs used by CodePeeks**. On by default.
-
-Blackboard also captures a screenshot before the dialog opens and attaches it
-by default. The dialog shows a removable preview and accepts a replacement
-image by paste or drag.
-
-A blackboard does not always have a software map. The report then omits the
-map and records no error, because an absent map is a normal state.
-
-The report payload contains these fields:
-
-| Field                            | Value                                                                         |
-| -------------------------------- | ----------------------------------------------------------------------------- |
-| `schema_version`                 | Internal report payload format version                                        |
-| `description`                    | Optional user-entered description, limited to 64 KiB of UTF-8 data            |
-| `screenshot.mime`                | `image/jpeg` when a screenshot is attached                                    |
-| `screenshot.base64`              | JPEG screenshot data, limited to 3 MiB decoded                                |
-| `review["review.json"]`          | The saved blackboard record, when the user consents                           |
-| `map`                            | The software maps the blackboard shows, when the user consents and one exists |
-| `diff.baseRef`                   | Base revision for the changed-file diffs, when one is available               |
-| `diff.headRef`                   | Head revision for the changed-file diffs, when one is available               |
-| `diff.files[].path`              | Current changed-file path                                                     |
-| `diff.files[].previousPath`      | Previous path for a renamed file, when one is available                       |
-| `diff.files[].status`            | Changed-file status                                                           |
-| `diff.files[].additions`         | Added line count                                                              |
-| `diff.files[].deletions`         | Deleted line count                                                            |
-| `diff.files[].patch`             | Unified patch used to resolve the blackboard's exact CodePeek ranges          |
-| `diagnostics.app_version`        | Blackboard app version                                                        |
-| `diagnostics.cli_version`        | `@dev.fast/review` package version                                            |
-| `diagnostics.platform`           | Node platform enum                                                            |
-| `diagnostics.app_session_id`     | Random identifier for the canvas window                                       |
-| `diagnostics.client_error_names` | Last 20 sanitized JavaScript error class names from that canvas session       |
-| `diagnostics.attachment_errors`  | Selected attachment names with the value `unavailable`                        |
-
-The blackboard record is the whole saved version: its title and document text,
-its lenses, the commits it is pinned to, and where it came from, such as the
-branch, base ref, and pull request number and URL. It does not contain source
-code; the changed-file diffs are a separate attachment.
-
-If a selected attachment is unavailable, Blackboard omits it, names it in
-`diagnostics.attachment_errors`, and sends the rest. If the report would exceed
-the upload limit, Blackboard drops attachments in this order until it fits:
-the diffs, the maps, the screenshot, and the blackboard record. If it still
-does not fit, the report is not sent.
-
-The Worker stores reports in a private Cloudflare R2 bucket. Only credentialed
-dev.fast operators can read the bucket. Reports are deleted after 90 days.
-
-After storage completes, the Worker sends a `review_bug_report` PostHog event
-with the report ID, date, app version, platform, sizes, attachment presence, and
-truncation flags. The event does not contain the description or attachments.
-
-Cloudflare uses `CF-Connecting-IP` only as the rate-limit key. The Worker does
-not store that value in R2. The Worker does not send it to PostHog as report
-data. The limit is five report attempts per minute for each client IP.
-
-An explicit bug report submission overrides the passive telemetry opt-out.
-The local server sends this report even when Blackboard telemetry is off. The
-passive event allowlist and telemetry disk queue do not process bug reports.
 
 ## Code locations
 

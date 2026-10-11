@@ -1,3 +1,4 @@
+import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import {
   cp,
@@ -244,7 +245,7 @@ it("starts with healthy reviews when a published review's repository is unavaila
   }
 });
 
-it("skips an unsupported trace review beside healthy reviews and saved Ask history", async () => {
+it("skips an unsupported trace review beside healthy reviews and retired conversation data", async () => {
   const repo = await scratchGitRepo();
 
   const healthy = await syntheticLegacyReview(
@@ -283,30 +284,40 @@ it("skips an unsupported trace review beside healthy reviews and saved Ask histo
   const { reviewId, snapshot } = await seed(healthy.home);
   const local = openLocalReviewStore(path.join(healthy.home, "review-api.db"));
 
-  const record = {
-    id: "thread",
-    reviewId,
-    agent: "claude" as const,
-    sessionId: "ask-session",
-    version: 0,
-    head: snapshot.pins!.head,
-    cwd: repo.root,
-    title: "A question",
-    selection: {
-      title: "Paragraph",
-      target: { kind: "text" as const, quote: "Healthy" },
-    },
-    createdAt: "2026-09-01T10:00:00.000Z",
-    updatedAt: "2026-09-01T10:00:00.000Z",
-  };
-
-  const entries = [
-    { kind: "user" as const, id: "q", text: "Why?", at: 1 },
-    { kind: "agent" as const, id: "a", text: "Because." },
-  ];
-
-  local.store.askHistory.save(record);
-  local.store.askHistory.saveEntries("thread", entries);
+  const database = path.join(healthy.home, "review-api.db");
+  const legacy = new Database(database);
+  // A profile written by the retired Ask feature must keep its saved data.
+  legacy.exec(`CREATE TABLE ask_conversations(
+    id TEXT PRIMARY KEY, review_id TEXT NOT NULL, agent TEXT NOT NULL,
+    session_id TEXT NOT NULL, version INTEGER NOT NULL, head TEXT NOT NULL,
+    cwd TEXT NOT NULL, selection TEXT NOT NULL, title TEXT NOT NULL,
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL, entries TEXT,
+    bypass INTEGER NOT NULL DEFAULT 0, UNIQUE(agent, session_id))`);
+  legacy
+    .query("INSERT INTO ask_conversations VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+    .run(
+      "thread",
+      reviewId,
+      "claude",
+      "ask-session",
+      0,
+      snapshot.pins!.head,
+      repo.root,
+      JSON.stringify({
+        title: "Paragraph",
+        target: { kind: "text", quote: "Healthy" },
+      }),
+      "A question",
+      "2026-09-01T10:00:00.000Z",
+      "2026-09-01T10:00:00.000Z",
+      JSON.stringify([
+        { kind: "user", id: "q", text: "Why?", at: 1 },
+        { kind: "agent", id: "a", text: "Because." },
+      ]),
+      0,
+    );
+  const saved = legacy.query("SELECT * FROM ask_conversations").get();
+  legacy.close();
   await local.data.close();
   await local.store.close();
   const report = await migrateJsonReviews({ home: healthy.home });
@@ -328,11 +339,16 @@ it("skips an unsupported trace review beside healthy reviews and saved Ask histo
       reopened.store.read(healthy.record.uuid).document.length,
     ).toBeGreaterThan(0);
     expect(reopened.store.has(retired.record.uuid)).toBe(false);
-    expect(reopened.store.askHistory.get("thread")).toEqual({
-      ...record,
-      entries,
-      bypass: false,
-    });
+    const preserved = new Database(database, { readonly: true });
+
+    try {
+      expect(preserved.query("SELECT * FROM ask_conversations").get()).toEqual(
+        saved,
+      );
+    } finally {
+      preserved.close();
+    }
+
     expect(await readFile(path.join(copied, "review.json"))).toEqual(original);
   } finally {
     await reopened.data.close();

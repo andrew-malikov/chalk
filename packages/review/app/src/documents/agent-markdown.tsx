@@ -1,14 +1,8 @@
 import { drawStyles } from "@canvas/drawing/draw-styles";
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { isNumberValue, isStringValue } from "@dev.fast/review-protocol";
 import { type MarkdownNode, parseMarkdown } from "@review/documents/markdown";
 import * as stylex from "@stylexjs/stylex";
-// Deliberately separate from the MDX document pipeline: this renderer walks the
-// mdast of untrusted agent messages and never
-// evaluates them, whereas MDX compilation produces executable code and must
-// only ever see trusted authored review documents.
 import {
   type ComponentType,
   Fragment,
@@ -30,15 +24,6 @@ type LinkRenderer = (href: string, children: ReactNode) => ReactNode;
 
 const DocumentLink = createContext<LinkRenderer | undefined>(undefined);
 
-/** Renders inline code another way, given the code element it would be
- * (with more style, if asked), or leaves it as that element with undefined. */
-type CodeRenderer = (
-  value: string,
-  code: (xstyle?: stylex.StyleXStyles) => ReactElement,
-) => ReactNode;
-
-const InlineCodeRenderer = createContext<CodeRenderer | undefined>(undefined);
-
 /** Whether a remote image may be fetched and shown where it was authored. */
 const RemoteImages = createContext(false);
 
@@ -47,49 +32,7 @@ const TaskToggle = createContext<((item: MarkdownNode) => void) | undefined>(
   undefined,
 );
 
-/** Where a node renders: a chat message (agent markdown) or a document. The
- * document styles hold only inside the review document. */
-interface RenderContext {
-  chat: boolean;
-
-  /** Restyles a chat message's inline code, as on a tray. */
-  codeXstyle?: stylex.StyleXStyles;
-}
-
-const documentContext: RenderContext = { chat: false };
-
-export function AgentMarkdown({
-  source,
-  xstyle,
-  codeXstyle,
-
-  renderLink,
-  renderInlineCode,
-}: {
-  source: string;
-  xstyle?: stylex.StyleXStyles;
-  /** Restyles inline code, as on a tray. */
-  codeXstyle?: stylex.StyleXStyles;
-
-  renderLink?: LinkRenderer;
-  renderInlineCode?: CodeRenderer;
-}): ReactElement {
-  const { body, footnotes } = splitFootnotes(parseMarkdown(source));
-  const context = { chat: true, codeXstyle };
-
-  return (
-    <DocumentLink.Provider value={renderLink}>
-      <InlineCodeRenderer.Provider value={renderInlineCode}>
-        <div {...stylex.props(chat.root, xstyle)}>
-          {renderMarkdownChildren(body, "root", context)}
-          {renderFootnotes(footnotes, "root", context)}
-        </div>
-      </InlineCodeRenderer.Provider>
-    </DocumentLink.Provider>
-  );
-}
-
-/** Reuse safe Markdown parsing in documents without the chat-message wrapper. */
+/** Safely render authored Markdown without evaluating embedded HTML. */
 export function MarkdownContent({
   source,
   h1: Heading,
@@ -133,11 +76,7 @@ export function MarkdownContent({
           {body.map((node, index) =>
             node.type === "heading" && node.depth === 1 && Heading ? (
               <Heading key={index}>
-                {renderMarkdownChildren(
-                  node.children ?? [],
-                  String(index),
-                  documentContext,
-                )}
+                {renderMarkdownChildren(node.children ?? [], String(index))}
               </Heading>
             ) : node.type === "heading" && headingId ? (
               createElement(
@@ -153,17 +92,13 @@ export function MarkdownContent({
                     drawStyles.blockChild,
                   ),
                 },
-                renderMarkdownChildren(
-                  node.children ?? [],
-                  String(index),
-                  documentContext,
-                ),
+                renderMarkdownChildren(node.children ?? [], String(index)),
               )
             ) : (
-              renderMarkdownNode(node, String(index), documentContext)
+              renderMarkdownNode(node, String(index))
             ),
           )}
-          {renderFootnotes(footnotes, "document", documentContext)}
+          {renderFootnotes(footnotes, "document")}
         </TaskToggle.Provider>
       </RemoteImages.Provider>
     </DocumentLink.Provider>
@@ -197,28 +132,25 @@ function splitFootnotes(tree: MarkdownNode) {
 function renderFootnotes(
   footnotes: MarkdownNode[],
   keyPrefix: string,
-  context: RenderContext,
 ): ReactNode {
   if (footnotes.length === 0) return null;
-  const inChat = context.chat;
 
   return (
     <section
       data-footnotes=""
-      {...withClass("footnotes", !inChat && drawStyles.blockChild)}
+      {...withClass("footnotes", drawStyles.blockChild)}
     >
-      <ol {...stylex.props(inChat && chat.block, inChat && chat.list)}>
+      <ol>
         {footnotes.map((definition, index) => (
           <li
             key={`${keyPrefix}:fn:${index}`}
             id={`fn-${definition.label ?? definition.identifier ?? index}`}
-            {...stylex.props(!inChat && doc.item)}
+            {...stylex.props(doc.item)}
           >
             {renderMarkdownChildren(
               definition.children ?? [],
               `${keyPrefix}:fn:${index}`,
-              context,
-              inChat ? chat.itemParagraph : doc.itemParagraph,
+              doc.itemParagraph,
             )}
           </li>
         ))}
@@ -236,65 +168,55 @@ export const markdownHasTitle = (source: string) =>
 function renderMarkdownChildren(
   children: MarkdownNode[],
   keyPrefix: string,
-  context: RenderContext,
   paragraph?: stylex.StyleXStyles,
 ): ReactNode {
   return children.map((child, index) =>
-    renderMarkdownNode(child, `${keyPrefix}:${index}`, context, paragraph),
+    renderMarkdownNode(child, `${keyPrefix}:${index}`, paragraph),
   );
 }
 
 function renderMarkdownNode(
   node: MarkdownNode,
   key: string,
-  context: RenderContext,
   paragraph?: stylex.StyleXStyles,
 ): ReactNode {
-  const { chat: inChat } = context;
-  const codeStyle = inChat ? [chat.code, context.codeXstyle] : doc.code;
-
   switch (node.type) {
     case "root":
       return (
         <Fragment key={key}>
-          {renderMarkdownChildren(node.children ?? [], key, context)}
+          {renderMarkdownChildren(node.children ?? [], key)}
         </Fragment>
       );
     case "paragraph":
       return (
         <p
           key={key}
-          {...stylex.props(
-            inChat ? chat.block : [doc.paragraph, drawStyles.blockChild],
-            paragraph,
-          )}
+          {...stylex.props([doc.paragraph, drawStyles.blockChild], paragraph)}
         >
-          {renderMarkdownChildren(node.children ?? [], key, context)}
+          {renderMarkdownChildren(node.children ?? [], key)}
         </p>
       );
     case "text":
       return node.value ?? "";
     case "emphasis":
       return (
-        <em key={key}>
-          {renderMarkdownChildren(node.children ?? [], key, context)}
-        </em>
+        <em key={key}>{renderMarkdownChildren(node.children ?? [], key)}</em>
       );
     case "strong":
       return (
         <strong key={key}>
-          {renderMarkdownChildren(node.children ?? [], key, context)}
+          {renderMarkdownChildren(node.children ?? [], key)}
         </strong>
       );
     case "delete":
       return (
-        <del key={key}>
-          {renderMarkdownChildren(node.children ?? [], key, context)}
-        </del>
+        <del key={key}>{renderMarkdownChildren(node.children ?? [], key)}</del>
       );
     case "inlineCode":
       return (
-        <InlineCode key={key} value={node.value ?? ""} xstyle={codeStyle} />
+        <code key={key} {...stylex.props(doc.code)}>
+          {node.value ?? ""}
+        </code>
       );
     case "code":
       return (
@@ -303,7 +225,6 @@ function renderMarkdownNode(
           className="markdown-code-block"
           code={node.value ?? ""}
           language={node.lang}
-          compact={inChat}
         />
       );
     case "math":
@@ -316,36 +237,23 @@ function renderMarkdownNode(
     case "break":
       return <br key={key} />;
     case "thematicBreak":
-      return (
-        <hr
-          key={key}
-          {...stylex.props(inChat ? chat.rule : drawStyles.blockChild)}
-        />
-      );
+      return <hr key={key} {...stylex.props(drawStyles.blockChild)} />;
     case "heading":
       return createElement(
         headingTag(node.depth),
         {
           key,
-          ...stylex.props(
-            inChat
-              ? [chat.block, chat.heading]
-              : [headingStyle(node.depth), drawStyles.blockChild],
-          ),
+          ...stylex.props([headingStyle(node.depth), drawStyles.blockChild]),
         },
-        renderMarkdownChildren(node.children ?? [], key, context),
+        renderMarkdownChildren(node.children ?? [], key),
       );
     case "blockquote":
       return (
         <blockquote
           key={key}
-          {...stylex.props(
-            inChat
-              ? [chat.block, chat.quote]
-              : [doc.serif, doc.column, drawStyles.blockChild],
-          )}
+          {...stylex.props([doc.serif, doc.column, drawStyles.blockChild])}
         >
-          {renderMarkdownChildren(node.children ?? [], key, context)}
+          {renderMarkdownChildren(node.children ?? [], key)}
         </blockquote>
       );
     case "list": {
@@ -356,49 +264,34 @@ function renderMarkdownNode(
         {
           key,
           start: node.ordered ? (node.start ?? undefined) : undefined,
-          ...stylex.props(
-            inChat
-              ? [chat.block, chat.list]
-              : [doc.column, drawStyles.blockChild],
-          ),
+          ...stylex.props([doc.column, drawStyles.blockChild]),
         },
-        renderMarkdownChildren(node.children ?? [], key, context),
+        renderMarkdownChildren(node.children ?? [], key),
       );
     }
 
     case "listItem":
       return node.checked === null || node.checked === undefined ? (
-        <li key={key} {...stylex.props(!inChat && doc.item)}>
-          {renderMarkdownChildren(
-            node.children ?? [],
-            key,
-            context,
-            inChat ? chat.itemParagraph : doc.itemParagraph,
-          )}
+        <li key={key} {...stylex.props(doc.item)}>
+          {renderMarkdownChildren(node.children ?? [], key, doc.itemParagraph)}
         </li>
       ) : (
-        <TaskItem key={key} node={node} chat={inChat}>
+        <TaskItem key={key} node={node}>
           {renderMarkdownChildren(
             node.children ?? [],
             key,
-            context,
             styles.taskParagraph,
           )}
         </TaskItem>
       );
     case "link": {
-      const children = renderMarkdownChildren(
-        node.children ?? [],
-        key,
-        context,
-      );
+      const children = renderMarkdownChildren(node.children ?? [], key);
 
       return (
         <MarkdownLink
           key={key}
           href={node.url ?? ""}
           title={node.title ?? undefined}
-          chat={inChat}
         >
           {children}
         </MarkdownLink>
@@ -410,13 +303,13 @@ function renderMarkdownNode(
         <MarkdownImage key={key} url={node.url ?? ""} alt={node.alt ?? ""} />
       );
     case "table":
-      return renderTable(node, key, inChat);
+      return renderTable(node, key);
     case "tableRow":
-      return renderTableRow(node, key, false, null, inChat);
+      return renderTableRow(node, key, false, null);
     case "tableCell":
       return (
-        <td key={key} {...stylex.props(inChat ? chat.cell : doc.cell)}>
-          {renderMarkdownChildren(node.children ?? [], key, { chat: inChat })}
+        <td key={key} {...stylex.props(doc.cell)}>
+          {renderMarkdownChildren(node.children ?? [], key)}
         </td>
       );
     case "footnoteReference": {
@@ -428,7 +321,7 @@ function renderMarkdownNode(
             data-footnote-ref=""
             href={`#fn-${label}`}
             id={`fnref-${label}`}
-            {...stylex.props(inChat ? chat.link : doc.link)}
+            {...stylex.props(doc.link)}
           >
             {label}
           </a>
@@ -442,7 +335,7 @@ function renderMarkdownNode(
       return node.value ?? "";
     default:
       return node.children
-        ? renderMarkdownChildren(node.children, key, { chat: inChat })
+        ? renderMarkdownChildren(node.children, key)
         : (node.value ?? null);
   }
 }
@@ -467,31 +360,20 @@ function headingTag(depth: number | undefined): "h1" | "h2" | "h3" | "h4" {
   return "h4";
 }
 
-function renderTable(
-  node: MarkdownNode,
-  key: string,
-  inChat: boolean,
-): ReactElement {
+function renderTable(node: MarkdownNode, key: string): ReactElement {
   const rows = node.children ?? [];
   const [header, ...body] = rows;
 
   const align = node.align ?? null;
 
   return (
-    <table
-      key={key}
-      {...stylex.props(
-        inChat ? [chat.block, chat.table] : [doc.table, drawStyles.blockChild],
-      )}
-    >
+    <table key={key} {...stylex.props([doc.table, drawStyles.blockChild])}>
       {header && (
-        <thead>
-          {renderTableRow(header, `${key}:head`, true, align, inChat)}
-        </thead>
+        <thead>{renderTableRow(header, `${key}:head`, true, align)}</thead>
       )}
       <tbody>
         {body.map((row, index) =>
-          renderTableRow(row, `${key}:body:${index}`, false, align, inChat),
+          renderTableRow(row, `${key}:body:${index}`, false, align),
         )}
       </tbody>
     </table>
@@ -503,7 +385,6 @@ function renderTableRow(
   key: string,
   isHeader: boolean,
   align: Array<string | null> | null,
-  inChat: boolean,
 ): ReactElement {
   const Cell = isHeader ? "th" : "td";
 
@@ -516,15 +397,10 @@ function renderTableRow(
           Cell,
           {
             key: `${key}:cell:${index}`,
-            ...stylex.props(
-              inChat ? chat.cell : doc.cell,
-              isHeader && (inChat ? chat.headerCell : doc.headerCell),
-            ),
+            ...stylex.props(doc.cell, isHeader && doc.headerCell),
             style: textAlign ? { textAlign } : undefined,
           },
-          renderMarkdownChildren(cell.children ?? [], `${key}:cell:${index}`, {
-            chat: inChat,
-          }),
+          renderMarkdownChildren(cell.children ?? [], `${key}:cell:${index}`),
         );
       })}
     </tr>
@@ -546,17 +422,15 @@ function cellAlignment(
 
 function TaskItem({
   node,
-  chat: inChat,
   children,
 }: {
   node: MarkdownNode;
-  chat: boolean;
   children: ReactNode;
 }) {
   const toggle = useContext(TaskToggle);
 
   return (
-    <li {...stylex.props(!inChat && doc.item, styles.task)}>
+    <li {...stylex.props(doc.item, styles.task)}>
       <input
         type="checkbox"
         checked={node.checked === true}
@@ -577,36 +451,18 @@ function MarkdownImage({ url, alt }: { url: string; alt: string }): ReactNode {
       <img src={url} alt={alt} loading="lazy" {...stylex.props(doc.image)} />
     );
 
-  // Chat has no store to resolve an image against, so its alt text stands in.
+  // Images that cannot be safely loaded display their alt text.
   return alt ? <em>{alt}</em> : null;
-}
-
-function InlineCode({
-  value,
-  xstyle,
-}: {
-  value: string;
-  xstyle: stylex.StyleXStyles;
-}): ReactElement {
-  const code = (more?: stylex.StyleXStyles) => (
-    <code {...stylex.props(xstyle, more)}>{value}</code>
-  );
-
-  const custom = useContext(InlineCodeRenderer)?.(value, code);
-
-  return custom === undefined ? code() : <>{custom}</>;
 }
 
 function MarkdownLink({
   href,
   children,
   title,
-  chat: inChat,
 }: {
   href: string;
   children: ReactNode;
   title?: string;
-  chat: boolean;
 }): ReactElement {
   const renderLink = useContext(DocumentLink);
   const custom = renderLink?.(href, children);
@@ -615,12 +471,7 @@ function MarkdownLink({
 
   if (isLocalFilesystemHref(href))
     return (
-      <code
-        {...withClass(
-          "agent-markdown-code-reference",
-          inChat ? chat.code : doc.code,
-        )}
-      >
+      <code {...withClass("agent-markdown-code-reference", doc.code)}>
         {textFromChildren(children) ?? "local file"}
       </code>
     );
@@ -629,12 +480,7 @@ function MarkdownLink({
   const linkProps = newTabLinkProps(href);
 
   return (
-    <a
-      href={href}
-      title={title}
-      {...linkProps}
-      {...stylex.props(inChat ? chat.link : doc.link)}
-    >
+    <a href={href} title={title} {...linkProps} {...stylex.props(doc.link)}>
       {children}
     </a>
   );
@@ -694,82 +540,6 @@ function textFromChildren(children: ReactNode): string | null {
 
   return null;
 }
-
-// Agent chat messages: compact blocks at the message's own size.
-const chat = stylex.create({
-  root: {
-    minWidth: 0,
-    overflowWrap: "anywhere",
-  },
-  block: {
-    margin: 0,
-  },
-  heading: {
-    color: tokens.ink,
-    fontSize: fontSize.ui,
-    fontWeight: fontWeight.bold,
-    lineHeight: 1.35,
-  },
-  list: {
-    display: "grid",
-    gap: "4px",
-    paddingLeft: "1.35em",
-  },
-  itemParagraph: {
-    display: "inline",
-  },
-  link: {
-    color: tokens.accent,
-    textDecorationColor: tokens.accentOutline,
-    textDecorationThickness: "1px",
-    textUnderlineOffset: "3px",
-  },
-  code: {
-    padding: "1px 4px",
-    borderRadius: radius.small,
-    backgroundColor: tokens.tray,
-    color: tokens.ink,
-    fontFamily: tokens.fontMono,
-    fontSize: "0.92em",
-  },
-  quote: {
-    paddingLeft: "10px",
-    borderLeftWidth: "3px",
-    borderLeftStyle: "solid",
-    borderLeftColor: tokens.ruleSoft,
-    color: tokens.inkFaint,
-  },
-  table: {
-    maxWidth: "100%",
-    overflow: "hidden",
-    borderCollapse: "collapse",
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontMono,
-    fontSize: fontSize.body,
-    tableLayout: "fixed",
-  },
-  cell: {
-    padding: "5px 7px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    verticalAlign: "top",
-  },
-  headerCell: {
-    color: tokens.ink,
-    fontWeight: fontWeight.bold,
-    textAlign: "left",
-  },
-  rule: {
-    margin: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderTopWidth: "1px",
-    borderTopStyle: "solid",
-    borderTopColor: tokens.rule,
-  },
-});
 
 const styles = stylex.create({
   // The checkbox replaces the bullet, beside the item's first line.

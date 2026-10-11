@@ -1,22 +1,14 @@
 import { useGitLab } from "@canvas/gitlab/gitlab-context";
 import { useReviewSession } from "@canvas/host/review-session";
-import { useOptionalReviewPanelStore } from "@canvas/review/review-panel";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { fontSize, layer } from "@canvas/styles/scale.stylex";
 import { themeStyles } from "@canvas/styles/theme-styles";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import { Button, IconButton } from "@canvas/ui/button";
-import {
-  ChatIcon,
-  ChevronDownIcon,
-  CommandKeyIcon,
-  CopyIcon,
-  ShiftKeyIcon,
-} from "@canvas/ui/icons";
+import { Button } from "@canvas/ui/button";
+import { CommandKeyIcon, CopyIcon, ShiftKeyIcon } from "@canvas/ui/icons";
 import { surfaceStyles } from "@canvas/ui/surface";
 import { useToast } from "@canvas/ui/toast";
-import type { AgentSelection } from "@review/ask/agent-selection";
-import type { AskAgentId } from "@review/ask/thread-state";
+import type { AgentSelection } from "@review/review-api/agent-selection";
 import * as stylex from "@stylexjs/stylex";
 import {
   type ReactNode,
@@ -29,20 +21,13 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import {
-  AskAgentMenu,
-  preferredAskAgent,
-  rememberAskAgent,
-  useAskAgents,
-} from "./ask-agent-picker";
-import { askAnchor } from "./ask-anchor";
 import { copyAgentContext } from "./copy-agent-context";
 
 type Selection = Omit<AgentSelection, "revision"> & {
   anchor?: { x: number; y: number };
   anchorElement?: Element;
   anchorContainer?: HTMLElement;
-  /** The selected document text, read for its context only when asked. */
+  /** The selected document text, copied for an external agent. */
   range?: Range;
 };
 
@@ -64,9 +49,6 @@ export function AgentSelectionProvider({
 }) {
   const session = useReviewSession();
   const gitlab = useGitLab();
-  const panels = useOptionalReviewPanelStore();
-  // Ask needs a panel to answer in and a host that runs agents (Desktop).
-  const askAgents = useAskAgents(panels ? session : null);
   const [overlayHost, setOverlayHost] = useState<HTMLElement | null>(null);
 
   const bindOverlay = useCallback((node: HTMLSpanElement | null) => {
@@ -79,8 +61,6 @@ export function AgentSelectionProvider({
 
   const [selection, setSelection] = useState<Selection | null>(null);
   const [copiedSelection, setCopiedSelection] = useState<string | null>(null);
-  const [choosing, setChoosing] = useState(false);
-  const actions = useRef<HTMLDivElement>(null);
   const copying = useRef(false);
   const pointer = useRef<{ x: number; y: number } | null>(null);
   const pointerElement = useRef<Element | null>(null);
@@ -135,7 +115,6 @@ export function AgentSelectionProvider({
       }
 
       if (!value) setCopiedSelection(null);
-      setChoosing(false);
       setSelection(value);
     },
     [overlayHost],
@@ -215,35 +194,6 @@ export function AgentSelectionProvider({
     }
   }, [selection, session, revision]);
 
-  const askAgent = askAgents && preferredAskAgent(session, askAgents);
-
-  const ask = useCallback(
-    (agent?: AskAgentId) => {
-      if (!selection || !panels) return;
-
-      const {
-        anchor: _anchor,
-        anchorElement: _anchorElement,
-        anchorContainer: _anchorContainer,
-        range,
-        ...payload
-      } = selection;
-
-      // The saved conversation marks this passage by its place in its
-      // block, so its pin finds it again in later versions.
-      const anchor =
-        payload.target.kind === "text" && range && askAnchor(range);
-
-      if (payload.target.kind === "text" && anchor)
-        payload.target = { ...payload.target, anchor };
-
-      if (agent) rememberAskAgent(session, agent);
-      panels.getState().openAsk({ ...payload, revision }, agent);
-      select(null);
-    },
-    [selection, panels, revision, select, session],
-  );
-
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if (
@@ -259,27 +209,13 @@ export function AgentSelectionProvider({
         void copy();
       }
 
-      if (
-        selection &&
-        askAgent &&
-        event.metaKey &&
-        !event.shiftKey &&
-        !event.altKey &&
-        !event.ctrlKey &&
-        event.key.toLowerCase() === "l"
-      ) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        ask();
-      }
-
       if (event.key === "Escape") select(null);
     };
 
     window.addEventListener("keydown", keydown, true);
 
     return () => window.removeEventListener("keydown", keydown, true);
-  }, [selection, copy, select, askAgent, ask]);
+  }, [selection, copy, select]);
 
   return (
     <SelectionContext.Provider value={select}>
@@ -307,46 +243,9 @@ export function AgentSelectionProvider({
                     style={{ flexBasis: selection.anchor?.x }}
                   />
                   <div
-                    ref={actions}
                     {...stylex.props(surfaceStyles.popover, styles.actions)}
                     onMouseDown={(event) => event.preventDefault()}
                   >
-                    {askAgents && askAgent ? (
-                      <>
-                        <Button
-                          variant="primary"
-                          aria-keyshortcuts="Meta+L"
-                          onClick={() => ask()}
-                        >
-                          <ChatIcon xstyle={controlStyles.inlineIcon} />
-                          <span>Ask {askAgent.name}</span>
-                          <kbd aria-hidden="true" {...stylex.props(styles.key)}>
-                            <CommandKeyIcon />L
-                          </kbd>
-                        </Button>
-                        <IconButton
-                          aria-label="Ask another agent"
-                          aria-haspopup="menu"
-                          aria-expanded={choosing}
-                          onClick={() => setChoosing((value) => !value)}
-                        >
-                          <ChevronDownIcon />
-                        </IconButton>
-                        <span
-                          {...stylex.props(styles.divider)}
-                          aria-hidden="true"
-                        />
-                        {choosing ? (
-                          <AskAgentMenu
-                            agents={askAgents}
-                            current={askAgent.id}
-                            within={actions}
-                            onPick={ask}
-                            onDismiss={() => setChoosing(false)}
-                          />
-                        ) : null}
-                      </>
-                    ) : null}
                     {gitlab?.editable &&
                       gitlab.state &&
                       selection.target.kind === "code" &&
@@ -427,8 +326,6 @@ export function AgentSelectionProvider({
   );
 }
 
-// The selection's agent actions, beside the selected text: Ask the preferred
-// agent (or pick another), or copy the selection for an agent elsewhere.
 const styles = stylex.create({
   // Spans its container, short of the right edge; only the toolbar takes
   // the pointer. Outside .review-app it brings the chrome tokens.
@@ -463,11 +360,5 @@ const styles = stylex.create({
     fontSize: fontSize.micro,
     lineHeight: "14px",
     opacity: 0.65,
-  },
-  divider: {
-    flex: "0 0 auto",
-    width: "1px",
-    height: "16px",
-    backgroundColor: tokens.ruleSoft,
   },
 });

@@ -4,7 +4,6 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { gzip } from "node:zlib";
 
-import { ReviewBugReportMetaV2Schema } from "@dev.fast/review-protocol";
 import type { PostHogCaptureProperties } from "@review/telemetry/posthog-capture-client";
 import type { ReviewTelemetry } from "@review/telemetry/review-telemetry";
 import { z } from "zod";
@@ -46,7 +45,20 @@ const CrashEnvelopeSchema = z.object({
     .enum(["desktop", "cli", "headless", "mcp", "api"])
     .optional()
     .catch(undefined),
-  platform: ReviewBugReportMetaV2Schema.shape.platform
+  platform: z
+    .enum([
+      "aix",
+      "android",
+      "darwin",
+      "freebsd",
+      "haiku",
+      "linux",
+      "openbsd",
+      "sunos",
+      "win32",
+      "cygwin",
+      "netbsd",
+    ])
     .optional()
     .catch(undefined),
   arch: z

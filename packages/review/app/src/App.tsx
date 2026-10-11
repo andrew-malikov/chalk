@@ -34,11 +34,8 @@ import {
 import {
   AgentSelectionProvider,
   useAgentSelection,
-} from "./ask/agent-selection";
-import { observeAgentTextSelection } from "./ask/agent-text-selection";
-import { AskHistoryProvider } from "./ask/ask-history";
-import { AskHistoryControl } from "./ask/ask-history-list";
-import { AskThreadMarks } from "./ask/ask-marks";
+} from "./agent-context/agent-selection";
+import { observeAgentTextSelection } from "./agent-context/agent-text-selection";
 import { DiffLayoutControl } from "./diff/diff-layout-control";
 import { ReviewDiffView } from "./diff/DiffView";
 import { ReviewCommitsView } from "./diff/ReviewCommitsView";
@@ -75,7 +72,7 @@ import {
   useReviewPanelStore,
   useSuppressPanelMotionOnCanvasResume,
 } from "./review/review-panel";
-import { type ReviewDiffScope, askShown } from "./review/review-panel-store";
+import { type ReviewDiffScope } from "./review/review-panel-store";
 import {
   ReviewRootsProvider,
   useReviewContainer,
@@ -245,31 +242,29 @@ function ReviewLayout({
             softwareMapEnabled={softwareMapEnabled}
           >
             <GitLabProvider>
-              <AskHistoryProvider>
-                <AgentSelectionProvider revision={documentRevision}>
-                  <ReviewLayoutContent
-                    appRef={appRef}
-                    shellRef={shellRef}
-                    scrollRegionRef={scrollRegionRef}
-                    articleRef={articleRef}
-                    document={document}
-                    documentRevision={documentRevision}
-                    softwareModels={[
-                      ...(softwareMap.head ? [softwareMap.head] : []),
-                      ...document.documentSoftwareModels,
-                    ]}
-                    repoSoftwareMap={softwareMap.head ?? null}
-                    baseSoftwareMap={softwareMap.base ?? null}
-                    softwareMapTopologyDiff={diffSoftwareMaps(
-                      softwareMap.base,
-                      softwareMap.head,
-                    )}
-                    softwareMapEnabled={softwareMapEnabled}
-                    range={range}
-                    commits={commits}
-                  />
-                </AgentSelectionProvider>
-              </AskHistoryProvider>
+              <AgentSelectionProvider revision={documentRevision}>
+                <ReviewLayoutContent
+                  appRef={appRef}
+                  shellRef={shellRef}
+                  scrollRegionRef={scrollRegionRef}
+                  articleRef={articleRef}
+                  document={document}
+                  documentRevision={documentRevision}
+                  softwareModels={[
+                    ...(softwareMap.head ? [softwareMap.head] : []),
+                    ...document.documentSoftwareModels,
+                  ]}
+                  repoSoftwareMap={softwareMap.head ?? null}
+                  baseSoftwareMap={softwareMap.base ?? null}
+                  softwareMapTopologyDiff={diffSoftwareMaps(
+                    softwareMap.base,
+                    softwareMap.head,
+                  )}
+                  softwareMapEnabled={softwareMapEnabled}
+                  range={range}
+                  commits={commits}
+                />
+              </AgentSelectionProvider>
             </GitLabProvider>
           </ReviewProvider>
         </ReviewDebugSettingsProvider>
@@ -320,7 +315,6 @@ function ReviewLayoutContent({
   const panelStore = useReviewPanelStore();
   useSuppressPanelMotionOnCanvasResume(appRef);
   const activePanel = useReviewPanel((state) => state.active);
-  const askDocked = useReviewPanel((state) => askShown(state) === "panel");
   const panelMotion = useReviewPanel((state) => state.motion);
   const activeView = useReviewPanel((state) => state.view);
   const diffScope = useReviewPanel((state) => state.diffScope);
@@ -354,8 +348,8 @@ function ReviewLayoutContent({
 
   const debugSettings = useReviewDebugSettings();
 
-  const gitlabShown = !!gitlab?.open && activePanel === null && !askDocked;
-  const rightPanelOpen = activePanel !== null || askDocked || gitlabShown;
+  const gitlabShown = !!gitlab?.open && activePanel === null;
+  const rightPanelOpen = activePanel !== null || gitlabShown;
 
   const sidePeekResize = useRightPanelResize({
     stateKey: "side-peek-width",
@@ -653,7 +647,6 @@ function ReviewLayoutContent({
                 />
               </div>
               <ReviewStackSelector />
-              <AskHistoryControl />
               <ReviewBatonChip outcome={review.submissionOutcome} />
               <DiffLayoutControl />
               {gitlab && (
@@ -730,10 +723,6 @@ function ReviewLayoutContent({
                     <document.render />
                   </ReviewDocumentBoundary>
                 </article>
-                <AskThreadMarks
-                  articleRef={articleRef}
-                  revision={documentRevision}
-                />
               </>
             </div>
             {softwareMapEnabled && activeView === "map" && (
@@ -826,7 +815,6 @@ function ReviewLayoutContent({
             shellStyles.resizer,
             shellStyles.peekResizer,
             shellStyles.resizerGrabPanel,
-            askDocked && shellStyles.peekResizerTray,
             sidePeekResize.isResizing && shellStyles.peekResizerActive,
           )}
           {...sidePeekResize.separatorProps}

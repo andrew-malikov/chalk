@@ -462,18 +462,6 @@ export const UI_TELEMETRY_EVENTS = {
     event: "review_tour_abandoned",
     properties: { step: "number", steps: "number" },
   },
-  bug_report_dialog_opened: {
-    event: "review_bug_report_dialog_opened",
-    properties: {},
-  },
-  bug_report_cancelled: {
-    event: "review_bug_report_cancelled",
-    properties: {},
-  },
-  bug_report_send_failed: {
-    event: "review_bug_report_send_failed",
-    properties: { error_name: "enum_free_short" },
-  },
   setting_changed: {
     event: "review_setting_changed",
     // value carries the chosen option for the one multi-valued setting, theme.

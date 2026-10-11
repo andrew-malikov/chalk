@@ -2,9 +2,9 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { AgentMarkdown, MarkdownContent } from "./agent-markdown";
+import { MarkdownContent } from "./agent-markdown";
 
-describe("agent markdown", () => {
+describe("document markdown", () => {
   it("routes document source links through the supplied peek renderer, including headings and reference links", () => {
     const seen: string[] = [];
 
@@ -30,52 +30,11 @@ describe("agent markdown", () => {
     );
     expect(html).toContain('href="https://example.com"');
     expect(html).not.toContain("javascript:");
-
-    const chat = renderToStaticMarkup(
-      createElement(AgentMarkdown, {
-        source: "[unvalidated](review-source:head/file.ts#L2)",
-      }),
-    );
-
-    expect(chat).not.toContain("href=");
-  });
-  it("renders agent answers as GitHub-flavored markdown", () => {
-    const html = renderToStaticMarkup(
-      createElement(AgentMarkdown, {
-        source: [
-          "**Done**",
-          "",
-          "- one",
-          "- two",
-          "",
-          "| file | status |",
-          "| --- | --- |",
-          "| `App.tsx` | fixed |",
-          "",
-          "```ts",
-          "const answer = true;",
-          "```",
-          "",
-          "[Docs](https://example.com/docs)",
-        ].join("\n"),
-      }),
-    );
-
-    expect(html).toContain("<strong>Done</strong>");
-    expect(html).toMatch(/<ul[ >]/);
-    expect(html).toMatch(/<li><p[^>]*>one<\/p><\/li>/);
-    expect(html).toMatch(/<table[ >]/);
-    expect(html).toMatch(/<code[^>]*>App\.tsx<\/code>/);
-    expect(html).toContain('data-language="ts"');
-    expect(html).toContain("const answer = true;");
-    expect(html).toContain('href="https://example.com/docs"');
-    expect(html).toContain('target="_blank"');
-    expect(html).toContain('rel="noopener noreferrer"');
   });
 
   it("does not execute raw html or unsafe markdown links", () => {
     const html = renderToStaticMarkup(
-      createElement(AgentMarkdown, {
+      createElement(MarkdownContent, {
         source:
           '<script>alert("x")</script>\n\n[run this](javascript:alert("x"))',
       }),
@@ -90,7 +49,7 @@ describe("agent markdown", () => {
 
   it("keeps dollar amounts as prose", () => {
     const html = renderToStaticMarkup(
-      createElement(AgentMarkdown, { source: "It costs $5 and $10." }),
+      createElement(MarkdownContent, { source: "It costs $5 and $10." }),
     );
 
     expect(html).toContain("It costs $5 and $10.");
@@ -98,7 +57,7 @@ describe("agent markdown", () => {
 
   it("renders local filesystem links as non-clickable code references", () => {
     const html = renderToStaticMarkup(
-      createElement(AgentMarkdown, {
+      createElement(MarkdownContent, {
         source: [
           "[App.test.ts:49](/Users/ketanagrawal/monorepo/repos/dev/packages/review/app/src/App.test.ts:49)",
           "[styles.css](file:///Users/ketanagrawal/monorepo/repos/dev/packages/review/app/src/styles.css)",
@@ -115,7 +74,7 @@ describe("agent markdown", () => {
 
   it("decodes named character references without using DOM innerHTML", () => {
     const html = renderToStaticMarkup(
-      createElement(AgentMarkdown, {
+      createElement(MarkdownContent, {
         source: "a &amp; b &gt; c",
       }),
     );

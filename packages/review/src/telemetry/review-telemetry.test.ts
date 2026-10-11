@@ -350,7 +350,7 @@ describe("ReviewTelemetry", () => {
     expect(events[0].properties).not.toHaveProperty("app_session_id");
   });
 
-  it("exposes the envelope for bug reports and persists the internal marker", async () => {
+  it("exposes the diagnostic envelope and persists the internal marker", async () => {
     const { configPath, rootPath, telemetry } = createTelemetry();
 
     cleanupPaths.push(rootPath);

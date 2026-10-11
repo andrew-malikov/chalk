@@ -25,8 +25,6 @@ export interface RenderedCodeBlockProps extends ComponentProps<"pre"> {
   caption?: string;
   /** Ghost line numbers in a sticky gutter; off for fenced markdown. */
   lineNumbers?: boolean;
-  /** Tighter block margins, for a chat message. */
-  compact?: boolean;
   codeAttributes?: Record<string, string>;
 }
 
@@ -37,7 +35,6 @@ export function RenderedCodeBlock({
   language,
   caption,
   lineNumbers = false,
-  compact = false,
   codeAttributes,
   className,
   ...props
@@ -79,17 +76,8 @@ export function RenderedCodeBlock({
   return (
     <figure
       {...(className
-        ? withClass(
-            className,
-            styles.block,
-            compact && styles.compact,
-            drawStyles.blockChild,
-          )
-        : stylex.props(
-            styles.block,
-            compact && styles.compact,
-            drawStyles.blockChild,
-          ))}
+        ? withClass(className, styles.block, drawStyles.blockChild)
+        : stylex.props(styles.block, drawStyles.blockChild))}
       data-language={displayLanguage}
     >
       <DiagramHeader
@@ -250,9 +238,6 @@ const styles = stylex.create({
     borderColor: tokens.rule,
     borderRadius: radius.surface,
     backgroundColor: tokens.surface,
-  },
-  compact: {
-    marginBlock: "8px",
   },
   header: {
     paddingRight: "8px",

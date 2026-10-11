@@ -23,12 +23,12 @@ import {
   jsonString,
   parseJsonText,
 } from "@dev.fast/review-protocol";
+import { snapshotReviewTree } from "@review/fixtures/legacy-reviews/legacy-review-fixture";
+import { readReviewDocumentBundle } from "@review/publishing/review-bundle";
 import {
   authoringSessionKey,
   parseAuthoringSessionKey,
-} from "@review/ask/agent-session-ref";
-import { snapshotReviewTree } from "@review/fixtures/legacy-reviews/legacy-review-fixture";
-import { readReviewDocumentBundle } from "@review/publishing/review-bundle";
+} from "@review/review-api/agent-session-ref";
 import { readReviewSoftwareMapBundle } from "@review/software-map/software-map-bundle";
 import {
   materializeReviewRevision,

@@ -1,15 +1,3 @@
-import {
-  AskDeleteThreadButton,
-  AskOpenThreadProvider,
-} from "@canvas/ask/ask-delete";
-import { AskHistoryButton, AskHistoryList } from "@canvas/ask/ask-history-list";
-import { AskPanelContent } from "@canvas/ask/ask-panel";
-import {
-  AskPill,
-  type AskPresence,
-  AskSlot,
-  AskWindow,
-} from "@canvas/ask/ask-window";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { CodePeekCard } from "@canvas/diff/CodePeek";
 import { AuthoredCodeSurface } from "@canvas/documents/authored-code-surface";
@@ -26,7 +14,6 @@ import {
   activeTargetForScroll,
   scrollTailHeight,
 } from "@canvas/lib/scroll-active-tracking";
-import { useTooltip } from "@canvas/lib/use-tooltip";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { chevronMarker, documentMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, fontWeight } from "@canvas/styles/scale.stylex";
@@ -36,12 +23,7 @@ import { tokens } from "@canvas/styles/tokens.stylex";
 import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
 import { useTutorialSection } from "@canvas/tutorial/tutorial-section-context";
 import { IconButton } from "@canvas/ui/button";
-import {
-  CloseIcon,
-  DisclosureChevron,
-  MapPinIcon,
-  PopOutIcon,
-} from "@canvas/ui/icons";
+import { CloseIcon, DisclosureChevron, MapPinIcon } from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
 import type { ReviewComponentProps } from "@review/documents/review-document-data";
 import * as stylex from "@stylexjs/stylex";
@@ -53,7 +35,6 @@ import type {
   Ref,
 } from "react";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
 import { useReviewActions } from "./review-context";
 import { useOptionalReviewPanelStore, useReviewPanel } from "./review-panel";
@@ -63,7 +44,6 @@ import type {
   PeekAnchor,
   ReviewPeekContent,
 } from "./review-panel-model";
-import { askShown } from "./review-panel-store";
 import { useReviewRoots } from "./review-root-context";
 import { useReviewUiState } from "./review-ui-state";
 import { useBottomSheetResize } from "./side-panel-resizer";
@@ -475,107 +455,7 @@ export function ReviewPanelHost() {
           onClose={close}
         />
       ) : null}
-      <AskHost />
     </>
-  );
-}
-
-const historyPresence: AskPresence = {
-  agentName: "Ask",
-  status: "Conversations",
-  tone: "quiet",
-};
-
-/**
- * The open conversation, in the side panel, its window or the pill. It
- * renders once, into an element of its own that moves between them, so
- * popping out, docking or minimizing never restarts it.
- */
-function AskHost() {
-  const ask = useReviewPanel((state) => state.ask);
-  const shown = useReviewPanel(askShown);
-  const closeAsk = useReviewPanel((state) => state.closeAsk);
-  const popOutAsk = useReviewPanel((state) => state.popOutAsk);
-  const popOutTooltip = useTooltip("Pop out");
-  const [node] = useState(() => document.createElement("div"));
-
-  const [header, setHeader] = useState<HTMLDivElement | null>(null);
-
-  const [presence, setPresence] = useState<AskPresence>({
-    agentName: "Ask",
-    status: "New question",
-    tone: "quiet",
-  });
-
-  if (!ask || !shown) return null;
-
-  const actions = (
-    <>
-      <AskDeleteThreadButton />
-      <AskHistoryButton view={ask.view} />
-    </>
-  );
-
-  return (
-    <AskOpenThreadProvider key={ask.key}>
-      {createPortal(
-        ask.view.type === "history" ? (
-          <AskHistoryList passage={ask.view.passage} />
-        ) : (
-          <AskPanelContent
-            selection={ask.view.selection}
-            agent={ask.view.agent}
-            savedThreadId={
-              ask.view.type === "saved" ? ask.view.threadId : undefined
-            }
-            onPresence={setPresence}
-            header={header}
-          />
-        ),
-        node,
-      )}
-      {shown === "panel" ? (
-        <ReviewPanelFrame
-          tray
-          label="Ask"
-          titleAccessory={
-            <div ref={setHeader} {...stylex.props(panelStyles.title)} />
-          }
-          onClose={closeAsk}
-          closeLabel="Close Ask"
-          headerActions={
-            <>
-              {actions}
-              <IconButton
-                ref={popOutTooltip}
-                size="large"
-                aria-label="Pop out Ask"
-                onClick={popOutAsk}
-              >
-                <PopOutIcon
-                  xstyle={[controlStyles.inertIcon, controlStyles.chromeIcon]}
-                />
-              </IconButton>
-            </>
-          }
-        >
-          <AskSlot node={node} />
-        </ReviewPanelFrame>
-      ) : shown === "window" ? (
-        <AskWindow
-          actions={actions}
-          titleAccessory={
-            <div ref={setHeader} {...stylex.props(panelStyles.title)} />
-          }
-        >
-          <AskSlot node={node} />
-        </AskWindow>
-      ) : (
-        <AskPill
-          presence={ask.view.type === "history" ? historyPresence : presence}
-        />
-      )}
-    </AskOpenThreadProvider>
   );
 }
 

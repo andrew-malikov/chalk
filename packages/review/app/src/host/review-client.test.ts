@@ -43,15 +43,15 @@ describe("review host client", () => {
   });
 });
 
-it("routes JSON reports and authenticated beacons without legacy document parameters", () => {
-  const report = new URL(
-    jsonReviewApiUrl(injectedConfig, "review/id", "/telemetry/bug-report", {
+it("routes versioned diffs and authenticated beacons without legacy document parameters", () => {
+  const diff = new URL(
+    jsonReviewApiUrl(injectedConfig, "review/id", "/diff", {
       version: 0,
     }),
   );
 
-  expect(report.pathname).toBe("/reviews-api/review%2Fid/telemetry/bug-report");
-  expect([...report.searchParams]).toEqual([["version", "0"]]);
+  expect(diff.pathname).toBe("/reviews-api/review%2Fid/diff");
+  expect([...diff.searchParams]).toEqual([["version", "0"]]);
 
   const beacon = new URL(
     jsonReviewApiUrl(

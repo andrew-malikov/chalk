@@ -1,6 +1,6 @@
 import "@canvas/global.css";
 import "@canvas/ui.css";
-import { AgentSelectionProvider } from "@canvas/ask/agent-selection";
+import { AgentSelectionProvider } from "@canvas/agent-context/agent-selection";
 import { PierreDiffView } from "@canvas/diff/PierreDiffView";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDiffFilesProvider } from "@canvas/review/review-diff-files-context";

@@ -1,4 +1,4 @@
-import { AgentSelectionProvider } from "@canvas/ask/agent-selection";
+import { AgentSelectionProvider } from "@canvas/agent-context/agent-selection";
 import { GitLabProvider } from "@canvas/gitlab/gitlab-context";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDiffFilesProvider } from "@canvas/review/review-diff-files-context";

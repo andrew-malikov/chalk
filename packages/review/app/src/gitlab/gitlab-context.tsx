@@ -1,6 +1,5 @@
 import { useReviewSession } from "@canvas/host/review-session";
 import { useOptionalReviewPanelStore } from "@canvas/review/review-panel";
-import { askShown } from "@canvas/review/review-panel-store";
 import {
   type GitLabDiscussion,
   type GitLabDraft,
@@ -289,7 +288,6 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
 
   const show = () => {
     panels?.getState().close();
-    panels?.getState().closeAsk();
     setOpen(true);
   };
 
@@ -377,12 +375,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
       toggle: () => {
         const panelState = panels?.getState();
 
-        if (
-          open &&
-          !panelState?.active &&
-          (!panelState || askShown(panelState) !== "panel")
-        )
-          setOpen(false);
+        if (open && !panelState?.active) setOpen(false);
         else show();
       },
       edit,

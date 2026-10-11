@@ -10,10 +10,6 @@ import {
   jsonString,
   parseJsonText,
 } from "@dev.fast/review-protocol";
-import {
-  authoringSessionKey,
-  parseAuthoringSessionKey,
-} from "@review/ask/agent-session-ref";
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { errorMessage } from "@review/lib/error-message";
 import { isMissingFileError } from "@review/lib/fs-utils";
@@ -24,6 +20,10 @@ import {
   writeReviewDocumentBundle,
 } from "@review/publishing/review-bundle";
 import { evaluateSealedReviewDocument } from "@review/publishing/review-sealed-document";
+import {
+  authoringSessionKey,
+  parseAuthoringSessionKey,
+} from "@review/review-api/agent-session-ref";
 import {
   type ReviewSoftwareMapBundle,
   bundleReviewSoftwareMap,

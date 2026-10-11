@@ -127,8 +127,7 @@ export function deriveErrorTelemetryProperties(
  * cleaning behind it.
  *
  * `error_name` is deliberately absent. The allowlist caps it at 40 identifier
- * characters, which makes it safe whoever sends it, and `bug_report_send_failed`
- * sends it with no error envelope.
+ * characters, which makes it safe whoever sends it.
  */
 const SERVER_DERIVED_PROPERTIES = [
   "message",

@@ -8,10 +8,10 @@ import {
   jsonString,
   parseJsonText,
 } from "@dev.fast/review-protocol";
-import { resolveAuthoringSessionRef } from "@review/ask/agent-session-ref";
 import { writeFileAtomic } from "@review/lib/atomic-write";
 import { processIsAlive, withFileLock } from "@review/lib/with-file-lock";
 import { readReviewPackageVersion as readReviewPackageVersionSync } from "@review/package-paths";
+import { resolveAuthoringSessionRef } from "@review/review-api/agent-session-ref";
 import { valid as validSemver } from "semver";
 
 import { EMBEDDED_PROGRESSIVE_REVIEW_POSTHOG_KEY } from "./embedded-posthog-key";
@@ -325,7 +325,7 @@ export class ReviewTelemetry {
     return this.isEnabled();
   }
 
-  /** The common properties every event carries; bug reports embed them. */
+  /** The common properties every event carries, including crash diagnostics. */
   async envelope(): Promise<PostHogCaptureProperties> {
     return this.commonProperties(await this.loadInstallConfig());
   }

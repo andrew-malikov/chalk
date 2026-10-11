@@ -1,12 +1,12 @@
 # Privacy
 
 <!--
-Outline: Local data -> Anonymous telemetry -> Errors -> Explicit bug reports
+Outline: Local data -> Anonymous telemetry -> Errors
 -> Hosted trace store -> Opt-out -> Developer inspection.
 -->
 
 Blackboard reads source code and agent-authored documents from your machine.
-This page separates the local product data, anonymous telemetry, explicit bug
+This page separates the local product data, anonymous telemetry, error
 reports, and hosted traces.
 
 Read the [dev.fast privacy policy](https://dev.fast/privacy) for the public
@@ -77,46 +77,6 @@ Before sending, Blackboard cleans paths, home and temporary directories, web
 addresses, email addresses, and known secret formats. It drops repository,
 dependency, and extension stack frames. It also drops any message that quotes a
 blackboard document or does not pass a second local path-and-secret check.
-
-## User-initiated bug reports
-
-The **Report a bug** dialog sends a report only after you select **Send**.
-
-Under **Include diagnostic attachments**, two independent checkboxes control
-whether Blackboard attaches:
-
-- **Session**: the saved blackboard record, including its title, document
-  text, pinned commits, and origin such as the branch and pull request URL,
-  plus its software maps
-- **Changed-file diffs used by CodePeeks** (only the diff lines)
-
-Both attachments are selected by default.
-
-Blackboard captures a screenshot before the dialog opens, so the dialog itself
-is not in the image. The screenshot is attached by default with a visible
-preview. You can remove it with the × button, or paste or drag an image to
-replace it. Pasted and dropped PNG, JPEG, and WebP images are normalized to
-JPEG and limited to 3 MiB.
-
-You can turn off either attachment and remove the screenshot before sending.
-
-The checkboxes control only those optional attachments. Every submitted report
-also includes the optional description (which may be empty), app and CLI
-versions, operating-system category, a random app-session ID, and up to 20
-sanitized JavaScript error class names seen during that canvas session. It does
-not include error messages in that list.
-
-If a selected attachment is unavailable, Blackboard omits it and sends the
-other available data. If the report would exceed the upload limit, Blackboard
-drops attachments, starting with the diffs and then the maps, screenshot, and
-blackboard record, and sends what fits.
-
-Blackboard stores completed reports in a private /dev/fast Cloudflare R2 bucket
-and deletes them after 90 days.
-
-An explicit bug report is separate from passive telemetry and is sent even when
-anonymous telemetry is disabled. Blackboard shows the attachment choices before
-submission.
 
 ## Hosted trace store
 

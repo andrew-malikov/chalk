@@ -61,46 +61,6 @@ export function admitUiTelemetryEvent(
   );
 }
 
-const MAX_CLIENT_ERROR_SESSIONS = 100;
-
-const MAX_CLIENT_ERRORS_PER_SESSION = 20;
-
-const clientErrorsBySession = new Map<string, string[]>();
-
-export function recordClientError(
-  event: ReturnType<typeof sanitizeUiTelemetryEvent>,
-): void {
-  if (event?.event !== "review_client_error") return;
-  const sessionId = jsonString(event.properties.app_session_id);
-  const errorName = jsonString(event.properties.error_name);
-
-  if (sessionId === undefined || errorName === undefined) return;
-  const names = clientErrorsBySession.get(sessionId) ?? [];
-  names.push(errorName);
-
-  if (names.length > MAX_CLIENT_ERRORS_PER_SESSION) names.shift();
-  clientErrorsBySession.delete(sessionId);
-  clientErrorsBySession.set(sessionId, names);
-
-  while (clientErrorsBySession.size > MAX_CLIENT_ERROR_SESSIONS) {
-    const oldest = clientErrorsBySession.keys().next().value;
-
-    if (oldest === undefined) break;
-    clientErrorsBySession.delete(oldest);
-  }
-}
-
-export function clientErrorsForSession(sessionId: string): string[] {
-  const names = clientErrorsBySession.get(sessionId) ?? [];
-
-  if (names.length > 0) {
-    clientErrorsBySession.delete(sessionId);
-    clientErrorsBySession.set(sessionId, names);
-  }
-
-  return [...names];
-}
-
 export interface ReviewTelemetryCapture {
   captureTabViewed(event: ReviewTabTelemetryEvent): Promise<void>;
   captureUiEvent?(
