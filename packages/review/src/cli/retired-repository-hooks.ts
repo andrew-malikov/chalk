@@ -1,4 +1,4 @@
-import { realpath, rm, rmdir } from "node:fs/promises";
+import { lstat, realpath, rm, rmdir } from "node:fs/promises";
 import path from "node:path";
 
 import { gitAt } from "@dev.fast/local-vcs";
@@ -66,7 +66,8 @@ export async function retireRepositoryHooks(
       const hooks = path.join(stateDir, "hooks");
 
       if (
-        (await realpath(state.managedHooksPath)) !== (await realpath(hooks)) ||
+        (await canonicalHookPath(state.managedHooksPath)) !==
+          (await canonicalHookPath(hooks)) ||
         !input.ownedCommands.some(
           (command) => state.command === shellQuote(command),
         )
@@ -114,17 +115,9 @@ export async function retireRepositoryHooks(
 
       if (
         current.ok &&
-        (await realpath(
+        (await canonicalHookPath(
           path.resolve(root.stdout.trim(), current.stdout.trim()),
-        ).catch((error) => {
-          if (
-            error instanceof Error &&
-            "code" in error &&
-            error.code === "ENOENT"
-          )
-            return "";
-          throw error;
-        })) === (await realpath(hooks))
+        )) === (await canonicalHookPath(hooks))
       ) {
         if (state.previousWasConfigured)
           await gitAt(
@@ -155,6 +148,33 @@ export async function retireRepositoryHooks(
     await writePrivateJsonAtomic(registry, [...remaining]);
 
   return { complete, warnings };
+}
+
+/** Resolve existing ancestors even when a prior cleanup removed the directory.
+ * A dangling symlink is an existing entry, so preserve that failure for retry. */
+async function canonicalHookPath(value: string): Promise<string> {
+  try {
+    return await realpath(value);
+  } catch (error) {
+    if (!(error instanceof Error) || !isMissingPath(error)) throw error;
+
+    const entry = await lstat(value).catch((failure) => {
+      if (failure instanceof Error && isMissingPath(failure)) return null;
+      throw failure;
+    });
+
+    if (entry !== null) throw error;
+
+    const parent = path.dirname(value);
+
+    if (parent === value) throw error;
+
+    return path.join(await canonicalHookPath(parent), path.basename(value));
+  }
+}
+
+function isMissingPath(error: Error): boolean {
+  return "code" in error && error.code === "ENOENT";
 }
 
 async function pruneEmpty(dir: string) {

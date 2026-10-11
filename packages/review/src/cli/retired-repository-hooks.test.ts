@@ -203,6 +203,17 @@ it("finishes partial cleanup when one generated wrapper is already absent", asyn
   );
 });
 
+it("restores predecessor hooks when the managed directory is already absent", async () => {
+  const f = await fixture();
+  await rm(f.hooks, { recursive: true });
+
+  expect((await retireRepositoryHooks(f.input)).complete).toBe(true);
+  expect(git(f.root, ["config", "--get", "core.hooksPath"])).toBe(
+    "predecessor",
+  );
+  expect((await retireRepositoryHooks(f.input)).complete).toBe(true);
+});
+
 it("restores a custom absolute predecessor path", async () => {
   const f = await fixture();
   const previous = path.join(f.root, "predecessor");
