@@ -7,7 +7,7 @@ import {
 } from "@review/review-api/diff-lenses.js";
 import { z } from "zod";
 
-/** Upgrade a saved or shared Review document to the current block schema at the
+/** Upgrade a saved Review document to the current block schema at the
  * read/import boundary. New edits use the strict schema and never accept these
  * retired forms. */
 // This is the decoder boundary for stored documents in retired wire formats.

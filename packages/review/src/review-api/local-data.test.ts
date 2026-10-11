@@ -443,7 +443,7 @@ it("opens the PR's existing review that create returns instead of a new one", as
 it("does not open a created review when Desktop is not attached", async () => {
   const open = vi.fn<OpenDesktop>(async () => ({ softwareMapEnabled: false }));
 
-  const app = createReviewApi(local.store, local.data, open, undefined, () => ({
+  const app = createReviewApi(local.store, local.data, open, () => ({
     desktopAvailable: false,
     softwareMapEnabled: false,
   }));

@@ -179,7 +179,7 @@ it("resolves a block's links at the block's own pins, and only where those pins 
 });
 
 for (const href of [
-  "packages/review/src/sharing/cli.ts#L76-L80",
+  "packages/review/src/cli/cli-runner.ts#L76-L80",
   ".github/workflows/review-author.yml",
   "./src/save.ts#L2",
   "../src/save.ts#L2",

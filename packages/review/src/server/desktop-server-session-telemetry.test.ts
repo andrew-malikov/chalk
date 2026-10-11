@@ -148,7 +148,7 @@ it("never trusts a client-supplied source_kind or agent_kind on session_started"
   try {
     await server.listen();
 
-    // A review this store never had (a shared review, or one deleted between
+    // A review this store never had (one deleted between
     // open and the event arriving): sessionStartedSourceKind cannot resolve it.
     const context = {
       reviewUuid: randomUUID(),

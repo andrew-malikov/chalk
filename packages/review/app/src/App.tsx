@@ -311,7 +311,7 @@ function ReviewLayoutContent({
   const gitlab = useGitLab();
   const review = useReview();
   // The scratchpad is a document and nothing else: no source tree to browse,
-  // nothing to share, nothing to dismiss.
+  // nothing to dismiss.
   const scratchpad = session.review?.kind === "scratchpad";
   useEffect(() => {
     if (scratchpad) captureUiEvent(session, "scratchpad_opened");

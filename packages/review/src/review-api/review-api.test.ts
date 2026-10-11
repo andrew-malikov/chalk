@@ -2966,7 +2966,6 @@ it("reports a created review with the origin its headers claim", async () => {
     undefined,
     undefined,
     undefined,
-    undefined,
     { onReviewCreated: (event) => created.push(event) },
   );
 

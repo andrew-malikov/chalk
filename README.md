@@ -85,8 +85,6 @@ product for teams is planned, and everything will always remain self-hostable.
 
 - Working and browsing files across multiple repos in a single review isn't well supported.
 
-- While you can share reviews between machines with the share button, updates made after a review is shared don't appear for others. You would need to re-share the review.
-
 ## Contributing
 
 Contributions and feedback are welcome.

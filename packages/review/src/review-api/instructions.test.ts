@@ -130,7 +130,6 @@ describe("review_get_instructions", () => {
       desktopAvailable
         ? async () => ({ softwareMapEnabled: false })
         : undefined,
-      undefined,
       () => ({ desktopAvailable, softwareMapEnabled: false }),
       () => scratchpadEnabled,
     );
@@ -263,7 +262,6 @@ describe("review_get_instructions", () => {
         store,
         undefined,
         async () => ({ softwareMapEnabled: false }),
-        undefined,
         async () => {
           throw new Error("renderer unavailable");
         },
@@ -518,7 +516,6 @@ describe("blackboard mcp instructions", () => {
       store,
       undefined,
       async () => ({ softwareMapEnabled: false }),
-      undefined,
       () => ({ desktopAvailable: true, softwareMapEnabled: false }),
       () => true,
     );

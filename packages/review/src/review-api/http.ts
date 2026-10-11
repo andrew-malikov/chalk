@@ -29,12 +29,6 @@ import { errorMessage } from "@review/lib/error-message";
 import { fuzzyRank } from "@review/lib/fuzzy-match.js";
 import { readBoundedRequestJson } from "@review/server/hono-http.js";
 import { HttpJsonError } from "@review/server/http-json.js";
-import {
-  type SharingHostEvents,
-  mountSharingHost,
-} from "@review/sharing/host.js";
-import type { SharedReviewStore } from "@review/sharing/import.js";
-import { SharedReviewData } from "@review/sharing/routes.js";
 import type { ReviewSessionAgent } from "@review/telemetry/ui-telemetry-events.js";
 import { resolveReviewStackLayers } from "@review/vcs/review-stack.js";
 import { type Context, Hono, type MiddlewareHandler } from "hono";
@@ -146,7 +140,6 @@ export interface ReviewApiHooks {
     via: ReviewRequestVia;
     agentKind?: ReviewSessionAgent;
   }) => void;
-  sharing?: SharingHostEvents;
 }
 
 /** A gateway forwarding from another machine; it gets no local paths. */
@@ -161,7 +154,6 @@ export function createReviewApi(
     reviewId: string;
     title: string;
   }) => Promise<{ softwareMapEnabled: boolean }>,
-  shared?: SharedReviewStore,
   capabilities: () =>
     | Omit<AuthoringCapabilities, "scratchpadEnabled">
     | Promise<Omit<AuthoringCapabilities, "scratchpadEnabled">> = () => ({
@@ -215,13 +207,6 @@ export function createReviewApi(
       await next();
     });
 
-  const sharedData = shared ? new SharedReviewData(shared) : undefined;
-  const isShared = (id: string) => id.startsWith("shared-");
-
-  const sharedCommandSchema = z.object({
-    operation: z.object({ reviewId: z.string().optional() }),
-  });
-
   // The host that can show the scratchpad keeps it: Desktop, while the
   // preference is on. Headless servers never make one, and a pad made earlier
   // stays in the store while it is off.
@@ -235,57 +220,25 @@ export function createReviewApi(
       throw new ReviewInputError(SCRATCHPAD_DISABLED, 409);
   };
 
-  const sharedGuard: MiddlewareHandler = async (context, next) => {
+  const reviewGuard: MiddlewareHandler = async (context, next) => {
     refuseDisabledScratchpad(context.req.param("id"));
     await ensureScratchpad(context.req.param("id"));
-
-    const id = context.req.param("id");
-
-    if (!id || !isShared(id)) return next();
-
-    const query = readQuerySchemas.get.parse({
-      version: context.req.query("version"),
-    });
-
-    readReview(id, query.version);
-
-    if (
-      context.req.method !== "GET" &&
-      !/\/(open|source|copy-context|environment)$/.test(context.req.path) &&
-      !/\/workspaces\/[^/]+\/retry$/.test(context.req.path)
-    )
-      throw new ReviewInputError("Shared reviews are read-only.", 409);
 
     return next();
   };
 
-  app.use("/:id", sharedGuard);
-  app.use("/:id/*", sharedGuard);
+  app.use("/:id", reviewGuard);
+  app.use("/:id/*", reviewGuard);
 
-  if (shared && data) {
-    shared.connect(store, data);
-    mountSharingHost(app, store, data, shared, hooks.sharing);
-  }
-
-  const readReview = (id: string, version?: number): Snapshot => {
-    if (!id.startsWith("shared-")) return store.read(id, version);
-    const snapshot = shared?.get(id).snapshot;
-
-    if (!snapshot || (version !== undefined && version !== snapshot.version))
-      throw new ReviewInputError("Shared review version is unavailable.", 404);
-
-    return snapshot;
-  };
+  const readReview = (id: string, version?: number): Snapshot =>
+    store.read(id, version);
 
   const catalog = (mode: "structural" | "textual" = "structural") => {
     const local = store.list(mode);
 
-    return [
-      ...(scratchpadEnabled()
-        ? local
-        : local.filter((summary) => summary.kind !== "scratchpad")),
-      ...(shared?.list(mode) ?? []),
-    ];
+    return scratchpadEnabled()
+      ? local
+      : local.filter((summary) => summary.kind !== "scratchpad");
   };
 
   app.get("/", async (context) => {
@@ -323,17 +276,12 @@ export function createReviewApi(
       throw new ReviewInputError("GitLab source service is unavailable.", 409);
     const id = context.req.param("id");
 
-    if (isShared(id))
-      throw new ReviewInputError("Shared reviews cannot modify GitLab.", 409);
     const snapshot = store.read(id);
     const version = context.req.query("version");
 
-    if (
-      snapshot.shared ||
-      (version !== undefined && Number(version) !== snapshot.version)
-    )
+    if (version !== undefined && Number(version) !== snapshot.version)
       throw new ReviewInputError(
-        "Historical or shared reviews cannot modify GitLab. Open the current review.",
+        "Historical reviews cannot modify GitLab. Open the current review.",
         409,
       );
 
@@ -530,11 +478,7 @@ export function createReviewApi(
     const id = context.req.param("id");
     readReview(id);
 
-    return context.json(
-      isShared(id)
-        ? { workingCount: 0, expiresAt: null }
-        : store.activity.read(id),
-    );
+    return context.json(store.activity.read(id));
   });
 
   // One route per agent tool; the path names the action.
@@ -639,9 +583,6 @@ export function createReviewApi(
             store.activity.subscribeWorking(() => {
               if (mark(null)) notify();
             }),
-            shared?.subscribe(() => {
-              if (mark(null)) notify();
-            }) ?? (() => {}),
             store.subscribeCatalog(() => {
               if (mark(null)) notify();
             }),
@@ -661,12 +602,10 @@ export function createReviewApi(
       (notify) => {
         const local = store.subscribeCatalog(notify);
         const activity = store.activity.subscribeWorking(notify);
-        const imported = shared?.subscribe(notify);
 
         return () => {
           local();
           activity();
-          imported?.();
         };
       },
     );
@@ -726,8 +665,6 @@ export function createReviewApi(
   app.post("/:id/open", async (context) => {
     const id = context.req.param("id");
 
-    if (isShared(id)) await shared?.assertReady(id);
-
     return context.json({ ok: true, ...(await openReview(readReview(id))) });
   });
   app.get("/:id/watch", (context) => {
@@ -739,9 +676,7 @@ export function createReviewApi(
     return watch(
       () => ({
         ...(document ??= readReview(id)),
-        activity: isShared(id)
-          ? { workingCount: 0, expiresAt: null }
-          : store.activity.read(id),
+        activity: store.activity.read(id),
       }),
       (notify) => {
         const stopRefresh = store.watchWorktrees();
@@ -808,14 +743,6 @@ export function createReviewApi(
       const query = readQuerySchemas.maps.parse(context.req.query());
       const id = context.req.param("id");
 
-      if (id && isShared(id))
-        return context.json(
-          sharedData!.map(
-            id,
-            z.string().parse(context.req.param("resourceId")),
-          ),
-        );
-
       return context.json(
         await data.map(
           await data.sourcePins(readReview(id, query.version)),
@@ -854,16 +781,9 @@ export function createReviewApi(
       const id = context.req.param("id");
       const snapshot = readReview(id);
 
-      const resource =
-        id && isShared(id)
-          ? {
-              ...(await sharedData!.resource(
-                id,
-                z.string().parse(context.req.param("resourceId")),
-              )),
-              repositoryId: snapshot.pins?.repositoryId ?? "",
-            }
-          : store.resource(z.string().parse(context.req.param("resourceId")));
+      const resource = store.resource(
+        z.string().parse(context.req.param("resourceId")),
+      );
 
       // A document with pins serves only its repository's resources.
       if (snapshot.pins && resource.repositoryId !== snapshot.pins.repositoryId)
@@ -1650,7 +1570,7 @@ export function createReviewApi(
     const id = context.req.param("id");
     const snapshot = readReview(id, query.version);
 
-    if (isShared(id) || !snapshot.pins) return context.json({ layers: [] });
+    if (!snapshot.pins) return context.json({ layers: [] });
     const repositoryId = snapshot.pins.repositoryId;
 
     const repoKey = (review: Pick<Snapshot, "origin" | "pins">) =>
@@ -1674,20 +1594,9 @@ export function createReviewApi(
     return context.json({ layers });
   });
 
-  app.get("/:id/history", (context) => {
-    const id = context.req.param("id");
-
-    if (!isShared(id)) return context.json(store.history(id));
-    const snapshot = readReview(id);
-
-    return context.json([
-      {
-        version: snapshot.version,
-        title: snapshot.title,
-        createdAt: snapshot.createdAt,
-      },
-    ]);
-  });
+  app.get("/:id/history", (context) =>
+    context.json(store.history(context.req.param("id"))),
+  );
   app.get("/:id/inspect", (context) => {
     const query = inspectQuerySchema.parse(context.req.query());
     const id = context.req.param("id");
@@ -1762,50 +1671,17 @@ export function createReviewApi(
 
     const input = commandSchema.parse(request);
 
-    const command = sharedCommandSchema.safeParse(input);
+    const reviewId =
+      "reviewId" in input.operation ? input.operation.reviewId : undefined;
 
-    if (command.success) {
-      refuseDisabledScratchpad(command.data.operation.reviewId);
-      await ensureScratchpad(command.data.operation.reviewId);
-    }
+    refuseDisabledScratchpad(reviewId);
+    await ensureScratchpad(reviewId);
 
     if (
       input.operation.type === "create" &&
       input.operation.kind === "scratchpad"
     )
       refuseDisabledScratchpad(SCRATCHPAD_ID);
-
-    if (
-      command.success &&
-      command.data.operation.reviewId?.startsWith("shared-")
-    ) {
-      const parsed = commandSchema.parse(input);
-
-      if (shared && parsed.operation.type === "delete") {
-        await shared.removeLocal(parsed.operation.reviewId);
-
-        return context.json({
-          reviewId: parsed.operation.reviewId,
-          version: 0,
-          deleted: true,
-        });
-      }
-
-      if (shared && parsed.operation.type === "attention") {
-        await shared.setAttention(
-          parsed.operation.reviewId,
-          parsed.operation.action,
-        );
-
-        return context.json({
-          reviewId: parsed.operation.reviewId,
-          version: shared.get(parsed.operation.reviewId).snapshot.version,
-          attention: true,
-        });
-      }
-
-      throw new ReviewInputError("Shared reviews are read-only.", 409);
-    }
 
     const result = await store.execute(input);
 

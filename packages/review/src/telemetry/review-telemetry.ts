@@ -63,28 +63,7 @@ export const REVIEW_APP_SESSION_ID_ENV = "DEV_FAST_REVIEW_APP_SESSION_ID";
 const REVIEW_SERVER_ENTRY_ENV = "DEV_FAST_REVIEW_SERVER_ENTRY";
 
 /** Install config fields announceOnce guards. */
-type AnnouncedField =
-  | "installationCreatedSent"
-  | "firstReviewPresentedSent"
-  | "accountAlias";
-
-/**
- * A fixed namespace, not the installation id: a key per install would give
- * every install a different alias for one account and defeat the linking.
- * The hash is one-way; the account id itself is never sent.
- */
-const ACCOUNT_ALIAS_KEY = "dev.fast.review.telemetry.account.v1";
-
-/** `gh_` + the first 16 bytes of HMAC-SHA256(namespace, account id). */
-export function accountAlias(accountId: string): string {
-  const digest = createHmac("sha256", ACCOUNT_ALIAS_KEY)
-    .update(accountId)
-    .digest()
-    .subarray(0, 16)
-    .toString("base64url");
-
-  return `gh_${digest}`;
-}
+type AnnouncedField = "installationCreatedSent" | "firstReviewPresentedSent";
 
 /** A tool name is program-owned, but only an identifier is ever sent. */
 const TOOL_NAME_PATTERN = /^[a-z][a-z0-9_]{0,39}$/;
@@ -109,9 +88,6 @@ export type ReviewCliCommandPath =
   | "instances.use"
   | "instances.clear"
   | "migrate.apply"
-  | "login"
-  | "logout"
-  | "whoami"
   | "api"
   | "mcp"
   | "server.start"
@@ -250,7 +226,6 @@ export type ReviewCommandTelemetry = Pick<
   | "captureCommandFailed"
   | "captureUiEvent"
   | "captureToolCalled"
-  | "captureAccountAlias"
   | "shutdown"
 >;
 
@@ -361,37 +336,6 @@ export class ReviewTelemetry {
         event: "review_installation_created",
         distinctId: config.installationId,
         properties: await this.commonProperties(config),
-      });
-    });
-  }
-
-  /**
-   * Link this installation to a signed-in account by a one-way hash, so
-   * several installs by one person count as one; the raw account id never
-   * leaves this process. Once per installation: the first account wins. A
-   * later login to another account sends nothing, because a second alias
-   * would merge two accounts, and every later install of either, into one
-   * PostHog person. The account is looked up only when an alias would be
-   * sent, so a login with telemetry off makes no network call.
-   */
-  async captureAccountAlias(
-    lookupAccountId: () => Promise<string>,
-  ): Promise<void> {
-    if (!(await this.isEnabled()) || this.installConfig?.accountAlias) return;
-
-    const alias = accountAlias(await lookupAccountId());
-
-    await this.announceOnce("accountAlias", alias, async (config) => {
-      await this.captureClient.capture({
-        event: "$create_alias",
-        distinctId: config.installationId,
-        // PostHog merges identities only while processing persons, so the
-        // alias itself must turn processing on.
-        properties: {
-          ...(await this.commonProperties(config)),
-          alias,
-          $process_person_profile: true,
-        },
       });
     });
   }
@@ -879,10 +823,7 @@ export class ReviewTelemetry {
   }
 
   private async commonProperties(
-    config: Pick<
-      ReviewTelemetryInstallConfig,
-      "internal" | "accountAlias" | "createdAt"
-    >,
+    config: Pick<ReviewTelemetryInstallConfig, "internal" | "createdAt">,
   ): Promise<PostHogCaptureProperties> {
     const appVersion = reviewAppVersion(this.env);
     const appSessionId = nonEmpty(this.env[REVIEW_APP_SESSION_ID_ENV]);
@@ -901,8 +842,7 @@ export class ReviewTelemetry {
       ci: Boolean(this.env.CI),
       internal: isInternalTelemetry(this.env, config),
       install_age_days: installAgeDays(config, this.now()),
-      // Anonymous until an account is aliased; then PostHog keeps a person.
-      $process_person_profile: config.accountAlias !== undefined,
+      $process_person_profile: false,
     };
 
     if (appVersion) properties.app_version = appVersion;

@@ -10,7 +10,6 @@ import {
   headlessServerLockPath,
   reviewServerDiscoveryPath,
 } from "@review/server/server-discovery.js";
-import { mountSharingPublisher } from "@review/sharing/host.js";
 
 import { GlobalReviewDesktopVerbRelay } from "./global-verb-relay.js";
 import {
@@ -103,14 +102,12 @@ async function serve(input: HeadlessServerInput) {
     local.store,
     local.data,
     callbacks.open,
-    undefined,
     callbacks.capabilities,
     // The scratchpad is the laptop's alone, even with a Desktop attached.
     () => false,
     () => ({ key: "headless", home: input.stateDir }),
   );
 
-  mountSharingPublisher(api, local.store, local.data);
   app.route("/reviews-api", api);
 
   let server: Bun.Server<undefined> | undefined;

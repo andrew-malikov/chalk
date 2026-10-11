@@ -99,7 +99,6 @@
         "@dev.fast/json": "workspace:*",
         "@dev.fast/local-vcs": "^0.1.0",
         "@dev.fast/review-protocol": "workspace:*",
-        "@dev.fast/review-share-protocol": "workspace:*",
         "@types/node": "24.12.2",
         "@types/react": "19.2.14",
         "@types/semver": "7.7.1",
@@ -118,16 +117,6 @@
         "@dev.fast/diffr": "0.1.10",
         "@dev.fast/json": "workspace:*",
         "eventsource-parser": "3.1.1",
-        "zod": "catalog:",
-      },
-      "devDependencies": {
-        "vitest": "4.1.11",
-      },
-    },
-    "packages/review-share-protocol": {
-      "name": "@dev.fast/review-share-protocol",
-      "version": "0.1.2",
-      "dependencies": {
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -279,8 +268,6 @@
     "@dev.fast/review-electrobun": ["@dev.fast/review-electrobun@workspace:apps/review-electrobun"],
 
     "@dev.fast/review-protocol": ["@dev.fast/review-protocol@workspace:packages/review-protocol"],
-
-    "@dev.fast/review-share-protocol": ["@dev.fast/review-share-protocol@workspace:packages/review-share-protocol"],
 
     "@dual-bundle/import-meta-resolve": ["@dual-bundle/import-meta-resolve@4.2.1", "", {}, "sha512-id+7YRUgoUX6CgV0DtuhirQWodeeA7Lf4i2x71JS/vtA5pRb/hIGWlw+G6MeXvsM+MXrz0VAydTGElX1rAfgPg=="],
 

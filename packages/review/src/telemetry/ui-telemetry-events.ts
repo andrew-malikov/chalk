@@ -560,8 +560,6 @@ export const UI_TELEMETRY_EVENTS = {
     event: "review_review_deleted",
     properties: { via: REVIEW_DELETED_VIA },
   },
-  // The reader copied the review's share link.
-  review_shared: { event: "review_review_shared", properties: {} },
 } as const satisfies Record<
   string,
   { event: string; properties: Record<string, UiTelemetryPropertySpec> }

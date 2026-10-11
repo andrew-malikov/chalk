@@ -219,19 +219,6 @@ export function DiscordIcon({ xstyle }: IconProps = {}): ReactElement {
   );
 }
 
-export function ShareIcon({ xstyle }: IconProps = {}): ReactElement {
-  return (
-    <svg
-      {...stylex.props(styles.icon, xstyle)}
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M12 15V3m-4 4 4-4 4 4M7 10H5v11h14V10h-2" />
-    </svg>
-  );
-}
-
 export function CopyIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
     <svg

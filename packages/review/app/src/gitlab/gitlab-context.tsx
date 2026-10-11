@@ -85,10 +85,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
   sessionRef.current = session;
   const enabled = !!session.review?.gitlab;
 
-  const editable =
-    enabled &&
-    session.review?.historicalRevision === null &&
-    !session.config.reviewId.startsWith("shared-");
+  const editable = enabled && session.review?.historicalRevision === null;
 
   const [state, setState] = useState<GitLabState | null>(null);
   const stateRef = useRef(state);

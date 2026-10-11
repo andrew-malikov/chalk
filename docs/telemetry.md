@@ -85,14 +85,6 @@ On first use, Blackboard creates a random installation UUID and stores it at
 PostHog's `identify()` API. Events carry `$process_person_profile: false`, so
 PostHog keeps no person profile.
 
-**Account alias.** The first GitHub sign-in (in the app or with
-`blackboard login`) sends one `$create_alias` linking the installation ID to
-`gh_` plus a one-way HMAC of the account ID. The account ID, login, and email
-never leave the machine. After that, events carry
-`$process_person_profile: true`, so installations signed into the same account
-share one PostHog person. Later sign-ins to other accounts and sign-outs change
-nothing.
-
 Blackboard Preview keeps a separate installation ID in
 `telemetry/progressive-review.preview.json`. The standalone CLI always uses the
 stable ID.
@@ -223,13 +215,7 @@ dropped the events.
 | `review_error_burst`            | `message_hash`, `suppressed`                                                                                                                   | A `review_client_error` passes 5 reports for one message in one session; see "Error reports" |
 | `review_open_timeout`           | `elapsed_ms`, `review_id`, `presentation_id`                                                                                                   | A session starts and no presented or ended event follows within 30 seconds                   |
 | `review_review_created`         | `via` in `api`, `mcp`, `other`; `kind` in `review`, `scratchpad`; `blocks`; optional `agent_kind`                                              | A blackboard or the scratchpad is created; `via` is `other` for the app's own UI             |
-| `review_review_published`       | `version`                                                                                                                                      | A blackboard is published for sharing                                                        |
-| `review_review_revoked`         | None                                                                                                                                           | A share link is revoked                                                                      |
-| `review_authoring_completed`    | `duration_ms`; optional `agent_kind`                                                                                                           | The first publish of a blackboard created via `api` or `mcp`, timed from its creation        |
 | `review_mcp_tool_called`        | `tool`; `via` in `api`, `mcp`; `ok`; `duration_ms`                                                                                             | An agent calls a Blackboard authoring tool                                                   |
-| `review_login_started`          | None                                                                                                                                           | GitHub sign-in in the app begins                                                             |
-| `review_login_succeeded`        | None                                                                                                                                           | GitHub sign-in in the app finishes                                                           |
-| `review_login_failed`           | `reason` in `did_not_finish`, `error`                                                                                                          | GitHub sign-in in the app fails                                                              |
 | `$exception`                    | Same fields as `review_client_error`, in PostHog's error-tracking shape                                                                        | Sent alongside every `review_client_error`, for one release                                  |
 | `$create_alias`                 | `alias`, `$process_person_profile: true`                                                                                                       | The first GitHub sign-in on this installation; see "Identity and storage"                    |
 
@@ -247,11 +233,11 @@ yet sent.
 
 `command_path` is a closed enum: `help`, `version`, `app.launch`, `app.pick`,
 `info`, `connect`, `instances`, `instances.use`, `instances.clear`,
-`migrate.apply`, `login`, `logout`, `whoami`,
+`migrate.apply`,
 `trace.store.create`, `trace.store.delete`, `trace.store.info`,
 `trace.install`, `trace.allow`, `trace.deny`, `trace.storage.use`,
 `trace.config.migrate`, `api`, `mcp`, `server.start`, and `invalid`. Other
-commands, such as `share` and `status`, send no command events. Blackboard
+commands, such as `status`, send no command events. Blackboard
 sends no arguments, refs, tokens, or storage credentials. `surface` is
 `headless` for `server.start`, `mcp` for `mcp`, `api` for `api`, and `cli`
 otherwise, on every event the command's process sends.
@@ -292,7 +278,6 @@ The server checks all properties in this table against
 | `review_discord_clicked`          | `via` in topbar, dialog, docs                                                                                                                                                  | A user clicks a Discord invite                                                                             |
 | `review_discord_dialog_shown`     | None                                                                                                                                                                           | The community invite dialog opens                                                                          |
 | `review_discord_dialog_dismissed` | None                                                                                                                                                                           | The community invite dialog closes unaccepted                                                              |
-| `review_review_shared`            | None                                                                                                                                                                           | A user copies a blackboard's share link                                                                    |
 | `review_review_deleted`           | `via` in home                                                                                                                                                                  | A user deletes a stored blackboard from Home                                                               |
 | `review_tour_started`             | `steps`                                                                                                                                                                        | A user starts a tour                                                                                       |
 | `review_tour_step_advanced`       | `step`, `steps`                                                                                                                                                                | A user moves to the next tour step                                                                         |
@@ -484,10 +469,8 @@ The report payload contains these fields:
 
 The blackboard record is the whole saved version: its title and document text,
 its lenses, the commits it is pinned to, and where it came from, such as the
-branch, base ref, and pull request number and URL. A blackboard received
-through a share link also carries the sharer's GitHub login and the
-repository's clone URL. It does not contain source code; the changed-file diffs
-are a separate attachment.
+branch, base ref, and pull request number and URL. It does not contain source
+code; the changed-file diffs are a separate attachment.
 
 If a selected attachment is unavailable, Blackboard omits it, names it in
 `diagnostics.attachment_errors`, and sends the rest. If the report would exceed
@@ -527,7 +510,6 @@ passive event allowlist and telemetry disk queue do not process bug reports.
 | Settings screen             | `packages/review/app/src/settings-page.tsx`                                                    |
 | First-use notice            | `apps/review-desktop/code-oss/src/vs/review/contrib/telemetry/reviewTelemetry.contribution.ts` |
 | Error budget and bursts     | `packages/review/src/server/client-error-budget.ts`                                            |
-| Account alias               | `packages/review/src/server/account-alias.ts`                                                  |
 | Blackboard lifecycle events | `packages/review/src/server/review-lifecycle-telemetry.ts`                                     |
 | Open-timeout watchdog       | `packages/review/src/server/review-open-watchdog.ts`                                           |
 | Crash dump upload           | `packages/review/src/server/crash-report.ts`                                                   |

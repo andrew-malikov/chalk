@@ -8,9 +8,6 @@ export const sourceAliases = {
 
 export const reviewTestAliases = {
   ...sourceAliases,
-  "@dev.fast/review-share-protocol": fileURLToPath(
-    new URL("../review-share-protocol/src/index.ts", import.meta.url),
-  ),
   "@dev.fast/json": fileURLToPath(
     new URL("../json/src/index.ts", import.meta.url),
   ),

@@ -170,7 +170,6 @@ export interface SnapshotOrigin {
 }
 
 export interface Snapshot {
-  shared?: { login?: string; sharedAt?: number; cloneUrl?: string };
   reviewId: string;
   version: number;
   title: string;

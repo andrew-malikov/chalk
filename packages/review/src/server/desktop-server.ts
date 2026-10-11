@@ -39,7 +39,6 @@ import {
   REVIEW_INSTANCE_ENV,
   type ReviewInstanceIdentity,
 } from "@review/server/desktop-discovery";
-import type { SharedReviewStore } from "@review/sharing/import.js";
 import {
   devReviewHome,
   reviewInstanceDiscoveryPath,
@@ -55,7 +54,6 @@ import {
 } from "@review/telemetry/review-telemetry";
 import { z } from "zod";
 
-import { aliasInstallationToAccount } from "./account-alias";
 import { CrashReportRequestSchema, reportCrashDump } from "./crash-report";
 import {
   readDiffrConfig,
@@ -90,7 +88,6 @@ const UUID_PATTERN =
 export interface GlobalReviewServerInput {
   /** The desktop host owns this shared database and closes it after the server. */
   reviewStore: ReviewStore;
-  sharedReviews?: SharedReviewStore;
   reviewData: LocalReviewData;
   appPid: number;
   packageRoot: string;
@@ -239,9 +236,7 @@ export function createGlobalReviewServer(
 
   app.route(
     "/reviews-api",
-    createJsonReviewReporting(input.reviewStore, telemetry, {
-      shared: input.sharedReviews,
-    }),
+    createJsonReviewReporting(input.reviewStore, telemetry),
   );
 
   app.route(
@@ -250,7 +245,6 @@ export function createGlobalReviewServer(
       input.reviewStore,
       input.reviewData,
       callbacks.open,
-      input.sharedReviews,
       callbacks.capabilities,
       () => scratchpadEnabled,
       () => {
@@ -268,11 +262,7 @@ export function createGlobalReviewServer(
           home: devReviewHome(),
         };
       },
-      reviewLifecycleTelemetry(
-        telemetry,
-        (reviewId) => reviewStore.summary(reviewId)?.firstCreatedAt,
-        () => aliasInstallationToAccount(telemetry),
-      ),
+      reviewLifecycleTelemetry(telemetry),
       { threads: askThreads, agents: () => detectAskAgents() },
     ),
   );
@@ -639,8 +629,7 @@ function watchSessionOpen(
 /**
  * `session_started`'s `source_kind`: the opened review's target kind, or
  * `scratchpad` for the one scratchpad. Undefined when the review is gone (a
- * shared review this store never had, or one deleted between open and the
- * event arriving) or was left without a target.
+ * review deleted between open and the event arriving) or was left without a target.
  */
 export function sessionStartedSourceKind(
   reviewStore: ReviewStore,

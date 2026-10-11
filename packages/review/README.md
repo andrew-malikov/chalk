@@ -1,7 +1,7 @@
 # dev.fast Blackboard
 
 The `@dev.fast/review` package provides the `blackboard` CLI for headless review
-authoring, sharing, and agent trace capture. It requires Bun 1.4.2 or newer. An npm install
+authoring and agent trace capture. It requires Bun 1.4.2 or newer. An npm install
 also provides `review` and `whiteboard` as aliases for `blackboard`.
 `blackboard server` and `blackboard trace` run without installing or starting Desktop.
 Blackboard Desktop displays the review canvas; its server owns review

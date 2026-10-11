@@ -56,7 +56,7 @@ jobs:
         run: |
           bun test scripts/review-cli-release.test.mjs scripts/review-cli-dependencies.test.mjs
           bun run --filter @dev.fast/review ensure:tutorial-assets
-          bun run --filter @dev.fast/review test -- --project shared-module-graph src/server/headless-host.test.ts src/server/headless-sharing.test.ts src/cli/cli-install.test.ts
+          bun run --filter @dev.fast/review test -- --project shared-module-graph src/server/headless-host.test.ts src/cli/cli-install.test.ts
       - name: Build release tarball
         if: steps.release.outputs.published != 'true'
         run: bun scripts/pack-review-cli.mjs release-artifacts

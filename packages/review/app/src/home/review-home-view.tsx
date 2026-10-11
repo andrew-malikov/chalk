@@ -602,10 +602,7 @@ function ReviewTable({
                       </span>
                       <span
                         {...stylex.props(styles.repository)}
-                        title={
-                          review.repositoryPath ??
-                          (review.shared ? "Shared review" : undefined)
-                        }
+                        title={review.repositoryPath ?? undefined}
                       >
                         <RepositoryName review={review} />
                       </span>
@@ -974,16 +971,6 @@ function matchesQuery(review: ReviewApiSummary, query: string): boolean {
 
 function repositoryLabel(review: ReviewApiSummary): string {
   if (review.repositoryGroup) return review.repositoryGroup.label;
-
-  if (review.shared?.cloneUrl) {
-    try {
-      return new URL(review.shared.cloneUrl).pathname
-        .replace(/^\//, "")
-        .replace(/\.git$/, "");
-    } catch {
-      // Older imports may not have a valid remote URL.
-    }
-  }
 
   return (
     review.repositoryName ??

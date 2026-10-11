@@ -62,10 +62,10 @@ describe("ReviewHome", () => {
       }),
       summary({
         reviewId: uuid(4),
-        title: "Newest shared",
+        title: "Newest review",
         createdAt: "2026-09-22T11:00:00Z",
         repositoryPath: undefined,
-        shared: { cloneUrl: "https://github.com/team/other.git" },
+        repositoryGroup: { key: "other", label: "team/other" },
       }),
     ];
 
@@ -76,7 +76,7 @@ describe("ReviewHome", () => {
       [...container.querySelectorAll("tbody button > span:first-child")].map(
         (el) => el.textContent,
       ),
-    ).toEqual(["Newest shared", "Recent local", "Week", "Old"]);
+    ).toEqual(["Newest review", "Recent local", "Week", "Old"]);
     expect(container.textContent).toContain("team/other");
     expect(
       container.querySelector('[title^="/worktrees/feature-a"]'),

@@ -2,12 +2,12 @@
 
 <!--
 Outline: Local data -> Anonymous telemetry -> Errors -> Explicit bug reports
--> Sharing -> Hosted trace store -> Opt-out -> Developer inspection.
+-> Hosted trace store -> Opt-out -> Developer inspection.
 -->
 
 Blackboard reads source code and agent-authored documents from your machine.
 This page separates the local product data, anonymous telemetry, explicit bug
-reports, sharing, and hosted traces.
+reports, and hosted traces.
 
 Read the [dev.fast privacy policy](https://dev.fast/privacy) for the public
 policy governing Blackboard.
@@ -17,9 +17,8 @@ For the exact event schemas and implementation references, see the full
 
 ## What stays local
 
-Blackboard stores authored blackboards in `~/.dev/review-api.db`, blackboards
-opened from share links under `~/.dev/shared-reviews/`, and desktop discovery
-under `~/.dev/review-desktop/`. The native desktop uses
+Blackboard stores authored blackboards in `~/.dev/review-api.db` and desktop
+discovery under `~/.dev/review-desktop/`. The native desktop uses
 `~/.dev-fast/review-electrobun` as its default profile; `DEV_REVIEW_HOME`
 selects another profile. These names predate the
 Blackboard rename.
@@ -40,11 +39,8 @@ PostHog.
 ## Anonymous product telemetry
 
 Anonymous telemetry is enabled by default. Blackboard creates a random
-installation UUID per release channel, with no PostHog person profile. If you
-sign in with GitHub, Blackboard links the installation to a one-way hash of
-your account ID, so installations signed into the same account share one
-profile. Your account ID, login, and email never leave the machine. See
-[Identity and storage](telemetry.md#identity-and-storage).
+installation UUID per release channel, with no PostHog person profile.
+See [Identity and storage](telemetry.md#identity-and-storage).
 
 Telemetry can include closed enums, booleans, counts, durations, the CLI and
 app versions, release channel, operating-system version and architecture
@@ -122,16 +118,6 @@ An explicit bug report is separate from passive telemetry and is sent even when
 anonymous telemetry is disabled. Blackboard shows the attachment choices before
 submission.
 
-## Sharing
-
-Sharing is explicit. `blackboard share` uploads an immutable copy of one saved
-blackboard version to the /dev/fast share service and returns a link. The copy
-includes the document text, images, software maps, the commits it is pinned
-to, your GitHub login, and the repository's GitHub clone URL. It does not
-upload source code: recipients fetch the pinned commits from GitHub with their
-own access. Anyone with the link can download the copy.
-`blackboard share revoke <share-id>` stops future downloads.
-
 ## Hosted trace store
 
 Hosted tracing requires explicit consent for each repository and origin.
@@ -161,7 +147,6 @@ retained object versions expire on a bounded schedule rather than instantly.
 `blackboard trace deny` removes this machine's consent for the repository and keeps
 prior uploads. `blackboard trace store delete` asks the store to delete the
 repository's hosted copies (admins only) and leaves the consent as it is.
-`blackboard logout` forgets the local login only.
 
 Objects are encrypted with server-controlled keys, so /dev/fast can decrypt
 stored traces. The GitHub OAuth app requests the `repo` scope to check access.

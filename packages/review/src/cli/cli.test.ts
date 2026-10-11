@@ -243,9 +243,6 @@ describe("Blackboard CLI", () => {
       captureToolCalled: vi.fn<ReviewTelemetry["captureToolCalled"]>(
         async () => undefined,
       ),
-      captureAccountAlias: vi.fn<ReviewTelemetry["captureAccountAlias"]>(
-        async () => undefined,
-      ),
       shutdown: vi.fn<() => Promise<undefined>>(async () => undefined),
     } satisfies ReviewCommandTelemetry;
 
@@ -442,9 +439,6 @@ describe("Blackboard CLI", () => {
         async () => undefined,
       ),
       captureToolCalled: vi.fn<ReviewTelemetry["captureToolCalled"]>(
-        async () => undefined,
-      ),
-      captureAccountAlias: vi.fn<ReviewTelemetry["captureAccountAlias"]>(
         async () => undefined,
       ),
       shutdown: vi.fn<ReviewTelemetry["shutdown"]>(async () => undefined),

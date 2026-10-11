@@ -65,7 +65,7 @@ export function failWithJsonError(
 }
 
 // Flags that take a separate value. A value can look exactly like a flag, as in
-// `share --review "--json"`, so the scan must skip it.
+// `app pick --session "--json"`, so the scan must skip it.
 const VALUE_FLAGS = new Set(["--review", "--session", "--agent-session"]);
 
 /**

@@ -61,8 +61,7 @@ const rowSchema = z
     }),
   );
 
-/** Saved Ask conversations, per review. Shared reviews are not in
- * `reviews`, so there is no foreign key; deleting a review deletes its rows. */
+/** Saved Ask conversations, per review; deleting a review deletes its rows. */
 export class AskHistory {
   constructor(private readonly db: Database) {
     db.exec(`CREATE TABLE IF NOT EXISTS ask_conversations(

@@ -17,7 +17,6 @@ import {
   readReviewPackageVersion,
 } from "@review/package-paths";
 import { reviewAgentCliHelp } from "@review/review-api/agent-cli";
-import { aliasInstallationToAccount } from "@review/server/account-alias";
 import {
   readReviewInstances,
   selectReviewInstance,
@@ -29,13 +28,6 @@ import {
   reviewServerStateDir,
   serverNotReady,
 } from "@review/server/server-discovery";
-import { readStoreAuth } from "@review/sharing/store-auth";
-import {
-  DEFAULT_STORE_ORIGIN,
-  runStoreLogin,
-  runStoreLogout,
-  runStoreWhoami,
-} from "@review/sharing/store-auth";
 import { DEV_REVIEW_HOME_ENV } from "@review/storage/review-home-paths";
 import {
   emitReviewEvent,
@@ -84,10 +76,6 @@ interface ReviewCliRuntime {
   runReviewAppPick: typeof runReviewAppPick;
   runReviewInfo: typeof runReviewInfo;
   runReviewMigration: typeof runReviewMigration;
-
-  runStoreLogin: typeof runStoreLogin;
-  runStoreLogout: typeof runStoreLogout;
-  runStoreWhoami: typeof runStoreWhoami;
 }
 
 export interface ReviewCliInput {
@@ -664,99 +652,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     });
   });
 
-  const share = configureJsonOutput(
-    program
-      .command("share")
-      .description(
-        "Upload an immutable review snapshot and return its share link",
-      ),
-    "plain",
-  )
-    .option("--review <id>", "review ID")
-    .option("--version <number>", "Saved version to share")
-    .option("--preview", "Open the share link in Blackboard Preview by default")
-    .option(
-      "--request-id <uuid>",
-      "Reuse this ID when retrying the same immutable upload",
-    )
-    .action(
-      async (options: {
-        session?: string;
-        version?: string;
-        requestId?: string;
-        preview?: boolean;
-        json?: boolean;
-      }) => {
-        const { runShareCli } = await import("@review/sharing/cli.js");
-        state.exitCode = await runShareCli({
-          ...input,
-          ...options,
-          env: authoringEnv(),
-        });
-      },
-    );
-
-  configureJsonOutput(
-    share
-      .command("revoke <share-id>")
-      .description("Revoke future downloads of a share"),
-    "plain",
-  ).action(async (shareId: string, options: { json?: boolean }) => {
-    const { runShareCli } = await import("@review/sharing/cli.js");
-    state.exitCode = await runShareCli({
-      ...input,
-      ...options,
-      revoke: shareId,
-      env: authoringEnv(),
-    });
-  });
-
-  // Sharing uses identity-only device login.
-  configureJsonOutput(
-    program.command("login").description("Log in to Blackboard with GitHub"),
-    "plain",
-  )
-    .option("--origin <url>", "Blackboard service origin", DEFAULT_STORE_ORIGIN)
-    .option("--no-browser", "Print the URL instead of opening a browser")
-    .action(
-      async (options: {
-        origin?: string;
-        browser?: boolean;
-        json?: boolean;
-      }) => {
-        state.exitCode = await runtime.runStoreLogin({
-          origin: options.origin,
-          noBrowser: options.browser === false,
-          json: options.json,
-          stdout: input.stdout,
-          stderr: input.stderr,
-        });
-
-        if (state.exitCode === 0)
-          await attemptTelemetry(() =>
-            aliasInstallationToAccount(telemetry, env),
-          );
-      },
-    );
-
-  program
-    .command("logout")
-    .description("Forget the Blackboard account login")
-    .action(async () => {
-      state.exitCode = await runtime.runStoreLogout({ stdout: input.stdout });
-    });
-
-  configureJsonOutput(
-    program.command("whoami").description("Show the Blackboard account login"),
-    "plain",
-  ).action(async (options: { json?: boolean }) => {
-    state.exitCode = await runtime.runStoreWhoami({
-      json: options.json,
-      stdout: input.stdout,
-      stderr: input.stderr,
-    });
-  });
-
   // The JSON authoring surface is owned by review-api/agent-cli.ts. Commander
   // passes the tool name and JSON payload through untouched, so these commands
   // share the top-level help, the leading `--json` form, and the telemetry
@@ -938,9 +833,6 @@ function reviewCliRuntime(
     runReviewInfo,
     runReviewMigration,
 
-    runStoreLogin,
-    runStoreLogout,
-    runStoreWhoami,
     ...overrides,
   };
 }
@@ -1057,8 +949,6 @@ function telemetryCommandPath(
   if (parent === "migrate" && name === "apply") return "migrate.apply";
 
   if (parent === "server" && name === "start") return "server.start";
-
-  if (name === "login" || name === "logout" || name === "whoami") return name;
 
   if (name === "api" || name === "mcp" || name === "connect") return name;
 

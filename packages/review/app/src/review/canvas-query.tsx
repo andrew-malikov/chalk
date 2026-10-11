@@ -28,10 +28,6 @@ export function createCanvasQueryClient(): QueryClient {
  * boundary and keys name only what varies within one canvas.
  */
 export const canvasQueryKeys = {
-  sharingAccount: () => ["sharing", "account"] as const,
-  shareLink: (version: number | undefined) =>
-    ["sharing", "link", version] as const,
-
   commitFiles: (commit: string) => ["commit-files", commit] as const,
   diffFiles: (documentKey: string, source: number, revision?: string) =>
     ["diff-files", documentKey, source, revision] as const,

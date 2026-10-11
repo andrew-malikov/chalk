@@ -52,7 +52,6 @@ import type { ReviewFindHost } from "./review-find";
 import { ReviewLensesProvider } from "./review-lenses";
 import { ReviewPanelProvider } from "./review-panel";
 import { readReviewNavigationRestore } from "./review-view-state";
-import { SharingContext } from "./share-control";
 
 type ApiContent = Extract<ReviewCanvasContent, { kind: "api" }>;
 
@@ -324,8 +323,7 @@ export function ApiCanvas({
   }, [baseSession, client, content.reviewId, data, version]);
 
   // Only the latest version of a review this machine owns takes edits.
-  const editable =
-    version === undefined && data !== undefined && !data.snapshot.shared;
+  const editable = version === undefined && data !== undefined;
 
   const saveMarkdown = useMemo(
     () =>
@@ -357,19 +355,6 @@ export function ApiCanvas({
     if (data) content.setTutorial?.(data.snapshot.origin?.tutorial === true);
   }, [data?.snapshot.origin?.tutorial, content.setTutorial]);
 
-  const sharing = useMemo(
-    () =>
-      data
-        ? {
-            client,
-            reviewId: content.reviewId,
-            version: data.snapshot.version,
-            sender: data.snapshot.shared?.login,
-          }
-        : null,
-    [client, content.reviewId, data],
-  );
-
   // Loads are near-instant, so stay blank until there is data or an error.
   // Both branches root the same query provider, so its cache outlives a load.
   if (!data)
@@ -397,72 +382,70 @@ export function ApiCanvas({
 
   return (
     <CanvasQueryProvider client={client} reviewId={content.reviewId}>
-      <SharingContext.Provider value={sharing}>
-        <ReviewSessionProvider session={session}>
-          <ReviewPanelProvider
-            restore={() =>
-              readReviewNavigationRestore(session.config, {
-                softwareMapEnabled:
-                  content.softwareMapEnabled === true && data.maps.size > 0,
-                hasChangeRange:
-                  (data.snapshot.pins?.base ?? "") !==
-                  (data.snapshot.pins?.head ?? ""),
-                version: data.snapshot.version,
-                lensMode: "textual",
-                commits: data.commits,
-              })
-            }
-          >
-            <DocumentData.Provider value={data}>
-              <ReviewLensesProvider
-                client={client}
-                snapshot={data.snapshot}
-                coverageRevision={coverageRevision}
-                structuralDiffEnabled={false}
-              >
-                <TutorialProvider tutorial={content.tutorial}>
-                  {error && (
-                    <p {...stylex.props(styles.error)} role="status">
-                      {error}
-                    </p>
-                  )}
-                  <AuthoringActivityContext.Provider
-                    value={version === undefined ? activity : undefined}
+      <ReviewSessionProvider session={session}>
+        <ReviewPanelProvider
+          restore={() =>
+            readReviewNavigationRestore(session.config, {
+              softwareMapEnabled:
+                content.softwareMapEnabled === true && data.maps.size > 0,
+              hasChangeRange:
+                (data.snapshot.pins?.base ?? "") !==
+                (data.snapshot.pins?.head ?? ""),
+              version: data.snapshot.version,
+              lensMode: "textual",
+              commits: data.commits,
+            })
+          }
+        >
+          <DocumentData.Provider value={data}>
+            <ReviewLensesProvider
+              client={client}
+              snapshot={data.snapshot}
+              coverageRevision={coverageRevision}
+              structuralDiffEnabled={false}
+            >
+              <TutorialProvider tutorial={content.tutorial}>
+                {error && (
+                  <p {...stylex.props(styles.error)} role="status">
+                    {error}
+                  </p>
+                )}
+                <AuthoringActivityContext.Provider
+                  value={version === undefined ? activity : undefined}
+                >
+                  <DrawQueueProvider
+                    cursor={version === undefined ? cursor : undefined}
                   >
                     <DrawQueueProvider
-                      cursor={version === undefined ? cursor : undefined}
+                      scope="lenses"
+                      cursor={version === undefined ? lensCursor : undefined}
                     >
-                      <DrawQueueProvider
-                        scope="lenses"
-                        cursor={version === undefined ? lensCursor : undefined}
+                      <DisplayedReviewVersionContext.Provider
+                        value={data.snapshot.version}
                       >
-                        <DisplayedReviewVersionContext.Provider
-                          value={data.snapshot.version}
+                        <MapEnabled.Provider
+                          value={content.softwareMapEnabled === true}
                         >
-                          <MapEnabled.Provider
-                            value={content.softwareMapEnabled === true}
-                          >
-                            <SaveMarkdown.Provider value={saveMarkdown}>
-                              <CanvasDocument
-                                data={data}
-                                findHost={findHost}
-                                softwareMapEnabled={
-                                  content.softwareMapEnabled === true
-                                }
-                                documentWidth={content.documentWidth}
-                              />
-                            </SaveMarkdown.Provider>
-                          </MapEnabled.Provider>
-                        </DisplayedReviewVersionContext.Provider>
-                      </DrawQueueProvider>
+                          <SaveMarkdown.Provider value={saveMarkdown}>
+                            <CanvasDocument
+                              data={data}
+                              findHost={findHost}
+                              softwareMapEnabled={
+                                content.softwareMapEnabled === true
+                              }
+                              documentWidth={content.documentWidth}
+                            />
+                          </SaveMarkdown.Provider>
+                        </MapEnabled.Provider>
+                      </DisplayedReviewVersionContext.Provider>
                     </DrawQueueProvider>
-                  </AuthoringActivityContext.Provider>
-                </TutorialProvider>
-              </ReviewLensesProvider>
-            </DocumentData.Provider>
-          </ReviewPanelProvider>
-        </ReviewSessionProvider>
-      </SharingContext.Provider>
+                  </DrawQueueProvider>
+                </AuthoringActivityContext.Provider>
+              </TutorialProvider>
+            </ReviewLensesProvider>
+          </DocumentData.Provider>
+        </ReviewPanelProvider>
+      </ReviewSessionProvider>
     </CanvasQueryProvider>
   );
 }

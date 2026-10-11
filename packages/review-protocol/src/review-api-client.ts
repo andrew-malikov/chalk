@@ -34,8 +34,6 @@ export interface ReviewApiSummary {
     pullRequestUrl?: string;
     revision?: string;
   };
-  /** Shared imports have separate local checkouts but retain their remote identity. */
-  shared?: { cloneUrl?: string };
   /** Display grouping only; source pins remain bound to their own checkout. */
   repositoryGroup?: { key: string; label: string };
   repositoryName: string;
@@ -47,7 +45,7 @@ export interface ReviewApiSummary {
   } | null;
   viewedAt: string | null;
   dismissedAt: string | null;
-  /** An agent holds a live lease; absent on shared reviews. */
+  /** An agent holds a live lease. */
   working?: boolean;
 }
 
