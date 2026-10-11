@@ -11,20 +11,8 @@ import {
   type ReviewCliInstallStatus,
 } from "@dev.fast/review-protocol";
 import {
-  AGENT_TRACE_HOOK_AGENTS,
   type TraceCredentialsInput,
-  configureTraceMachine,
-  describeTraceHookOwners,
-  disableAllTraceRepositories,
-  disableTraceMachine,
-  enableTraceRepository,
-  installHarnessHooks,
-  listTraceRepositoryRoots,
-  removeAgentTraceHook,
-  traceMachineEnabled,
   traceMachineStatus,
-  traceRepositoryStatus,
-  traceScope,
 } from "@dev.fast/trace-core";
 import {
   writeFileAtomicAsync,
@@ -45,6 +33,11 @@ import {
 } from "./connect-prompts";
 import { cursorInstallDeeplink } from "./cursor-deeplink";
 import { removeLegacySkills, scanLegacySkills } from "./legacy-skills";
+import { readRetiredFile } from "./retired-agent-hooks";
+import {
+  retireManagedTraceHooks,
+  type RetirementResult,
+} from "./retired-trace-hooks";
 import {
   WINDOWS_MACHINE_ENVIRONMENT_KEY,
   updateWindowsUserPath,
@@ -223,17 +216,26 @@ interface ApplyCliInstallInput {
 export async function applyCliInstall(
   input: ApplyCliInstallInput,
 ): Promise<ApplyResult> {
-  if (!input.autoUpdate && input.shim !== true && input.trace === undefined)
-    return { code: 0, output: "" };
-
   const homeDir = input.homeDir ?? os.homedir();
 
   try {
-    const result = await withDesktopInstallLock(input.env, () =>
-      input.autoUpdate
-        ? resyncCliInstallUnlocked(input)
-        : applyCliInstallUnlocked(input),
-    );
+    const result = await withDesktopInstallLock(input.env, async () => {
+      const retired = await retireInstallationHooks(input);
+      const output = retired.warnings
+        .map((warning) => `[skip] ${warning}\n`)
+        .join("");
+      if (!retired.complete) return { code: 1, output };
+      if (input.trace !== undefined)
+        return {
+          code: 1,
+          output: output + "Agent trace capture has been removed.\n",
+        };
+      if (!input.autoUpdate && input.shim !== true) return { code: 0, output };
+      const result = input.autoUpdate
+        ? await resyncCliInstallUnlocked(input)
+        : await applyCliInstallUnlocked(input);
+      return { ...result, output: output + result.output };
+    });
 
     if (result.code === 0) installErrors.delete(homeDir);
     else installErrors.set(homeDir, result.output);
@@ -317,32 +319,6 @@ async function applyCliInstallUnlocked(
   const previous = await readCliInstallStamp(cliInstallStampPath(env));
   const granted = previous?.consent === "granted";
   const chunks: string[] = [];
-  let traceEnabled = false;
-
-  // Configure the machine before any other mutation, so a request with
-  // missing credentials fails without a partial install.
-  if (input.trace !== undefined) {
-    try {
-      const status = await configureTraceMachine({
-        homeDir,
-        env,
-        credentials: input.trace === true ? undefined : input.trace,
-      });
-
-      traceEnabled = status.enabled;
-      chunks.push(`[ok] trace capture -> ${status.envPath}\n`);
-
-      if (status.error)
-        chunks.push(`Trace storage check failed: ${status.error}\n`);
-    } catch (cause) {
-      chunks.push(
-        `${cause instanceof Error ? cause.message : String(cause)}\n`,
-      );
-
-      return { code: 1, output: chunks.join("") };
-    }
-  }
-
   let shimPath: string | undefined;
   let userPath: string | undefined;
 
@@ -352,17 +328,6 @@ async function applyCliInstallUnlocked(
     if (installed.code !== 0) return installed;
     shimPath = installed.shimPath;
     userPath = installed.userPath;
-  }
-
-  if (traceEnabled) {
-    const executable = (await isOwnedShim(pathShimPath(homeDir)))
-      ? pathShimPath(homeDir)
-      : undefined;
-
-    const hooks = await installHarnessHooks({ homeDir, env, executable });
-
-    for (const hook of hooks.installed)
-      chunks.push(`[ok] ${hook.agent} trace hook -> ${hook.path}\n`);
   }
 
   const stamp: ReviewCliInstallStamp = {
@@ -377,9 +342,6 @@ async function applyCliInstallUnlocked(
 
   if (granted && previous.commandDisabled && input.shim !== true)
     stamp.commandDisabled = true;
-
-  if (input.trace !== undefined || (granted && previous.traceManaged))
-    stamp.traceManaged = true;
 
   const stampUserPath =
     userPath ?? (granted && !shimPath ? previous.userPath : undefined);
@@ -577,9 +539,9 @@ async function removeCliInstallUnlocked(
   const env = input.env ?? process.env;
   const chunks: string[] = [];
 
-  const expectedTraceCommand = (await isOwnedShim(pathShimPath(homeDir)))
-    ? pathShimPath(homeDir)
-    : "";
+  const retired = await retireInstallationHooks(input);
+  chunks.push(...retired.warnings.map((warning) => `[skip] ${warning}\n`));
+  if (!retired.complete) throw new Error(chunks.join(""));
 
   const previous = await readCliInstallStamp(cliInstallStampPath(env));
 
@@ -610,27 +572,6 @@ async function removeCliInstallUnlocked(
     }
   }
 
-  if (input.trace) {
-    const { kept } = await disableAllTraceRepositories(
-      traceScope({ homeDir, env }),
-      expectedTraceCommand,
-    );
-
-    for (const agent of AGENT_TRACE_HOOK_AGENTS)
-      await removeAgentTraceHook(agent, homeDir, env, expectedTraceCommand);
-
-    const remaining = await describeTraceHookOwners(homeDir, env);
-
-    if (kept.length || Object.values(remaining).some(Boolean)) {
-      chunks.push(
-        "[skip] kept trace capture for another Blackboard installation\n",
-      );
-    } else {
-      await disableTraceMachine({ homeDir, env });
-      chunks.push("[ok] disabled Blackboard trace capture\n");
-    }
-  }
-
   if (previous?.consent === "granted") {
     const stamp: ReviewCliInstallStamp = {
       consent: "granted",
@@ -642,8 +583,6 @@ async function removeCliInstallUnlocked(
     if (!input.shim && previous.shimPath) stamp.shimPath = previous.shimPath;
 
     if (input.shim || previous.commandDisabled) stamp.commandDisabled = true;
-
-    if (!input.trace && previous.traceManaged) stamp.traceManaged = true;
 
     if (!input.shim && previous.userPath) stamp.userPath = previous.userPath;
     await writeCurrentStamp(env, stamp);
@@ -808,6 +747,11 @@ export async function installReviewCommand(input: {
   homeDir?: string;
   env?: NodeJS.ProcessEnv;
 }): Promise<{ shimPath: string; output: string; userPath?: string }> {
+  const retired = await retireInstallationHooks({
+    ...input,
+    packageRoot: path.resolve(input.cliPath, "..", ".."),
+  });
+  if (!retired.complete) throw new Error(retired.warnings.join("\n"));
   const homeDir = input.homeDir ?? os.homedir();
   const env = input.env ?? process.env;
   const shimPath = pathShimPath(homeDir);
@@ -831,22 +775,6 @@ export async function installReviewCommand(input: {
     input.cliRuntimePath,
     devReviewHome(env, homeDir),
   );
-
-  if (await traceMachineEnabled({ homeDir, env })) {
-    const scope = traceScope({ homeDir, env });
-
-    for (const cwd of await listTraceRepositoryRoots(homeDir)) {
-      if (!(await isDirectory(cwd))) continue;
-
-      if ((await traceRepositoryStatus(cwd)).enabled)
-        await enableTraceRepository({
-          cwd,
-          scope,
-          reviewCommand: shimPath,
-          replaceCommand: true,
-        });
-    }
-  }
 
   const legacyShim = path.join(path.dirname(shimPath), "review");
 
@@ -1035,4 +963,47 @@ function homeRelative(homeDir: string, target: string): string {
   return relative.startsWith("..") || path.isAbsolute(relative)
     ? target
     : `~/${relative.split(path.sep).join("/")}`;
+}
+
+async function retireInstallationHooks(input: {
+  homeDir?: string;
+  env?: NodeJS.ProcessEnv;
+  packageRoot?: string;
+}): Promise<RetirementResult> {
+  const homeDir = input.homeDir ?? os.homedir();
+  const env = input.env ?? process.env;
+  const source = await readRetiredFile(cliInstallStampPath(env));
+  const stamp = source === null ? null : JSON.parse(source);
+  const stamped =
+    typeof stamp?.shimPath === "string" ? stamp.shimPath : undefined;
+  const candidates = [
+    pathShimPath(homeDir),
+    path.join(homeDir, ".local/bin/blackboard.cmd"),
+    path.join(homeDir, ".local/bin/review"),
+    path.join(homeDir, ".local/bin/whiteboard"),
+    ...(stamped ? [stamped] : []),
+    ...(input.packageRoot
+      ? [
+          path.resolve(
+            input.packageRoot,
+            "..",
+            "..",
+            "..",
+            "bin/blackboard.cmd",
+          ),
+        ]
+      : []),
+  ];
+  const ownedCommands: string[] = [];
+  for (const file of candidates) {
+    if (!path.isAbsolute(file)) continue;
+    const content = await readRetiredFile(file);
+    if (content === null ? file === stamped : hasManagedShimMarker(content))
+      ownedCommands.push(file);
+    if (file.endsWith(".cmd")) {
+      const companion = file.slice(0, -4);
+      if (await isOwnedShim(companion)) ownedCommands.push(companion);
+    }
+  }
+  return retireManagedTraceHooks({ homeDir, env, ownedCommands });
 }

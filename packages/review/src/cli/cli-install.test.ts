@@ -14,13 +14,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import type { ReviewCliInstallStamp } from "@dev.fast/review-protocol";
-import {
-  enableTraceRepository,
-  installClaudeTraceHook,
-  traceMachineStatus,
-  traceRepositoryStatus,
-  traceScope,
-} from "@dev.fast/trace-core";
+
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -31,6 +25,7 @@ import {
   ensureShellProfilePath,
   finishCliInstallUpdate,
   installReviewCommand,
+  installFingerprint,
   pathShimPath,
   readCliInstallStamp,
   removeCliInstall,
@@ -97,109 +92,6 @@ describe("skipCliInstall", () => {
       );
     },
   );
-});
-
-describe("trace capture installation", () => {
-  it("recognizes an existing bucket install at its original paths without migration or login", async () => {
-    const homeDir = await temporaryHome("review-legacy-trace-");
-    const configDir = path.join(homeDir, ".config", "dev-trace");
-    await mkdir(configDir, { recursive: true });
-
-    const credentials =
-      'TRACE_R2_ENDPOINT="https://storage.example.invalid"\nTRACE_R2_BUCKET="existing-traces"\nTRACE_R2_ACCESS_KEY_ID="fixture-key"\nTRACE_R2_SECRET_ACCESS_KEY="fixture-secret"\n';
-
-    const settings = JSON.stringify({
-      version: 1,
-      enabled: true,
-      autoActivateRepositories: true,
-    });
-
-    await writeFile(path.join(configDir, "env"), credentials, { mode: 0o600 });
-    await writeFile(path.join(configDir, "settings.json"), settings);
-
-    const status = await resolveCliInstallStatus({
-      packageRoot,
-      homeDir,
-      env: { DEV_REVIEW_HOME: path.join(homeDir, ".dev") },
-    });
-
-    expect(status.trace).toMatchObject({
-      enabled: true,
-      configured: true,
-      bucket: "existing-traces",
-      autoActivateRepositories: true,
-    });
-    expect(JSON.stringify(status)).not.toContain("fixture-secret");
-    expect(await readFile(path.join(configDir, "env"), "utf8")).toBe(
-      credentials,
-    );
-    expect(await readFile(path.join(configDir, "settings.json"), "utf8")).toBe(
-      settings,
-    );
-  });
-
-  it("writes a version-2 profile for a machine with no legacy files", async () => {
-    const homeDir = await temporaryHome("review-fresh-trace-");
-
-    const env: NodeJS.ProcessEnv = {
-      DEV_REVIEW_HOME: path.join(homeDir, ".dev"),
-      TRACE_R2_MODE: "mock",
-    };
-
-    const applied = await applyCliInstall({
-      packageRoot,
-      homeDir,
-      env,
-      trace: {
-        endpoint: "mock://endpoint",
-        bucket: "fresh-bucket",
-        key: "fresh-key-id",
-        secret: "fresh-secret-value",
-      },
-    });
-
-    expect(applied.code).toBe(0);
-    const configPath = path.join(homeDir, ".dev", "trace", "config.json");
-    expect(JSON.parse(await readFile(configPath, "utf8"))).toMatchObject({
-      version: 2,
-      "current-store": "s3",
-      stores: {
-        s3: {
-          bucket: "fresh-bucket",
-          accessKeyId: "fresh-key-id",
-          capture: { enabled: true, autoActivateRepositories: true },
-        },
-      },
-    });
-    expect(
-      await readFile(path.join(homeDir, ".config", "dev-trace", "env"), "utf8")
-        .then(() => true)
-        .catch(() => false),
-    ).toBe(false);
-    const status = await resolveCliInstallStatus({ packageRoot, homeDir, env });
-    expect(status.trace).toMatchObject({
-      enabled: true,
-      configured: true,
-      bucket: "fresh-bucket",
-      credentialsSource: "profile",
-      captureSource: "profile",
-      storageMode: "s3",
-    });
-    expect(JSON.stringify(status)).not.toContain("fresh-secret-value");
-
-    await removeCliInstall({ trace: true, homeDir, env });
-
-    const disabled = await resolveCliInstallStatus({
-      packageRoot,
-      homeDir,
-      env,
-    });
-
-    expect(disabled.trace).toMatchObject({ enabled: false, configured: true });
-    expect(
-      JSON.parse(await readFile(configPath, "utf8")).stores.s3.secretAccessKey,
-    ).toBe("fresh-secret-value");
-  });
 });
 
 describe("shell profile PATH management", () => {
@@ -781,52 +673,6 @@ describe("Desktop installation alongside npm", () => {
   });
 });
 
-it("Desktop removal preserves hooks and capture owned by an npm installation", async () => {
-  const homeDir = await temporaryHome("review-uninstall-coexist-");
-
-  const env = {
-    DEV_REVIEW_HOME: path.join(homeDir, ".dev"),
-    TRACE_R2_MODE: "mock",
-  };
-
-  const npm = path.join(homeDir, "npm/bin/review");
-  await mkdir(path.dirname(npm), { recursive: true });
-  await writeFile(npm, "#!/bin/sh\n", { mode: 0o755 });
-
-  const installed = await applyCliInstall({
-    packageRoot,
-    homeDir,
-    env,
-    trace: {
-      endpoint: "mock://endpoint",
-      bucket: "fixture",
-      key: "key",
-      secret: "secret",
-    },
-  });
-
-  expect(installed.code).toBe(0);
-  const hook = await installClaudeTraceHook(homeDir, npm);
-  const before = await readFile(hook.path, "utf8");
-  await applyCliInstall({
-    packageRoot,
-    shim: true,
-    trace: true,
-    cliPath: path.join(packageRoot, "dist/cli.js"),
-    homeDir,
-    env,
-  });
-  expect(await readFile(hook.path, "utf8")).toBe(before);
-  await removeCliInstall({
-    shim: true,
-    trace: true,
-    homeDir,
-    env,
-  });
-  expect(await readFile(hook.path, "utf8")).toBe(before);
-  expect((await traceMachineStatus({ homeDir, env })).enabled).toBe(true);
-});
-
 const STAMPED_SKILL = `---
 name: dev-review
 description: x
@@ -1086,70 +932,95 @@ describe("MCP self-install", () => {
   });
 });
 
-it("retargets enabled repository hooks before removing the owned legacy launcher", async () => {
-  const homeDir = await mkdtemp(path.join(tmpdir(), "review-shim-trace-"));
-  temporaryDirectories.push(homeDir);
-  const cwd = path.join(homeDir, "repo");
-  await mkdir(cwd);
-  const run = promisify(execFile);
-  await run("git", ["init", "--quiet", cwd]);
-  const settings = path.join(homeDir, "trace-settings.json");
-  await writeFile(
-    settings,
-    JSON.stringify({
-      version: 1,
-      enabled: true,
-      autoActivateRepositories: true,
-    }),
+describe("retired capture upgrade", () => {
+  it.each(["granted", "declined"] as const)(
+    "retires owned extensions before same-fingerprint %s early return",
+    async (consent) => {
+      const homeDir = await temporaryHome("retired-upgrade-");
+      const env: NodeJS.ProcessEnv = {
+        ...(await isolatedEnvironment()),
+        XDG_CONFIG_HOME: path.join(homeDir, "config"),
+      };
+      const command = pathShimPath(homeDir);
+      await mkdir(path.dirname(command), { recursive: true });
+      await writePathShim(
+        command,
+        path.join(packageRoot, "dist/cli.js"),
+        undefined,
+        String(env.DEV_REVIEW_HOME),
+      );
+      await writePrivateJsonAtomic(cliInstallStampPath(env), {
+        consent,
+        shimPath: command,
+        traceManaged: true,
+        fingerprint: await installFingerprint(packageRoot),
+        updatedAt: "now",
+      });
+      const extension = path.join(
+        homeDir,
+        ".pi/agent/extensions/review-trace.ts",
+      );
+      await mkdir(path.dirname(extension), { recursive: true });
+      await writeFile(
+        extension,
+        `// Managed by Review Desktop trace setup\nspawn(${JSON.stringify(command)}, ["trace", "hook", eventName]);\n`,
+      );
+      const result = await applyCliInstall({
+        packageRoot,
+        homeDir,
+        env,
+        autoUpdate: true,
+      });
+      expect(result.code).toBe(0);
+      expect(existsSync(extension)).toBe(false);
+      expect(
+        (await readCliInstallStamp(cliInstallStampPath(env)))?.consent,
+      ).toBe(consent);
+    },
   );
+});
 
-  const env = {
-    ...process.env,
-    DEV_REVIEW_HOME: path.join(homeDir, ".dev"),
-    TRACE_SETTINGS_FILE: settings,
-    DEV_FAST_REVIEW_CLI_NO_DELEGATE: "1",
+it("keeps stamp and launcher evidence when cleanup fails, then retries apply and uninstall", async () => {
+  const homeDir = await temporaryHome("retired-failure-");
+  const env = await isolatedEnvironment();
+  const command = pathShimPath(homeDir);
+  await mkdir(path.dirname(command), { recursive: true });
+  await writePathShim(
+    command,
+    "fixture-cli",
+    undefined,
+    String(env.DEV_REVIEW_HOME),
+  );
+  const stamp = {
+    consent: "granted",
+    shimPath: command,
+    fingerprint: await installFingerprint(packageRoot),
+    updatedAt: "now",
   };
-
-  const oldCommand = path.join(homeDir, ".local", "bin", "review");
-  await mkdir(path.dirname(oldCommand), { recursive: true });
-  await writeFile(
-    oldCommand,
-    "#!/bin/sh\n# Managed by Blackboard Desktop\nexit 1\n",
-    { mode: 0o755 },
-  );
-  await enableTraceRepository({
-    cwd,
-    scope: traceScope({ homeDir, env }),
-    reviewCommand: oldCommand,
-  });
-  const cliPath = path.join(homeDir, "cli.js");
-  const invoked = path.join(homeDir, "invoked.json");
-  await writeFile(
-    cliPath,
-    `require("node:fs").writeFileSync(${JSON.stringify(invoked)}, JSON.stringify(process.argv.slice(2)));`,
-  );
-
+  await writePrivateJsonAtomic(cliInstallStampPath(env), stamp);
+  const before = await readFile(cliInstallStampPath(env), "utf8");
+  const registry = path.join(homeDir, ".config/dev-trace/repositories.json");
+  await mkdir(path.dirname(registry), { recursive: true });
+  await writeFile(registry, "broken");
   const result = await applyCliInstall({
-    shim: true,
+    packageRoot,
     homeDir,
     env,
-    packageRoot,
-    cliPath,
-    cliRuntimePath: process.execPath,
+    autoUpdate: true,
   });
-
-  expect(result.code).toBe(0);
-  await expect(lstat(oldCommand)).rejects.toMatchObject({ code: "ENOENT" });
-  const hooks = await traceRepositoryStatus(cwd);
-  await run(
-    "sh",
-    [path.join(hooks.managedHooksPath!, "prepare-commit-msg"), "message"],
-    { cwd, env },
-  );
-  expect(JSON.parse(await readFile(invoked, "utf8"))).toEqual([
-    "trace",
-    "git-hook",
-    "prepare-commit-msg",
-    "message",
-  ]);
+  expect(result.code).toBe(1);
+  expect(await readFile(cliInstallStampPath(env), "utf8")).toBe(before);
+  expect(existsSync(command)).toBe(true);
+  await expect(
+    removeCliInstall({ shim: true, homeDir, env }),
+  ).rejects.toThrow();
+  expect(await readFile(cliInstallStampPath(env), "utf8")).toBe(before);
+  expect(existsSync(command)).toBe(true);
+  await writeFile(registry, "[]");
+  expect(
+    (await applyCliInstall({ packageRoot, homeDir, env, autoUpdate: true }))
+      .code,
+  ).toBe(0);
+  await removeCliInstall({ shim: true, homeDir, env });
+  expect(existsSync(command)).toBe(false);
 });
