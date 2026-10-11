@@ -1,7 +1,7 @@
 import { cp, mkdir, mkdtemp, rename, rm } from "node:fs/promises";
 import path from "node:path";
 
-import { writePrivateJsonAtomic } from "@dev.fast/trace-core";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { isMissingFileError } from "@review/lib/fs-utils";
 import {
   type ReviewRecord,

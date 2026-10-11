@@ -5,7 +5,8 @@ import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
 import { git, gitCommonDir } from "@dev.fast/local-vcs";
-import { errorMessage, processIsAlive } from "@dev.fast/trace-core";
+import { errorMessage } from "@review/lib/error-message";
+import { processIsAlive } from "@review/lib/with-file-lock";
 import { reviewManagedCheckoutRoot } from "@review/vcs/review-checkout-paths.js";
 import {
   ensureReviewPinnedCheckout,

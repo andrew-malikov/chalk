@@ -7,7 +7,6 @@ import {
   type ReviewStructuralDiffEvent,
   gitLabSaveDraftSchema,
 } from "@dev.fast/review-protocol";
-import { errorMessage } from "@dev.fast/trace-core";
 import {
   type AgentSelection,
   AgentSelectionSchema,
@@ -26,6 +25,7 @@ import {
 import type { AskThreads } from "@review/ask/threads.js";
 import { watchAskThread } from "@review/ask/watch.js";
 import { scopedCoverage } from "@review/documents/viewed-coverage.js";
+import { errorMessage } from "@review/lib/error-message";
 import { fuzzyRank } from "@review/lib/fuzzy-match.js";
 import { readBoundedRequestJson } from "@review/server/hono-http.js";
 import { HttpJsonError } from "@review/server/http-json.js";

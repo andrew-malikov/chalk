@@ -1,5 +1,4 @@
 import { isCallableValue, isObjectValue } from "@dev.fast/review-protocol";
-import { errorMessage } from "@dev.fast/trace-core";
 import {
   type CallStackDiffProps,
   type DatabaseLensProps,
@@ -11,6 +10,7 @@ import {
   sequenceDiagramPropsSchema,
   traceQuotePropsSchema,
 } from "@review/documents/authoring";
+import { errorMessage } from "@review/lib/error-message";
 import { z } from "zod";
 
 // Publish-time element audit. The validation runtime's React substitute does

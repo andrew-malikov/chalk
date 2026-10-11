@@ -8,7 +8,8 @@ import {
   jjRevisionIsConflicted,
   resolveRevision,
 } from "@dev.fast/local-vcs";
-import { errorMessage, withFileLock } from "@dev.fast/trace-core";
+import { errorMessage } from "@review/lib/error-message";
+import { withFileLock } from "@review/lib/with-file-lock";
 
 import {
   type ReviewCheckoutRole,

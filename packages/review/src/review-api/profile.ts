@@ -2,7 +2,7 @@ import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { access, mkdir } from "node:fs/promises";
 import path from "node:path";
 
-import { withFileLock } from "@dev.fast/trace-core";
+import { withFileLock } from "@review/lib/with-file-lock";
 import { ensureJsonCutover } from "@review/review-import/json-cutover.js";
 
 import { openLocalReviewStore } from "./local-data.js";

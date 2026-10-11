@@ -3,7 +3,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type { openUrlInBrowser, runStoreLogin } from "@dev.fast/trace-core";
+import {
+  type openUrlInBrowser,
+  type runStoreLogin,
+} from "@review/sharing/store-auth";
 import { Hono } from "hono";
 import { afterEach, expect, it, vi } from "vitest";
 

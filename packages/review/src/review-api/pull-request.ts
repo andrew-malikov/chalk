@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 
 import { type LocalVcsKind, parseGitRemote } from "@dev.fast/local-vcs";
-import { errorMessage } from "@dev.fast/trace-core";
+import { errorMessage } from "@review/lib/error-message";
 import { z } from "zod";
 
 import { ReviewInputError } from "./document.js";

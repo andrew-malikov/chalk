@@ -30,7 +30,6 @@ import type {
   ReviewSourceEntry,
   StructuralDiffEvent,
 } from "@dev.fast/review-protocol";
-import { writePrivateJsonAtomic } from "@dev.fast/trace-core";
 import { textIncludesQuote } from "@review/documents/evidence.js";
 import {
   SourceRangeError,
@@ -38,6 +37,7 @@ import {
   requireVisibleSource,
   sliceSourceRange,
 } from "@review/documents/source.js";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { isMissingFileError } from "@review/lib/fs-utils.js";
 import { StructuralComparisons } from "@review/server/structural-comparisons.js";
 import { resolveSoftwareMapDiffCounts } from "@review/software-map/software-map-diff-counts.js";

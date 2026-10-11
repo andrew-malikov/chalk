@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 
-import { withFileLock } from "@dev.fast/trace-core";
+import { withFileLock } from "@review/lib/with-file-lock";
 
 const heldLocks = new AsyncLocalStorage<ReadonlySet<string>>();
 

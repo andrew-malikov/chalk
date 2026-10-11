@@ -10,7 +10,7 @@ import {
   type ReviewDesktopDiscovery,
   type ReviewSourceIdentity,
 } from "@dev.fast/review-protocol";
-import { writePrivateJsonAtomic } from "@dev.fast/trace-core";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import {
   type ReviewInstanceSelection,
   isHealthyReviewDesktop,

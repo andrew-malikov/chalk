@@ -1,5 +1,4 @@
 import { PROTOCOL_VERSION, client, methods } from "@agentclientprotocol/sdk";
-import { errorMessage } from "@dev.fast/trace-core";
 import {
   type AskAgentLauncher,
   askAgentTakesMcp,
@@ -18,6 +17,7 @@ import {
   type AskThreadStart,
   askThreadLimits,
 } from "@review/ask/thread.js";
+import { errorMessage } from "@review/lib/error-message";
 
 /** How long an agent may take to say what it offers. */
 const OFFER_TIMEOUT_MS = 30_000;

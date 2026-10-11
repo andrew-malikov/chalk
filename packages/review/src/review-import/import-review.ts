@@ -3,12 +3,13 @@ import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
-import { errorMessage, loadReviewAgentTrace } from "@dev.fast/trace-core";
+import { loadReviewAgentTrace } from "@dev.fast/trace-core";
 import { textIncludesQuote } from "@review/documents/evidence";
 import {
   reviewDocumentDataSchema,
   upgradeReviewDocumentJson,
 } from "@review/documents/review-document-data";
+import { errorMessage } from "@review/lib/error-message";
 import { isMissingFileError } from "@review/lib/fs-utils";
 import { REVIEW_DOCUMENT_BUNDLE_DIR } from "@review/publishing/review-bundle";
 import { evaluateSealedReviewDocument } from "@review/publishing/review-sealed-document";

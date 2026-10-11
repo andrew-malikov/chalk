@@ -9,7 +9,7 @@ import {
   isJsonObject,
   parseJsonText,
 } from "@dev.fast/review-protocol";
-import { withFileLock } from "@dev.fast/trace-core";
+import { withFileLock } from "@review/lib/with-file-lock";
 import { findReviewPackageRoot } from "@review/package-paths";
 import { DEV_REVIEW_HOME_ENV } from "@review/storage/review-home-paths";
 import { afterEach, describe, expect, it } from "vitest";

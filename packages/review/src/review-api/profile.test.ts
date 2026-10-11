@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { withFileLock } from "@dev.fast/trace-core";
+import { withFileLock } from "@review/lib/with-file-lock";
 import { afterEach, beforeEach, expect, it } from "vitest";
 
 import { openReviewProfile } from "./profile.js";

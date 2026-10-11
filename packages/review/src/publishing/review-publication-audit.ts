@@ -3,7 +3,6 @@ import path from "node:path";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
 import {
-  errorMessage,
   extractTraceEventText,
   loadReviewAgentTrace,
 } from "@dev.fast/trace-core";
@@ -42,6 +41,7 @@ import {
   requireVisibleSource,
   sliceSourceRange,
 } from "@review/documents/source";
+import { errorMessage } from "@review/lib/error-message";
 import {
   type NormalizedSoftwareModel,
   type SoftwareModelData,

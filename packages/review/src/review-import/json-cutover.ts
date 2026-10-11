@@ -14,12 +14,10 @@ import {
 import path from "node:path";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
-import {
-  errorMessage,
-  withFileLock,
-  writePrivateJsonAtomic,
-} from "@dev.fast/trace-core";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
+import { errorMessage } from "@review/lib/error-message";
 import { isMissingFileError } from "@review/lib/fs-utils";
+import { withFileLock } from "@review/lib/with-file-lock";
 import { openLocalReviewStore } from "@review/review-api/local-data";
 import {
   type StoredReview,

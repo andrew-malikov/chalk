@@ -10,7 +10,7 @@ import {
   jsonString,
   parseJsonText,
 } from "@dev.fast/review-protocol";
-import { errorMessage } from "@dev.fast/trace-core";
+import { errorMessage } from "@review/lib/error-message";
 import {
   type ReviewRecord,
   ReviewRecordSchema,

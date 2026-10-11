@@ -2,8 +2,8 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { errorMessage } from "@dev.fast/trace-core";
 import type { StoreRef } from "@review/documents/authoring";
+import { errorMessage } from "@review/lib/error-message";
 import { span } from "@review/telemetry/startup-trace";
 import { init as initModuleLexer, parse as parseModule } from "es-module-lexer";
 

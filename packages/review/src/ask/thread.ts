@@ -18,7 +18,6 @@ import {
   client,
   methods,
 } from "@agentclientprotocol/sdk";
-import { errorMessage } from "@dev.fast/trace-core";
 import {
   type AskAgentLauncher,
   type AskAgentProcess,
@@ -51,6 +50,7 @@ import {
   applyAskChange,
   askChoiceKinds,
 } from "@review/ask/thread-state.js";
+import { errorMessage } from "@review/lib/error-message";
 import { z } from "zod";
 
 /** Refused without asking: changes to files, and leaving the read-only

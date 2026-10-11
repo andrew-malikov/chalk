@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { readFile, rm, writeFile } from "node:fs/promises";
 
 import { jsonObject, parseJsonText } from "@dev.fast/review-protocol";
-import { withFileLock } from "@dev.fast/trace-core";
+import { withFileLock } from "@review/lib/with-file-lock";
 
 // Dependency preparation for pinned worktrees. The repo owner configures the
 // commands once per clone (`git config devfast.prepare '<command>'`, the key

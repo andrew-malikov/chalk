@@ -4,7 +4,7 @@ import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Writable } from "node:stream";
 
-import { collectingWritable } from "@dev.fast/trace-core";
+import { collectingWritable } from "@review/cli/cli-output";
 import { sealReviewCandidate } from "@review/storage/review-home";
 import {
   cleanupTempDirs,

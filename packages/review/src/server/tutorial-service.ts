@@ -3,7 +3,7 @@ import { cp, mkdir, readFile, rename, rm } from "node:fs/promises";
 import path from "node:path";
 
 import { resolveRevision } from "@dev.fast/local-vcs";
-import { writePrivateJsonAtomic } from "@dev.fast/trace-core";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import {
   documentSchema,
   resourceReferences,

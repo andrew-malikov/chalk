@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { writeStoreAuth } from "@dev.fast/trace-core";
+import { writeStoreAuth } from "@review/sharing/store-auth";
 import { expect, it } from "vitest";
 
 import { readSharingAuth } from "./auth.js";

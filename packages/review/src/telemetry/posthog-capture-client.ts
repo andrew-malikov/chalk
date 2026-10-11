@@ -4,7 +4,8 @@ import path from "node:path";
 
 import { type JsonValue, jsonValueSchema } from "@dev.fast/json";
 import { parseJsonText } from "@dev.fast/review-protocol";
-import { withFileLock, writeFileAtomic } from "@dev.fast/trace-core";
+import { writeFileAtomic } from "@review/lib/atomic-write";
+import { withFileLock } from "@review/lib/with-file-lock";
 import {
   DEV_REVIEW_HOME_ENV,
   devReviewHome,

@@ -1,5 +1,5 @@
 import { jsonObject, parseJsonText } from "@dev.fast/review-protocol";
-import type { loadReviewAgentTrace } from "@dev.fast/trace-core";
+import { type loadReviewAgentTrace } from "@dev.fast/trace-core";
 import type { ReviewSoftwareMapBundle } from "@review/software-map/software-map-bundle";
 import {
   hydrateSoftwareModel,

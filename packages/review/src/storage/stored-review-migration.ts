@@ -10,11 +10,12 @@ import {
   jsonString,
   parseJsonText,
 } from "@dev.fast/review-protocol";
-import { errorMessage, writePrivateJsonAtomic } from "@dev.fast/trace-core";
 import {
   authoringSessionKey,
   parseAuthoringSessionKey,
 } from "@review/ask/agent-session-ref";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
+import { errorMessage } from "@review/lib/error-message";
 import { isMissingFileError } from "@review/lib/fs-utils";
 import { promoteReviewArtifactFiles } from "@review/publishing/review-artifact-promotion";
 import {

@@ -10,10 +10,8 @@ import os from "node:os";
 import path from "node:path";
 import { PassThrough, Readable } from "node:stream";
 
-import {
-  StoreClient,
-  runTraceSessions as runTraceSessionsActual,
-} from "@dev.fast/trace-core";
+import { StoreClient } from "@dev.fast/trace-core";
+import { runTraceSessions as runTraceSessionsActual } from "@dev.fast/trace-core";
 import {
   PostHogCaptureClient,
   type PostHogCaptureInput,

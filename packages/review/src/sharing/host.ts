@@ -2,17 +2,17 @@ import { randomUUID } from "node:crypto";
 import { Writable } from "node:stream";
 
 import { parseShareLink, shareIdSchema } from "@dev.fast/review-share-protocol";
+import { ReviewInputError } from "@review/review-api/document.js";
+import type { LocalReviewData } from "@review/review-api/local-data.js";
+import type { ReviewStore } from "@review/review-api/store.js";
+import { readBoundedRequestJson } from "@review/server/hono-http.js";
 import {
   DEFAULT_STORE_ORIGIN,
   clearStoreAuth,
   openUrlInBrowser,
   readStoreAuth,
   runStoreLogin,
-} from "@dev.fast/trace-core";
-import { ReviewInputError } from "@review/review-api/document.js";
-import type { LocalReviewData } from "@review/review-api/local-data.js";
-import type { ReviewStore } from "@review/review-api/store.js";
-import { readBoundedRequestJson } from "@review/server/hono-http.js";
+} from "@review/sharing/store-auth";
 import type { Hono } from "hono";
 import { z } from "zod";
 
@@ -89,7 +89,6 @@ export function mountSharingHost(
       });
 
       void startLogin({
-        traces: false,
         stdout: discard,
         stderr: discard,
         openUrl: async (url) => {

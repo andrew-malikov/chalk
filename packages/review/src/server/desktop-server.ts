@@ -17,11 +17,7 @@ import {
   parseReviewCliInstallApplyRequest,
   reviewDiffrSummarizerInputSchema,
 } from "@dev.fast/review-protocol";
-import {
-  shellQuote,
-  traceMachineEnabled,
-  writePrivateJsonAtomic,
-} from "@dev.fast/trace-core";
+import { traceMachineEnabled } from "@dev.fast/trace-core";
 import { detectAskAgents, launchAskAgent } from "@review/ask/agents.js";
 import { AskThreads } from "@review/ask/threads.js";
 import {
@@ -34,6 +30,8 @@ import {
   resolveCliInstallStatus,
   skipCliInstall,
 } from "@review/cli/cli-install";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
+import { shellQuote } from "@review/lib/shell-quote";
 import { readReviewPackageVersion } from "@review/package-paths";
 import { createReviewApi } from "@review/review-api/http.js";
 import type { LocalReviewData } from "@review/review-api/local-data.js";

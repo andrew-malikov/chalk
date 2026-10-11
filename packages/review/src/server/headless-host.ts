@@ -1,11 +1,9 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { mkdir, realpath, rm } from "node:fs/promises";
 
-import {
-  traceMachineEnabled,
-  withFileLock,
-  writePrivateJsonAtomic,
-} from "@dev.fast/trace-core";
+import { traceMachineEnabled } from "@dev.fast/trace-core";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
+import { withFileLock } from "@review/lib/with-file-lock";
 import { createReviewApi } from "@review/review-api/http.js";
 import { openReviewProfile } from "@review/review-api/profile.js";
 import {

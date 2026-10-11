@@ -4,7 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import type { McpServer } from "@agentclientprotocol/sdk";
-import { devReviewHome } from "@dev.fast/trace-core";
+import { devReviewHome } from "@review/storage/review-home-paths";
 
 /**
  * pi-acp keeps the MCP servers a session is given without passing them to

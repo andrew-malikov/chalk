@@ -1,4 +1,5 @@
-import { StoreClient, readStoreAuth } from "@dev.fast/trace-core";
+import { readStoreAuth } from "@review/sharing/store-auth";
+import { StoreClient } from "@review/sharing/store-client";
 import type { ReviewTelemetry } from "@review/telemetry/review-telemetry";
 
 /**

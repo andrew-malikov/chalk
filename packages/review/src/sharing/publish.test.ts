@@ -3,8 +3,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { readStoreAuth, writeStoreAuth } from "@dev.fast/trace-core";
 import { ReviewInputError } from "@review/review-api/document.js";
+import { readStoreAuth, writeStoreAuth } from "@review/sharing/store-auth";
 import { Hono } from "hono";
 import { expect, it, vi } from "vitest";
 

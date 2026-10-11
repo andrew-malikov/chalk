@@ -1,28 +1,12 @@
 import { existsSync } from "node:fs";
 import { realpath } from "node:fs/promises";
 import path from "node:path";
-import { createInterface } from "node:readline/promises";
 import type { Writable } from "node:stream";
 import { fileURLToPath } from "node:url";
 
 import {
-  StoreApiError,
-  processIsAlive,
-  readStoreAuth,
-  withStoreAuthorization,
-} from "@dev.fast/trace-core";
-import {
-  type CliInputStream,
-  DEFAULT_STORE_ORIGIN,
-  DEV_REVIEW_HOME_ENV,
-  emitJsonEvent,
-  humanStream,
-  jsonRequestedInArgv,
   registerTraceCommands,
   resolveTraceCommand,
-  runStoreLogin,
-  runStoreLogout,
-  runStoreWhoami,
   runTraceAllow,
   runTraceDeny,
   runTraceInstallMachine,
@@ -34,6 +18,13 @@ import {
   traceMachineEnabled,
   traceScope,
 } from "@dev.fast/trace-core";
+import {
+  type CliInputStream,
+  emitJsonEvent,
+  humanStream,
+  jsonRequestedInArgv,
+} from "@review/cli/cli-output";
+import { processIsAlive } from "@review/lib/with-file-lock";
 import {
   findReviewPackageRoot,
   readReviewPackageVersion,
@@ -51,6 +42,14 @@ import {
   reviewServerStateDir,
   serverNotReady,
 } from "@review/server/server-discovery";
+import { readStoreAuth } from "@review/sharing/store-auth";
+import {
+  DEFAULT_STORE_ORIGIN,
+  runStoreLogin,
+  runStoreLogout,
+  runStoreWhoami,
+} from "@review/sharing/store-auth";
+import { DEV_REVIEW_HOME_ENV } from "@review/storage/review-home-paths";
 import {
   emitReviewEvent,
   serializeReviewError,
@@ -770,26 +769,22 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     });
   });
 
-  // Hosted trace store login. Logging in authenticates a user; it selects
-  // no storage by itself.
+  // Sharing uses identity-only device login.
   configureJsonOutput(
     program.command("login").description("Log in to Blackboard with GitHub"),
     "plain",
   )
     .option("--origin <url>", "Blackboard service origin", DEFAULT_STORE_ORIGIN)
-    .option("--traces", "Also authorize GitHub repositories for hosted traces")
     .option("--no-browser", "Print the URL instead of opening a browser")
     .action(
       async (options: {
         origin?: string;
         browser?: boolean;
-        traces?: boolean;
         json?: boolean;
       }) => {
         state.exitCode = await runtime.runStoreLogin({
           origin: options.origin,
           noBrowser: options.browser === false,
-          traces: options.traces === true,
           json: options.json,
           stdout: input.stdout,
           stderr: input.stderr,
@@ -1006,45 +1001,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   });
 
   try {
-    await withStoreAuthorization(
-      async (origin) => {
-        if (
-          state.json ||
-          input.stdin?.isTTY !== true ||
-          input.argv[0] !== "trace" ||
-          input.argv.some((arg) => /hook/i.test(arg))
-        )
-          return undefined;
-
-        const prompt = createInterface({
-          input: input.stdin,
-          output: input.stderr,
-        });
-
-        let answer: string;
-
-        try {
-          answer = await prompt.question(
-            "Authorize GitHub repositories for hosted traces? [y/N] ",
-          );
-        } finally {
-          prompt.close();
-        }
-
-        if (!/^y(es)?$/i.test(answer.trim())) return undefined;
-
-        const code = await runtime.runStoreLogin({
-          origin,
-          traces: true,
-          stdout: input.stdout,
-          stderr: input.stderr,
-          env: input.env,
-        });
-
-        return code === 0 ? (await readStoreAuth(input.env))?.token : undefined;
-      },
-      () => program.parseAsync(input.argv, { from: "user" }),
-    );
+    await program.parseAsync(input.argv, { from: "user" });
 
     return state.exitCode;
   } catch (error) {
@@ -1102,14 +1059,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
         code?: string;
         remedy?: string;
       } = serializeReviewError(error);
-
-      if (
-        error instanceof StoreApiError &&
-        error.code === "repository_authorization_required"
-      ) {
-        serialized.code = error.code;
-        serialized.remedy = "blackboard login --traces";
-      }
 
       emitReviewEvent(input.stdout, { event: "error", error: serialized });
     } else {

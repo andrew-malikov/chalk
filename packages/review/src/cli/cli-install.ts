@@ -15,7 +15,6 @@ import {
   type TraceCredentialsInput,
   configureTraceMachine,
   describeTraceHookOwners,
-  devReviewHome,
   disableAllTraceRepositories,
   disableTraceMachine,
   enableTraceRepository,
@@ -26,12 +25,15 @@ import {
   traceMachineStatus,
   traceRepositoryStatus,
   traceScope,
-  withFileLock,
+} from "@dev.fast/trace-core";
+import {
   writeFileAtomicAsync,
   writePrivateJsonAtomic,
-} from "@dev.fast/trace-core";
+} from "@review/lib/atomic-write";
 import { isDirectory, isFile } from "@review/lib/fs-utils";
+import { withFileLock } from "@review/lib/with-file-lock";
 import { readReviewPackageVersion } from "@review/package-paths";
+import { devReviewHome } from "@review/storage/review-home-paths";
 import { reviewDesktopStateDir } from "@review/storage/review-home-paths";
 
 import {

@@ -20,12 +20,9 @@ import {
   jsonString,
   parseJsonText,
 } from "@dev.fast/review-protocol";
-import {
-  emitJsonEvent,
-  errorMessage,
-  humanStream,
-  writePrivateJsonAtomic,
-} from "@dev.fast/trace-core";
+import { emitJsonEvent, humanStream } from "@review/cli/cli-output";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
+import { errorMessage } from "@review/lib/error-message";
 import { readDirectory } from "@review/lib/fs-utils";
 import {
   type StoredReviewRecord,

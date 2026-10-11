@@ -2,7 +2,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
-import { writeFileAtomic } from "@dev.fast/trace-core";
+import { writeFileAtomic } from "@review/lib/atomic-write";
 import { devReviewHome } from "@review/storage/review-home-paths";
 import { z } from "zod";
 

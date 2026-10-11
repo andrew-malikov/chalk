@@ -20,8 +20,8 @@ import {
   traceMachineStatus,
   traceRepositoryStatus,
   traceScope,
-  writePrivateJsonAtomic,
 } from "@dev.fast/trace-core";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {

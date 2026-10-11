@@ -6,7 +6,7 @@ import {
   isJsonObject,
   parseJsonText,
 } from "@dev.fast/review-protocol";
-import { writePrivateJsonAtomic } from "@dev.fast/trace-core";
+import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 
 import { devReviewHome } from "./review-home-paths";
 
