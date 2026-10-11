@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "3ded5938-8abe-4e9a-9921-2d811d75fc02",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/private/tmp/whiteboard-remove-agent-traces/.archify/architecture-blackboard-overview-20261011-125100/candidate.json",
+  "output": "/private/tmp/whiteboard-remove-agent-traces/.archify/architecture-blackboard-overview-20261011-125100/blackboard-overview.html",
+  "specification": {
+    "sha256": "191039e895ea00338bae1a97c100545c227b721f9290cb07076cc7de558c453e",
+    "bytes": 10753
+  },
+  "artifact": {
+    "sha256": "97b51a28130f3a035a665940749d89aa71829c341d1c4fb3184675df88eede1e",
+    "bytes": 768441
+  }
+}

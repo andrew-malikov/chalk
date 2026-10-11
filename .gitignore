@@ -93,3 +93,6 @@ apps/review-electrobun/artifacts/
 
 # Generated Electrobun configuration loader
 apps/review-electrobun/.cottontail-tmp/
+
+# Archify design schemas
+.archify

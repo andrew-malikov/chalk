@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/private/tmp/whiteboard-remove-agent-traces/.archify/architecture-blackboard-overview-20261011-125100/candidate.json",
+    "sha256": "191039e895ea00338bae1a97c100545c227b721f9290cb07076cc7de558c453e",
+    "bytes": 10753
+  },
+  "artifact": {
+    "path": "/private/tmp/whiteboard-remove-agent-traces/.archify/architecture-blackboard-overview-20261011-125100/blackboard-overview.html",
+    "sha256": "97b51a28130f3a035a665940749d89aa71829c341d1c4fb3184675df88eede1e",
+    "bytes": 768441
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/private/tmp/whiteboard-remove-agent-traces/.archify/architecture-blackboard-overview-20261011-125100/blackboard-overview.finalize.json",
+    "summaryReceipt": "/private/tmp/whiteboard-remove-agent-traces/.archify/architecture-blackboard-overview-20261011-125100/blackboard-overview.finalize-summary.json",
+    "browserCheckReceipt": "/private/tmp/whiteboard-remove-agent-traces/.archify/architecture-blackboard-overview-20261011-125100/blackboard-overview.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.0.1",
+    "availableVersion": "3.0.1",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-11T09:51:25.343Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 12508
+}
