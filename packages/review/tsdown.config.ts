@@ -44,30 +44,20 @@ export default defineConfig({
   format: "esm",
   outDir: "dist",
   fixedExtension: false,
-  dts: true,
-  // The external declaration edge has no global augmentation or runtime effect.
-  // Used bindings stay bundled; the published declarations need no core package.
-  treeshake: {
-    moduleSideEffects: [
-      { test: /^@dev\.fast\/trace-core$/, external: true, sideEffects: false },
-    ],
-  },
+  // Declaration inputs include sibling workspace sources; tsgo emits relative
+  // to the config directory, so that directory must contain the whole graph.
+  dts: { tsconfig: "../../tsconfig.review-build.json" },
   deps: {
     alwaysBundle: [
-      "@dev.fast/trace-core",
       /^@dev\.fast\/diffr$/,
       /^@dev\.fast\/json$/,
       /^@dev\.fast\/local-vcs$/,
       /^@dev\.fast\/review-protocol$/,
       /^@dev\.fast\/review-share-protocol$/,
-      /^@dev\.fast\/trace-protocol$/,
       /^isomorphic-git$/,
       // Bundled to keep its KaTeX dependency out of the runtime.
       /^micromark-extension-math$/,
     ],
-    // Re-inlining core's public declaration graph exhausts the default runtime heap.
-    // Its only remaining declaration edge is the side-effect import handled above.
-    dts: { neverBundle: ["@dev.fast/trace-core"] },
     onlyBundle: false,
     neverBundle: ["typescript"],
   },

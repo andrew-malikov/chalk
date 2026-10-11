@@ -75,7 +75,8 @@ try {
     DEV_FAST_REVIEW_CLI_NO_DELEGATE: "1",
     DEV_REVIEW_HOME: path.join(root, "profile"),
     DEV_REVIEW_SERVER_DIR: path.join(root, "server"),
-    TRACE_HOME_DIR: path.join(root, "home"),
+    HOME: path.join(root, "home"),
+    XDG_CONFIG_HOME: path.join(root, "config"),
   };
 
   delete env.DISPLAY;
@@ -96,25 +97,6 @@ try {
   const api = async (name, value = {}) =>
     JSON.parse(await run(["api", name, JSON.stringify(value)]));
 
-  const installed = JSON.parse(
-    await run(["trace", "install", "--all-harnesses", "--json"]),
-  );
-
-  assert.equal(installed.hooks.length, 4);
-
-  const hooks = JSON.parse(
-    await readFile(
-      path.join(env.TRACE_HOME_DIR, ".claude/settings.json"),
-      "utf8",
-    ),
-  );
-
-  assert.ok(
-    hooks.hooks.SessionStart[0].hooks[0].command.includes(cli),
-    "Hooks must use the installed npm executable, not a host Desktop launcher",
-  );
-  const removed = JSON.parse(await run(["trace", "uninstall-hooks", "--json"]));
-  assert.equal(removed.removed.length, 4);
   server = spawn(cli, ["server", "start", "--json"], {
     cwd: root,
     env,
@@ -198,7 +180,7 @@ try {
   const reviews = await api("session_list");
   assert.equal(reviews.length, 1);
   console.log(
-    `Installed ${pkg.name}@${pkg.version}: tracing and headless authoring passed without Desktop.`,
+    `Installed ${pkg.name}@${pkg.version}: headless authoring passed without Desktop.`,
   );
 } finally {
   if (server) {

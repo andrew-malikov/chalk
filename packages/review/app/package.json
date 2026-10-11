@@ -19,7 +19,6 @@
   "dependencies": {
     "@dev.fast/review": "workspace:*",
     "@dev.fast/review-protocol": "workspace:*",
-    "@dev.fast/trace-protocol": "workspace:*",
     "@mr_mint/elkjs-libavoid": "0.5.0",
     "@pierre/diffs": "1.5.1",
     "@speed-highlight/core": "1.2.15",

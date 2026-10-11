@@ -251,15 +251,12 @@ describe("proseToMarkdown", () => {
             } as ReviewNode,
           ]),
         ]),
-
       ],
       undefined,
       warnings,
     );
 
-    expect(markdown).toBe(
-      "- [Peek](review-source:head/src/a.ts#L4-L6)\n",
-    );
+    expect(markdown).toBe("- [Peek](review-source:head/src/a.ts#L4-L6)\n");
     expect(warnings).toEqual([
       "CodePeek inside prose became a source link (Peek)",
     ]);
