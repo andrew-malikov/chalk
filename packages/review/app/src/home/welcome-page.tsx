@@ -8,7 +8,7 @@ import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button } from "@canvas/ui/button";
 import { EmptyState } from "@canvas/ui/empty-state";
-import { DisclosureChevron, DrawnCheckIcon } from "@canvas/ui/icons";
+import { CheckIcon, DisclosureChevron } from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
 import {
   REVIEW_DISCORD_URL,
@@ -18,6 +18,7 @@ import {
   type ReviewCliInstallStatus,
 } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
+import { Check } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 
 import { ConnectCard, LegacySkillsRow } from "./connect-card";
@@ -527,7 +528,7 @@ function StepDoneButton({
       xstyle={[styles.stepButton, styles.stepDone]}
       disabled
     >
-      <DrawnCheckIcon />
+      <CheckIcon />
       {label}
     </Button>
   );
@@ -552,13 +553,7 @@ function StepBadge({
       data-done={done}
     >
       {done ? (
-        <svg
-          {...stylex.props(styles.badgeCheck)}
-          viewBox="0 0 10 10"
-          aria-hidden="true"
-        >
-          <path d="M1.5 5.5 4 8l4.5-6" fill="none" strokeWidth="1.6" />
-        </svg>
+        <Check {...stylex.props(styles.badgeCheck)} aria-hidden="true" />
       ) : (
         label
       )}
@@ -604,7 +599,7 @@ const styles = stylex.create({
   headline: {
     margin: 0,
     color: tokens.ink,
-    font: `${fontWeight.medium} ${welcomeType.headline}/46px ${tokens.fontSerif}`,
+    font: `${fontWeight.medium} ${welcomeType.headline}/46px ${tokens.fontSans}`,
   },
   sub: {
     margin: 0,
@@ -729,7 +724,7 @@ const styles = stylex.create({
     margin: "0 0 14px",
     maxWidth: "560px",
     color: tokens.inkMuted,
-    font: `${fontSize.ui}/20px ${tokens.fontMono}`,
+    font: `${fontSize.ui}/20px ${tokens.fontSans}`,
   },
   hintCode: {
     padding: "1px 5px",

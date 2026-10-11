@@ -197,7 +197,7 @@ const styles = stylex.create({
     borderRadius: radius.surface,
     backgroundColor: tokens.surface,
     color: tokens.ink,
-    font: `${fontSize.body}/1.5 ${tokens.fontMono}`,
+    font: `${fontSize.body}/1.5 ${tokens.fontSans}`,
   },
   // The tour stage: the figure fills the overlay without its card chrome.
   stage: {
@@ -217,7 +217,7 @@ const styles = stylex.create({
     margin: 0,
     padding: "0 16px 12px",
     color: tokens.inkMuted,
-    font: `${fontSize.small}/1.6 ${tokens.fontMono}`,
+    font: `${fontSize.small}/1.6 ${tokens.fontSans}`,
     textAlign: { default: null, [inDocument()]: "left" },
   },
   body: {
@@ -249,7 +249,7 @@ const styles = stylex.create({
     borderTopColor: tokens.rule,
     backgroundColor: tokens.tray,
     color: tokens.inkMuted,
-    font: `${fontSize.micro}/1.5 ${tokens.fontMono}`,
+    font: `${fontSize.micro}/1.5 ${tokens.fontSans}`,
     fontSize: fontSize.small,
   },
   legend: {

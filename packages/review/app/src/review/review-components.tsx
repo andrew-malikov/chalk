@@ -18,7 +18,12 @@ import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { useTutorialSection } from "@canvas/tutorial/tutorial-section-context";
 import { IconButton } from "@canvas/ui/button";
-import { CloseIcon, DisclosureChevron, MapPinIcon } from "@canvas/ui/icons";
+import {
+  CheckIcon,
+  CloseIcon,
+  DisclosureChevron,
+  MapPinIcon,
+} from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
 import type { ReviewComponentProps } from "@review/documents/review-document-data";
 import * as stylex from "@stylexjs/stylex";
@@ -238,12 +243,7 @@ export function ReviewSection({
       data-review-section={title}
       data-tutorial-chapter-state={tutorialSection.state ?? undefined}
     >
-      <div
-        {...stylex.props(
-          sectionStyles.header,
-          tutorialSection.state === "complete" && sectionStyles.complete,
-        )}
-      >
+      <div {...stylex.props(sectionStyles.header)}>
         <IconButton
           size="small"
           xstyle={[chevronMarker, sectionStyles.toggle]}
@@ -270,6 +270,11 @@ export function ReviewSection({
         {collapsed && summary && (
           <span {...stylex.props(sectionStyles.meta)}>
             {reviewSectionSummaryLabel(summary)}
+          </span>
+        )}
+        {tutorialSection.state === "complete" && (
+          <span {...stylex.props(sectionStyles.complete)}>
+            Complete <CheckIcon xstyle={sectionStyles.completeIcon} />
           </span>
         )}
       </div>
@@ -901,12 +906,16 @@ const sectionStyles = stylex.create({
   },
   // A finished tutorial chapter says so at the end of its heading row.
   complete: {
-    "::after": {
-      content: "'Complete ✓'",
-      marginLeft: "auto",
-      color: tokens.tutorialRing,
-      font: `${fontSize.micro}/16px ${tokens.fontMono}`,
-    },
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "4px",
+    marginLeft: "auto",
+    color: tokens.tutorialRing,
+    font: `${fontSize.micro}/16px ${tokens.fontSans}`,
+  },
+  completeIcon: {
+    width: "12px",
+    height: "12px",
   },
   // Expanded sections keep a faint chevron so "this collapses" is legible
   // without hovering the header first.
@@ -922,7 +931,7 @@ const sectionStyles = stylex.create({
     scrollMarginTop: { default: null, [inDocument()]: "24px" },
     margin: 0,
     color: { default: null, [inDocument()]: tokens.ink },
-    fontFamily: { default: null, [inDocument()]: tokens.fontSerif },
+    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
     fontSize: { default: null, [inDocument()]: documentType.h2 },
     fontWeight: { default: null, [inDocument()]: fontWeight.medium },
     lineHeight: { default: null, [inDocument()]: "32px" },
@@ -936,7 +945,7 @@ const sectionStyles = stylex.create({
   meta: {
     flex: "0 0 auto",
     color: tokens.inkFaint,
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.small,
     whiteSpace: "nowrap",
   },

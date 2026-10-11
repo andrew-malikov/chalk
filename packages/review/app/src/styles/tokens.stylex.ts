@@ -51,7 +51,7 @@ export const tokens = stylex.defineConsts({
   edgeMuted: "var(--edge-muted)",
   fontDisplay: "var(--font-display)",
   fontMono: "var(--font-mono)",
-  fontSerif: "var(--font-serif)",
+  fontSans: "var(--font-sans)",
   ghost: "var(--ghost)",
   ink: "var(--ink)",
   inkFaint: "var(--ink-faint)",

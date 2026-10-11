@@ -356,7 +356,7 @@ const styles = stylex.create({
     display: "inline-flex",
     alignItems: "center",
     gap: "1px",
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.micro,
     lineHeight: "14px",
     opacity: 0.65,

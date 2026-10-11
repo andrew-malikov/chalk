@@ -52,22 +52,7 @@ export async function copyText(text: string): Promise<boolean> {
 
 /** The prompt cards' copy glyph. */
 export function CopyIcon() {
-  return (
-    <svg {...stylex.props(styles.icon)} viewBox="0 0 12 12" aria-hidden="true">
-      <rect
-        {...stylex.props(styles.stroke)}
-        x="3.5"
-        y="3.5"
-        width="7"
-        height="7"
-        rx="1"
-      />
-      <path
-        {...stylex.props(styles.stroke)}
-        d="M8.5 3.5v-1a1 1 0 0 0-1-1h-5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h1"
-      />
-    </svg>
-  );
+  return <CopyGlyph xstyle={styles.icon} />;
 }
 
 const COPIED_FOR_MS = 1200;
@@ -124,12 +109,5 @@ const styles = stylex.create({
   icon: {
     width: "12px",
     height: "12px",
-  },
-  stroke: {
-    fill: "none",
-    stroke: "currentColor",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    strokeWidth: "1.2",
   },
 });

@@ -8,6 +8,7 @@ import { Button } from "@canvas/ui/button";
 import type { IconProps } from "@canvas/ui/icons";
 import { surfaceStyles } from "@canvas/ui/surface";
 import * as stylex from "@stylexjs/stylex";
+import { Archive } from "lucide-react";
 import { type ReactElement, useRef, useState } from "react";
 
 import { useReviewActions, useReviewState } from "./review-context";
@@ -81,17 +82,12 @@ export function ReviewCornerAction(): ReactElement | null {
 
 export function ArchiveIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Archive
       {...stylex.props(xstyle)}
-      viewBox="0 0 16 16"
-      width="13"
-      height="13"
+      size={13}
       aria-hidden="true"
-    >
-      <rect x="1.6" y="2.6" width="12.8" height="3.4" rx="1" />
-      <path d="M3 6v6.2a1.2 1.2 0 0 0 1.2 1.2h7.6A1.2 1.2 0 0 0 13 12.2V6" />
-      <path d="M6.4 9h3.2" />
-    </svg>
+      focusable="false"
+    />
   );
 }
 
@@ -114,7 +110,7 @@ const styles = stylex.create({
   error: {
     padding: "8px 12px",
     color: tokens.changeRemoved,
-    font: `${fontWeight.regular} ${fontSize.small} ${tokens.fontMono}`,
+    font: `${fontWeight.regular} ${fontSize.small} ${tokens.fontSans}`,
     whiteSpace: "nowrap",
   },
 });

@@ -47,7 +47,13 @@ import {
 } from "@review/documents/viewed-coverage";
 import type { Lens } from "@review/review-api/diff-lenses";
 import * as stylex from "@stylexjs/stylex";
-import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
+import {
+  File,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
+  Search,
+  X,
+} from "lucide-react";
 import {
   type CSSProperties,
   type ReactNode,
@@ -415,12 +421,11 @@ export function ReviewDiffView({
                             {...stylex.props(styles.clear)}
                             aria-hidden="true"
                           >
-                            <svg width="10" height="10" viewBox="0 0 10 10">
-                              <path
-                                {...stylex.props(styles.clearMark)}
-                                d="M2 2l6 6M8 2L2 8"
-                              />
-                            </svg>
+                            <X
+                              size={10}
+                              {...stylex.props(styles.clearMark)}
+                              aria-hidden="true"
+                            />
                           </span>
                         )}
                       </span>
@@ -726,41 +731,11 @@ function RailButton({
 }
 
 function FileIcon() {
-  return (
-    <svg
-      {...stylex.props(styles.icon)}
-      width="14"
-      height="14"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.2"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 1.75h5l3.25 3.25v9.25H4z" />
-      <path d="M9 1.75V5h3.25" />
-    </svg>
-  );
+  return <File {...stylex.props(styles.icon)} size={14} aria-hidden="true" />;
 }
 
 function MagnifierIcon() {
-  return (
-    <svg
-      {...stylex.props(styles.icon)}
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.2"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <circle cx="6" cy="6" r="4.25" />
-      <path d="M9.2 9.2l3.3 3.3" />
-    </svg>
-  );
+  return <Search {...stylex.props(styles.icon)} size={14} aria-hidden="true" />;
 }
 
 // The lens list draws like the document: a new row lands in a slot and wipes
@@ -818,7 +793,7 @@ const styles = stylex.create({
     minHeight: 0,
     height: "100%",
     color: tokens.ink,
-    font: `${fontSize.small}/1.5 ${tokens.fontMono}`,
+    font: `${fontSize.small}/1.5 ${tokens.fontSans}`,
   },
   // The sidebar is the tray; its right padding holds the divider.
   sidebar: {
@@ -995,7 +970,7 @@ const styles = stylex.create({
   hint: {
     padding: "0 14px 6px 16px",
     color: tokens.inkFaint,
-    font: `${fontSize.small}/16px ${tokens.fontMono}`,
+    font: `${fontSize.small}/16px ${tokens.fontSans}`,
   },
   nativeTree: {
     flex: 1,
@@ -1174,7 +1149,7 @@ const styles = stylex.create({
     padding: "0 10px",
     backgroundColor: tokens.surface,
     color: tokens.inkFaint,
-    font: `${fontSize.small}/1 ${tokens.fontMono}`,
+    font: `${fontSize.small}/1 ${tokens.fontSans}`,
   },
   error: {
     padding: "8px 12px",

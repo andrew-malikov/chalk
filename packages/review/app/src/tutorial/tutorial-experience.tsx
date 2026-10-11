@@ -16,7 +16,7 @@ import {
 } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button, IconButton } from "@canvas/ui/button";
-import { TutorialIcon } from "@canvas/ui/icons";
+import { CloseIcon, TutorialIcon } from "@canvas/ui/icons";
 import * as stylex from "@stylexjs/stylex";
 import {
   type ReactElement,
@@ -424,7 +424,7 @@ function TutorialGuide({
           onClick={experience.onDismiss}
           aria-label="Hide tutorial"
         >
-          ×
+          <CloseIcon />
         </IconButton>
       </header>
       <div {...stylex.props(styles.progress)} aria-hidden="true">
@@ -678,7 +678,7 @@ const styles = stylex.create({
   },
   guideChapter: {
     color: tokens.inkMuted,
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.small,
     letterSpacing: tracking.chrome,
     textTransform: "uppercase",
@@ -713,19 +713,19 @@ const styles = stylex.create({
   chapter: {
     margin: 0,
     color: tokens.tutorialRing,
-    font: `${fontSize.small}/16px ${tokens.fontMono}`,
+    font: `${fontSize.small}/16px ${tokens.fontSans}`,
     textAlign: "left",
   },
   step: {
     margin: 0,
     color: tokens.ink,
-    font: `${fontWeight.medium} ${documentType.body}/22px ${tokens.fontSerif}`,
+    font: `${fontWeight.medium} ${documentType.body}/22px ${tokens.fontSans}`,
     textAlign: "left",
   },
   instruction: {
     margin: 0,
     color: tokens.inkMuted,
-    font: `${fontSize.body}/18px ${tokens.fontMono}`,
+    font: `${fontSize.body}/18px ${tokens.fontSans}`,
     textAlign: "left",
   },
   guideFooter: {

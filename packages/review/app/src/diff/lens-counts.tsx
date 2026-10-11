@@ -1,4 +1,5 @@
 import { tokens } from "@canvas/styles/tokens.stylex";
+import { CheckIcon } from "@canvas/ui/icons";
 import type { CoverageProgress } from "@review/documents/viewed-coverage";
 import * as stylex from "@stylexjs/stylex";
 
@@ -11,7 +12,9 @@ export function ElementCountsText({
   progress: CoverageProgress;
 }) {
   return progress.state === "viewed" ? (
-    <span>✓</span>
+    <span aria-label="Viewed">
+      <CheckIcon />
+    </span>
   ) : progress.state === "folded" ? (
     <span>Folded</span>
   ) : (

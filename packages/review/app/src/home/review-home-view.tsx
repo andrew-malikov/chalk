@@ -25,6 +25,15 @@ import type {
 import { fuzzyMatches, fuzzySegments } from "@review/lib/fuzzy-match";
 import * as stylex from "@stylexjs/stylex";
 import {
+  ArrowDownUp,
+  Ellipsis,
+  ListFilter,
+  Pencil,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
+import {
   Fragment,
   createContext,
   useCallback,
@@ -689,15 +698,7 @@ function ReviewRowActions({ review }: { review: ReviewApiSummary }) {
         {...menu.triggerProps}
         disabled={!ui?.confirmDelete}
       >
-        <svg
-          {...stylex.props(rowMenuStyles.icon)}
-          viewBox="0 0 20 20"
-          aria-hidden="true"
-        >
-          <circle cx="4.5" cy="10" r="1.6" />
-          <circle cx="10" cy="10" r="1.6" />
-          <circle cx="15.5" cy="10" r="1.6" />
-        </svg>
+        <Ellipsis {...stylex.props(rowMenuStyles.icon)} aria-hidden="true" />
       </IconButton>
     </div>
   );
@@ -726,19 +727,11 @@ function TableMenu<T extends string>({
       size="sm"
       triggerStyle={styles.menuTrigger}
     >
-      <svg
-        {...stylex.props(styles.menuIcon)}
-        viewBox="0 0 20 20"
-        aria-hidden="true"
-      >
-        <path
-          d={
-            label === "Filter"
-              ? "M3 5h14M6 10h8M8.5 15h3"
-              : "M6 4v12m0 0-3-3m3 3 3-3M14 16V4m0 0-3 3m3-3 3 3"
-          }
-        />
-      </svg>
+      {label === "Filter" ? (
+        <ListFilter {...stylex.props(styles.menuIcon)} aria-hidden="true" />
+      ) : (
+        <ArrowDownUp {...stylex.props(styles.menuIcon)} aria-hidden="true" />
+      )}
       <span>{label}</span>
       <strong {...stylex.props(styles.menuValue)}>
         {options.find((option) => option.value === value)?.label ?? value}
@@ -815,14 +808,7 @@ function ScratchpadGroup({
 
 function PencilIcon() {
   return (
-    <svg
-      {...stylex.props(styles.scratchpadGlyph)}
-      aria-hidden="true"
-      viewBox="0 0 16 16"
-    >
-      <path d="M3 13l1-4 7-7 3 3-7 7-4 1z" />
-      <path d="M10 3l3 3" />
-    </svg>
+    <Pencil {...stylex.props(styles.scratchpadGlyph)} aria-hidden="true" />
   );
 }
 
@@ -996,44 +982,28 @@ export function countLabel(count: number, singular: string): string {
 
 function SearchIcon() {
   return (
-    <svg
-      {...stylex.props(styles.searchIcon)}
-      viewBox="0 0 16 16"
+    <Search
+      {...stylex.props(styles.searchIcon, styles.searchStroke)}
       aria-hidden="true"
-    >
-      <circle {...stylex.props(styles.searchStroke)} cx="7" cy="7" r="4.25" />
-      <path {...stylex.props(styles.searchStroke)} d="M10.2 10.2 13.5 13.5" />
-    </svg>
+    />
   );
 }
 
 function ClearIcon() {
   return (
-    <svg
-      {...stylex.props(styles.clearIcon)}
-      viewBox="0 0 16 16"
+    <X
+      {...stylex.props(styles.clearIcon, styles.searchStroke)}
       aria-hidden="true"
-    >
-      <path
-        {...stylex.props(styles.searchStroke)}
-        d="M4.5 4.5 11.5 11.5M11.5 4.5 4.5 11.5"
-      />
-    </svg>
+    />
   );
 }
 
 function TrashIcon() {
   return (
-    <svg
-      {...stylex.props(styles.deleteIcon)}
-      viewBox="0 0 20 20"
+    <Trash2
+      {...stylex.props(styles.deleteIcon, styles.deleteStroke)}
       aria-hidden="true"
-    >
-      <path
-        {...stylex.props(styles.deleteStroke)}
-        d="M3.5 5.5h13M8 5.5V4h4v1.5M5 5.5l.8 11h8.4l.8-11M8.3 8.5l.3 5M11.7 8.5l-.3 5"
-      />
-    </svg>
+    />
   );
 }
 
@@ -1052,7 +1022,7 @@ const rowMenuStyles = stylex.create({
   icon: {
     width: "16px",
     height: "16px",
-    fill: "currentColor",
+    fill: "none",
   },
 });
 
@@ -1211,7 +1181,7 @@ const styles = stylex.create({
     minWidth: 0,
     overflow: "hidden",
     color: tokens.ink,
-    font: `${fontWeight.medium} ${documentType.body}/22px ${tokens.fontSerif}`,
+    font: `${fontWeight.medium} ${documentType.body}/22px ${tokens.fontSans}`,
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
@@ -1234,7 +1204,7 @@ const styles = stylex.create({
     columnGap: "10px",
     rowGap: "3px",
     color: tokens.reviewHomeMeta,
-    font: `${fontSize.small} ${tokens.fontMono}`,
+    font: `${fontSize.small} ${tokens.fontSans}`,
   },
   // Meta lines are one sentence of facts joined by a middle dot.
   cardMetaNext: {
@@ -1272,7 +1242,7 @@ const styles = stylex.create({
     borderColor: "currentcolor",
     backgroundColor: tokens.transparent,
     color: tokens.inkMuted,
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
   },
   dismissedCount: {
     fontWeight: fontWeight.medium,
@@ -1309,7 +1279,7 @@ const styles = stylex.create({
   dismissedClock: {
     flex: "0 0 auto",
     color: tokens.inkMuted,
-    font: `${fontWeight.regular} ${fontSize.small} ${tokens.fontMono}`,
+    font: `${fontWeight.regular} ${fontSize.small} ${tokens.fontSans}`,
     opacity: 0.75,
   },
   restore: {
@@ -1366,7 +1336,7 @@ const styles = stylex.create({
     borderBottomStyle: "solid",
     borderBottomColor: tokens.rule,
     color: tokens.inkMuted,
-    font: `${fontSize.reading}/24px ${tokens.fontMono}`,
+    font: `${fontSize.reading}/24px ${tokens.fontSans}`,
   },
   controls: {
     display: "flex",
@@ -1414,7 +1384,7 @@ const styles = stylex.create({
     minWidth: "840px",
     borderCollapse: "collapse",
     tableLayout: "fixed",
-    font: `${fontSize.body}/18px ${tokens.fontMono}`,
+    font: `${fontSize.body}/18px ${tokens.fontSans}`,
   },
   colPr: {
     width: "88px",
@@ -1439,7 +1409,7 @@ const styles = stylex.create({
     borderBottomColor: tokens.rule,
     backgroundColor: tokens.tray,
     color: tokens.inkMuted,
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.small,
     fontWeight: fontWeight.semibold,
     lineHeight: "16px",
@@ -1509,7 +1479,7 @@ const styles = stylex.create({
     overflow: "hidden",
     textOverflow: "ellipsis",
     color: tokens.inkFaint,
-    font: `${fontSize.small}/14px ${tokens.fontMono}`,
+    font: `${fontSize.small}/14px ${tokens.fontSans}`,
   },
   repositoryName: {
     fontWeight: fontWeight.regular,

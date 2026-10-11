@@ -20,6 +20,7 @@ import { StackIcon } from "@canvas/ui/icons";
 import type { ReviewStackLayer } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
 import {
   type MouseEvent,
   type ReactElement,
@@ -98,13 +99,10 @@ export function ReviewStackSelector(): ReactElement | null {
             <span {...stylex.props(styles.triggerPosition)}>
               {index + 1}/{layers.length}
             </span>
-            <svg
-              viewBox="0 0 12 12"
+            <ChevronDown
               aria-hidden="true"
               {...stylex.props(styles.chevron, open && styles.chevronOpen)}
-            >
-              <path d="m3 4.5 3 3 3-3" />
-            </svg>
+            />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -114,7 +112,7 @@ export function ReviewStackSelector(): ReactElement | null {
           }
           align="start"
           aria-label="Pull request stack"
-          className="tw:min-w-[340px] tw:max-w-[calc(100vw-16px)] tw:p-2 tw:font-mono"
+          className="tw:min-w-[340px] tw:max-w-[calc(100vw-16px)] tw:p-2 tw:font-sans"
         >
           {layers.map((layer) => (
             <LayerRow
@@ -206,7 +204,7 @@ const styles = stylex.create({
   trigger: {
     gap: "7px",
     padding: "0 8px",
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.small,
   },
   triggerIcon: {
@@ -227,7 +225,7 @@ const styles = stylex.create({
     height: "12px",
     fill: "none",
     stroke: tokens.inkFaint,
-    strokeWidth: "1.25",
+    strokeWidth: "2",
     strokeLinecap: "round",
     strokeLinejoin: "round",
     transition: `transform ${motion.fast} ease-out`,
@@ -240,7 +238,7 @@ const styles = stylex.create({
     flexDirection: "column",
     minWidth: "340px",
     padding: "7px",
-    font: `${fontSize.ui}/18px ${tokens.fontMono}`,
+    font: `${fontSize.ui}/18px ${tokens.fontSans}`,
   },
   row: {
     display: "flex",

@@ -153,7 +153,7 @@ const styles = stylex.create({
     borderRadius: radius.small,
     backgroundColor: tokens.tray,
     color: tokens.ink,
-    font: `${fontSize.body}/18px ${tokens.fontMono}`,
+    font: `${fontSize.body}/18px ${tokens.fontSans}`,
     cursor: "pointer",
   },
   copy: {

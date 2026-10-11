@@ -1,6 +1,7 @@
 import { Button } from "@canvas/components/ui/button";
 import { useCanvasMenu } from "@canvas/host/canvas-ui";
 import * as stylex from "@stylexjs/stylex";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ReactNode } from "react";
 
 /** A single-choice menu; the caller renders the trigger's content. */
@@ -50,13 +51,11 @@ export function OptionMenu<T extends string>({
         {...triggerProps}
       >
         {children}
-        <svg
-          {...stylex.props(styles.chevron)}
-          viewBox="0 0 20 20"
-          aria-hidden="true"
-        >
-          <path d={menu.open ? "m5 12 5-5 5 5" : "m5 8 5 5 5-5"} />
-        </svg>
+        {menu.open ? (
+          <ChevronUp {...stylex.props(styles.chevron)} aria-hidden="true" />
+        ) : (
+          <ChevronDown {...stylex.props(styles.chevron)} aria-hidden="true" />
+        )}
       </Button>
     </div>
   );

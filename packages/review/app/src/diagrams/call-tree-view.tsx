@@ -11,6 +11,7 @@ import { callEdgeMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
+import { CheckIcon } from "@canvas/ui/icons";
 import type { DiffSelection } from "@review/documents/lens-selection";
 import type { CallStackDiffBlock } from "@review/review-api/blocks/call_stack_diff";
 import * as stylex from "@stylexjs/stylex";
@@ -121,7 +122,9 @@ export function CallTree({
                     title={`Remaining +${stats.remaining.additions} −${stats.remaining.deletions} · Total +${stats.total.additions} −${stats.total.deletions}`}
                   >
                     {stats.state === "viewed" ? (
-                      "✓"
+                      <span aria-label="Viewed">
+                        <CheckIcon />
+                      </span>
                     ) : stats.state === "folded" ? (
                       "Folded"
                     ) : (

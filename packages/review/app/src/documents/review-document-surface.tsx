@@ -28,7 +28,7 @@ const styles = stylex.create({
     maxWidth: { default: null, [inDocument()]: "1000px" },
     margin: { default: null, [inDocument()]: 0 },
     color: { default: null, [inDocument()]: tokens.ink },
-    fontFamily: { default: null, [inDocument()]: tokens.fontSerif },
+    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
     fontSize: { default: null, [inDocument()]: documentType.title },
     fontWeight: { default: null, [inDocument()]: fontWeight.medium },
     lineHeight: { default: null, [inDocument()]: "38px" },

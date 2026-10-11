@@ -122,7 +122,7 @@ function mount(
   const document = spec.container.ownerDocument;
   const header = document.createElement("div");
   header.style.cssText =
-    "display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;font:12px var(--font-mono,monospace);color:var(--ink);background:var(--surface);";
+    "display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;font:12px var(--font-sans,sans-serif);color:var(--ink);background:var(--surface);";
   const open = document.createElement("button");
   open.type = "button";
   open.textContent = spec.title;

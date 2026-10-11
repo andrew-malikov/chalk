@@ -8,7 +8,7 @@ import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button } from "@canvas/ui/button";
 import { CopyIcon, copyText } from "@canvas/ui/copy-text";
-import { DrawnCheckIcon } from "@canvas/ui/icons";
+import { CheckIcon } from "@canvas/ui/icons";
 import { OptionMenu } from "@canvas/ui/option-menu";
 import {
   type ReviewCanvasInstallContent,
@@ -267,7 +267,7 @@ export function ConnectCard({
               aria-label={`${copied ? "Copied" : "Copy"} ${noun} for ${agent}`}
               onClick={() => copy(text)}
             >
-              {copied ? <DrawnCheckIcon /> : <CopyIcon />}
+              {copied ? <CheckIcon /> : <CopyIcon />}
               {copied
                 ? "Copied"
                 : `Copy ${mode === "prompt" ? "prompt" : "command"}`}
@@ -496,7 +496,7 @@ const styles = stylex.create({
     borderRadius: radius.pill,
     backgroundColor: tokens.raised,
     color: tokens.ink,
-    font: `${fontSize.body}/18px ${tokens.fontMono}`,
+    font: `${fontSize.body}/18px ${tokens.fontSans}`,
     cursor: "pointer",
   },
   collapse: {
@@ -507,7 +507,7 @@ const styles = stylex.create({
     borderColor: "currentcolor",
     backgroundColor: "transparent",
     color: { default: tokens.inkMuted, ":hover": tokens.ink },
-    font: `${fontSize.body}/22px ${tokens.fontMono}`,
+    font: `${fontSize.body}/22px ${tokens.fontSans}`,
     cursor: "pointer",
   },
   legacy: {

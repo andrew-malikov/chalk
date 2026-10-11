@@ -695,7 +695,7 @@ const styles = stylex.create({
   paragraph: {
     margin: { default: null, [inDocument()]: "14px 0" },
     color: { default: null, [inDocument()]: tokens.ink },
-    fontFamily: { default: null, [inDocument()]: tokens.fontSerif },
+    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
     fontSize: { default: null, [inDocument()]: fontSize.reading },
     lineHeight: { default: null, [inDocument()]: 1.72 },
     textAlign: { default: null, [inDocument()]: "left" },
@@ -708,7 +708,7 @@ const styles = stylex.create({
     width: "100%",
     minHeight: "120px",
     display: "block",
-    font: `${fontSize.body} ${tokens.fontMono}`,
+    font: `${fontSize.body} ${tokens.fontSans}`,
   },
   canvas: {
     backgroundColor: tokens.transparent,
@@ -720,7 +720,7 @@ const styles = stylex.create({
     position: "relative",
     boxSizing: "border-box",
     color: tokens.ink,
-    font: `${fontSize.body}/1.4 ${tokens.fontMono}`,
+    font: `${fontSize.body}/1.4 ${tokens.fontSans}`,
     cursor: "pointer",
     outline: { default: null, ":focus-visible": "none" },
   },
@@ -816,7 +816,7 @@ const styles = stylex.create({
     strokeWidth: 1.6,
   },
   edgeLabel: {
-    font: `${fontSize.micro} ${tokens.fontMono}`,
+    font: `${fontSize.micro} ${tokens.fontSans}`,
     fill: tokens.inkMuted,
     paintOrder: "stroke",
     stroke: tokens.tray,

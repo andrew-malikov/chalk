@@ -1,6 +1,7 @@
 import { tokens } from "@canvas/styles/tokens.stylex";
 import type { ReviewDiffFileWire } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
+import { ArrowRight, CircleSmall, File, Minus, Plus } from "lucide-react";
 import type { ReactElement } from "react";
 
 // Added and deleted take the two change colors, modified the warn amber the
@@ -27,31 +28,31 @@ const styles = stylex.create({
   unchanged: { color: tokens.ghost },
 });
 
-const MARK_PATHS: Record<ReviewDiffFileWire["status"], ReactElement> = {
-  added: <path d="M8 4v8M4 8h8" />,
-  deleted: <path d="M4 8h8" />,
-  modified: <circle {...stylex.props(styles.dot)} cx="8" cy="8" r="2.75" />,
-  renamed: <path d="M3.5 8h9M9 4.5 12.5 8 9 11.5" />,
-  unchanged: <path d="M4.5 2.5h4.5l3 3v8h-7.5z M9 2.5v3h3" />,
+const MARK_ICONS = {
+  added: Plus,
+  deleted: Minus,
+  modified: CircleSmall,
+  renamed: ArrowRight,
+  unchanged: File,
 };
 
-/**
- * A file's status as one stroke beside its name: plus, minus, dot, arrow, or
- * a ghost file outline for referenced context. Same 16px slot as the chevron;
- * the workbench draws the same paths for its tree and diff headers.
- */
+/** A file's status beside its name, using the corresponding change color. */
 export function FileMark({
   status,
 }: {
   status: ReviewDiffFileWire["status"];
 }): ReactElement {
+  const Icon = MARK_ICONS[status];
+
   return (
-    <svg
-      {...stylex.props(styles.mark, styles[status])}
-      viewBox="0 0 16 16"
+    <Icon
+      {...stylex.props(
+        styles.mark,
+        styles[status],
+        status === "modified" && styles.dot,
+      )}
       aria-hidden="true"
-    >
-      {MARK_PATHS[status]}
-    </svg>
+      focusable="false"
+    />
   );
 }

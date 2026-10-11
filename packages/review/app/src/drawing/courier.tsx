@@ -461,7 +461,7 @@ const styles = stylex.create({
     borderRadius: radius.pill,
     backgroundColor: tokens.ink,
     color: tokens.surface,
-    font: `${fontWeight.medium} ${fontSize.micro} ${tokens.fontMono}`,
+    font: `${fontWeight.medium} ${fontSize.micro} ${tokens.fontSans}`,
     whiteSpace: "nowrap",
     transform: "translateX(-50%)",
     opacity: {

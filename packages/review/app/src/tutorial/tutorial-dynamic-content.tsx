@@ -5,6 +5,7 @@ import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import type { ReviewComponentProps } from "@review/documents/review-document-data";
 import * as stylex from "@stylexjs/stylex";
+import { ArrowRight } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
 
 import { useTutorial } from "./tutorial-context";
@@ -61,9 +62,11 @@ export function TutorialViewButton({
       onClick={() => openReviewView(view)}
     >
       {children}
-      <span aria-hidden="true" {...stylex.props(styles.arrow)}>
-        →
-      </span>
+      <ArrowRight
+        aria-hidden="true"
+        focusable="false"
+        {...stylex.props(styles.arrow)}
+      />
     </ButtonPrimitive>
   );
 }
@@ -96,10 +99,13 @@ const styles = stylex.create({
     backgroundColor: tokens.transparent,
     color: tokens.accent,
     cursor: "pointer",
-    font: `${fontSize.body} ${tokens.fontMono}`,
+    font: `${fontSize.body} ${tokens.fontSans}`,
     textDecoration: { default: null, ":hover": "underline" },
   },
   arrow: {
+    width: "14px",
+    height: "14px",
+    flexShrink: 0,
     color: tokens.inkFaint,
   },
 });

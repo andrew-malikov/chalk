@@ -14,6 +14,7 @@ import {
   summarizeReviewDiffFiles,
 } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
+import { ArrowUpRight, GitBranch } from "lucide-react";
 import {
   Fragment,
   type ReactElement,
@@ -75,18 +76,11 @@ export function ReviewDocumentMetaLine({
       key: "branch",
       node: (
         <span {...stylex.props(styles.branch)} title={`Head branch: ${branch}`}>
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 20 20"
+          <GitBranch
+            size={13}
             aria-hidden="true"
             {...stylex.props(styles.icon, styles.branchIcon)}
-          >
-            <circle cx="5" cy="4.5" r="2" />
-            <circle cx="5" cy="15.5" r="2" />
-            <circle cx="15" cy="6.5" r="2" />
-            <path d="M5 6.5v7M15 8.5c0 3-10 2-10 5" />
-          </svg>
+          />
           <span {...stylex.props(styles.branchName)}>{branch}</span>
         </span>
       ),
@@ -173,15 +167,11 @@ export function ReviewDocumentMetaLine({
                 {...stylex.props(styles.pullRequest, styles.pullRequestLink)}
               >
                 PR #{meta.pullRequestNumber}
-                <svg
-                  width="11"
-                  height="11"
-                  viewBox="0 0 20 20"
+                <ArrowUpRight
+                  size={11}
                   aria-hidden="true"
                   {...stylex.props(styles.icon)}
-                >
-                  <path d="M7 4h9v9M16 4 5 15" />
-                </svg>
+                />
               </a>
             ) : (
               <span {...stylex.props(styles.pullRequest)}>
@@ -268,7 +258,7 @@ const styles = stylex.create({
     flexDirection: "column",
     gap: "12px",
     paddingBottom: "28px",
-    font: `${fontSize.ui}/18px ${tokens.fontMono}`,
+    font: `${fontSize.ui}/18px ${tokens.fontSans}`,
     color: tokens.inkFaint,
   },
   row: {

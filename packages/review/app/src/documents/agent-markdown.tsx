@@ -251,7 +251,7 @@ function renderMarkdownNode(
       return (
         <blockquote
           key={key}
-          {...stylex.props([doc.serif, doc.column, drawStyles.blockChild])}
+          {...stylex.props([doc.body, doc.column, drawStyles.blockChild])}
         >
           {renderMarkdownChildren(node.children ?? [], key)}
         </blockquote>

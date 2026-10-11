@@ -2,6 +2,35 @@ import { chevronMarker, segmentMarker } from "@canvas/styles/markers.stylex";
 import { motion } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
+import {
+  ArrowBigUp,
+  ArrowUp,
+  BookOpen,
+  Bug,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Code,
+  Command,
+  Copy,
+  ExternalLink,
+  GripVertical,
+  History,
+  Image,
+  Layers,
+  List,
+  Lock,
+  MapPin,
+  MessageSquare,
+  Minus,
+  PanelRight,
+  Plus,
+  RefreshCw,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+  X,
+} from "lucide-react";
 import type { ReactElement } from "react";
 
 /** Styles a parent adds to an icon for its context. */
@@ -9,155 +38,111 @@ export type IconProps = { xstyle?: stylex.StyleXStyles };
 
 export function CloseIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <X
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M7 7l10 10M17 7 7 17" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function SlidersIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <SlidersHorizontal
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4 8h4.5M13.5 8H20M4 16h6.5M15.5 16H20" />
-      <circle cx="11" cy="8" r="2.5" />
-      <circle cx="13" cy="16" r="2.5" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function StackIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Layers
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 4 20 8.5 12 13 4 8.5Z" />
-      <path d="M4 12.5 12 17l8-4.5M4 16.5 12 21l8-4.5" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function BugIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Bug
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <rect x="8" y="7" width="8" height="12" rx="4" />
-      <path d="M10 7V6a2 2 0 0 1 4 0v1M12 8v10" />
-      <path d="M8 10H5M19 10h-3M8 14H5M19 14h-3M8.75 18 6 20M15.25 18 18 20" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function ContentsIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <List
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M8 7h10M8 12h10M8 17h10" />
-      <path d="M5 7h.01M5 12h.01M5 17h.01" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function TutorialIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <BookOpen
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4.5 5.5h4.75A2.75 2.75 0 0 1 12 8.25V19a2.75 2.75 0 0 0-2.75-2.75H4.5V5.5Z" />
-      <path d="M19.5 5.5h-4.75A2.75 2.75 0 0 0 12 8.25V19a2.75 2.75 0 0 1 2.75-2.75h4.75V5.5Z" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function PlusIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Plus
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function MinusIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Minus
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M5 12h14" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function RefreshIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <RefreshCw
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M20 7v5h-5" />
-      <path d="M20 12a8 8 0 1 0-2.34 5.66" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function SettingsSlidersIcon(): ReactElement {
   return (
-    <svg
+    <SlidersHorizontal
       aria-hidden="true"
-      {...stylex.props(styles.settingsSliders)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4.5 8h15M4.5 16h15" />
-      <circle cx="9" cy="8" r="2" />
-      <circle cx="15" cy="16" r="2" />
-    </svg>
+      {...stylex.props(styles.settingsSliders)}
+    />
   );
 }
 
 export function MapPinIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <MapPin
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 21s6-5.25 6-11a6 6 0 1 0-12 0c0 5.75 6 11 6 11Z" />
-      <circle cx="12" cy="10" r="2.25" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
@@ -183,9 +168,7 @@ export function MarkerUnderline({ active }: { active: boolean }): ReactElement {
 
 /**
  * The one disclosure glyph. A 12px stroke chevron in a 16px slot that points
- * right when closed and rotates to point down when open; every section
- * header, lens row, tree row, commit card and dropdown chip uses this, and the
- * workbench restyles its codicon twisties to the same path (review.css).
+ * right when closed and rotates to point down when open.
  * Its button carries `chevronMarker`.
  */
 export function DisclosureChevron({
@@ -195,14 +178,12 @@ export function DisclosureChevron({
   expanded: boolean;
 }): ReactElement {
   return (
-    <svg
+    <ChevronRight
       {...stylex.props(styles.chevron, expanded && styles.chevronOpen, xstyle)}
-      viewBox="0 0 12 12"
       aria-hidden="true"
+      focusable="false"
       data-open={expanded || undefined}
-    >
-      <path d="M4.25 2.5 8 6l-3.75 3.5" />
-    </svg>
+    />
   );
 }
 
@@ -221,249 +202,167 @@ export function DiscordIcon({ xstyle }: IconProps = {}): ReactElement {
 
 export function CopyIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Copy
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <rect x="9" y="9" width="11" height="11" rx="2" />
-      <path d="M5 15V6a2 2 0 0 1 2-2h9" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function CodeIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Code
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="m9 7-5 5 5 5m6-10 5 5-5 5" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function CheckIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Check
       aria-hidden="true"
+      focusable="false"
       {...stylex.props(styles.icon, xstyle)}
-      focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M5 12.5l4.5 4.5L19 7" />
-    </svg>
-  );
-}
-
-/** A check that draws itself in when it mounts, for a just-finished action. */
-export function DrawnCheckIcon(): ReactElement {
-  return (
-    <svg
-      aria-hidden="true"
-      {...stylex.props(styles.drawnCheck)}
-      focusable="false"
-      viewBox="0 0 12 12"
-    >
-      <path
-        {...stylex.props(styles.drawnCheckStroke)}
-        d="M2.5 6.5 5 9l4.5-6"
-        pathLength={1}
-      />
-    </svg>
+    />
   );
 }
 
 export function ChatIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <MessageSquare
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4.5 5.25h15v10.5H11.25L6.75 19.5v-3.75H4.5z" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function LockIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Lock
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <rect x="4.5" y="10.5" width="15" height="10.5" rx="2.25" />
-      <path d="M8.25 10.5v-3a3.75 3.75 0 0 1 7.5 0v3" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function ArrowUpIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <ArrowUp
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 20V4m-7 7 7-7 7 7" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function HistoryIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <History
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M3.75 12a8.25 8.25 0 1 0 2.4-5.85M3.75 3.75v3.9h3.9M12 7.5v4.8l3 1.95" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function ImageIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Image
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <rect x="3.75" y="4.5" width="16.5" height="15" rx="2.25" />
-      <circle cx="9" cy="9.75" r="1.5" />
-      <path d="m20.25 15.75-4.5-4.5L6 19.5" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function TrashIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Trash2
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4.5 6.75h15M9.75 6.75V4.5h4.5v2.25M6.75 6.75l.9 12.75h8.7l.9-12.75M10.5 10.5v6M13.5 10.5v6" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function SearchIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Search
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <circle cx="10.5" cy="10.5" r="6.75" />
-      <path d="m15.75 15.75 4.5 4.5" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 export function PopOutIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <ExternalLink
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M13.5 3.75h6.75v6.75M20.25 3.75 12 12M9.75 5.25H6A2.25 2.25 0 0 0 3.75 7.5V18A2.25 2.25 0 0 0 6 20.25h10.5A2.25 2.25 0 0 0 18.75 18v-3.75" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
 /** A side panel, for docking a floating window back into it. */
 export function DockIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <PanelRight
       aria-hidden="true"
-      {...stylex.props(styles.icon, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <rect x="3.75" y="4.5" width="16.5" height="15" rx="2.25" />
-      <path d="M14.25 4.5v15" />
-    </svg>
+      {...stylex.props(styles.icon, xstyle)}
+    />
   );
 }
 
-/** The Command key, drawn: the canvas's mono font has no ⌘. */
+/** Keep keyboard symbols independent of font glyph coverage. */
 export function CommandKeyIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <Command
       aria-hidden="true"
-      {...stylex.props(styles.icon, styles.key, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M9 9h6v6H9zM9 9V6.5A2.5 2.5 0 1 0 6.5 9H9m6 0V6.5A2.5 2.5 0 1 1 17.5 9H15m-6 6v2.5A2.5 2.5 0 1 1 6.5 15H9m6 0v2.5a2.5 2.5 0 1 0 2.5-2.5H15" />
-    </svg>
+      {...stylex.props(styles.icon, styles.key, xstyle)}
+    />
   );
 }
 
-/** The Shift key, drawn: the canvas's mono font has no ⇧. */
 export function ShiftKeyIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <ArrowBigUp
       aria-hidden="true"
-      {...stylex.props(styles.icon, styles.key, xstyle)}
       focusable="false"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 4.5 5 12.5h4v7h6v-7h4z" />
-    </svg>
+      {...stylex.props(styles.icon, styles.key, xstyle)}
+    />
   );
 }
 
 /** A select's closed-state chevron, the same glyph as `tokens.chevronDown`. */
 export function ChevronDownIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <ChevronDown
       aria-hidden="true"
-      {...stylex.props(styles.chevronDown, xstyle)}
       focusable="false"
-      viewBox="0 0 12 12"
-    >
-      <path d="M2.5 4.25 6 8l3.5-3.75" />
-    </svg>
+      {...stylex.props(styles.chevronDown, xstyle)}
+    />
   );
 }
 
 /** Where a floating window is dragged from. */
 export function GripIcon({ xstyle }: IconProps = {}): ReactElement {
   return (
-    <svg
+    <GripVertical
       aria-hidden="true"
-      {...stylex.props(styles.grip, xstyle)}
       focusable="false"
-      viewBox="0 0 10 14"
-    >
-      {[3, 7].flatMap((cx) =>
-        [3, 7, 11].map((cy) => (
-          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.1" />
-        )),
-      )}
-    </svg>
+      {...stylex.props(styles.grip, xstyle)}
+    />
   );
 }
-
-const drawIn = stylex.keyframes({
-  from: { strokeDashoffset: 1 },
-  to: { strokeDashoffset: 0 },
-});
 
 const reducedMotion = "@media (prefers-reduced-motion: reduce)";
 
@@ -498,7 +397,7 @@ const styles = stylex.create({
     height: "12px",
     fill: "none",
     stroke: "currentcolor",
-    strokeWidth: "1.5",
+    strokeWidth: "2",
     strokeLinecap: "round",
     strokeLinejoin: "round",
   },
@@ -506,7 +405,7 @@ const styles = stylex.create({
     flex: "none",
     width: "10px",
     height: "14px",
-    fill: "currentColor",
+    fill: "none",
   },
   discord: {
     fill: "currentColor",
@@ -569,32 +468,12 @@ const styles = stylex.create({
     },
     fill: "none",
     stroke: "currentcolor",
-    strokeWidth: "1.5",
+    strokeWidth: "2",
     strokeLinecap: "round",
     strokeLinejoin: "round",
     transition: `transform ${motion.fast} ${motion.ease}, color ${motion.fast} ${motion.ease}`,
   },
   chevronOpen: {
     transform: "rotate(90deg)",
-  },
-  drawnCheck: {
-    flex: "none",
-    width: "12px",
-    height: "12px",
-  },
-  drawnCheckStroke: {
-    fill: "none",
-    stroke: "currentColor",
-    strokeDasharray: "1",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    strokeWidth: "1.2",
-    animationName: { default: drawIn, [reducedMotion]: "none" },
-    animationDuration: {
-      default: motion.slow,
-      [reducedMotion]: motion.instant,
-    },
-    animationTimingFunction: { default: "ease-out", [reducedMotion]: "ease" },
-    animationFillMode: { default: "both", [reducedMotion]: "none" },
   },
 });

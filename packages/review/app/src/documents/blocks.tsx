@@ -128,7 +128,7 @@ function CalloutBlock({ node, children }: BlockProps<"callout">) {
     <blockquote
       data-tone={node.tone}
       {...stylex.props(
-        documentStyles.serif,
+        documentStyles.body,
         styles.callout,
         styles[node.tone],
         documentStyles.column,

@@ -2685,8 +2685,6 @@ const stacked = "@media (max-width: 900px)";
 
 const narrow = "@media (max-width: 720px)";
 
-const geistMono = '"Geist Mono", ui-monospace, monospace';
-
 const settle = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 
 const groupBloom = stylex.keyframes({
@@ -2735,7 +2733,7 @@ const styles = stylex.create({
     borderRadius: radius.control,
     backgroundColor: tokens.surface,
     boxShadow: "none",
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
   },
   frameExpanded: {
     ...noBorder,
@@ -2770,7 +2768,7 @@ const styles = stylex.create({
     padding: "0 12px",
     backgroundColor: tokens.transparent,
     boxShadow: "none",
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
   },
   titleBlock: {
     position: "relative",
@@ -2880,7 +2878,7 @@ const styles = stylex.create({
     overflow: "hidden",
     padding: 0,
     backgroundColor: tokens.bg,
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
   },
   status: {
     ...noBorder,
@@ -3010,14 +3008,14 @@ const styles = stylex.create({
     overflow: "hidden",
     borderRadius: 0,
     backgroundColor: tokens.bg,
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
   },
   c4CanvasLens: {
     minWidth: 0,
   },
   flow: {
     backgroundColor: tokens.bg,
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
   },
   background: {
     opacity: 0.45,
@@ -3103,7 +3101,7 @@ const styles = stylex.create({
     borderRadius: radius.control,
     backgroundColor: tokens.surface,
     color: tokens.inkMuted,
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.small,
     fontWeight: fontWeight.medium,
     letterSpacing: 0,
@@ -3173,7 +3171,7 @@ const styles = stylex.create({
     boxShadow: "none",
     outline: { default: null, ":hover": "none", ":focus-visible": "none" },
     cursor: "pointer",
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     animationName: groupBloom,
     animationDuration: motion.medium,
     animationTimingFunction: settle,
@@ -3289,7 +3287,7 @@ const styles = stylex.create({
     color: tokens.ink,
     cursor: "pointer",
     font: "inherit",
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     textAlign: "left",
     transition: `border-color ${motion.fast} ${motion.ease}, background ${motion.fast} ${motion.ease}, box-shadow ${motion.fast} ${motion.ease}, transform ${motion.fast} ${motion.ease}`,
   },
@@ -3387,7 +3385,7 @@ const styles = stylex.create({
   description: {
     margin: { default: 0, [inDocument()]: "14px 0" },
     color: tokens.inkMuted,
-    fontFamily: { default: null, [inDocument()]: tokens.fontSerif },
+    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
     fontSize: fontSize.body,
     fontWeight: fontWeight.regular,
     lineHeight: "17px",
@@ -3407,7 +3405,7 @@ const styles = stylex.create({
     borderRadius: 0,
     backgroundColor: tokens.transparent,
     color: tokens.inkFaint,
-    fontFamily: geistMono,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.small,
     fontWeight: fontWeight.regular,
     lineHeight: "15px",
@@ -3432,7 +3430,7 @@ const styles = stylex.create({
     borderRadius: { default: null, [inDocument()]: radius.small },
     backgroundColor: { default: null, [inDocument()]: tokens.well },
     color: tokens.ink,
-    fontFamily: { default: geistMono, [inDocument()]: tokens.fontMono },
+    fontFamily: tokens.fontMono,
     fontSize: fontSize.reading,
     fontWeight: fontWeight.semibold,
     lineHeight: "18px",
@@ -3453,7 +3451,7 @@ const styles = stylex.create({
     overflow: "hidden",
     padding: 0,
     backgroundColor: tokens.transparent,
-    fontFamily: geistMono,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.small,
     fontWeight: fontWeight.medium,
     lineHeight: "15px",
@@ -3607,7 +3605,7 @@ const styles = stylex.create({
   },
   schemaKind: {
     color: tokens.inkFaint,
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.micro,
     fontWeight: fontWeight.bold,
     lineHeight: "12px",

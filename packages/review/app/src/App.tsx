@@ -19,6 +19,7 @@ import {
   diffSoftwareMaps,
 } from "@review/software-map/software-map-topology-diff";
 import * as stylex from "@stylexjs/stylex";
+import { Archive, ArrowLeft, ArrowUpRight } from "lucide-react";
 import {
   type CSSProperties,
   type ComponentType,
@@ -600,7 +601,7 @@ function ReviewLayoutContent({
                     <span {...stylex.props(shellStyles.openSourceTreeLabel)}>
                       Source tree
                     </span>
-                    <span aria-hidden="true">↗</span>
+                    <ArrowUpRight size={12} aria-hidden="true" />
                   </Button>
                 )}
                 <AuthoringActivityBadge
@@ -805,7 +806,7 @@ function CommitDiffScopeBar({
         {...stylex.props(scopeBarStyles.back)}
         onClick={onBack}
       >
-        <span aria-hidden="true">←</span> Commits
+        <ArrowLeft size={12} aria-hidden="true" /> Commits
       </ButtonPrimitive>
       <code {...stylex.props(scopeBarStyles.sha)} title={commit.commit}>
         {commit.commit.slice(0, 8)}
@@ -874,16 +875,11 @@ function ReviewBatonChip({
       ref={tooltip}
       {...stylex.props(shellStyles.topbarItem, batonStyles.chip)}
     >
-      <svg
+      <Archive
         {...stylex.props(batonStyles.glyph)}
-        viewBox="0 0 16 16"
-        width="12"
-        height="12"
+        size={12}
         aria-hidden="true"
-      >
-        <rect x="1.6" y="2.6" width="12.8" height="3.4" rx="1" />
-        <path d="M3 6v6.2a1.2 1.2 0 0 0 1.2 1.2h7.6A1.2 1.2 0 0 0 13 12.2V6" />
-      </svg>
+      />
       <span>dismissed</span>
     </span>
   );

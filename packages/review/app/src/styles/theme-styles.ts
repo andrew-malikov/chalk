@@ -23,10 +23,8 @@ export const themeStyles = stylex.create({
     // .review-app rather than .review-canvas-root because the light palette is a
     // class on this same element -- a custom property is substituted where it is
     // declared, so declaring them further up would freeze the dark values.
-    // The workbench has no font custom property to bridge to -- it hardcodes a
-    // stack per platform and per language -- so Desktop's review.css publishes
-    // --review-chrome-font; the browser build keeps the canvas's mono face.
-    "--chrome-font": "var(--review-chrome-font, var(--font-mono))",
+    // The desktop shell and canvas share the bundled UI face.
+    "--chrome-font": tokens.fontSans,
     // The workbench publishes a font-weight ramp, so the weights bridge like the
     // color tokens below. The sizes are fixed at the end of this rule.
     "--chrome-font-weight": "var(--vscode-fontWeight-regular, 400)",
@@ -87,7 +85,7 @@ export const themeStyles = stylex.create({
     color: tokens.ink,
     backgroundColor: tokens.bg,
     colorScheme: "dark",
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
   },
   light: {
     "--ghost": "#d4d4d4",
@@ -96,9 +94,9 @@ export const themeStyles = stylex.create({
     "--tray": "#f5f5f5",
     "--tray-raised": "color-mix(in srgb, var(--ink) 6%, var(--tray))",
     "--chevron-down":
-      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.5 4.25 6 8l3.5-3.75' fill='none' stroke='%23737373' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='m6 9 6 6 6-6' fill='none' stroke='%23737373' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
     "--check-mark":
-      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M2 5.2 4.2 7.4 8 3.2' fill='none' stroke='%23FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='m20 6-11 11-5-5' fill='none' stroke='%23FFFFFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
     "--marker-tint": "rgba(38, 38, 38, 0.08)",
     "--marker-glow": "rgba(38, 38, 38, 0.22)",
     "--board-grid":

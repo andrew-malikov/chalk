@@ -14,6 +14,7 @@ import type {
   ReviewInlineEditorHandle,
 } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
+import { ArrowDown, ArrowUp, X } from "lucide-react";
 import {
   type ReactNode,
   type RefObject,
@@ -533,22 +534,9 @@ function FindActionButton({
 }
 
 function FindActionIcon({ icon }: { icon: "previous" | "next" | "close" }) {
-  const path =
-    icon === "previous"
-      ? "M3 7.5 8 2.5l5 5M8 3v10.5"
-      : icon === "next"
-        ? "m3 8.5 5 5 5-5M8 13V2.5"
-        : "m3 3 10 10M13 3 3 13";
+  const Icon = icon === "previous" ? ArrowUp : icon === "next" ? ArrowDown : X;
 
-  return (
-    <svg
-      {...stylex.props(styles.actionIcon)}
-      viewBox="0 0 16 16"
-      aria-hidden="true"
-    >
-      <path d={path} />
-    </svg>
-  );
+  return <Icon {...stylex.props(styles.actionIcon)} aria-hidden="true" />;
 }
 
 function selectedMdxText(article: HTMLElement | null): string | undefined {
@@ -702,6 +690,6 @@ const styles = stylex.create({
     stroke: "currentcolor",
     strokeLinecap: "round",
     strokeLinejoin: "round",
-    strokeWidth: "1.35",
+    strokeWidth: "2",
   },
 });

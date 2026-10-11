@@ -12,6 +12,8 @@
 }
 
 @theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
   --color-background: var(--bg);
   --color-foreground: var(--ink);
   --color-primary: var(--ink);

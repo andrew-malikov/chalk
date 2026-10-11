@@ -78,7 +78,7 @@ const styles = stylex.create({
     gridTemplateColumns: "48px minmax(0, 1fr)",
     gap: "10px",
     color: tokens.ink,
-    fontFamily: tokens.fontSerif,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.reading,
     lineHeight: 1.72,
     textAlign: "left",

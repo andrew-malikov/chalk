@@ -445,7 +445,7 @@ const styles = stylex.create({
     overflow: "hidden",
     padding: 0,
     color: tokens.inkMuted,
-    fontFamily: tokens.fontSerif,
+    fontFamily: tokens.fontSans,
     interpolateSize: "allow-keywords",
     transition: {
       default: `width ${motion.medium} cubic-bezier(0.2, 0.7, 0.2, 1) ${motion.fast}, height ${motion.medium} cubic-bezier(0.2, 0.7, 0.2, 1) ${motion.fast}`,
@@ -527,7 +527,7 @@ const styles = stylex.create({
   head: {
     height: "32px",
     paddingLeft: "32px",
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     lineHeight: "32px",
     whiteSpace: "nowrap",
   },
@@ -585,7 +585,7 @@ const styles = stylex.create({
       ":focus-visible": tokens.ink,
       [currentEntry]: tokens.ink,
     },
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     fontSize: fontSize.body,
     lineHeight: "18px",
     outline: {
@@ -604,7 +604,7 @@ const styles = stylex.create({
   number: {
     flex: "0 0 auto",
     color: { default: tokens.inkFaint, [inCurrentEntry()]: tokens.ink },
-    fontFamily: tokens.fontMono,
+    fontFamily: tokens.fontSans,
     minWidth: "22px",
     fontSize: fontSize.small,
   },

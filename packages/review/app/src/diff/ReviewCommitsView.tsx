@@ -18,6 +18,7 @@ import {
 } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
 import { useQuery } from "@tanstack/react-query";
+import { CircleSmall } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { DiffCount } from "./diff-count";
@@ -69,13 +70,7 @@ function CommitGroups({
   return groups.map((group, index) => (
     <section key={group.key}>
       <div {...stylex.props(styles.date, index > 0 && styles.laterDate)}>
-        <svg
-          {...stylex.props(styles.dateIcon)}
-          viewBox="0 0 14 14"
-          aria-hidden="true"
-        >
-          <circle cx="7" cy="7" r="3" />
-        </svg>
+        <CircleSmall {...stylex.props(styles.dateIcon)} aria-hidden="true" />
         <h2 {...stylex.props(textStyles.eyebrow, styles.dateHeading)}>
           Commits on {group.label}
         </h2>
@@ -299,7 +294,7 @@ const styles = stylex.create({
   rangeCount: {
     color: tokens.ink,
     flexShrink: 0,
-    font: `${fontWeight.semibold} ${fontSize.reading}/20px ${tokens.fontMono}`,
+    font: `${fontWeight.semibold} ${fontSize.reading}/20px ${tokens.fontSans}`,
     whiteSpace: "nowrap",
   },
   rangeRefs: {
@@ -421,7 +416,7 @@ const styles = stylex.create({
     fontVariantNumeric: "tabular-nums",
   },
   meta: {
-    font: `${fontSize.small} ${tokens.fontMono}`,
+    font: `${fontSize.small} ${tokens.fontSans}`,
     fontVariantNumeric: "tabular-nums",
     paddingLeft: "26px",
     color: tokens.inkMuted,
