@@ -10,6 +10,7 @@ import { selectSource } from "@review/documents/lens-selection";
 import { ReviewInputError } from "@review/review-api/document.js";
 import { createReviewApi } from "@review/review-api/http.js";
 import { openLocalReviewStore } from "@review/review-api/local-data.js";
+import sharp from "sharp";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { type ShareBundle, digestBytes, exportShare } from "./export.js";
@@ -68,18 +69,18 @@ async function fixture() {
     operation: { type: "create", title: "A shared review", pins },
   });
 
-  const traceId = randomUUID();
+  const imageId = randomUUID();
   await local.data.upload({
-    kind: "trace",
-    id: traceId,
+    kind: "image",
+    id: imageId,
     repositoryId: repository.id,
-    trace: {
-      label: "Retained conversation",
-      events: [
-        { id: "one", role: "user", text: "Change the answer." },
-        { id: "two", role: "assistant", text: "Changed it to two." },
-      ],
-    },
+    base64: (
+      await sharp({
+        create: { width: 2, height: 2, channels: 3, background: "red" },
+      })
+        .png()
+        .toBuffer()
+    ).toString("base64"),
   });
 
   for (const content of [
@@ -101,12 +102,7 @@ async function fixture() {
         toLine: 1,
       }),
     },
-    {
-      type: "trace_quote",
-      traceId,
-      eventId: "one",
-      text: "Change the answer.",
-    },
+    { type: "image", assetId: imageId, alt: "Retained image" },
   ])
     await local.store.execute({
       commandId: randomUUID(),
@@ -333,7 +329,7 @@ it("shares a review's lenses and reads a bundle that holds them as document bloc
   expect(JSON.stringify(shared.document)).not.toContain("file_lens");
 });
 
-it("fetches pinned source into an independent repository and retains complete traces offline", async () => {
+it("fetches pinned source into an independent repository and serves source offline", async () => {
   const { bundle, imported, id, repo, app, recipient } = await importFixture();
   expect(imported.get(id).snapshot.origin?.branch).toBe("feature/shared-head");
   await rename(repo, repo + "-hidden");
@@ -357,15 +353,6 @@ it("fetches pinned source into an independent repository and retains complete tr
     ]),
   );
 
-  const resource = bundle.manifest.resources.find(
-    (item) => item.kind === "trace",
-  )!;
-
-  const trace = await (
-    await app.request(`/${id}/resources/${resource.id}`)
-  ).json();
-
-  expect(trace.events).toHaveLength(2);
   const persisted = validateShareBundle(await imported.read(id));
   expect(persisted.snapshot.pins!.repositoryId).not.toBe(
     imported.get(id).snapshot.pins!.repositoryId,

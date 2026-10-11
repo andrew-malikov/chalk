@@ -113,17 +113,6 @@ describe("agent markdown", () => {
     expect(html).toMatch(/<code[^>]*>styles\.css<\/code>/);
   });
 
-  it("highlights quote spans inside markdown paragraphs and inline code", () => {
-    const html = renderToStaticMarkup(
-      createElement(AgentMarkdown, {
-        source: "We should optimize database queries to avoid latency.",
-        highlightQuote: "optimize database queries",
-      }),
-    );
-
-    expect(html).toMatch(/<mark[^>]*>optimize database queries<\/mark>/);
-  });
-
   it("decodes named character references without using DOM innerHTML", () => {
     const html = renderToStaticMarkup(
       createElement(AgentMarkdown, {

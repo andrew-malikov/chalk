@@ -107,44 +107,26 @@ describe("review view state", () => {
     ).toBeNull();
   });
 
-  it("restores trace identity, event and source without saving trace content", () => {
-    const session = testReviewSession();
-    const store = createReviewPanelStore();
-    renderViewState({ session, store });
-    act(() => {
-      store
-        .getState()
-        .openTrace({ sessionId: "agent-a", trace: "subagent", eventIndex: 7 });
-      store.getState().selectTraceStorage("hosted");
+  it("restores obsolete trace preferences to the canvas", () => {
+    const request = vi.fn<typeof fetch>();
+    const session = testReviewSession({}, { request });
+    storeState(session, {
+      activeView: "trace",
+      trace: { sessionId: "old" },
+      traceStorage: "hosted",
     });
-    unmount();
-
-    const restored = createReviewPanelStore(
-      readReviewNavigationRestore(session.config, canvas),
-    );
-
-    expect(restored.getState().view).toBe("trace");
-    expect(restored.getState().traceSelection).toEqual({
-      sessionId: "agent-a",
-      trace: "subagent",
-      eventIndex: 7,
-    });
-    expect(restored.getState().traceStorage).toBe("hosted");
-    restored.getState().setAvailableViews(["review", "diff"]);
-    expect(restored.getState().view).toBe("review");
+    const restore = readReviewNavigationRestore(session.config, canvas);
+    expect(createReviewPanelStore(restore).getState().view).toBe("review");
+    expect(request).not.toHaveBeenCalled();
   });
 
   it("rejects malformed navigation identifiers", () => {
     const session = testReviewSession();
     storeState(session, {
       diffScope: { commit: "invalid", file: "file.ts" },
-      trace: { sessionId: "agent", eventIndex: -5 },
     });
     expect(
       readPersistedReviewViewState(session.config).diffScope,
-    ).toBeUndefined();
-    expect(
-      readPersistedReviewViewState(session.config).trace?.eventIndex,
     ).toBeUndefined();
   });
 
@@ -411,7 +393,7 @@ describe("review view state", () => {
   it("restores every view the switcher offers, and nothing else", () => {
     const session = testReviewSession();
 
-    for (const view of ["review", "commits", "map", "diff", "trace"] as const) {
+    for (const view of ["review", "commits", "map", "diff"] as const) {
       storeState(session, { activeView: view });
       expect(readPersistedReviewViewState(session.config).activeView).toBe(
         view,

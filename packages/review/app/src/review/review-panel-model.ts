@@ -5,14 +5,7 @@ import { type DiffSelection } from "@review/documents/lens-selection";
 export type ReviewPeekContent =
   | { kind: "source"; source: DiffSelection }
   | { kind: "inline-code"; language?: string; text: string }
-  | { kind: "explanation"; text?: string }
-  | {
-      kind: "trace-quote";
-      sessionId: string;
-      trace?: string;
-      event?: number;
-      quote: string;
-    };
+  | { kind: "explanation"; text?: string };
 
 /** What a peek or tour stop needs to know about its subject. Components build
  * one from their own document props; it is the panel's contract, not the

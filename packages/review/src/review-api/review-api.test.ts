@@ -325,12 +325,7 @@ describe("snapshot authoring", () => {
       ],
     },
     { type: "image", assetId: "image-1", alt: "Example" },
-    {
-      type: "trace_quote",
-      traceId: "trace-1",
-      eventId: "event-1",
-      text: "Keep it simple",
-    },
+
     { type: "software_map", mapVersionId: "map-1" },
   ])(
     "saves and reads a $type component without a second document representation",
@@ -2972,7 +2967,6 @@ it("reports a created review with the origin its headers claim", async () => {
     undefined,
     undefined,
     undefined,
-    undefined,
     { onReviewCreated: (event) => created.push(event) },
   );
 
@@ -3009,4 +3003,12 @@ it("reports a created review with the origin its headers claim", async () => {
     },
     { reviewId: expect.any(String), kind: "review", blocks: 0, via: "other" },
   ]);
+});
+
+it("returns unknown routes for retired trace endpoints", async () => {
+  const { createReviewApi } = await import("./http.js");
+  const api = createReviewApi(store);
+
+  for (const route of ["/old/agent-traces", "/old/agent-traces/session"])
+    expect((await api.request(route)).status).toBe(404);
 });

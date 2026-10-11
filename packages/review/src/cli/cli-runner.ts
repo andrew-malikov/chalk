@@ -1,23 +1,10 @@
 import { existsSync } from "node:fs";
 import { realpath } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import type { Writable } from "node:stream";
 import { fileURLToPath } from "node:url";
 
-import {
-  registerTraceCommands,
-  resolveTraceCommand,
-  runTraceAllow,
-  runTraceDeny,
-  runTraceInstallMachine,
-  runTraceOnboard,
-  runTraceSessions,
-  runTraceStoreDelete,
-  runTraceStoreInfo,
-  traceHomeDir,
-  traceMachineEnabled,
-  traceScope,
-} from "@dev.fast/trace-core";
 import {
   type CliInputStream,
   emitJsonEvent,
@@ -91,46 +78,13 @@ import {
   listReviewInstancesCommand,
   useReviewInstance,
 } from "./review-instances";
-import {
-  runTraceBlame,
-  runTraceDisable,
-  runTraceEnable,
-  runTraceGitHook,
-  runTraceHook,
-  runTraceList,
-  runTracePull,
-  runTraceRepair,
-  runTraceShow,
-  runTraceStatus,
-  runTraceSync,
-} from "./trace-cli";
-import { runTraceConfigMigrate, runTraceStorageUse } from "./trace-storage-cli";
 
 interface ReviewCliRuntime {
   runReviewAppLaunch: typeof runReviewAppLaunch;
   runReviewAppPick: typeof runReviewAppPick;
   runReviewInfo: typeof runReviewInfo;
   runReviewMigration: typeof runReviewMigration;
-  runTraceStatus: typeof runTraceStatus;
-  runTraceEnable: typeof runTraceEnable;
-  runTraceDisable: typeof runTraceDisable;
-  runTraceRepair: typeof runTraceRepair;
-  runTraceList: typeof runTraceList;
-  runTraceShow: typeof runTraceShow;
-  runTracePull: typeof runTracePull;
-  runTraceBlame: typeof runTraceBlame;
-  runTraceHook: typeof runTraceHook;
-  runTraceGitHook: typeof runTraceGitHook;
-  runTraceSync: typeof runTraceSync;
-  runTraceStorageUse: typeof runTraceStorageUse;
-  runTraceConfigMigrate: typeof runTraceConfigMigrate;
-  runTraceInstallMachine: typeof runTraceInstallMachine;
-  runTraceOnboard: typeof runTraceOnboard;
-  runTraceStoreDelete: typeof runTraceStoreDelete;
-  runTraceStoreInfo: typeof runTraceStoreInfo;
-  runTraceSessions: typeof runTraceSessions;
-  runTraceAllow: typeof runTraceAllow;
-  runTraceDeny: typeof runTraceDeny;
+
   runStoreLogin: typeof runStoreLogin;
   runStoreLogout: typeof runStoreLogout;
   runStoreWhoami: typeof runStoreWhoami;
@@ -166,15 +120,6 @@ interface CliRunState {
 export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   const env = input.env ?? process.env;
   const cwd = input.cwd ?? env.INIT_CWD ?? process.cwd();
-
-  // The command every installed hook re-enters. The Review CLI resolves it
-  // the same way the hooks did on their own, so `review` behaves as before.
-  const traceCommand = resolveTraceCommand({
-    env,
-    homeDir: traceHomeDir(env),
-  });
-
-  const scope = traceScope({ env, homeDir: traceHomeDir(env) });
 
   const cliVersion =
     input.cliVersion ?? readReviewPackageVersion(import.meta.url);
@@ -660,7 +605,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   connect.action(async (targets: string[], options: { json?: boolean }) => {
     const selected = parseTargets(targets);
 
-    const { homeDir, devHome } = scope;
+    const homeDir = env.HOME || os.homedir();
 
     const prompts = connectPrompts({
       legacyPaths: await scanLegacySkills(homeDir),
@@ -670,9 +615,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
           findReviewPackageRoot(import.meta.url),
           env,
         )) !== undefined,
-      traceEnabled: await traceMachineEnabled({ homeDir, env }),
-      fffBinaryPath: path.join(homeDir, ".local", "bin", "fff-mcp"),
-      fffCorpusRoot: path.join(devHome, "trace-search"),
     });
 
     const output = {
@@ -799,13 +741,13 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
 
   program
     .command("logout")
-    .description("Forget the hosted trace store login")
+    .description("Forget the Blackboard account login")
     .action(async () => {
       state.exitCode = await runtime.runStoreLogout({ stdout: input.stdout });
     });
 
   configureJsonOutput(
-    program.command("whoami").description("Show the hosted trace store login"),
+    program.command("whoami").description("Show the Blackboard account login"),
     "plain",
   ).action(async (options: { json?: boolean }) => {
     state.exitCode = await runtime.runStoreWhoami({
@@ -813,123 +755,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
       stdout: input.stdout,
       stderr: input.stderr,
     });
-  });
-
-  // The trace surface: inspect storage, manage one repository, or read events.
-  const trace = configureOutput(
-    program.command("trace").description("Manage agent traces"),
-    "plain",
-  );
-
-  registerTraceCommands(trace, {
-    runtime,
-    traceCommand,
-    scope,
-    cwd,
-    stdin: input.stdin,
-    stdout: input.stdout,
-    stderr: input.stderr,
-    configureOutput: (command) => configureOutput(command, "plain"),
-    configureJsonOutput: (command) => configureJsonOutput(command, "plain"),
-    verifyCommand: "blackboard trace status",
-    setExitCode: (code) => {
-      state.exitCode = code;
-    },
-  });
-
-  // Storage selection and configuration migration write only the shared
-  // trace config; legacy files and remote objects are never touched.
-  const traceStorage = configureOutput(
-    trace.command("storage").description("Select the trace store"),
-    "plain",
-  );
-
-  configureJsonOutput(
-    traceStorage
-      .command("use <mode>")
-      .description("Select the s3 (S3/R2 bucket) or hosted trace store")
-      .option("--origin <url>", "hosted store origin")
-      .option("--endpoint <url>", "S3/R2 endpoint URL (s3)")
-      .option("--bucket <name>", "S3/R2 bucket name (s3)")
-      .option("--key <id>", "S3/R2 access key ID (s3)")
-      .option("--secret <key>", "S3/R2 secret access key (s3)")
-      .option("--region <region>", "S3/R2 signing region (s3)"),
-    "plain",
-  ).action(
-    async (
-      mode: string,
-      options: {
-        origin?: string;
-        endpoint?: string;
-        bucket?: string;
-        key?: string;
-        secret?: string;
-        region?: string;
-        json?: boolean;
-      },
-    ) => {
-      state.exitCode = await runtime.runTraceStorageUse({
-        cwd,
-        mode,
-        origin: options.origin,
-        endpoint: options.endpoint,
-        bucket: options.bucket,
-        key: options.key,
-        secret: options.secret,
-        region: options.region,
-        json: options.json,
-        stdout: input.stdout,
-        stderr: input.stderr,
-      });
-    },
-  );
-
-  const traceConfig = configureOutput(
-    trace.command("config").description("Manage trace storage configuration"),
-    "plain",
-  );
-
-  configureJsonOutput(
-    traceConfig
-      .command("migrate")
-      .description(
-        "Copy the legacy S3/R2 setup into $DEV_REVIEW_HOME/trace/config.json",
-      )
-      .option("--dry-run", "preview without writing")
-      .option(
-        "--keep-legacy",
-        "leave the legacy env and settings files in place instead of renaming them to legacy_*",
-      ),
-    "plain",
-  ).action(
-    async (options: {
-      dryRun?: boolean;
-      keepLegacy?: boolean;
-      json?: boolean;
-    }) => {
-      state.exitCode = await runtime.runTraceConfigMigrate({
-        dryRun: options.dryRun,
-        keepLegacy: options.keepLegacy,
-        json: options.json,
-        stdout: input.stdout,
-        stderr: input.stderr,
-      });
-    },
-  );
-
-  // Keep the established Review help order while app-only commands stay here.
-  const traceHelp = trace.createHelp();
-
-  trace.configureHelp({
-    visibleCommands: (command) => {
-      const commands = traceHelp.visibleCommands(command);
-      commands.splice(commands.indexOf(traceStorage), 1);
-      commands.splice(1, 0, traceStorage);
-      commands.splice(commands.indexOf(traceConfig), 1);
-      commands.splice(6, 0, traceConfig);
-
-      return commands;
-    },
   });
 
   // The JSON authoring surface is owned by review-api/agent-cli.ts. Commander
@@ -1112,26 +937,7 @@ function reviewCliRuntime(
     runReviewAppPick,
     runReviewInfo,
     runReviewMigration,
-    runTraceStatus,
-    runTraceEnable,
-    runTraceDisable,
-    runTraceRepair,
-    runTraceList,
-    runTraceShow,
-    runTracePull,
-    runTraceBlame,
-    runTraceHook,
-    runTraceGitHook,
-    runTraceSync,
-    runTraceStorageUse,
-    runTraceConfigMigrate,
-    runTraceInstallMachine,
-    runTraceOnboard,
-    runTraceStoreDelete,
-    runTraceStoreInfo,
-    runTraceSessions,
-    runTraceAllow,
-    runTraceDeny,
+
     runStoreLogin,
     runStoreLogout,
     runStoreWhoami,
@@ -1249,22 +1055,6 @@ function telemetryCommandPath(
   const parent = command.parent?.name();
 
   if (parent === "migrate" && name === "apply") return "migrate.apply";
-
-  if (parent === "trace") {
-    if (name === "allow" || name === "deny" || name === "install") {
-      return `trace.${name}`;
-    }
-  }
-
-  if (parent === "store" && command.parent?.parent?.name() === "trace") {
-    if (name === "create" || name === "delete" || name === "info") {
-      return `trace.store.${name}`;
-    }
-  }
-
-  if (parent === "storage" && name === "use") return "trace.storage.use";
-
-  if (parent === "config" && name === "migrate") return "trace.config.migrate";
 
   if (parent === "server" && name === "start") return "server.start";
 

@@ -18,6 +18,7 @@ import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { errorMessage } from "@review/lib/error-message";
 import { isMissingFileError } from "@review/lib/fs-utils";
 import { withFileLock } from "@review/lib/with-file-lock";
+import { UnsupportedReviewContentError } from "@review/review-api/input-error";
 import { openLocalReviewStore } from "@review/review-api/local-data";
 import {
   type StoredReview,
@@ -203,6 +204,24 @@ export async function migrateJsonReviews(input: {
 
             input.log?.(`${original.review.title}: ${outcome.kind}`);
           } catch (error) {
+            if (error instanceof UnsupportedReviewContentError) {
+              const reason = error.message;
+              report.skipped.push({
+                reviewId: original.review.uuid,
+                dir: original.dir,
+                reason,
+              });
+              report.outcomes.push({
+                kind: "skipped",
+                reviewId: original.review.uuid,
+                reason,
+              });
+              input.log?.(
+                `${original.dir}: left untouched and skipped: ${reason}`,
+              );
+              continue;
+            }
+
             report.errors.push({
               reviewId: original.review.uuid,
               reason: errorMessage(error),

@@ -3,11 +3,7 @@ import {
   selectSource,
   sourceAnchors,
 } from "@review/documents/lens-selection.js";
-import {
-  markdownNodes,
-  markdownText,
-  parseMarkdown,
-} from "@review/documents/markdown.js";
+import { markdownNodes, parseMarkdown } from "@review/documents/markdown.js";
 import {
   type FileLineRange,
   type SourcePins,
@@ -24,9 +20,13 @@ import {
   flowNodeSchema,
 } from "./blocks/flow_diagram.js";
 import { type Block, blockSchema } from "./blocks/index.js";
+import { assertNoRetiredTraceLinks } from "./blocks/markdown.js";
 import { type Step, stepSchema } from "./blocks/sequence.js";
 import type { Lens } from "./diff-lenses.js";
-import { ReviewInputError } from "./input-error.js";
+import {
+  ReviewInputError,
+  UnsupportedReviewContentError,
+} from "./input-error.js";
 
 export { ReviewInputError } from "./input-error.js";
 
@@ -140,28 +140,44 @@ const unitTypes = new Set(["step", "flow_node", "flow_edge"]);
 export const isUnit = (element: Element): element is Unit =>
   unitTypes.has(element.type);
 
-/** Inline trace quotes keep paragraph/list layout while using retained resources. */
-export function traceQuoteLink(
-  href: string,
-): { traceId: string; eventId: string } | undefined {
-  const match = /^review-trace:([^#]+)#(.+)$/.exec(href);
+const retiredContentNodeSchema = z.looseObject({
+  type: z.string().optional(),
+  name: z.string().optional(),
+  component: z.string().optional(),
+  markdown: z.string().optional(),
+});
 
-  return match
-    ? {
-        traceId: decodeURIComponent(match[1]!),
-        eventId: decodeURIComponent(match[2]!),
-      }
-    : undefined;
+/** Reject retired content before migration or resource resolution. */
+// oxlint-disable-next-line anti-slop/no-unknown-parameters -- Stored/legacy JSON boundary: inspect retired identities before the supported schema can reject them generically.
+export function assertNoRetiredTraceContent(value: unknown): void {
+  if (Array.isArray(value)) {
+    value.forEach(assertNoRetiredTraceContent);
+
+    return;
+  }
+
+  const parsed = retiredContentNodeSchema.safeParse(value);
+
+  if (!parsed.success) return;
+  const node = parsed.data;
+
+  if (
+    node.type === "trace_quote" ||
+    node.component === "TraceQuote" ||
+    (node.type === "component" && node.name === "TraceQuote")
+  )
+    throw new UnsupportedReviewContentError();
+
+  if (node.markdown !== undefined) assertNoRetiredTraceLinks(node.markdown);
+  Object.values(node).forEach(assertNoRetiredTraceContent);
 }
 
 export function resourceReference(
   block: Block,
-): { id: string; kind: "image" | "trace" | "map" } | undefined {
+): { id: string; kind: "image" | "map" } | undefined {
   switch (block.type) {
     case "image":
       return { id: block.assetId, kind: "image" };
-    case "trace_quote":
-      return { id: block.traceId, kind: "trace" };
     case "software_map":
       return { id: block.mapVersionId, kind: "map" };
     default:
@@ -170,26 +186,9 @@ export function resourceReference(
 }
 
 export function resourceReferences(document: Block[]): Block[] {
-  return elements(document).flatMap((block): Block[] => {
-    if (block.type !== "markdown")
-      return block.type === "image" ||
-        block.type === "trace_quote" ||
-        block.type === "software_map"
-        ? [block]
-        : [];
-
-    return [...markdownNodes(parseMarkdown(block.markdown))].flatMap(
-      (node): Block[] => {
-        if (node.type !== "link" || !node.url?.startsWith("review-trace:"))
-          return [];
-        const quote = traceQuoteLink(node.url);
-
-        if (!quote) throw new ReviewInputError("Invalid trace quote link.");
-
-        return [{ type: "trace_quote", ...quote, text: markdownText(node) }];
-      },
-    );
-  });
+  return elements(document).filter(
+    (block) => block.type === "image" || block.type === "software_map",
+  );
 }
 
 /**
@@ -224,9 +223,6 @@ function documentReferences(
           const href = node.url ?? "";
 
           if (!/^review-source:/i.test(href)) {
-            // Trace links are checked by resourceReferences.
-            if (href.startsWith("review-trace:")) return [];
-
             if (/^(?:https?:\/\/|mailto:|#)/i.test(href)) return [];
 
             return reject(

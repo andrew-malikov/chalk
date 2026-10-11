@@ -13,7 +13,6 @@ import { markdown } from "./markdown.js";
 import { type SectionBlock, section } from "./section.js";
 import { sequence } from "./sequence.js";
 import { software_map } from "./software_map.js";
-import { trace_quote } from "./trace_quote.js";
 import { type TutorialBlock, tutorial } from "./tutorial.js";
 
 /** Leaf kinds share one discriminated union so unknown types read as they always have. */
@@ -26,7 +25,6 @@ export const leafSchema = z.discriminatedUnion("type", [
   call_stack_diff.schema,
   database_lens.schema,
   image.schema,
-  trace_quote.schema,
   software_map.schema,
   flow_diagram.schema,
 ]);
@@ -51,7 +49,6 @@ export const blocks = {
   call_stack_diff,
   database_lens,
   image,
-  trace_quote,
   software_map,
   flow_diagram,
   section,

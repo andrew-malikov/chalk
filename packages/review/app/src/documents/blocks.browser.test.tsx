@@ -9,12 +9,7 @@ import {
   parseJsonText,
 } from "@dev.fast/review-protocol";
 import { selectionKey } from "@review/documents/lens-selection";
-import {
-  FIXTURE_IMAGE_ID,
-  FIXTURE_MAP_ID,
-  FIXTURE_TRACE_EVENT_ID,
-  FIXTURE_TRACE_ID,
-} from "@review/fixtures/blocks/ids";
+import { FIXTURE_IMAGE_ID, FIXTURE_MAP_ID } from "@review/fixtures/blocks/ids";
 import {
   assignFreshIds,
   documentSchema,
@@ -31,7 +26,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import tutorialDocument from "../../../tutorial/document.json";
 import tutorialModel from "../../../tutorial/software-map.json";
-import tutorialTrace from "../../../tutorial/trace.json";
 import {
   BlockErrorBoundary,
   type StoredBlock,
@@ -52,17 +46,6 @@ const fixtures = new Map(
     documentSchema.parse(module.default),
   ]),
 );
-
-const trace = {
-  label: "Fixture conversation",
-  events: [
-    {
-      id: FIXTURE_TRACE_EVENT_ID,
-      role: "assistant",
-      text: "Please queue the order once the row is written.",
-    },
-  ],
-};
 
 // A 1x1 PNG.
 const png = Uint8Array.from(
@@ -147,8 +130,7 @@ const rendered: Record<
     text(c).includes("write queued"),
   image: (c) =>
     has(c, "figure img[src^='blob:']") && text(c).includes("An image"),
-  trace_quote: (c) =>
-    has(c, 'a[href^="#trace-"]') && text(c).includes("queue the order"),
+
   // The map has drawn its system and is neither refreshing nor failed.
   flow_diagram: (c) =>
     has(c, ".lens-flow-node") &&
@@ -177,7 +159,7 @@ afterEach(async () => {
 
 async function mountFixture(
   kind: Kind,
-  options: { trace?: null; document?: Snapshot["document"] } = {},
+  options: { document?: Snapshot["document"] } = {},
   tutorial?: ReviewCanvasTutorialBridge,
   shippedTutorial = false,
   hostStyle?: string,
@@ -212,14 +194,7 @@ async function mountFixture(
   const bridge = fixtureReviewBridge({
     snapshot,
     progress: fixtureProgress,
-    resources:
-      options.trace === null
-        ? { [FIXTURE_IMAGE_ID]: image }
-        : {
-            [FIXTURE_IMAGE_ID]: image,
-            [FIXTURE_TRACE_ID]: trace,
-            "tutorial-trace": parseJsonText(JSON.stringify(tutorialTrace)),
-          },
+    resources: { [FIXTURE_IMAGE_ID]: image },
     maps: {
       [FIXTURE_MAP_ID]: savedMap,
       ...Object.fromEntries(
@@ -479,18 +454,6 @@ describe("block components", () => {
       expect(empty).toEqual([]);
     },
   );
-
-  it("renders a trace quote whose trace fails to load as a placeholder, not an error", async () => {
-    const { container } = await mountFixture("trace_quote", { trace: null });
-
-    expect(
-      await settled(() =>
-        container.querySelector("blockquote[data-unavailable='trace']"),
-      ),
-    ).toBeTruthy();
-    expect(text(container)).toContain("queue the order");
-    expect(container.querySelector("[data-block-error]")).toBeNull();
-  });
 });
 
 describe("BlockErrorBoundary", () => {

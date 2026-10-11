@@ -157,7 +157,7 @@ it("uploads and opens a document without registering or fetching a repository, i
   expect(restarted.list()).toEqual([]);
 });
 
-it("retains image and trace resources on a document without source pins", async () => {
+it("retains image resources on a document without source pins", async () => {
   const local = await fixture();
 
   const resources = await createShareFixture(
@@ -187,15 +187,11 @@ it("retains image and trace resources on a document without source pins", async 
         reviewId,
         edit: {
           type: "insert",
-          content:
-            resource.kind === "image"
-              ? { type: "image", assetId: resource.id, alt: "Attached image" }
-              : {
-                  type: "trace_quote",
-                  traceId: resource.id,
-                  eventId: "request",
-                  text: "Please compute the answer.",
-                },
+          content: {
+            type: "image",
+            assetId: resource.id,
+            alt: "Attached image",
+          },
         },
       },
     });
@@ -209,7 +205,7 @@ it("retains image and trace resources on a document without source pins", async 
 
   expect(
     bundle.manifest.resources.map((resource) => resource.kind).sort(),
-  ).toEqual(["image", "trace"]);
+  ).toEqual(["image"]);
   const shared = new SharedReviewStore(path.join(local.root, "shared"));
   const id = await shared.import("https://sharing.test", randomUUID(), bundle);
   const api = createReviewApi(local.store, local.data, undefined, shared);

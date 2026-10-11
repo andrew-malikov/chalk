@@ -104,21 +104,6 @@ describe("Review navigation", () => {
     });
   });
 
-  it("opens a trace on the blackboard when the canvas has no traces", () => {
-    const store = createReviewPanelStore();
-    store.getState().setAvailableViews(["review", "commits", "diff"]);
-
-    store.getState().openTrace({ sessionId: "session-1" });
-    expect(store.getState().view).toBe("review");
-
-    store.getState().setAvailableViews(["review", "trace"]);
-    store.getState().openTrace({ sessionId: "session-2" });
-    expect(store.getState()).toMatchObject({
-      view: "trace",
-      traceSelection: { sessionId: "session-2" },
-    });
-  });
-
   it("resumes on the blackboard when the stored view is not offered", () => {
     const store = createReviewPanelStore({
       view: "map",

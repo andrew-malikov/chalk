@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { jsonObject, parseJsonText } from "@dev.fast/review-protocol";
 import { isMissingFileError } from "@review/lib/fs-utils";
+import { UnsupportedReviewContentError } from "@review/review-api/input-error";
 
 import { evaluateReviewDocumentBundleForPublish } from "./review-publish-evaluate";
 
@@ -42,6 +43,8 @@ export async function evaluateSealedReviewDocument(
     ),
     ranges: "skip",
   });
+
+  if (evaluated.unsupportedContent) throw new UnsupportedReviewContentError();
 
   for (const warning of evaluated.warnings) onWarning?.(warning);
 

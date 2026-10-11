@@ -11,7 +11,6 @@ const bugReport = {
   include_review: true,
   include_map: true,
   include_diff: true,
-  include_trace: false,
   app_session_id: "session-1234567890",
   app_version: "1.2.3",
 };
@@ -110,6 +109,6 @@ describe("parseReviewTabTelemetryInput", () => {
         reason: "route_change",
         app_session_id: "../review",
       }),
-    ).toThrow("tab must be review, commits, map, files, or trace");
+    ).toThrow("tab must be review, commits, map, files");
   });
 });

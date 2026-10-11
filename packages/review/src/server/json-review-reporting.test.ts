@@ -161,7 +161,6 @@ it("routes sanitized telemetry and uploads only opted-in JSON context from the d
     include_review: true,
     include_map: true,
     include_diff: false,
-    include_trace: false,
     app_session_id: sessionId,
     app_version: "1.0.0",
   };
@@ -266,7 +265,6 @@ it("sends a bug report without the envelope when telemetry cannot supply one", a
         include_review: false,
         include_map: false,
         include_diff: false,
-        include_trace: false,
         app_session_id: randomUUID(),
         app_version: "1.0.0",
       }),

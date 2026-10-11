@@ -145,10 +145,7 @@ export function documentText(
 
         if (element.caption) detail(element.caption);
         break;
-      case "trace_quote":
-        detail(`${element.traceId}, event ${element.eventId}`);
-        detail(element.text);
-        break;
+
       case "flow_diagram":
         if (element.description) detail(element.description);
 

@@ -14,7 +14,6 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import type { ReviewCliInstallStamp } from "@dev.fast/review-protocol";
-
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -24,8 +23,8 @@ import {
   cliInstallUpdateMarkerPath,
   ensureShellProfilePath,
   finishCliInstallUpdate,
-  installReviewCommand,
   installFingerprint,
+  installReviewCommand,
   pathShimPath,
   readCliInstallStamp,
   removeCliInstall,
@@ -709,8 +708,12 @@ describe("MCP self-install", () => {
     shim = pathShimPath(homeDir);
   });
 
-  const writeStamp = (stamp: ReviewCliInstallStamp & { targets?: string[] }) =>
-    writePrivateJsonAtomic(cliInstallStampPath(env), stamp);
+  const writeStamp = (
+    stamp: ReviewCliInstallStamp & {
+      targets?: string[];
+      traceManaged?: boolean;
+    },
+  ) => writePrivateJsonAtomic(cliInstallStampPath(env), stamp);
 
   const writeStampedSkill = async (skillDir: string) => {
     await mkdir(skillDir, { recursive: true });
@@ -937,10 +940,12 @@ describe("retired capture upgrade", () => {
     "retires owned extensions before same-fingerprint %s early return",
     async (consent) => {
       const homeDir = await temporaryHome("retired-upgrade-");
+
       const env: NodeJS.ProcessEnv = {
         ...(await isolatedEnvironment()),
         XDG_CONFIG_HOME: path.join(homeDir, "config"),
       };
+
       const command = pathShimPath(homeDir);
       await mkdir(path.dirname(command), { recursive: true });
       await writePathShim(
@@ -956,21 +961,25 @@ describe("retired capture upgrade", () => {
         fingerprint: await installFingerprint(packageRoot),
         updatedAt: "now",
       });
+
       const extension = path.join(
         homeDir,
         ".pi/agent/extensions/review-trace.ts",
       );
+
       await mkdir(path.dirname(extension), { recursive: true });
       await writeFile(
         extension,
         `// Managed by Review Desktop trace setup\nspawn(${JSON.stringify(command)}, ["trace", "hook", eventName]);\n`,
       );
+
       const result = await applyCliInstall({
         packageRoot,
         homeDir,
         env,
         autoUpdate: true,
       });
+
       expect(result.code).toBe(0);
       expect(existsSync(extension)).toBe(false);
       expect(
@@ -991,29 +1000,33 @@ it("keeps stamp and launcher evidence when cleanup fails, then retries apply and
     undefined,
     String(env.DEV_REVIEW_HOME),
   );
+
   const stamp = {
     consent: "granted",
     shimPath: command,
     fingerprint: await installFingerprint(packageRoot),
     updatedAt: "now",
   };
+
   await writePrivateJsonAtomic(cliInstallStampPath(env), stamp);
   const before = await readFile(cliInstallStampPath(env), "utf8");
   const registry = path.join(homeDir, ".config/dev-trace/repositories.json");
   await mkdir(path.dirname(registry), { recursive: true });
   await writeFile(registry, "broken");
+
   const result = await applyCliInstall({
     packageRoot,
     homeDir,
     env,
     autoUpdate: true,
   });
+
   expect(result.code).toBe(1);
   expect(await readFile(cliInstallStampPath(env), "utf8")).toBe(before);
   expect(existsSync(command)).toBe(true);
-  await expect(
-    removeCliInstall({ shim: true, homeDir, env }),
-  ).rejects.toThrow();
+  await expect(removeCliInstall({ shim: true, homeDir, env })).rejects.toThrow(
+    /retir|JSON|Unexpected/i,
+  );
   expect(await readFile(cliInstallStampPath(env), "utf8")).toBe(before);
   expect(existsSync(command)).toBe(true);
   await writeFile(registry, "[]");

@@ -1,4 +1,4 @@
-import { rm, rmdir, realpath } from "node:fs/promises";
+import { realpath, rm, rmdir } from "node:fs/promises";
 import path from "node:path";
 
 import { gitAt } from "@dev.fast/local-vcs";
@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import { readRetiredFile } from "./retired-agent-hooks";
 import type { RetirementInput, RetirementResult } from "./retired-trace-hooks";
+
 const stateSchema = z.object({
   version: z.literal(1),
   root: z.string(),
@@ -26,13 +27,16 @@ export async function retireRepositoryHooks(
     input.homeDir,
     ".config/dev-trace/repositories.json",
   );
+
   const source = await readRetiredFile(registry);
+
   if (source === null) return { complete: true, warnings: [] };
   const roots = z.array(z.string().min(1)).parse(JSON.parse(source));
   const remaining = new Set(roots);
   const seen = new Map<string, boolean>();
   const warnings: string[] = [];
   let complete = true;
+
   for (const cwd of roots) {
     try {
       const common = await gitAt(
@@ -40,21 +44,27 @@ export async function retireRepositoryHooks(
         ["rev-parse", "--path-format=absolute", "--git-common-dir"],
         { env: input.env },
       );
+
       const commonDir = common.stdout.trim();
+
       if (seen.has(commonDir)) {
         if (seen.get(commonDir)) remaining.delete(cwd);
         continue;
       }
+
       seen.set(commonDir, false);
       const stateDir = path.join(commonDir, "dev-fast/trace-hooks");
       const file = path.join(stateDir, "state.json");
       const raw = await readRetiredFile(file);
+
       if (raw === null) {
         remaining.delete(cwd);
         continue;
       }
+
       const state = stateSchema.parse(JSON.parse(raw));
       const hooks = path.join(stateDir, "hooks");
+
       if (
         (await realpath(state.managedHooksPath)) !== (await realpath(hooks)) ||
         !input.ownedCommands.some(
@@ -66,14 +76,18 @@ export async function retireRepositoryHooks(
         );
         continue;
       }
+
       const expected = [
         prepareCommitMessageHook(state.previousHookDirectory, state.command!),
         prePushHook(state.previousHookDirectory, state.command!),
       ];
+
       const names = ["prepare-commit-msg", "pre-push"];
+
       const actual = await Promise.all(
         names.map((name) => readRetiredFile(path.join(hooks, name))),
       );
+
       if (
         actual.some(
           (source, index) => source !== null && source !== expected[index],
@@ -82,18 +96,22 @@ export async function retireRepositoryHooks(
         warnings.push(`preserved ${cwd}: repository wrapper was replaced`);
         continue;
       }
+
       const current = await gitAt(
         cwd,
         ["config", "--local", "--get", "core.hooksPath"],
         { allowFailure: true, env: input.env },
       );
+
       if (!current.ok && current.stderr.trim())
         throw new Error(
           current.stderr || "Cannot read repository hook configuration",
         );
+
       const root = await gitAt(cwd, ["rev-parse", "--show-toplevel"], {
         env: input.env,
       });
+
       if (
         current.ok &&
         (await realpath(
@@ -119,6 +137,7 @@ export async function retireRepositoryHooks(
             env: input.env,
           });
       }
+
       for (const name of names)
         await rm(path.join(hooks, name), { force: true });
       await rm(file);
@@ -131,10 +150,13 @@ export async function retireRepositoryHooks(
       warnings.push(`${cwd}: ${errorMessage(error)}`);
     }
   }
+
   if (remaining.size !== roots.length)
     await writePrivateJsonAtomic(registry, [...remaining]);
+
   return { complete, warnings };
 }
+
 async function pruneEmpty(dir: string) {
   try {
     await rmdir(dir);

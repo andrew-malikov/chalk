@@ -18,7 +18,6 @@ import { type ReactNode, useEffect, useState } from "react";
 
 import { Choice } from "./settings-choice";
 import { settingsStyles as styles } from "./settings-styles";
-import { TraceCaptureSection } from "./trace-capture-section";
 
 const THEME_LABELS: Record<ReviewThemeChoice, string> = {
   light: "Light",
@@ -148,8 +147,8 @@ export function SettingsPage({
                 label="blackboard command"
                 description={
                   install.status.shim.installed
-                    ? `Installed at ${install.status.shim.path}. Your agents and trace capture run it.`
-                    : "Adds blackboard to your shell PATH. Your agents and trace capture run it."
+                    ? `Installed at ${install.status.shim.path}. Your agents run it.`
+                    : "Adds blackboard to your shell PATH. Your agents run it."
                 }
               >
                 {install.status.shim.installer ? null : (
@@ -347,12 +346,6 @@ export function SettingsPage({
                 />
               </div>
             </Row>
-            {install ? (
-              <TraceCaptureSection
-                install={install}
-                onStatusChange={setInstallStatus}
-              />
-            ) : null}
           </Section>
 
           {error ? <p {...stylex.props(styles.error)}>{error}</p> : null}

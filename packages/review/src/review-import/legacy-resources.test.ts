@@ -2,46 +2,7 @@ import { bundleReviewSoftwareMap } from "@review/software-map/software-map-bundl
 import { defineSoftwareMap } from "@review/software-map/software-map-model";
 import { describe, expect, it } from "vitest";
 
-import {
-  mapResourcesFromBundle,
-  traceResourceFromLoaded,
-} from "./legacy-resources";
-
-describe("traceResourceFromLoaded", () => {
-  it("flattens parsed events into id, role, text", () => {
-    const resource = traceResourceFromLoaded({
-      parserVersion: "1",
-      traceName: "main",
-      subagents: [],
-      cacheStatus: "fresh" as never,
-      descriptor: { sessionId: "s1" } as never,
-      trace: {
-        harness: "codex" as never,
-        title: "Fix",
-        startedAt: null,
-        endedAt: null,
-        activeMs: null,
-        userTurns: 1,
-        toolCalls: 1,
-        events: [
-          { kind: "user", text: "please fix" },
-          { kind: "separator" },
-          { kind: "assistant", markdown: "On it." },
-          { kind: "tool", tool: "shell", verb: "ran", title: "pnpm test" },
-        ] as never,
-      },
-    });
-
-    expect(resource).toEqual({
-      label: "Fix",
-      events: [
-        { id: "0", role: "user", text: "please fix" },
-        { id: "2", role: "assistant", text: "On it." },
-        { id: "3", role: "tool", text: "shell ran pnpm test" },
-      ],
-    });
-  });
-});
+import { mapResourcesFromBundle } from "./legacy-resources";
 
 describe("mapResourcesFromBundle", () => {
   it("produces one map resource per side in the store's saved shape", () => {

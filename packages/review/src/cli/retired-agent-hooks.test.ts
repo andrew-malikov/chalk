@@ -1,36 +1,45 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import { afterEach, expect, it } from "vitest";
 
 import { retireAgentHooks } from "./retired-agent-hooks";
+
 const homes: string[] = [];
+
 afterEach(async () => {
   await Promise.all(
     homes.splice(0).map((home) => rm(home, { recursive: true, force: true })),
   );
 });
+
 async function fixture() {
   const homeDir = await mkdtemp(path.join(os.tmpdir(), "retire-agents-"));
   homes.push(homeDir);
+
   return {
     homeDir,
     env: { XDG_CONFIG_HOME: path.join(homeDir, "config") },
     ownedCommands: [path.join(homeDir, "bin/custom.cmd")],
   };
 }
+
 it("removes marked owned extensions, preserving foreign missing launchers", async () => {
   const input = await fixture();
   const pi = path.join(input.homeDir, ".pi/agent/extensions/review-trace.ts");
+
   const opencode = path.join(
     input.env.XDG_CONFIG_HOME,
     "opencode/plugins/review-trace.ts",
   );
+
   await mkdir(path.dirname(pi), { recursive: true });
   await mkdir(path.dirname(opencode), { recursive: true });
+
   const source = (command: string) =>
     `// Managed by Review Desktop trace setup\nspawn(${JSON.stringify(command)}, ["trace", "hook", eventName]);\n`;
+
   await writeFile(pi, source(input.ownedCommands[0]!));
   await writeFile(opencode, source("/missing/other/blackboard"));
   const warnings = await retireAgentHooks(input);
@@ -40,10 +49,12 @@ it("removes marked owned extensions, preserving foreign missing launchers", asyn
   );
   expect(warnings.join(" ")).toContain("preserved");
 });
+
 it("preserves unmarked handwritten same-command Claude and Codex configuration", async () => {
   const input = await fixture();
   const claude = path.join(input.homeDir, ".claude/settings.json");
   const codex = path.join(input.homeDir, ".codex/config.toml");
+
   const sources = [
     JSON.stringify({
       hooks: {
@@ -62,10 +73,12 @@ it("preserves unmarked handwritten same-command Claude and Codex configuration",
     }),
     `model="test"\n[[hooks.SessionEnd]]\n[[hooks.SessionEnd.hooks]]\ntype = "command"\ncommand = "same trace hook SessionEnd"\n`,
   ];
+
   for (const [i, file] of [claude, codex].entries()) {
     await mkdir(path.dirname(file), { recursive: true });
     await writeFile(file, sources[i]!);
   }
+
   const warnings = await retireAgentHooks(input);
   expect(warnings).toHaveLength(2);
   expect(await readFile(claude, "utf8")).toBe(sources[0]);

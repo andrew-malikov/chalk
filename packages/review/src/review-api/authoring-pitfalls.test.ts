@@ -9,8 +9,6 @@ import { selectSource } from "@review/documents/lens-selection.js";
 import {
   FIXTURE_IMAGE_ID,
   FIXTURE_MAP_ID,
-  FIXTURE_TRACE_EVENT_ID,
-  FIXTURE_TRACE_ID,
   readBlockFixtures,
 } from "@review/fixtures/blocks/fixtures.js";
 import type { Hono } from "hono";
@@ -510,22 +508,6 @@ describe("the fixtures are what the API accepts", () => {
       ).toString("base64"),
     };
 
-    const trace = {
-      id: randomUUID(),
-      repositoryId: pins.repositoryId,
-      kind: "trace",
-      trace: {
-        label: "Fixture conversation",
-        events: [
-          {
-            id: FIXTURE_TRACE_EVENT_ID,
-            role: "assistant",
-            text: "Please queue the order once the row is written.",
-          },
-        ],
-      },
-    };
-
     const map = {
       id: randomUUID(),
       repositoryId: pins.repositoryId,
@@ -556,7 +538,7 @@ describe("the fixtures are what the API accepts", () => {
       },
     };
 
-    for (const upload of [image, trace, map]) {
+    for (const upload of [image, map]) {
       const uploaded = await post("/resources", upload);
 
       expect({ status: uploaded.status, body: uploaded.body }).toMatchObject({
@@ -566,7 +548,6 @@ describe("the fixtures are what the API accepts", () => {
 
     const resourceIds = {
       [FIXTURE_IMAGE_ID]: image.id,
-      [FIXTURE_TRACE_ID]: trace.id,
       [FIXTURE_MAP_ID]: map.id,
     };
 

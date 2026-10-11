@@ -1,7 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { mkdir, realpath, rm } from "node:fs/promises";
 
-import { traceMachineEnabled } from "@dev.fast/trace-core";
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { withFileLock } from "@review/lib/with-file-lock";
 import { createReviewApi } from "@review/review-api/http.js";
@@ -108,7 +107,6 @@ async function serve(input: HeadlessServerInput) {
     callbacks.capabilities,
     // The scratchpad is the laptop's alone, even with a Desktop attached.
     () => false,
-    () => traceMachineEnabled(),
     () => ({ key: "headless", home: input.stateDir }),
   );
 

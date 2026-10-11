@@ -1,4 +1,3 @@
-import type { AgentTraceStorage } from "@canvas/traces/use-agent-trace";
 import type { ReviewApiClient } from "@review/review-api/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo } from "react";
@@ -32,16 +31,7 @@ export const canvasQueryKeys = {
   sharingAccount: () => ["sharing", "account"] as const,
   shareLink: (version: number | undefined) =>
     ["sharing", "link", version] as const,
-  traceList: (
-    version: number | undefined,
-    pins: { base: string; head: string } | undefined,
-    storage: AgentTraceStorage | null,
-  ) => ["agent-traces", version, pins?.base, pins?.head, storage] as const,
-  agentTrace: (
-    sessionId: string | null | undefined,
-    trace: string | null | undefined,
-    storage: AgentTraceStorage | null | undefined,
-  ) => ["agent-trace", sessionId, trace ?? null, storage ?? null] as const,
+
   commitFiles: (commit: string) => ["commit-files", commit] as const,
   diffFiles: (documentKey: string, source: number, revision?: string) =>
     ["diff-files", documentKey, source, revision] as const,

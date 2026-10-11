@@ -30,12 +30,7 @@ const stampSchema = z.object({
 });
 
 export async function readTutorialAssets(assetsRoot: string) {
-  const names = [
-    "document.json",
-    "trace.json",
-    "software-map.json",
-    "pins.json",
-  ];
+  const names = ["document.json", "software-map.json", "pins.json"];
 
   const bytes = await Promise.all(
     names.map((name) => readFile(path.join(assetsRoot, name), "utf8")),
@@ -43,9 +38,8 @@ export async function readTutorialAssets(assetsRoot: string) {
 
   return {
     authored: authoredSchema.parse(JSON.parse(bytes[0]!)),
-    trace: JSON.parse(bytes[1]!),
-    model: JSON.parse(bytes[2]!),
-    pins: pinsSchema.parse(JSON.parse(bytes[3]!)),
+    model: JSON.parse(bytes[1]!),
+    pins: pinsSchema.parse(JSON.parse(bytes[2]!)),
     contentHash: createHash("sha256")
       .update(JSON.stringify(bytes))
       .digest("hex"),
@@ -69,14 +63,6 @@ export async function createNativeTutorial(input: {
   );
 
   const aliases = new Map<string, string>();
-  const traceId = randomUUID();
-  await input.data.upload({
-    id: traceId,
-    repositoryId: repository.id,
-    kind: "trace",
-    trace: assets.trace,
-  });
-  aliases.set("tutorial-trace", traceId);
 
   for (const side of ["base", "head"] as const) {
     const id = randomUUID();
@@ -92,9 +78,6 @@ export async function createNativeTutorial(input: {
   }
 
   for (const block of resourceReferences(assets.authored.document)) {
-    if (block.type === "trace_quote")
-      block.traceId = aliases.get(block.traceId) ?? block.traceId;
-
     if (block.type === "software_map")
       block.mapVersionId =
         aliases.get(block.mapVersionId) ?? block.mapVersionId;

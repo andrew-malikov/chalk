@@ -2,13 +2,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { clearTraceEnvCache } from "@dev.fast/trace-core";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   type ReviewPublishEvidenceTargets,
   evaluateReviewDocumentBundleForPublish,
 } from "./review-publish-evaluate";
+import { evaluateSealedReviewDocument } from "./review-sealed-document";
 
 describe("publish range evaluation", () => {
   const roots: string[] = [];
@@ -18,6 +18,57 @@ describe("publish range evaluation", () => {
       fs.rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it.each([
+    ["direct import", 'jsx(TraceQuote, { children: "old" })'],
+    ["alias", 'React.createElement(OldQuote, {}, "old")'],
+    [
+      "session component",
+      'React.createElement(components.TraceQuote, {}, "old")',
+    ],
+    [
+      "nested helper",
+      'React.createElement(() => jsx(TraceQuote, {children: "old"}))',
+    ],
+    ["direct invocation", 'TraceQuote({children: "old"})'],
+    [
+      "caught invocation",
+      '(() => { try { return OldQuote({children: "old"}); } catch { return null; } })()',
+    ],
+  ])(
+    "rejects a retired quote through %s in both sealed layouts",
+    async (_name, body) => {
+      const reviewDir = fixtureDir("retired-quote");
+
+      const bundleCode = bundleWithDocumentBody(body).replace(
+        "createActiveReviewDocument,",
+        "createActiveReviewDocument, TraceQuote, TraceQuote as OldQuote, jsx,",
+      );
+
+      const result = await evaluateReviewDocumentBundleForPublish({
+        reviewDir,
+        bundleCode,
+        ranges: "skip",
+      });
+
+      expect(result.document).toBeNull();
+      expect(result.unsupportedContent).toBe("agent-traces");
+      expect(result.errors.join(" ")).toMatch(/no longer supported/);
+
+      for (const layout of [".bundle", ".bundle/document"]) {
+        const dir = path.join(reviewDir, layout);
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(
+          path.join(dir, "manifest.json"),
+          JSON.stringify({ version: 1 }),
+        );
+        fs.writeFileSync(path.join(dir, "review-document.js"), bundleCode);
+        await expect(
+          evaluateSealedReviewDocument(reviewDir),
+        ).rejects.toMatchObject({ kind: "agent-traces", status: 400 });
+      }
+    },
+  );
 
   it("recovers the former fields accessor when evaluating a sealed database diagram", async () => {
     const result = await evaluateReviewDocumentBundleForPublish({
@@ -307,176 +358,6 @@ export default createActiveReviewDocument({ title: "Legacy", routePath: "/", fil
 
     expect(schemaFailure.errors.length).toBeGreaterThan(0);
     expect(schemaFailure.document).toBeNull();
-  });
-
-  describe("TraceQuote validation", () => {
-    const sessionId = "72b3d130-2e72-41b6-8686-527a93d16647";
-    let mockR2Dir: string;
-
-    beforeEach(() => {
-      mockR2Dir = fixtureDir("mock-r2");
-      process.env.TRACE_R2_MODE = "mock";
-      process.env.TRACE_R2_MOCK_DIR = mockR2Dir;
-      process.env.REVIEW_TEST_TRACE_SEARCH_DIR = fixtureDir("trace-search");
-      clearTraceEnvCache();
-
-      const sessionDir = path.join(mockR2Dir, "by-session", sessionId);
-      fs.mkdirSync(sessionDir, { recursive: true });
-      fs.writeFileSync(
-        path.join(sessionDir, "meta.json"),
-        JSON.stringify({
-          session: sessionId,
-          repo: "acme/widgets",
-          branch: "main",
-          pr: null,
-          commits: [],
-          author: null,
-          ts: "2026-08-16T12:00:00Z",
-        }),
-      );
-      fs.writeFileSync(
-        path.join(sessionDir, "trace.jsonl"),
-        [
-          JSON.stringify({
-            type: "session",
-            id: sessionId,
-            cwd: "/repo",
-            timestamp: "2026-08-16T12:00:00Z",
-          }),
-          JSON.stringify({
-            type: "message",
-            timestamp: "2026-08-16T12:00:05Z",
-            message: { role: "user", content: "Optimize database queries" },
-          }),
-          JSON.stringify({
-            type: "message",
-            timestamp: "2026-08-16T12:01:00Z",
-            message: {
-              role: "assistant",
-              content: "I will rewrite the queries with batching.",
-            },
-          }),
-        ].join("\n"),
-      );
-    });
-
-    afterEach(() => {
-      delete process.env.TRACE_R2_MODE;
-      delete process.env.TRACE_R2_MOCK_DIR;
-      delete process.env.REVIEW_TEST_TRACE_SEARCH_DIR;
-      clearTraceEnvCache();
-    });
-
-    it("passes when quote text matches trace", async () => {
-      const reviewDir = fixtureDir("review");
-
-      const result = await evaluateReviewDocumentBundleForPublish({
-        reviewDir,
-        bundleCode: `
-          import React, {
-            createActiveReviewDocument,
-            createBrowserReviewDefinitionSession,
-          } from "review-doc-runtime";
-          const session = createBrowserReviewDefinitionSession({
-            softwareMap: null,
-            baseSoftwareMap: null,
-          });
-          await session.ready();
-          createActiveReviewDocument({
-            title: "Trace quote",
-            routePath: "/",
-            filePath: "/repo/review.mdx",
-            modelNames: [],
-            models: {},
-            Component: ({ components }) => {
-              const TraceQuote = components.TraceQuote;
-              return React.createElement(
-                TraceQuote,
-                { sessionId: "${sessionId}" },
-                "Optimize database queries"
-              );
-            }
-          });
-        `,
-      });
-
-      expect(result.errors).toEqual([]);
-    });
-
-    it("fails when quote text is not found in trace", async () => {
-      const reviewDir = fixtureDir("review");
-
-      const result = await evaluateReviewDocumentBundleForPublish({
-        reviewDir,
-        bundleCode: `
-          import React, {
-            createActiveReviewDocument,
-            createBrowserReviewDefinitionSession,
-          } from "review-doc-runtime";
-          const session = createBrowserReviewDefinitionSession({
-            softwareMap: null,
-            baseSoftwareMap: null,
-          });
-          await session.ready();
-          createActiveReviewDocument({
-            title: "Trace quote",
-            routePath: "/",
-            filePath: "/repo/review.mdx",
-            modelNames: [],
-            models: {},
-            Component: ({ components }) => {
-              const TraceQuote = components.TraceQuote;
-              return React.createElement(
-                TraceQuote,
-                { sessionId: "${sessionId}" },
-                "Nonexistent text that never happened"
-              );
-            }
-          });
-        `,
-      });
-
-      expect(result.errors.length).toBeGreaterThan(0);
-      expect(result.errors[0]).toContain("not found in session");
-    });
-
-    it("emits warning when event hint is stale", async () => {
-      const reviewDir = fixtureDir("review");
-
-      const result = await evaluateReviewDocumentBundleForPublish({
-        reviewDir,
-        bundleCode: `
-          import React, {
-            createActiveReviewDocument,
-            createBrowserReviewDefinitionSession,
-          } from "review-doc-runtime";
-          const session = createBrowserReviewDefinitionSession({
-            softwareMap: null,
-            baseSoftwareMap: null,
-          });
-          await session.ready();
-          createActiveReviewDocument({
-            title: "Trace quote",
-            routePath: "/",
-            filePath: "/repo/review.mdx",
-            modelNames: [],
-            models: {},
-            Component: ({ components }) => {
-              const TraceQuote = components.TraceQuote;
-              return React.createElement(
-                TraceQuote,
-                { sessionId: "${sessionId}", event: 99 },
-                "Optimize database queries"
-              );
-            }
-          });
-        `,
-      });
-
-      expect(result.errors).toEqual([]);
-      expect(result.warnings.length).toBeGreaterThan(0);
-      expect(result.warnings[0]).toContain("hint event={99} is stale");
-    });
   });
 
   it("serializes concurrent evaluations that share the process-global runtime", async () => {

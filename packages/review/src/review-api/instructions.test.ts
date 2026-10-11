@@ -22,7 +22,6 @@ import { ReviewStore } from "./store.js";
 const live = {
   desktopAvailable: true,
   scratchpadEnabled: true,
-  traceEnabled: true,
 };
 
 describe("renderInstructions", () => {
@@ -36,7 +35,6 @@ describe("renderInstructions", () => {
         authoring: "AUTHORING_WORKFLOW",
         "file-lenses": "LENS_GUIDANCE",
         scratchpad: "SCRATCHPAD_GUIDANCE",
-        "trace-archaeology": "TRACE_GUIDANCE",
       }).map(([name, content]) =>
         writeFile(path.join(root, "instructions", `${name}.md`), content),
       ),
@@ -57,13 +55,6 @@ describe("renderInstructions", () => {
         /\]\((?!https?:\/\/|review-source:|#)[^)]+\.md(?:#[^)]*)?\)/,
       );
     }
-  });
-
-  it("serves the authoring workflow with the other topics listed", async () => {
-    const authoring = await renderInstructions("authoring", live, root);
-
-    expect(authoring.startsWith("AUTHORING_WORKFLOW")).toBe(true);
-    expect(authoring).toContain('topic:"trace-archaeology"');
   });
 
   it("advertises the scratchpad only when Desktop has it enabled", async () => {
@@ -92,23 +83,9 @@ describe("renderInstructions", () => {
   it("serves other fixed topics without Desktop", async () => {
     const context = { ...live, desktopAvailable: false };
 
-    for (const [topic, marker] of [
-      ["file-lenses", "LENS_GUIDANCE"],
-      ["trace-archaeology", "TRACE_GUIDANCE"],
-    ] as const) {
+    for (const [topic, marker] of [["file-lenses", "LENS_GUIDANCE"]] as const) {
       expect(await renderInstructions(topic, context, root)).toBe(marker);
     }
-  });
-
-  it("omits trace guidance from authoring when capture is off", async () => {
-    const text = await renderInstructions(
-      "authoring",
-      { desktopAvailable: true, scratchpadEnabled: false, traceEnabled: false },
-      root,
-    );
-
-    expect(text).not.toContain("trace-archaeology");
-    expect(text).not.toContain("check if traces are available");
   });
 
   it("accepts only named topics, defaulting to authoring", () => {
@@ -127,21 +104,6 @@ describe("renderInstructions", () => {
         file: "secret.md",
       }).success,
     ).toBe(false);
-  });
-});
-
-describe("tool descriptions", () => {
-  it("mention trace-archaeology only when capture is on", () => {
-    const off = authoringTools(false, false).find(
-      (tool) => tool.name === "review_get_instructions",
-    );
-
-    const on = authoringTools(false, true).find(
-      (tool) => tool.name === "review_get_instructions",
-    );
-
-    expect(off?.description).not.toContain("trace-archaeology");
-    expect(on?.description).toContain("trace-archaeology");
   });
 });
 
@@ -226,7 +188,6 @@ describe("review_get_instructions", () => {
       await renderInstructions("authoring", {
         desktopAvailable: false,
         scratchpadEnabled: false,
-        traceEnabled: false,
       }),
     );
     expect(guidance).toBe(await client.read("/instructions"));
@@ -317,7 +278,7 @@ describe("review_get_instructions", () => {
         ).description,
       ).toContain('topic:"scratchpad"');
 
-      for (const topic of ["authoring", "scratchpad", "trace-archaeology"]) {
+      for (const topic of ["authoring", "scratchpad"]) {
         const instructions = await app.request(`/instructions?topic=${topic}`);
         expect(instructions.status).toBe(200);
       }
@@ -330,41 +291,20 @@ describe("review_get_instructions", () => {
     }
   });
 
-  it("reads the trace gate on every request", async () => {
+  it("rejects the retired trace instruction topic", async () => {
     const store = new ReviewStore(":memory:", {
       validatePins: async () => {},
       validateSource: async () => {},
       validateResource: async () => {},
     });
 
-    let capture = false;
-
     try {
-      const app = createReviewApi(
-        store,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        () => false,
-        async () => capture,
-      );
-
-      const traces = async () =>
-        (await app.request("/instructions?topic=trace-archaeology")).json();
-
-      expect(await traces()).toMatch(/^Trace capture is off/);
-
-      capture = true;
-
-      expect(await traces()).not.toMatch(/^Trace capture is off/);
+      const app = createReviewApi(store);
       expect(
-        (await (await app.request("/authoring")).json()).find(
-          (tool: AuthoringTool) => tool.name === "review_get_instructions",
-        ).description,
-      ).toContain('topic:"trace-archaeology"');
+        (await app.request("/instructions?topic=trace-archaeology")).status,
+      ).toBe(400);
     } finally {
-      store.close();
+      await store.close();
     }
   });
 });
@@ -379,7 +319,6 @@ async function startMcp(connect: () => Promise<ReviewApiClient>) {
     stdin,
     stdout,
     stderr,
-    true,
   );
 
   let output = "";
@@ -460,7 +399,6 @@ describe("blackboard mcp instructions", () => {
       ).toEqual(["session_get_instructions", "blackboard_status"]);
       const guidance = list.result.tools[0].description;
       expect(guidance).toContain("session_get_instructions");
-      expect(guidance).toContain("trace-archaeology");
       expect(guidance).toContain('topic:"scratchpad"');
 
       const down = await mcp.request(3, "tools/call", {
@@ -506,10 +444,10 @@ describe("blackboard mcp instructions", () => {
 
       const restarted = await mcp.request(7, "tools/call", {
         name: "session_get_instructions",
-        arguments: { topic: "trace-archaeology" },
+        arguments: { topic: "file-lenses" },
       });
 
-      expect(restarted.result.content[0].text).toContain("trace");
+      expect(restarted.result.content[0].text).toContain("lens");
     } finally {
       await mcp.close();
       store.close();

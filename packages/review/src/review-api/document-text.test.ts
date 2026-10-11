@@ -142,13 +142,7 @@ const snapshot: Snapshot = {
       alt: "Screen layout",
       caption: "After saving",
     },
-    {
-      id: "quote-12",
-      type: "trace_quote",
-      traceId: "trace-1",
-      eventId: "event-1",
-      text: "Saved successfully",
-    },
+
     {
       id: "map-13",
       type: "software_map",
@@ -178,8 +172,6 @@ it("reads all component kinds without losing prose, relationships or source loca
     "Keep the new content",
     "Screen layout",
     "asset-1",
-    "trace-1, event event-1",
-    "Saved successfully",
     "map-1, focus: storage",
     "[divider-14]",
   ]) {

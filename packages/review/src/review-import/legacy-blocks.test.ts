@@ -19,7 +19,7 @@ import {
 } from "@review/review-api/document";
 import { describe, expect, it } from "vitest";
 
-import { el, footnoteTraceQuoteSection, text } from "./import-test-utils";
+import { el, text } from "./import-test-utils";
 import { legacyDocumentToBlocks } from "./legacy-blocks";
 
 /** A sealed document whose body is `body`, for the nesting cases no fixture has. */
@@ -118,92 +118,6 @@ describe("legacyDocumentToBlocks", () => {
     expect(stray).toEqual([]);
   });
 
-  it("emits a trace request per TraceQuote", () => {
-    const document = reviewDocumentDataSchema.parse({
-      format: "review-document/1",
-      title: "T",
-      routePath: "/",
-      sourcePath: "review.mdx",
-      anchors: {},
-      anchorContents: {},
-      softwareModels: [],
-      body: [
-        {
-          type: "component",
-          name: "TraceQuote",
-          props: { sessionId: "s1", event: 4 },
-          children: [{ type: "text", value: "quoted words" }],
-        },
-      ],
-    });
-
-    const { blocks, traces } = legacyDocumentToBlocks(document);
-
-    expect(traces).toEqual([
-      {
-        sessionId: "s1",
-        trace: undefined,
-        eventIndex: 4,
-        quote: "quoted words",
-        placeholder: "trace-placeholder-1",
-      },
-    ]);
-    expect(blocks[0]).toEqual({
-      type: "trace_quote",
-      traceId: "trace-placeholder-1",
-      eventId: "4",
-      text: "quoted words",
-    });
-  });
-
-  it("keeps nested quotes in their paragraph and list with trace references", async () => {
-    const document = await load("schema4-opencode-agentserver");
-
-    const quote = {
-      type: "component",
-      name: "TraceQuote",
-      props: { sessionId: "s1", event: 4 },
-      children: [{ type: "text", value: "quoted [words]\nnext line" }],
-    } as const;
-
-    document.body = reviewDocumentDataSchema.parse({
-      ...document,
-      body: [
-        {
-          type: "element",
-          tag: "p",
-          props: {},
-          children: [
-            { type: "text", value: "Before " },
-            quote,
-            { type: "text", value: " after." },
-          ],
-        },
-        {
-          type: "element",
-          tag: "ol",
-          props: { start: 3 },
-          children: [
-            { type: "element", tag: "li", props: {}, children: [quote] },
-          ],
-        },
-      ],
-    }).body;
-    const { blocks, traces, warnings } = legacyDocumentToBlocks(document);
-    expect(warnings).toEqual([]);
-    expect(traces).toHaveLength(2);
-    expect(blocks[0]).toMatchObject({
-      type: "markdown",
-      markdown: expect.stringContaining("Before [quoted"),
-    });
-    expect(JSON.stringify(blocks)).toContain("3. ");
-    expect(
-      resourceReferences(blocks).map(
-        (quote) => quote.type === "trace_quote" && quote.text,
-      ),
-    ).toEqual(["quoted [words]\nnext line", "quoted [words]\nnext line"]);
-  });
-
   it.each([
     {
       container: "a paragraph, in order",
@@ -288,42 +202,5 @@ describe("legacyDocumentToBlocks", () => {
       { type: "markdown", markdown: "![Remote](https://img.example/a.png)\n" },
     ]);
     expect(images).toEqual([]);
-  });
-
-  it("registers a footnote's trace quote once, whatever cites the footnote", () => {
-    const reference = () =>
-      el("sup", [
-        el("a", [text("1")], {
-          href: "#user-content-fn-1",
-          id: "user-content-fnref-1",
-          "data-footnote-ref": "true",
-        }),
-      ]);
-
-    const { blocks, traces, warnings } = legacyDocumentToBlocks(
-      documentOf([
-        el("p", [text("First"), reference()]),
-        {
-          type: "component",
-          name: "ReviewSection",
-          props: { title: "Detail" },
-          children: [el("p", [text("Second"), reference()])],
-        } as ReviewNode,
-        footnoteTraceQuoteSection("1"),
-      ]),
-    );
-
-    const definition =
-      "[^1]: The agent [agent said so](review-trace:trace-placeholder-1#2).";
-
-    expect(traces).toHaveLength(1);
-    expect(warnings).toEqual([]);
-    expect(blocks.map((block) => block.type)).toEqual(["markdown", "section"]);
-    expect(blocks[0]).toMatchObject({
-      markdown: expect.stringContaining(definition),
-    });
-    expect(blocks[1]).toMatchObject({
-      children: [{ markdown: expect.stringContaining(definition) }],
-    });
   });
 });

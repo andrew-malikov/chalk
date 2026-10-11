@@ -325,3 +325,36 @@ it("bounds concurrent downloads and still rejects corrupt objects", async () => 
     "integrity",
   );
 });
+
+it("rejects remote trace metadata before requesting signed objects", async () => {
+  const root = await mkdtemp("/tmp/share-retired-");
+  cleanup.push(() => rm(root, { recursive: true, force: true }));
+  const fixture = await createShareFixture(root);
+  cleanup.push(async () => {
+    await fixture.data.close();
+    await fixture.store.close();
+  });
+  const bundle = await exportShare(fixture);
+  const manifest = JSON.parse(JSON.stringify(bundle.manifest));
+  manifest.resources[0].kind = "trace";
+  const requests: string[] = [];
+
+  const client = new ShareClient(
+    "https://sharing.test",
+    undefined,
+    async (input) => {
+      requests.push(String(input));
+
+      return Response.json({
+        manifest,
+        sender: { login: "sender" },
+        sharedAt: 123,
+      });
+    },
+  );
+
+  await expect(client.download(randomUUID(), "x".repeat(43))).rejects.toThrow(
+    /image|map/,
+  );
+  expect(requests).toHaveLength(1);
+});

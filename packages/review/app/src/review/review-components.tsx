@@ -15,7 +15,6 @@ import { CodePeekCard } from "@canvas/diff/CodePeek";
 import { AuthoredCodeSurface } from "@canvas/documents/authored-code-surface";
 import { documentStyles } from "@canvas/documents/document-styles";
 import { documentType } from "@canvas/documents/document-type.stylex";
-import { findWhitespaceNormalizedSpan } from "@canvas/documents/highlighted-text";
 import { newTabLinkProps } from "@canvas/documents/link-props";
 import type { ReviewSectionSummary } from "@canvas/documents/review-section-summary";
 import { drawStyles } from "@canvas/drawing/draw-styles";
@@ -35,9 +34,6 @@ import { shellStyles } from "@canvas/styles/shell-styles";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { captureUiEvent } from "@canvas/telemetry/ui-telemetry";
-import { TraceDocument } from "@canvas/traces/trace-document";
-import { traceStyles } from "@canvas/traces/trace-styles";
-import { useAgentTrace } from "@canvas/traces/use-agent-trace";
 import { useTutorialSection } from "@canvas/tutorial/tutorial-section-context";
 import { IconButton } from "@canvas/ui/button";
 import {
@@ -47,7 +43,6 @@ import {
   PopOutIcon,
 } from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
-import { extractTraceEventText } from "@dev.fast/trace-protocol";
 import type { ReviewComponentProps } from "@review/documents/review-document-data";
 import * as stylex from "@stylexjs/stylex";
 import type {
@@ -352,7 +347,7 @@ interface ProsePeekAnchorProps {
 }
 
 /**
- * Shared prose side-peek anchor primitive for AnchorLink and TraceQuote.
+ * Shared prose side-peek anchor primitive for source links.
  * Renders an inline anchor with open-state styling, telemetry, and visibility retention.
  */
 export function ProsePeekAnchor({
@@ -584,166 +579,6 @@ function AskHost() {
   );
 }
 
-function TraceQuotePeekPanel({
-  sessionId,
-  trace,
-  event,
-  quote,
-  onClose,
-}: {
-  sessionId: string;
-  trace?: string;
-  event?: number;
-  quote: string;
-  onClose: () => void;
-}) {
-  const { openTraceSession } = useReviewActions();
-  const data = useAgentTrace(sessionId, trace);
-
-  const traceEvents = data.status === "loaded" ? data.trace.events : undefined;
-
-  const targetEventIndex = useMemo(() => {
-    if (!traceEvents) return -1;
-
-    if (event !== undefined && event >= 0 && event < traceEvents.length) {
-      const e = traceEvents[event];
-      const text = extractTraceEventText(e);
-
-      if (findWhitespaceNormalizedSpan(text, quote)) {
-        return event;
-      }
-    }
-
-    for (let i = 0; i < traceEvents.length; i++) {
-      const text = extractTraceEventText(traceEvents[i]);
-
-      if (findWhitespaceNormalizedSpan(text, quote)) {
-        return i;
-      }
-    }
-
-    return -1;
-  }, [traceEvents, event, quote]);
-
-  const picks = useMemo(() => {
-    if (!traceEvents || targetEventIndex === -1) return undefined;
-    let turnStart = 0;
-
-    for (let index = targetEventIndex; index >= 0; index -= 1) {
-      if (traceEvents[index].kind === "user") {
-        turnStart = index;
-        break;
-      }
-    }
-
-    let nextUserIndex = -1;
-
-    for (
-      let index = targetEventIndex + 1;
-      index < traceEvents.length;
-      index += 1
-    ) {
-      if (traceEvents[index].kind === "user") {
-        nextUserIndex = index;
-        break;
-      }
-    }
-
-    const turnEnd =
-      nextUserIndex === -1 ? traceEvents.length - 1 : nextUserIndex - 1;
-
-    const events: [number, number] = [turnStart, turnEnd];
-
-    return [{ events }];
-  }, [traceEvents, targetEventIndex]);
-
-  if (data.status === "loading" || data.status === "idle") {
-    return (
-      <ReviewPanelFrame
-        label="Agent trace"
-        title={
-          trace ? `${sessionId.slice(0, 8)} · ${trace}` : sessionId.slice(0, 8)
-        }
-        onClose={onClose}
-        closeLabel="Close side peek"
-      >
-        <div {...stylex.props(panelStyles.peekBody)}>
-          <p {...stylex.props(traceStyles.note)}>Loading trace…</p>
-        </div>
-      </ReviewPanelFrame>
-    );
-  }
-
-  if (data.status === "error") {
-    return (
-      <ReviewPanelFrame
-        label="Agent trace"
-        title={sessionId.slice(0, 8)}
-        onClose={onClose}
-        closeLabel="Close side peek"
-      >
-        <div {...stylex.props(panelStyles.peekBody)}>
-          <p {...stylex.props(traceStyles.note, traceStyles.noteError)}>
-            {data.error}
-          </p>
-        </div>
-      </ReviewPanelFrame>
-    );
-  }
-
-  const loadedTrace = data.trace;
-  const events = loadedTrace.events;
-
-  const headerAccessory = (
-    <ButtonPrimitive
-      variant="ghost"
-      size="xs"
-      type="button"
-      {...stylex.props(traceStyles.peekOpenFull)}
-      onClick={() => {
-        openTraceSession?.({
-          sessionId,
-          trace,
-          eventIndex: targetEventIndex >= 0 ? targetEventIndex : undefined,
-        });
-        onClose();
-      }}
-    >
-      Full Trace ↗
-    </ButtonPrimitive>
-  );
-
-  return (
-    <ReviewPanelFrame
-      label="Agent trace"
-      title={
-        loadedTrace.title ??
-        (trace ? `${sessionId.slice(0, 8)} · ${trace}` : sessionId.slice(0, 8))
-      }
-      titleAccessory={headerAccessory}
-      onClose={onClose}
-      closeLabel="Close side peek"
-    >
-      <div {...stylex.props(panelStyles.peekBody)}>
-        {targetEventIndex === -1 ? (
-          <p {...stylex.props(traceStyles.note)}>
-            Quote not found in this session transcript.
-          </p>
-        ) : (
-          <TraceDocument
-            key={`${sessionId}-${trace ?? ""}-${targetEventIndex}-${quote}`}
-            events={events}
-            targetEventIndex={targetEventIndex}
-            highlightQuote={quote}
-            picks={picks}
-            scoped
-          />
-        )}
-      </div>
-    </ReviewPanelFrame>
-  );
-}
-
 function ReviewPeekPanel({
   anchor,
   content,
@@ -753,18 +588,6 @@ function ReviewPeekPanel({
   content: ReviewPeekContent;
   onClose: () => void;
 }) {
-  if (content.kind === "trace-quote") {
-    return (
-      <TraceQuotePeekPanel
-        sessionId={content.sessionId}
-        trace={content.trace}
-        event={content.event}
-        quote={content.quote}
-        onClose={onClose}
-      />
-    );
-  }
-
   if (!anchor) return null;
 
   return (

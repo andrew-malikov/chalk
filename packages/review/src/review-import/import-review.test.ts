@@ -11,7 +11,6 @@ import { describe, expect, it } from "vitest";
 import { importLegacyReview, isMapSection } from "./import-review";
 import {
   el,
-  footnoteTraceQuoteSection,
   logFromRevisionDirs,
   materializeFromRevisionDirs,
   runImport,
@@ -120,99 +119,6 @@ describe("importLegacyReview", () => {
     } finally {
       await store.close();
     }
-  });
-
-  it("preserves unavailable quotes and reports import warnings outside the document", async () => {
-    const { record, oids, store, documentPath, importReview } = await runImport(
-      "schema4-bug-report-dialog",
-    );
-
-    await appendNodes(documentPath(oids[0]!), [
-      {
-        type: "component",
-        name: "TraceQuote",
-        props: { sessionId: "s1", event: 2 },
-        children: [text("agent said so")],
-      },
-    ]);
-
-    const outcome = await importReview();
-
-    expect(outcome.kind).toBe("imported");
-    expect(outcome.kind === "imported" && outcome.warnings).toContain(
-      "trace s1 unavailable; quoted as text",
-    );
-
-    const document = store.read(record.uuid).document;
-
-    expect(JSON.stringify(document)).not.toContain(
-      "Imported from the MDX review",
-    );
-    expect(document.at(-1)).toMatchObject({
-      type: "markdown",
-      markdown: "> agent said so\n",
-    });
-  });
-
-  it("links a footnote's trace quote to the imported trace", async () => {
-    const { record, oids, store, documentPath, importReview } = await runImport(
-      "schema4-bug-report-dialog",
-      {
-        loadTrace: async () => ({
-          parserVersion: "1",
-          descriptor: {
-            sessionId: "s1",
-            harness: "claude-code",
-            available: true,
-            source: null,
-            commits: [],
-          },
-          trace: {
-            harness: "claude-code",
-            title: "Session",
-            events: [
-              { kind: "user", text: "why?" },
-              { kind: "user", text: "and then?" },
-              { kind: "assistant", markdown: "agent said so, plainly" },
-            ],
-            startedAt: null,
-            endedAt: null,
-            activeMs: null,
-            userTurns: 2,
-            toolCalls: 0,
-          },
-          subagents: [],
-          traceName: null,
-          cacheStatus: "current",
-        }),
-      },
-    );
-
-    await appendNodes(documentPath(oids[0]!), [
-      el("p", [
-        text("Why"),
-        el("sup", [
-          el("a", [text("1")], {
-            href: "#user-content-fn-1",
-            id: "user-content-fnref-1",
-            "data-footnote-ref": "true",
-          }),
-        ]),
-        text("?"),
-      ]),
-      footnoteTraceQuoteSection("1"),
-    ]);
-
-    const outcome = await importReview();
-
-    expect(outcome.kind).toBe("imported");
-    expect(outcome.kind === "imported" && outcome.warnings).toEqual([]);
-    expect(store.read(record.uuid).document.at(-1)).toMatchObject({
-      type: "markdown",
-      markdown: expect.stringMatching(
-        /\[\^1\]: The agent \[agent said so\]\(review-trace:[\da-f-]{36}#2\)\.\n$/,
-      ),
-    });
   });
 
   it("stores a published image once per file, keeping what each version showed", async () => {
@@ -424,7 +330,6 @@ describe("importLegacyReview", () => {
           repositoryPaths: [repo.root],
           materialize: materializeFromRevisionDirs,
           log: logFromRevisionDirs(fixture.oids),
-          loadTrace: async () => null,
         }),
       ).toMatchObject({ kind: "imported" });
       expect(store.read(fixture.record.uuid).pins).toMatchObject({

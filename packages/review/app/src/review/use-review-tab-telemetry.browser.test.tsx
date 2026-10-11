@@ -42,7 +42,7 @@ it("keeps dwell continuous through live review updates and sends the latest vers
     pins: { base: "base", head: "head" },
     historicalRevision: null,
     updatedAtMs: 0,
-    traces: new Map(),
+
     stack: async () => [],
     dismiss: async () => {},
   };

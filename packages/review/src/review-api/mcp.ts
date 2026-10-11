@@ -27,18 +27,12 @@ const RELOAD_TOOLS =
 
 function mcpAuthoringGuidance(context: {
   scratchpadAvailable: boolean;
-  traceEnabled: boolean;
 }): string {
   return [
     "Blackboard explains code in documents the user reads in Blackboard Desktop. Call session_get_instructions before creating or editing a Blackboard and follow it. Read session_capabilities before authoring; session_create opens the new review in Desktop when it is available, so call session_open only for an existing review, and generate software maps only when softwareMapEnabled is true. When the user asks for a Blackboard or to use Blackboard (for example to review a branch, a change or a pull request, or to explain a system in Blackboard), author a Blackboard with the default topic.",
     ...(context.scratchpadAvailable
       ? [
           'When the user asks in conversation to be shown how code works or wants a diagram, without asking for a Blackboard, call session_capabilities; if it reports scratchpadEnabled and desktopAvailable, draw on the Blackboard scratchpad rather than answering only in chat, starting with session_get_instructions({topic:"scratchpad"}).',
-        ]
-      : []),
-    ...(context.traceEnabled
-      ? [
-          'For why code exists, what an agent was thinking, or whether an agent solved something before, call session_get_instructions({topic:"trace-archaeology"}).',
         ]
       : []),
     "Never read or write Blackboard files or SQL.",
@@ -51,13 +45,12 @@ export async function serveReviewMcp(
   stdin: Readable,
   stdout: Writable,
   stderr: Writable = process.stderr,
-  traceEnabled = false,
   /** What blackboard_status reports when the Desktop cannot be reached, and why. */
   offlineStatus?: (problem: string) => Promise<JsonValue>,
   onToolCall?: (call: ReviewToolCall) => Promise<void> | void,
 ) {
   const instructionsTool = {
-    ...authoringTools(false, traceEnabled).find(
+    ...authoringTools(false).find(
       (tool) => tool.name === "review_get_instructions",
     )!,
     name: "session_get_instructions",
@@ -123,7 +116,7 @@ export async function serveReviewMcp(
           // guidance on the discovery tool instead, including before Desktop starts.
           description:
             name === instructionsTool.name
-              ? `${mcpAuthoringGuidance({ scratchpadAvailable: true, traceEnabled })}\n\n${description}`
+              ? `${mcpAuthoringGuidance({ scratchpadAvailable: true })}\n\n${description}`
               : description,
           inputSchema,
         }),

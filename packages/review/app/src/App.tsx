@@ -123,9 +123,6 @@ import { withClass } from "./styles/stylex-props";
 import { themeStyles } from "./styles/theme-styles";
 import { tokens } from "./styles/tokens.stylex";
 import { captureUiEvent } from "./telemetry/ui-telemetry";
-import { ReviewTraceView } from "./traces/ReviewTraceView";
-import { traceStyles } from "./traces/trace-styles";
-import { useTraceList } from "./traces/use-trace-list";
 import { useTutorial } from "./tutorial/tutorial-context";
 import { TutorialExperienceProvider } from "./tutorial/tutorial-experience";
 import { MarkerUnderline, SettingsSlidersIcon } from "./ui/icons";
@@ -246,7 +243,6 @@ function ReviewLayout({
             key={documentRoute}
             documentRoute={documentRoute}
             softwareMapEnabled={softwareMapEnabled}
-            openTraceSession={panelStore.getState().openTrace}
           >
             <GitLabProvider>
               <AskHistoryProvider>
@@ -353,8 +349,6 @@ function ReviewLayoutContent({
       ? { right: "auto", width: `${frozenDiffWidth}px` }
       : undefined;
 
-  const traceSelection = useReviewPanel((state) => state.traceSelection);
-  const traceStorage = useReviewPanel((state) => state.traceStorage);
   const mapFocus = useReviewPanel((state) => state.mapFocus);
   const showView = useReviewPanel((state) => state.showView);
 
@@ -431,15 +425,7 @@ function ReviewLayoutContent({
     reviewFind?.setReviewActive(activeView === "review");
   }, [activeView, reviewFind]);
 
-  const storedList = useTraceList();
   const diffFiles = useReviewDiffFiles();
-
-  // The scratchpad has no repository of its own, so no traces to show.
-  const hasTraceSessions =
-    !scratchpad &&
-    ((session.review?.traces.size ?? 0) > 0 ||
-      storedList.status !== "loaded" ||
-      storedList.sessions.length > 0);
 
   const filesTabFileCount = diffScope
     ? diffScope.commit.fileCount
@@ -452,9 +438,8 @@ function ReviewLayoutContent({
       offeredReviewViews({
         hasChangeRange,
         softwareMapEnabled,
-        hasTraceSessions,
       }),
-    [hasChangeRange, hasTraceSessions, softwareMapEnabled],
+    [hasChangeRange, softwareMapEnabled],
   );
 
   useLayoutEffect(() => {
@@ -713,7 +698,6 @@ function ReviewLayoutContent({
               shellStyles.viewRegion,
               activeView === "commits" && shellStyles.commitsRegion,
               activeView === "review" && shellStyles.reviewRegion,
-              activeView === "trace" && traceStyles.region,
             )}
           >
             <div
@@ -832,15 +816,6 @@ function ReviewLayoutContent({
                   restoreFile={diffScope.restoreFile}
                 />
               </div>
-            )}
-            {activeView === "trace" && (
-              <ReviewTraceView
-                selection={traceSelection}
-                onSelect={panelStore.getState().selectTrace}
-                storage={traceStorage}
-                onSelectStorage={panelStore.getState().selectTraceStorage}
-                storedList={storedList}
-              />
             )}
           </section>
         </TutorialExperienceProvider>

@@ -1902,7 +1902,7 @@ it.skipIf(spawnSync("jj", ["--version"]).status !== 0)(
   },
 );
 
-it("decodes images and checks trace/map evidence before accepting components", async () => {
+it("decodes images and checks map evidence before accepting components", async () => {
   const review = await local.store.execute(
     command({ type: "create", title: "Resources", pins }),
   );
@@ -1929,51 +1929,6 @@ it("decodes images and checks trace/map evidence before accepting components", a
   await expect(
     local.data.upload({ ...image, id: randomUUID(), base64: "not an image" }),
   ).rejects.toThrow(/valid single/);
-
-  const trace = {
-    id: randomUUID(),
-    repositoryId: pins.repositoryId,
-    kind: "trace",
-    trace: {
-      label: "Author",
-      events: [
-        { id: "answer", role: "assistant", text: "Keep the old components." },
-      ],
-    },
-  };
-
-  await local.data.upload(trace);
-  await insert(review.reviewId, {
-    type: "trace_quote",
-    traceId: trace.id,
-    eventId: "answer",
-    text: "old components",
-  });
-  await expect(
-    insert(review.reviewId, {
-      type: "trace_quote",
-      traceId: trace.id,
-      eventId: "answer",
-      text: "Redesign everything",
-    }),
-  ).rejects.toThrow(/does not match/);
-  await insert(review.reviewId, {
-    type: "markdown",
-    markdown: `A quote: [old components](review-trace:${trace.id}#answer).`,
-  });
-  await expect(
-    insert(review.reviewId, {
-      type: "markdown",
-      markdown: `[Redesign everything](review-trace:${trace.id}#answer)`,
-    }),
-  ).rejects.toThrow(/does not match/);
-
-  await expect(
-    local.data.upload({
-      ...trace,
-      trace: { ...trace.trace, label: "Different content" },
-    }),
-  ).rejects.toThrow(/already used/);
 
   const map = {
     id: randomUUID(),
@@ -2124,11 +2079,11 @@ it("decodes images and checks trace/map evidence before accepting components", a
   await expect(
     insert(review.reviewId, {
       type: "image",
-      assetId: trace.id,
+      assetId: map.id,
       alt: "Not an image",
     }),
   ).rejects.toThrow(/component type/);
-  expect(local.store.read(review.reviewId).document).toHaveLength(4);
+  expect(local.store.read(review.reviewId).document).toHaveLength(2);
   await local.store.close();
   await local.data.close();
   local = openLocalReviewStore(database);
@@ -2139,7 +2094,7 @@ it("decodes images and checks trace/map evidence before accepting components", a
   ).toBe(2);
   await local.data.validateResource(
     pins,
-    local.store.read(review.reviewId).document[2]!,
+    local.store.read(review.reviewId).document[1]!,
   );
 
   const other = local.store.registerRepository(
@@ -2267,8 +2222,14 @@ it("exposes real source and resource operations through the authenticated deskto
     const resource = {
       id: randomUUID(),
       repositoryId: pins.repositoryId,
-      kind: "trace",
-      trace: { label: "Test", events: [] },
+      kind: "image",
+      base64: (
+        await sharp({
+          create: { width: 1, height: 1, channels: 3, background: "red" },
+        })
+          .png()
+          .toBuffer()
+      ).toString("base64"),
     };
 
     expect((await post("/resources", resource)).status).toBe(200);
@@ -2284,11 +2245,10 @@ it("exposes real source and resource operations through the authenticated deskto
       },
     );
 
-    expect(response.headers.get("content-type")).toBe("application/json");
-    expect(await response.json()).toMatchObject({
-      provenance: "client_supplied",
-      events: [],
-    });
+    expect(response.headers.get("content-type")).toBe("image/png");
+    expect(
+      (await sharp(Buffer.from(await response.arrayBuffer())).metadata()).width,
+    ).toBe(1);
     expect(
       (
         await post(`/${review.reviewId}/source`, {
@@ -3578,11 +3538,13 @@ describe("review_diff", () => {
       "-qm",
       "File becomes directory",
     );
+
     const current = await local.data.resolvePins(
       pins.repositoryId,
       head,
       "HEAD",
     );
+
     const raw = await local.data.rawFilePatch(current, file);
     expect(raw).toContain(`diff --git a/${file} b/${file}\n`);
     expect(raw).not.toContain(`${file}/index.ts`);
@@ -3590,16 +3552,20 @@ describe("review_diff", () => {
 
   it("serves an unnumbered single-file patch and preserves both rename paths", async () => {
     const api = createReviewApi(local.store, local.data);
+
     const response = await api.request(
       `/${reviewId}/diff?format=raw&file=example.ts&maxBytes=500000`,
     );
+
     expect(response.status).toBe(200);
     const patch = await response.text();
     expect(patch).toContain("--- a/example.ts\n+++ b/example.ts\n");
     expect(patch).toContain("-line 6\n+changed line\n");
+
     const renamed = await api.request(
       `/${reviewId}/diff?format=raw&file=dir/moved.ts&maxBytes=500000`,
     );
+
     expect(renamed.status).toBe(200);
     expect(await renamed.text()).toContain(
       "rename from literal1.ts\nrename to dir/moved.ts\n",
@@ -3608,13 +3574,16 @@ describe("review_diff", () => {
 
   it("rejects ambiguous raw requests and over-budget patches instead of truncating", async () => {
     const api = createReviewApi(local.store, local.data);
+
     for (const query of ["format=raw", "format=raw&file=example.ts&paths=dir/"])
       expect((await api.request(`/${reviewId}/diff?${query}`)).status).toBe(
         400,
       );
+
     const response = await api.request(
       `/${reviewId}/diff?format=raw&file=example.ts&maxBytes=1`,
     );
+
     expect(response.status).toBe(409);
     expect(await response.json()).toMatchObject({
       error: expect.stringContaining("byte"),
@@ -3800,4 +3769,31 @@ it("does not invent a head branch for detached or unrelated pinned commits", asy
   );
 
   expect(local.store.read(created.reviewId).origin?.branch).toBeUndefined();
+});
+
+it("rejects trace uploads before storing bytes and trace quote edits before saving", async () => {
+  const id = randomUUID();
+  await expect(
+    local.data.upload({
+      id,
+      repositoryId: pins.repositoryId,
+      kind: "trace",
+      trace: { label: "old", events: [] },
+    }),
+  ).rejects.toThrow(/image|map/);
+  expect(() => local.store.resource(id)).toThrow(/not found/i);
+
+  const review = await local.store.execute(
+    command({ type: "create", title: "Healthy", pins }),
+  );
+
+  expect(() =>
+    insert(review.reviewId, {
+      type: "trace_quote",
+      traceId: id,
+      eventId: "old",
+      text: "old",
+    }),
+  ).toThrow(/Invalid input/);
+  expect(local.store.read(review.reviewId).document).toEqual([]);
 });

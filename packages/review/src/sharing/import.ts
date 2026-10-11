@@ -24,7 +24,6 @@ import {
   shareIdSchema,
   shareManifestSchema,
 } from "@dev.fast/review-share-protocol";
-import { textIncludesQuote } from "@review/documents/evidence.js";
 import { lensSchema } from "@review/review-api/diff-lenses.js";
 import { ReviewInputError } from "@review/review-api/document.js";
 import {
@@ -37,7 +36,6 @@ import {
 } from "@review/review-api/document.js";
 import type { LocalReviewData } from "@review/review-api/local-data.js";
 import type { ReviewStore } from "@review/review-api/store.js";
-import { traceSchema } from "@review/review-api/trace-schema.js";
 import {
   normalizedSoftwareElementSchema,
   normalizedSoftwareRelationshipSchema,
@@ -175,11 +173,6 @@ export function validateShareBundle(bundle: ShareBundle) {
   if (!snapshot.pins && Object.keys(presentation.maps).length)
     throw new Error("Shared maps require source pins.");
 
-  const traces = new Map<
-    string,
-    Map<string, z.infer<typeof traceSchema>["events"][number]>
-  >();
-
   for (const block of resourceReferences(snapshot.document)) {
     const reference = resourceReference(block);
 
@@ -189,24 +182,6 @@ export function validateShareBundle(bundle: ShareBundle) {
 
     if (!reference || !resource || resource.kind !== reference.kind)
       throw new Error("Missing or mismatched shared resource.");
-
-    if (block.type === "trace_quote") {
-      let events = traces.get(resource.object);
-
-      if (!events) {
-        const trace = traceSchema.parse(json(resource.object));
-        events = new Map(trace.events.map((event) => [event.id, event]));
-
-        if (events.size !== trace.events.length)
-          throw new Error("Duplicate shared trace event.");
-        traces.set(resource.object, events);
-      }
-
-      const event = events.get(block.eventId);
-
-      if (!event || !textIncludesQuote(event.text, block.text))
-        throw new Error("Shared quote does not match its trace.");
-    }
 
     if (block.type === "software_map") {
       const map = presentation.maps[block.mapVersionId];

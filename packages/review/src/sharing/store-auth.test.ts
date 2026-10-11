@@ -1,4 +1,4 @@
-import { mkdtemp, rm, stat, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { PassThrough } from "node:stream";
@@ -146,6 +146,7 @@ describe("store-auth", () => {
   it("backs off slow polling by five seconds", async () => {
     const env = { DEV_REVIEW_HOME: tmp };
     const sleeps: number[] = [];
+
     const responses = [
       json({
         device_code: "dc",
@@ -159,6 +160,7 @@ describe("store-auth", () => {
       json({ access_token: "new-token" }),
       json({ user: { id: "user-1", name: "dev" } }),
     ];
+
     const code = await runStoreLogin({
       env,
       stdout: outputStream(),
@@ -169,21 +171,25 @@ describe("store-auth", () => {
         sleeps.push(ms);
       },
     });
+
     expect(code).toBe(0);
     expect(sleeps).toEqual([1000, 1000, 6000]);
     expect((await readStoreAuth(env))?.token).toBe("new-token");
   });
   it("keeps saved credentials when a device authorization expires", async () => {
     const env = { DEV_REVIEW_HOME: tmp };
+
     const saved = {
       origin: "https://app.dev.fast",
       token: "saved",
       login: "dev",
       savedAt: "2026-09-02T00:00:00Z",
     };
+
     await writeStoreAuth(saved, env);
     vi.useFakeTimers();
     vi.setSystemTime(0);
+
     const responses = [
       json({
         device_code: "dc",
@@ -194,6 +200,7 @@ describe("store-auth", () => {
       }),
       json({ error: "authorization_pending" }, 400),
     ];
+
     const code = await runStoreLogin({
       env,
       stdout: outputStream(),
@@ -204,6 +211,7 @@ describe("store-auth", () => {
         vi.setSystemTime(Date.now() + ms);
       },
     });
+
     expect(code).toBe(1);
     expect(responses).toHaveLength(0);
     expect(await readStoreAuth(env)).toEqual(saved);

@@ -112,14 +112,6 @@ export type ReviewCliCommandPath =
   | "login"
   | "logout"
   | "whoami"
-  | "trace.store.create"
-  | "trace.store.delete"
-  | "trace.store.info"
-  | "trace.install"
-  | "trace.allow"
-  | "trace.deny"
-  | "trace.storage.use"
-  | "trace.config.migrate"
   | "api"
   | "mcp"
   | "server.start"
@@ -146,12 +138,7 @@ export type ReviewTelemetryErrorCategory =
 
 export type { ReviewSessionAgent, ReviewSessionOutcome };
 
-export type ReviewTelemetryTab =
-  | "review"
-  | "commits"
-  | "map"
-  | "files"
-  | "trace";
+export type ReviewTelemetryTab = "review" | "commits" | "map" | "files";
 
 export type ReviewTabTelemetryReason =
   | "tab_change"

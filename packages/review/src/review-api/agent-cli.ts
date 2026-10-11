@@ -1,6 +1,5 @@
 import type { Readable, Writable } from "node:stream";
 
-import { traceMachineEnabled } from "@dev.fast/trace-core";
 import {
   REVIEW_INSTANCE_ENV,
   selectReviewInstance,
@@ -75,7 +74,6 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
         input.stdin ?? process.stdin,
         input.stdout,
         input.stderr,
-        await traceMachineEnabled({ env: input.env }),
         env.DEV_REVIEW_SERVER_DIR?.trim()
           ? undefined
           : async (problem) => {

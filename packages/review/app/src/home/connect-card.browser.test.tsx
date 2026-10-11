@@ -25,13 +25,7 @@ const status: ReviewCliInstallStatus = {
     profileConfigured: true,
     onPath: true,
   },
-  trace: {
-    enabled: false,
-    configured: false,
-    autoActivateRepositories: false,
-    envPath: "/e",
-    settingsPath: "/s",
-  },
+
   cli: { path: "/tmp/cli.js", version: "0.0.1" },
   connect: {
     command: "sh",

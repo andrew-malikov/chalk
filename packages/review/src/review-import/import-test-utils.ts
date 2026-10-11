@@ -38,34 +38,6 @@ export const el = (
 
 export const text = (value: string): ReviewNode => ({ type: "text", value });
 
-/** The footnote section a legacy review sealed for a definition, `[^<label>]`,
- * that quotes an agent trace. */
-export const footnoteTraceQuoteSection = (label: string): ReviewNode =>
-  el(
-    "section",
-    [
-      el("ol", [
-        el(
-          "li",
-          [
-            el("p", [
-              text("The agent "),
-              {
-                type: "component",
-                name: "TraceQuote",
-                props: { sessionId: "s1", event: 2 },
-                children: [text("agent said so")],
-              },
-              text("."),
-            ]),
-          ],
-          { id: `user-content-fn-${label}` },
-        ),
-      ]),
-    ],
-    { "data-footnotes": "true" },
-  );
-
 export async function scratchGitRepo() {
   const root = await mkdtemp(path.join(os.tmpdir(), "import-repo-"));
   const git = (...args: string[]) => exec("git", ["-C", root, ...args]);
@@ -191,9 +163,7 @@ export async function syntheticLegacyReview(
  * into the latter. */
 export async function runImport(
   fixture: string,
-  options: Parameters<typeof syntheticLegacyReview>[2] & {
-    loadTrace?: ImportLegacyReviewInput["loadTrace"];
-  } = {},
+  options: Parameters<typeof syntheticLegacyReview>[2] & {} = {},
 ) {
   const repo = await scratchGitRepo();
   const review = await syntheticLegacyReview(fixture, repo, options);
@@ -224,7 +194,6 @@ export async function runImport(
         data,
         materialize: materializeFromRevisionDirs,
         log: logFromRevisionDirs(review.oids),
-        loadTrace: options.loadTrace ?? (async () => null),
       }),
   };
 }

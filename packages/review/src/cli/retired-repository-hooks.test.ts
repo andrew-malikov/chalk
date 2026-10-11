@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -7,12 +7,15 @@ import { shellQuote } from "@review/lib/shell-quote";
 import { afterEach, expect, it } from "vitest";
 
 import { retireRepositoryHooks } from "./retired-repository-hooks";
+
 const homes: string[] = [];
+
 afterEach(async () => {
   await Promise.all(
     homes.splice(0).map((home) => rm(home, { recursive: true, force: true })),
   );
 });
+
 function git(cwd: string, args: string[]) {
   const r = spawnSync("git", args, {
     cwd,
@@ -23,9 +26,12 @@ function git(cwd: string, args: string[]) {
       GIT_CONFIG_NOSYSTEM: "1",
     },
   });
+
   if (r.status !== 0) throw new Error(r.stderr);
+
   return r.stdout.trim();
 }
+
 async function fixture(commandKind = "owned") {
   const homeDir = await mkdtemp(path.join(os.tmpdir(), "retire-repo-"));
   homes.push(homeDir);
@@ -33,24 +39,30 @@ async function fixture(commandKind = "owned") {
   await mkdir(root);
   git(root, ["init"]);
   const owned = path.join(homeDir, "bin/custom.cmd");
+
   const command = shellQuote(
     commandKind === "owned" ? owned : "/missing/foreign/blackboard",
   );
+
   const commonDir = path.join(root, ".git");
   const hooks = path.join(commonDir, "dev-fast/trace-hooks/hooks");
   const predecessor = "predecessor";
   await mkdir(hooks, { recursive: true });
   await mkdir(path.join(root, predecessor));
+
   const previous =
     'root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"\nprevious="$root"/' +
     shellQuote(path.join(predecessor, "prepare-commit-msg"));
+
   await writeFile(
     path.join(hooks, "prepare-commit-msg"),
     `#!/bin/sh\n${previous}\nif [ -x "$previous" ]; then\n  "$previous" "$@" || exit $?\nfi\n${command} trace git-hook prepare-commit-msg "$@" || true\nexit 0\n`,
   );
+
   const previousPush =
     'root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"\nprevious="$root"/' +
     shellQuote(path.join(predecessor, "pre-push"));
+
   await writeFile(
     path.join(hooks, "pre-push"),
     `#!/bin/sh\n${previousPush}\ntmp="$(mktemp "\${TMPDIR:-/tmp}/review-pre-push.XXXXXX")" || exit 0\ntrap 'rm -f "$tmp"' EXIT HUP INT TERM\ncat > "$tmp"\nif [ -x "$previous" ]; then\n  "$previous" "$@" < "$tmp" || exit $?\nfi\n${command} trace git-hook pre-push "$@" < "$tmp" || true\nexit 0\n`,
@@ -71,6 +83,7 @@ async function fixture(commandKind = "owned") {
   const registry = path.join(homeDir, ".config/dev-trace/repositories.json");
   await mkdir(path.dirname(registry), { recursive: true });
   await writeFile(registry, JSON.stringify([root]));
+
   return {
     input: { homeDir, env: {}, ownedCommands: [owned] },
     root,
@@ -78,6 +91,7 @@ async function fixture(commandKind = "owned") {
     registry,
   };
 }
+
 it("restores the relative predecessor and its arguments, stdin and exit status", async () => {
   const f = await fixture();
   await writeFile(
@@ -92,11 +106,13 @@ it("restores the relative predecessor and its arguments, stdin and exit status",
   );
   const payload = path.join(f.input.homeDir, "stdin");
   await writeFile(payload, "payload\n");
+
   const hook = spawnSync(
     "git",
     ["hook", "run", `--to-stdin=${payload}`, "pre-push", "--", "origin", "url"],
     { cwd: f.root, input: "payload\n", encoding: "utf8" },
   );
+
   expect(hook.status).toBe(9);
   expect(hook.stderr).toContain("origin/url\npayload\n");
   expect(
@@ -104,12 +120,14 @@ it("restores the relative predecessor and its arguments, stdin and exit status",
   ).toBe("user data");
   expect((await retireRepositoryHooks(f.input)).complete).toBe(true);
 });
+
 it("preserves wrappers owned by a different missing command", async () => {
   const f = await fixture("foreign");
   expect((await retireRepositoryHooks(f.input)).complete).toBe(true);
   expect(git(f.root, ["config", "--get", "core.hooksPath"])).toBe(f.hooks);
   expect(JSON.parse(await readFile(f.registry, "utf8"))).toEqual([f.root]);
 });
+
 it("preserves a replaced wrapper and later user hooksPath", async () => {
   const f = await fixture();
   await writeFile(path.join(f.hooks, "pre-push"), "handwritten hook");
@@ -122,6 +140,7 @@ it("preserves a replaced wrapper and later user hooksPath", async () => {
     "later-user-hooks",
   );
 });
+
 it("keeps inaccessible registered repositories retryable", async () => {
   const f = await fixture();
   await writeFile(f.registry, JSON.stringify([path.join(f.root, "missing")]));
@@ -149,6 +168,7 @@ it("deduplicates linked worktrees sharing one hook state", async () => {
     "predecessor",
   );
 });
+
 it("unsets only the local override so an inherited global hooksPath resumes", async () => {
   const f = await fixture();
   const stateFile = path.join(path.dirname(f.hooks), "state.json");
@@ -164,13 +184,16 @@ it("unsets only the local override so an inherited global hooksPath resumes", as
     GIT_CONFIG_NOSYSTEM: "1",
   };
   expect((await retireRepositoryHooks(f.input)).complete).toBe(true);
+
   const result = spawnSync("git", ["config", "--get", "core.hooksPath"], {
     cwd: f.root,
     env: f.input.env,
     encoding: "utf8",
   });
+
   expect(result.stdout.trim()).toBe(predecessor);
 });
+
 it("finishes partial cleanup when one generated wrapper is already absent", async () => {
   const f = await fixture();
   await rm(path.join(f.hooks, "prepare-commit-msg"));
@@ -188,6 +211,7 @@ it("restores a custom absolute predecessor path", async () => {
   state.previousHooksPath = previous;
   state.previousHookDirectory = previous;
   await writeFile(stateFile, JSON.stringify(state));
+
   for (const name of ["prepare-commit-msg", "pre-push"]) {
     const file = path.join(f.hooks, name);
     const source = await readFile(file, "utf8");
@@ -200,6 +224,7 @@ it("restores a custom absolute predecessor path", async () => {
           : source.slice(start)),
     );
   }
+
   expect((await retireRepositoryHooks(f.input)).complete).toBe(true);
   expect(git(f.root, ["config", "--get", "core.hooksPath"])).toBe(previous);
 });

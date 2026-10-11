@@ -73,7 +73,6 @@ describe("Review Desktop tutorial preparation", () => {
       expect(blocks.some((b) => b.type === "code_peek")).toBe(true);
       expect(blocks.some((b) => b.type === "sequence")).toBe(true);
       expect(blocks.some((b) => b.type === "database_lens")).toBe(true);
-      expect(blocks.some((b) => b.type === "trace_quote")).toBe(true);
       expect(blocks.some((b) => b.type === "software_map")).toBe(true);
       expect(
         blocks.some((b) => b.type === "section" && b.title === "Software map"),

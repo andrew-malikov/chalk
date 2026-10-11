@@ -15,52 +15,11 @@ import {
   documentMarker,
   proseMarker,
 } from "./styles/markers.stylex";
-import { TraceQuote } from "./traces/trace-quote";
 
 import canvasCss from "./styles.css?inline";
 import "./styles.css";
 
 describe("Review layout", () => {
-  it("aligns standalone JSON trace quotes with prose while keeping nested quotes inline", () => {
-    const quote = (text: string) =>
-      createElement(TraceQuote, { sessionId: "session" }, text);
-
-    const documentView = document.createElement("article");
-    documentView.className = `review-document ${stylex.props(documentStyles.article, documentMarker).className}`;
-    documentView.style.width = "1000px";
-    documentView.innerHTML = `
-      <div class="${stylex.props(proseMarker).className}" data-review-node-id="node">
-        ${renderToStaticMarkup(
-          createElement(MarkdownContent, {
-            source: "Prose with [an inline quote](#quote).",
-            renderLink: (_href, children) => quote(String(children)),
-          }),
-        )}
-      </div>
-      <div class="${stylex.props(proseMarker).className}" data-review-node-id="node">
-        ${renderToStaticMarkup(quote("A standalone quote"))}
-      </div>
-    `;
-    document.body.append(documentView);
-
-    try {
-      const prose = documentView.querySelector("p")!;
-      const inline = prose.querySelector("span")!;
-
-      const standalone = documentView.querySelector<HTMLElement>(
-        "[data-review-node-id] > span",
-      )!;
-
-      const proseBounds = prose.getBoundingClientRect();
-      const quoteBounds = standalone.getBoundingClientRect();
-      expect(quoteBounds.left).toBeCloseTo(proseBounds.left);
-      expect(quoteBounds.width).toBeCloseTo(proseBounds.width);
-      expect(getComputedStyle(inline).display).toBe("inline");
-    } finally {
-      documentView.remove();
-    }
-  });
-
   it("keeps an expanded software map inside the viewport and above the topbar", () => {
     const styles = document.createElement("style");
     styles.textContent = scopeReviewCanvasCss(canvasCss);

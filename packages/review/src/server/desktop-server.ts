@@ -17,7 +17,6 @@ import {
   parseReviewCliInstallApplyRequest,
   reviewDiffrSummarizerInputSchema,
 } from "@dev.fast/review-protocol";
-import { traceMachineEnabled } from "@dev.fast/trace-core";
 import { detectAskAgents, launchAskAgent } from "@review/ask/agents.js";
 import { AskThreads } from "@review/ask/threads.js";
 import {
@@ -254,7 +253,6 @@ export function createGlobalReviewServer(
       input.sharedReviews,
       callbacks.capabilities,
       () => scratchpadEnabled,
-      () => traceMachineEnabled(),
       () => {
         const { key, channel, checkout, appVersion, cliVersion, instanceId } =
           discovery;
@@ -483,8 +481,6 @@ export function createGlobalReviewServer(
 
     if (request.autoUpdate) applyInput.autoUpdate = true;
 
-    if (request.trace !== undefined) applyInput.trace = request.trace;
-
     if (discovery.cliPath) applyInput.cliPath = discovery.cliPath;
 
     if (discovery.cliRuntimePath) {
@@ -511,7 +507,6 @@ export function createGlobalReviewServer(
 
     if (request.shim) removeInput.shim = true;
 
-    if (request.trace) removeInput.trace = true;
     const result = await removeCliInstall(removeInput);
 
     return serverJson(200, { ok: true, output: result.output });

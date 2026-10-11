@@ -6,7 +6,7 @@ import { isNumberValue, isStringValue } from "@dev.fast/review-protocol";
 import { type MarkdownNode, parseMarkdown } from "@review/documents/markdown";
 import * as stylex from "@stylexjs/stylex";
 // Deliberately separate from the MDX document pipeline: this renderer walks the
-// mdast of untrusted runtime strings (agent trace message bodies) and never
+// mdast of untrusted agent messages and never
 // evaluates them, whereas MDX compilation produces executable code and must
 // only ever see trusted authored review documents.
 import {
@@ -23,7 +23,6 @@ import {
 
 import { RenderedCodeBlock } from "./code-block";
 import { documentStyles as doc } from "./document-styles";
-import { HighlightedText } from "./highlighted-text";
 import { newTabLinkProps } from "./link-props";
 import { MarkdownMath } from "./markdown-math";
 
@@ -52,7 +51,7 @@ const TaskToggle = createContext<((item: MarkdownNode) => void) | undefined>(
  * document styles hold only inside the review document. */
 interface RenderContext {
   chat: boolean;
-  highlightQuote?: string;
+
   /** Restyles a chat message's inline code, as on a tray. */
   codeXstyle?: stylex.StyleXStyles;
 }
@@ -63,7 +62,7 @@ export function AgentMarkdown({
   source,
   xstyle,
   codeXstyle,
-  highlightQuote,
+
   renderLink,
   renderInlineCode,
 }: {
@@ -71,12 +70,12 @@ export function AgentMarkdown({
   xstyle?: stylex.StyleXStyles;
   /** Restyles inline code, as on a tray. */
   codeXstyle?: stylex.StyleXStyles;
-  highlightQuote?: string;
+
   renderLink?: LinkRenderer;
   renderInlineCode?: CodeRenderer;
 }): ReactElement {
   const { body, footnotes } = splitFootnotes(parseMarkdown(source));
-  const context = { chat: true, highlightQuote, codeXstyle };
+  const context = { chat: true, codeXstyle };
 
   return (
     <DocumentLink.Provider value={renderLink}>
@@ -251,7 +250,7 @@ function renderMarkdownNode(
   context: RenderContext,
   paragraph?: stylex.StyleXStyles,
 ): ReactNode {
-  const { chat: inChat, highlightQuote } = context;
+  const { chat: inChat } = context;
   const codeStyle = inChat ? [chat.code, context.codeXstyle] : doc.code;
 
   switch (node.type) {
@@ -274,16 +273,6 @@ function renderMarkdownNode(
         </p>
       );
     case "text":
-      if (highlightQuote) {
-        return (
-          <HighlightedText
-            key={key}
-            text={node.value ?? ""}
-            quote={highlightQuote}
-          />
-        );
-      }
-
       return node.value ?? "";
     case "emphasis":
       return (
@@ -304,14 +293,6 @@ function renderMarkdownNode(
         </del>
       );
     case "inlineCode":
-      if (highlightQuote) {
-        return (
-          <code key={key} {...stylex.props(codeStyle)}>
-            <HighlightedText text={node.value ?? ""} quote={highlightQuote} />
-          </code>
-        );
-      }
-
       return (
         <InlineCode key={key} value={node.value ?? ""} xstyle={codeStyle} />
       );

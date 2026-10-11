@@ -3,10 +3,6 @@ import path from "node:path";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
 import {
-  extractTraceEventText,
-  loadReviewAgentTrace,
-} from "@dev.fast/trace-core";
-import {
   type CallStackDiffProps,
   type CodePeekProps,
   type CodePeekValidationContext,
@@ -21,7 +17,6 @@ import {
   diffCallStacks,
 } from "@review/documents/call-stack-diff";
 import { callStackFrames } from "@review/documents/call-stack-frames";
-import { textIncludesQuote } from "@review/documents/evidence";
 import {
   REVIEW_DOCUMENT_FORMAT,
   type ReviewDocumentData,
@@ -53,10 +48,10 @@ import {
 import { span, startSpan } from "@review/telemetry/startup-trace";
 
 import {
-  type PublishAuditTraceQuote,
   type ReviewDocumentPublishAudit,
   auditReviewDocumentComponent,
   createPublishValidationReact,
+  createRetiredTraceComponent,
   isPublishAuditComponent,
 } from "./review-publish-element-audit";
 
@@ -75,6 +70,7 @@ export interface ReviewPublishRangePeek extends CodePeekProps {
 
 export interface ReviewPublishEvaluationResult {
   document: ReviewDocumentData | null;
+  unsupportedContent?: "agent-traces";
   legacySoftwareMap?: {
     head: NormalizedSoftwareModel;
     base: NormalizedSoftwareModel;
@@ -112,7 +108,7 @@ export async function evaluateReviewDocumentForPublish(
   const failures: string[] = [];
   const rangePeeks: ReviewPublishRangePeek[] = [];
   const callStackProps: CallStackDiffProps[] = [];
-  const traceQuotes: PublishAuditTraceQuote[] = [];
+  let unsupportedContent: "agent-traces" | undefined;
   let peekCount = 0;
   let evidencePromise: Promise<ReviewPublishEvidenceTargets> | null = null;
   const sessions: ReviewDefinitionSession[] = [];
@@ -194,8 +190,13 @@ export async function evaluateReviewDocumentForPublish(
     collectCallStackDiff: (props) => {
       callStackProps.push(props);
     },
-    collectTraceQuote: (quote) => {
-      traceQuotes.push(quote);
+    reportUnsupportedContent: () => {
+      unsupportedContent = "agent-traces";
+
+      const message =
+        "Reviews containing agent traces are no longer supported.";
+
+      if (!failures.includes(message)) failures.push(message);
     },
     documentCapture,
   });
@@ -211,22 +212,6 @@ export async function evaluateReviewDocumentForPublish(
         }),
       )),
     );
-  }
-
-  const traceQuoteWarnings: string[] = [];
-
-  if (ranges === "validate" && traceQuotes.length > 0) {
-    const quoted = await span("evaluate: trace quotes", async () =>
-      validateTraceQuotes({
-        quotes: traceQuotes,
-        cwd: input.prepareEvidence
-          ? (await evidence()).head.sourceRootPath
-          : undefined,
-      }),
-    );
-
-    failures.push(...quoted.errors);
-    traceQuoteWarnings.push(...quoted.warnings);
   }
 
   let legacySoftwareMap: ReviewPublishEvaluationResult["legacySoftwareMap"];
@@ -313,11 +298,11 @@ export async function evaluateReviewDocumentForPublish(
     ...sessions.flatMap((session) =>
       session.diagnostics.map((diagnostic) => diagnostic.message),
     ),
-    ...traceQuoteWarnings,
   ];
 
   const result: ReviewPublishEvaluationResult = {
     document,
+    unsupportedContent,
     peekCount,
     rangePeeks,
     errors,
@@ -383,74 +368,6 @@ async function validateCallStackEvidence(input: {
   return failures;
 }
 
-async function validateTraceQuotes(input: {
-  quotes: readonly PublishAuditTraceQuote[];
-  cwd?: string;
-}): Promise<{ errors: string[]; warnings: string[] }> {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-
-  for (const quote of input.quotes) {
-    const cleanQuote = quote.text.trim();
-
-    if (!cleanQuote) {
-      errors.push(
-        `<TraceQuote> in session ${quote.sessionId} has empty quote text.`,
-      );
-      continue;
-    }
-
-    const loaded = await loadReviewAgentTrace({
-      sessionId: quote.sessionId,
-      trace: quote.trace,
-      cwd: input.cwd,
-    });
-
-    if (!loaded) {
-      errors.push(
-        `<TraceQuote> session ${quote.sessionId}${quote.trace ? ` (trace ${quote.trace})` : ""} has no normalized transcript.`,
-      );
-      continue;
-    }
-
-    const matchingIndices: number[] = [];
-
-    for (let i = 0; i < loaded.trace.events.length; i++) {
-      const event = loaded.trace.events[i];
-
-      if (textIncludesQuote(extractTraceEventText(event), cleanQuote))
-        matchingIndices.push(i);
-    }
-
-    const quoteLabel =
-      cleanQuote.length > 40 ? `${cleanQuote.slice(0, 39)}…` : cleanQuote;
-
-    if (matchingIndices.length === 0) {
-      errors.push(
-        `<TraceQuote> text "${quoteLabel}" not found in session ${quote.sessionId}${quote.trace ? ` (trace ${quote.trace})` : ""}.`,
-      );
-    } else if (quote.event !== undefined) {
-      if (!matchingIndices.includes(quote.event)) {
-        if (matchingIndices.length === 1) {
-          warnings.push(
-            `<TraceQuote> text "${quoteLabel}" hint event={${quote.event}} is stale; matched event ${matchingIndices[0]}.`,
-          );
-        } else {
-          warnings.push(
-            `<TraceQuote> text "${quoteLabel}" matched multiple events (${matchingIndices.join(", ")}). Update hint to event={${matchingIndices[0]}} to disambiguate.`,
-          );
-        }
-      }
-    } else if (matchingIndices.length > 1) {
-      warnings.push(
-        `<TraceQuote> text "${quoteLabel}" matched multiple events (${matchingIndices.join(", ")}). Add event={${matchingIndices[0]}} to disambiguate.`,
-      );
-    }
-  }
-
-  return { errors, warnings };
-}
-
 function assembleReviewDocument(input: {
   document: PublishDocumentInput;
   body: MaterializedReviewNode[];
@@ -507,7 +424,7 @@ function validationRuntimeExports(input: {
   ) => Promise<void>;
   reportAuditError: (message: string) => void;
   collectCallStackDiff: (props: CallStackDiffProps) => void;
-  collectTraceQuote: (quote: PublishAuditTraceQuote) => void;
+  reportUnsupportedContent: () => void;
   documentCapture: PublishDocumentCapture;
 }) {
   const noop = () => undefined;
@@ -515,8 +432,13 @@ function validationRuntimeExports(input: {
   // audit below can parse every authored element's props at publish time.
   const react = createPublishValidationReact();
 
+  const retiredTraceComponent = createRetiredTraceComponent(
+    input.reportUnsupportedContent,
+  );
+
   return {
     ...react,
+    TraceQuote: retiredTraceComponent,
     calls,
     defineSoftwareModel: (...args: Parameters<typeof defineSoftwareMap>) => {
       const model = defineSoftwareMap(...args);
@@ -567,7 +489,7 @@ function validationRuntimeExports(input: {
         Component: document.Component,
         reportError: input.reportAuditError,
         collectCallStackDiff: input.collectCallStackDiff,
-        collectTraceQuote: input.collectTraceQuote,
+        retiredTraceComponent,
       });
 
       input.documentCapture.input = document;

@@ -192,7 +192,6 @@ export const REVIEW_TELEMETRY_TABS = [
   "commits",
   "map",
   "files",
-  "trace",
 ] as const;
 
 const COMMIT_DIFF_VIA = ["row", "file", "footer"] as const;

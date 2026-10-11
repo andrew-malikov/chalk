@@ -212,7 +212,6 @@ it("serves MCP framing without stdout diagnostics and returns host errors as too
     stdin,
     stdout,
     undefined,
-    false,
     undefined,
     ({ tool, via, ok }) => void calls.push([tool, via, ok]),
   );
@@ -563,7 +562,6 @@ it("keeps an MCP session on the instance key it first reached", async () => {
     stdin,
     stdout,
     process.stderr,
-    false,
     async (problem) => ({ desktopAvailable: false, problem }),
   );
 

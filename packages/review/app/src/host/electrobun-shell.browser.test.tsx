@@ -209,13 +209,7 @@ async function setup(
           onPath: false,
         },
         cli: { path: "/tmp/cli.js", version: "0.2.0" },
-        trace: {
-          enabled: false,
-          configured: false,
-          autoActivateRepositories: false,
-          envPath: "/tmp/env",
-          settingsPath: "/tmp/settings",
-        },
+
         legacySkills: [],
         connect: {
           command: "blackboard",

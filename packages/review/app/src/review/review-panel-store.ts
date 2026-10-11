@@ -1,4 +1,3 @@
-import type { AgentTraceStorage } from "@canvas/traces/use-agent-trace";
 import {
   type ReviewCommitSummary,
   type ReviewView,
@@ -33,12 +32,6 @@ export interface ReviewPanelState {
   /** How big the window was made; until then, as wide as the docked panel. */
   askSize: AskSize | null;
   motion: ReviewPanelMotion;
-}
-
-export interface TraceSelection {
-  sessionId: string;
-  trace?: string;
-  eventIndex?: number;
 }
 
 /** A lens applies only to the version and diff mode it was chosen on. */
@@ -79,9 +72,9 @@ export interface ReviewNavigationState {
   /** Views the canvas offers; navigation to any other lands on "review". */
   availableViews: readonly ReviewView[];
   diffScope: ReviewDiffScope | null;
-  traceSelection: TraceSelection | undefined;
+
   /** null reads the configured default. */
-  traceStorage: AgentTraceStorage | null;
+
   lens: ReviewLensSelection | null;
   mapFocus: MapFocus | null;
   overlayTour: OverlayTour | null;
@@ -111,9 +104,7 @@ export interface ReviewNavigationActions {
   /** A lens opens its diff alongside any open peek. */
   selectLens: (lens: ReviewLensSelection) => void;
   clearLens: () => void;
-  openTrace: (selection: TraceSelection) => void;
-  selectTrace: (selection: TraceSelection) => void;
-  selectTraceStorage: (storage: AgentTraceStorage | null) => void;
+
   setAvailableViews: (views: readonly ReviewView[]) => void;
   focusMapElement: (elementPath: string) => void;
   consumeMapFocus: (requestId: number) => void;
@@ -135,13 +126,7 @@ export type ReviewPanelStore = ReturnType<typeof createReviewPanelStore>;
 export type ReviewNavigationRestore = Partial<
   Pick<
     ReviewNavigationState,
-    | "view"
-    | "availableViews"
-    | "diffScope"
-    | "traceSelection"
-    | "traceStorage"
-    | "lens"
-    | "overlayTour"
+    "view" | "availableViews" | "diffScope" | "lens" | "overlayTour"
   >
 >;
 
@@ -149,8 +134,7 @@ export function createReviewPanelStore({
   view = "review",
   availableViews = reviewViewSchema.options,
   diffScope = null,
-  traceSelection,
-  traceStorage = null,
+
   lens = null,
   overlayTour = null,
 }: ReviewNavigationRestore = {}) {
@@ -177,8 +161,7 @@ export function createReviewPanelStore({
     view: initialView,
     availableViews,
     diffScope: initialView === "diff" ? diffScope : null,
-    traceSelection,
-    traceStorage,
+
     lens,
     mapFocus: null,
     overlayTour: initialView === "review" ? overlayTour : null,
@@ -227,13 +210,7 @@ export function createReviewPanelStore({
         diffScope: null,
       })),
     clearLens: () => set({ lens: null }),
-    openTrace: (selection) =>
-      set((state) => ({
-        ...viewTransition(state, "trace"),
-        traceSelection: selection,
-      })),
-    selectTrace: (selection) => set({ traceSelection: selection }),
-    selectTraceStorage: (traceStorage) => set({ traceStorage }),
+
     focusMapElement: (elementPath) =>
       set((state) =>
         state.availableViews.includes("map")

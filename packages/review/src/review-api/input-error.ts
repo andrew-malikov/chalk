@@ -7,3 +7,10 @@ export class ReviewInputError extends Error {
     super(message);
   }
 }
+
+export class UnsupportedReviewContentError extends ReviewInputError {
+  readonly kind = "agent-traces";
+  constructor() {
+    super("Reviews containing agent traces are no longer supported.");
+  }
+}

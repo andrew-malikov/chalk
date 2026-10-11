@@ -246,7 +246,7 @@ export const reviewComponentNodeSchema = z.discriminatedUnion("name", [
     "SequenceDiagram",
     reviewComponentDataSchemas.SequenceDiagram,
   ),
-  componentNodeSchema("TraceQuote", reviewComponentDataSchemas.TraceQuote),
+
   componentNodeSchema(
     "TutorialAuthoringConversation",
     reviewComponentDataSchemas.TutorialAuthoringConversation,

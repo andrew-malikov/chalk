@@ -3,8 +3,6 @@ import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { parseJsonText } from "@dev.fast/review-protocol";
-import { loadReviewAgentTrace } from "@dev.fast/trace-core";
-import { textIncludesQuote } from "@review/documents/evidence";
 import {
   reviewDocumentDataSchema,
   upgradeReviewDocumentJson,
@@ -17,6 +15,7 @@ import {
   type Block,
   type Pins,
   ReviewInputError,
+  assertNoRetiredTraceContent,
   sourceReferences,
 } from "@review/review-api/document";
 import { decodeImage } from "@review/review-api/image-decode";
@@ -36,15 +35,10 @@ import { type ReviewVcsLogEntry, reviewVcs } from "@review/vcs/review-vcs";
 
 import {
   type ImageRequest,
-  type TraceRequest,
   legacyDocumentToBlocks,
   repairImportedSectionHeadings,
 } from "./legacy-blocks";
-import {
-  type TraceResource,
-  mapResourcesFromBundle,
-  traceResourceFromLoaded,
-} from "./legacy-resources";
+import { mapResourcesFromBundle } from "./legacy-resources";
 import { escapeMarkdownText } from "./prose-markdown";
 
 export type ImportOutcome =
@@ -65,7 +59,6 @@ export interface ImportLegacyReviewInput {
   /** A directory holding the review at `revision` (the server's cache). */
   materialize: (review: StoredReview, revision: string) => Promise<string>;
   log?: (dir: string) => Promise<ReviewVcsLogEntry[]>;
-  loadTrace?: typeof loadReviewAgentTrace;
   now?: () => Date;
   /** Surviving checkouts of the same repository, used only after pin verification. */
   repositoryPaths?: string[];
@@ -201,18 +194,13 @@ export async function importLegacyReview(
 
   const origin = originFrom(record);
 
-  const traces = new TraceResolver({
-    store,
-    repositoryId,
-    worktreePath,
-    loadTrace: input.loadTrace ?? loadReviewAgentTrace,
-  });
-
   const images = new ImageResolver({ store, repositoryId });
 
   for (const [index, entry] of entries.entries()) {
     const dir = await input.materialize(review, entry.oid);
     const raw = await readSealedDocument(dir);
+
+    if (raw !== null) assertNoRetiredTraceContent(parseJsonText(raw));
 
     if (raw === null) {
       if (entry.oid === record.presentedDocumentRevision)
@@ -295,7 +283,6 @@ export async function importLegacyReview(
     const blocks = replace(
       conversion.blocks,
       new Map([
-        ...(await traces.replacements(conversion.traces, versionWarnings)),
         ...(await images.replacements(conversion.images, dir, versionWarnings)),
       ]),
     );
@@ -682,105 +669,6 @@ function attentionFrom(record: StoredRecord) {
   };
 }
 
-/** Uploads each quoted trace once per review and rewrites placeholder quotes. */
-class TraceResolver {
-  private readonly loaded = new Map<
-    string,
-    Promise<{ id: string; resource: TraceResource } | null>
-  >();
-
-  constructor(
-    private readonly input: {
-      store: ReviewStore;
-      repositoryId: string;
-      worktreePath: string;
-      loadTrace: typeof loadReviewAgentTrace;
-    },
-  ) {}
-
-  async replacements(
-    requests: TraceRequest[],
-    warnings: string[],
-  ): Promise<Map<string, Block>> {
-    const replacements = new Map<string, Block>();
-
-    for (const request of requests) {
-      const quoted: Block = {
-        type: "markdown",
-        markdown: `${request.quote
-          .split("\n")
-          .map((line) => `> ${line}`)
-          .join("\n")}\n`,
-      };
-
-      const trace = await this.load(request);
-
-      if (!trace) {
-        warnings.push(`trace ${request.sessionId} unavailable; quoted as text`);
-        replacements.set(request.placeholder, quoted);
-        continue;
-      }
-
-      const wanted = String(request.eventIndex ?? 0);
-
-      const event = trace.resource.events.find(
-        (candidate) => candidate.id === wanted,
-      );
-
-      if (!event || !textIncludesQuote(event.text, request.quote)) {
-        warnings.push(
-          `quote not found in trace ${request.sessionId} event ${request.eventIndex ?? 0}; quoted as text`,
-        );
-        replacements.set(request.placeholder, quoted);
-        continue;
-      }
-
-      replacements.set(request.placeholder, {
-        type: "trace_quote",
-        traceId: trace.id,
-        eventId: event.id,
-        text: request.quote,
-      });
-    }
-
-    return replacements;
-  }
-
-  private load(request: TraceRequest) {
-    const key = `${request.sessionId}\0${request.trace ?? "main"}`;
-    let pending = this.loaded.get(key);
-
-    if (!pending) {
-      pending = this.input
-        .loadTrace({
-          sessionId: request.sessionId,
-          trace: request.trace,
-          cwd: this.input.worktreePath,
-        })
-        .then((loaded) => {
-          if (!loaded) return null;
-          const resource = traceResourceFromLoaded(loaded);
-          const id = randomUUID();
-          this.input.store.putResource(
-            id,
-            this.input.repositoryId,
-            "trace",
-            "application/json",
-            Buffer.from(
-              JSON.stringify({ ...resource, provenance: "legacy_import" }),
-            ),
-          );
-
-          return { id, resource };
-        })
-        .catch(() => null);
-      this.loaded.set(key, pending);
-    }
-
-    return pending;
-  }
-}
-
 /** Stores each published image once per review, keyed by file bytes: a
  * screenshot edited between revisions becomes a second resource. */
 class ImageResolver {
@@ -851,26 +739,6 @@ function replace(blocks: Block[], replacements: Map<string, Block>): Block[] {
   if (replacements.size === 0) return blocks;
 
   return blocks.map((block) => {
-    if (block.type === "markdown") {
-      return {
-        ...block,
-        markdown: block.markdown.replace(
-          /\[((?:\\[\s\S]|[^\]\\])*)\]\(review-trace:(trace-placeholder-\d+)#[^)]+\)/g,
-          (link, label: string, id: string) => {
-            const quote = replacements.get(id);
-
-            return quote?.type === "trace_quote"
-              ? `[${label}](review-trace:${quote.traceId}#${encodeURIComponent(quote.eventId)})`
-              : `“${label}”`;
-          },
-        ),
-      };
-    }
-
-    if (block.type === "trace_quote") {
-      return replacements.get(block.traceId) ?? block;
-    }
-
     if (block.type === "image") {
       return replacements.get(block.assetId) ?? block;
     }

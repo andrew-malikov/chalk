@@ -6,26 +6,18 @@ import type {
   ReviewElementNode,
   ReviewNode,
 } from "@review/documents/review-document-data";
-import { type Block, elements } from "@review/review-api/document";
+import {
+  type Block,
+  assertNoRetiredTraceContent,
+  elements,
+} from "@review/review-api/document";
 
 import {
-  type RenderProseNode,
   collectFootnoteDefinitions,
-  escapeMarkdownText,
   isFootnoteSection,
   isProseNode,
   proseToMarkdown,
 } from "./prose-markdown";
-
-/** A trace quote the caller must resolve against trace storage: the block in
- * `blocks` carries `placeholder` as its `traceId` until then. */
-export interface TraceRequest {
-  sessionId: string;
-  trace?: string;
-  eventIndex?: number;
-  quote: string;
-  placeholder: string;
-}
 
 /** An image file the caller must read beside the sealed document: the block in
  * `blocks` carries `placeholder` as its `assetId` until then. */
@@ -37,7 +29,6 @@ export interface ImageRequest {
 
 export interface LegacyConversion {
   blocks: Block[];
-  traces: TraceRequest[];
   images: ImageRequest[];
   warnings: string[];
 }
@@ -55,31 +46,9 @@ interface WithId {
 export function legacyDocumentToBlocks(
   document: ReviewDocumentData,
 ): LegacyConversion {
-  const traces: TraceRequest[] = [];
+  assertNoRetiredTraceContent(document);
   const images: ImageRequest[] = [];
   const warnings: string[] = [];
-
-  const traceQuote = (
-    node: Extract<ReviewNode, { type: "component"; name: "TraceQuote" }>,
-  ): Extract<Block, { type: "trace_quote" }> => {
-    const placeholder = `trace-placeholder-${traces.length + 1}`;
-    const quote = plainText(node.children);
-    const eventIndex = node.props.event;
-    traces.push({
-      sessionId: node.props.sessionId,
-      trace: node.props.trace,
-      eventIndex,
-      quote,
-      placeholder,
-    });
-
-    return {
-      type: "trace_quote",
-      traceId: placeholder,
-      eventId: String(eventIndex ?? 0),
-      text: quote,
-    };
-  };
 
   const imageRequest = (
     node: ReviewElementNode,
@@ -96,15 +65,6 @@ export function legacyDocumentToBlocks(
     images.push({ src, alt, placeholder });
 
     return { type: "image", assetId: placeholder, alt };
-  };
-
-  const render: RenderProseNode = (node) => {
-    if (node.name !== "TraceQuote") return undefined;
-
-    const quote = traceQuote(node);
-    const label = escapeMarkdownText(quote.text);
-
-    return `[${label}](review-trace:${quote.traceId}#${quote.eventId})`;
   };
 
   /** The block a node nested in prose becomes, if Markdown cannot carry it. */
@@ -131,7 +91,7 @@ export function legacyDocumentToBlocks(
     return { ...node, children };
   };
 
-  const footnotes = collectFootnoteDefinitions(document.body, warnings, render);
+  const footnotes = collectFootnoteDefinitions(document.body, warnings);
 
   const convert = (nodes: ReviewNode[]): Block[] => {
     const out: Block[] = [];
@@ -140,12 +100,7 @@ export function legacyDocumentToBlocks(
     const flush = () => {
       if (prose.length === 0) return;
 
-      const markdown = proseToMarkdown(
-        prose,
-        footnotes,
-        warnings,
-        render,
-      ).trim();
+      const markdown = proseToMarkdown(prose, footnotes, warnings).trim();
 
       if (markdown) out.push({ type: "markdown", markdown: `${markdown}\n` });
       prose = [];
@@ -205,11 +160,6 @@ export function legacyDocumentToBlocks(
           break;
         }
 
-        case "TraceQuote": {
-          out.push(traceQuote(node));
-          break;
-        }
-
         case "TutorialViewButton":
           out.push({
             type: "tutorial",
@@ -246,7 +196,7 @@ export function legacyDocumentToBlocks(
     return out;
   };
 
-  return { blocks: convert(document.body), traces, images, warnings };
+  return { blocks: convert(document.body), images, warnings };
 }
 
 /** The diagram components as blocks, wherever they were authored. */

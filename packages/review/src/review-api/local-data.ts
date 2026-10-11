@@ -30,7 +30,6 @@ import type {
   ReviewSourceEntry,
   StructuralDiffEvent,
 } from "@dev.fast/review-protocol";
-import { textIncludesQuote } from "@review/documents/evidence.js";
 import {
   SourceRangeError,
   checkSourcePath,
@@ -88,7 +87,6 @@ import {
   ReviewStore,
   type Snapshot,
 } from "./store.js";
-import { traceSchema } from "./trace-schema.js";
 import { ReviewWorkspaces } from "./workspaces.js";
 import {
   EMPTY_SOURCE,
@@ -105,12 +103,7 @@ export const uploadSchema = z.discriminatedUnion("kind", [
     kind: z.literal("image"),
     base64: z.string(),
   }),
-  z.strictObject({
-    id: z.uuid(),
-    repositoryId: z.string(),
-    kind: z.literal("trace"),
-    trace: traceSchema,
-  }),
+
   z.strictObject({
     id: z.uuid(),
     repositoryId: z.string(),
@@ -1682,16 +1675,6 @@ export class LocalReviewData {
         mimeType = "image/png";
         break;
 
-      case "trace":
-        if (
-          new Set(input.trace.events.map((event) => event.id)).size !==
-          input.trace.events.length
-        )
-          throw new ReviewInputError("Trace event IDs must be unique.");
-        data = Buffer.from(
-          JSON.stringify({ ...input.trace, provenance: "client_supplied" }),
-        );
-        break;
       case "map": {
         if (input.pins.repositoryId !== input.repositoryId)
           throw new ReviewInputError("Map belongs to a different repository.");
@@ -1766,19 +1749,6 @@ export class LocalReviewData {
       );
 
     if (!pins) this.store.repositoryPath(resource.repositoryId);
-
-    if (block.type === "trace_quote") {
-      const trace = traceSchema.parse(
-        JSON.parse(Buffer.from(resource.data).toString()),
-      );
-
-      const event = trace.events.find((event) => event.id === block.eventId);
-
-      if (!event || !textIncludesQuote(event.text, block.text))
-        throw new ReviewInputError(
-          "Quote does not match the retained trace event.",
-        );
-    }
 
     if (block.type === "software_map") {
       // SAFETY: map resources are normalized and validated by upload before storage.

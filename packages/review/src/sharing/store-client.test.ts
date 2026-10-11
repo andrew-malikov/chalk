@@ -1,18 +1,22 @@
+import type { JsonValue } from "@dev.fast/json";
 import { describe, expect, it } from "vitest";
 
 import { StoreClient } from "./store-client";
 
 const origin = "https://app.dev.fast";
-const json = (body: unknown, status = 200) =>
+
+const json = (body: JsonValue, status = 200) =>
   new Response(JSON.stringify(body), { status });
 
 describe("sharing account client", () => {
   it("requests identity without repository authorization", async () => {
     let request: RequestInit | undefined;
+
     const client = new StoreClient({
       origin,
       fetch: async (_url, init) => {
         request = init;
+
         return json({
           device_code: "dc",
           user_code: "code",
@@ -22,6 +26,7 @@ describe("sharing account client", () => {
         });
       },
     });
+
     await client.deviceCode();
     expect(JSON.parse(String(request?.body))).toEqual({
       client_id: "review-cli",
@@ -30,14 +35,17 @@ describe("sharing account client", () => {
   });
   it("keeps bearer authentication and account error envelopes", async () => {
     let headers: HeadersInit | undefined;
+
     const client = new StoreClient({
       origin,
       token: "saved-token",
       fetch: async (_url, init) => {
         headers = init?.headers;
+
         return json({ error: { code: "forbidden", message: "no" } }, 403);
       },
     });
+
     await expect(client.session()).rejects.toMatchObject({
       code: "forbidden",
       status: 403,
@@ -54,6 +62,7 @@ describe("sharing account client", () => {
         origin,
         fetch: async () => json({ error }, 400),
       });
+
       expect(await client.deviceToken("dc")).toEqual({ pending: error });
     },
   );
@@ -62,6 +71,7 @@ describe("sharing account client", () => {
       origin,
       fetch: async () => json({ nonsense: true }),
     });
+
     await expect(client.session()).rejects.toMatchObject({
       code: "upgrade_required",
     });
@@ -74,6 +84,7 @@ describe("sharing account client", () => {
           headers: { "content-length": String(8 * 1024 * 1024 + 1) },
         }),
     });
+
     await expect(client.session()).rejects.toMatchObject({ code: "internal" });
   });
 });

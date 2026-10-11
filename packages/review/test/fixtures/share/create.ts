@@ -54,26 +54,9 @@ export async function createShareFixture(root: string) {
     operation: { type: "create", title: "Sharing pinned commits", pins },
   });
 
-  const traceId = randomUUID(),
-    imageId = randomUUID(),
+  const imageId = randomUUID(),
     mapId = randomUUID();
 
-  await local.data.upload({
-    kind: "trace",
-    id: traceId,
-    repositoryId: registered.id,
-    trace: {
-      label: "Why the answer changed",
-      events: [
-        { id: "request", role: "user", text: "Please compute the answer." },
-        {
-          id: "response",
-          role: "assistant",
-          text: "The answer is 42. This entire conversation is retained.",
-        },
-      ],
-    },
-  });
   await local.data.upload({
     kind: "image",
     id: imageId,
@@ -121,7 +104,7 @@ export async function createShareFixture(root: string) {
     {
       type: "markdown",
       markdown:
-        "# A portable review\n\nThis review reads pinned GitHub commits and retains its image, map and complete trace.",
+        "# A portable review\n\nThis review reads pinned GitHub commits and retains its image and map.",
     },
     {
       type: "code_peek",
@@ -131,12 +114,7 @@ export async function createShareFixture(root: string) {
         end: { side: "head", line: 3 },
       },
     },
-    {
-      type: "trace_quote",
-      traceId,
-      eventId: "response",
-      text: "The answer is 42.",
-    },
+
     { type: "image", assetId: imageId, alt: "Embedded red pixel" },
     { type: "software_map", mapVersionId: mapId },
     {

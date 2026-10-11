@@ -13,23 +13,19 @@ import { REVIEW_STATUS_TOOL } from "./status-tool.js";
 import { commandSchema } from "./store.js";
 
 /** The host publishes its actual input schemas; adapters do not validate documents. */
-export function authoringTools(
-  scratchpadAvailable = false,
-  traceEnabled = false,
-) {
+export function authoringTools(scratchpadAvailable = false) {
   const id = z.string().min(1);
   const review = { reviewId: id };
   const version = z.number().int().nonnegative().optional();
 
   // Anthropic rejects a top-level union, so publish one object; the host validates the union.
-  const [image, trace, map] = uploadSchema.options;
+  const [image, map] = uploadSchema.options;
 
   const uploadInput = z
     .strictObject({
       ...image.shape,
-      ...trace.shape,
       ...map.shape,
-      kind: z.enum(["image", "trace", "map"]),
+      kind: z.enum(["image", "map"]),
     })
     .partial()
     .required({ id: true, repositoryId: true, kind: true });
@@ -86,9 +82,6 @@ export function authoringTools(
     tool(
       "get_instructions",
       'Read Blackboard\'s guidance before creating or editing a review. The default topic gives the authoring workflow; "file-lenses" covers Diff-view file lenses.' +
-        (traceEnabled
-          ? ' Call review_get_instructions({topic:"trace-archaeology"}) for why code exists, what an agent was thinking, or whether an agent solved this before.'
-          : "") +
         (scratchpadAvailable
           ? ' When the user asks in conversation to be shown how code works or wants a diagram, without asking for a review, draw it on the scratchpad rather than answering only in chat: call review_get_instructions({topic:"scratchpad"}) first. A request for a review or to use Blackboard means authoring a review with the default topic.'
           : ""),
@@ -204,7 +197,7 @@ export function authoringTools(
     ),
     tool(
       "upload",
-      'Retain an image, trace or software map for use in a review. kind:"image" takes base64; kind:"trace" takes trace; kind:"map" takes pins, side and model. Reusing an upload ID requires identical content; rejected uploads are not saved.',
+      'Retain an image or software map for use in a review. kind:"image" takes base64; kind:"map" takes pins, side and model. Reusing an upload ID requires identical content; rejected uploads are not saved.',
       uploadInput,
       "POST",
       "/resources",

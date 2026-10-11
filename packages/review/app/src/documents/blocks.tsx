@@ -1,3 +1,4 @@
+import { DocumentCallTree } from "@canvas/diagrams/call-tree-view";
 import { DatabaseLens } from "@canvas/diagrams/database-lens";
 import { SequenceDiagram } from "@canvas/diagrams/diagrams";
 import { FlowDiagram } from "@canvas/diagrams/flow-diagram";
@@ -9,19 +10,13 @@ import { SoftwareMap } from "@canvas/software-map/SoftwareMap";
 import { documentMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, radius } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import { DocumentCallTree } from "@canvas/traces/call-tree-view";
-import { TraceQuote } from "@canvas/traces/trace-quote";
 import { TutorialAuthoringConversation } from "@canvas/tutorial/tutorial-authoring-conversation";
 import {
   TutorialFeature,
   TutorialViewButton,
 } from "@canvas/tutorial/tutorial-dynamic-content";
 import { TutorialKeymapPicker } from "@canvas/tutorial/tutorial-keymap-picker";
-import {
-  type Block,
-  type BlockType,
-  traceQuoteLink,
-} from "@review/review-api/document";
+import { type Block, type BlockType } from "@review/review-api/document";
 import * as stylex from "@stylexjs/stylex";
 import {
   Component,
@@ -86,25 +81,6 @@ function MarkdownBlock({ node, data }: BlockProps<"markdown">) {
       headingId={(index) => data.headings.get(node.id, index)}
       h1={ReviewDocumentTitle}
       renderLink={(href, children) => {
-        const quote = traceQuoteLink(href);
-
-        if (quote) {
-          const trace = data.traces.get(quote.traceId);
-
-          const event = trace?.events.findIndex(
-            (item) => item.id === quote.eventId,
-          );
-
-          if (event === undefined || event < 0)
-            return <q data-unavailable="trace">{children}</q>;
-
-          return (
-            <TraceQuote sessionId={quote.traceId} event={event}>
-              {children}
-            </TraceQuote>
-          );
-        }
-
         const anchor = data.anchors.get(`${node.id}:${href}`);
 
         return anchor ? (
@@ -216,35 +192,6 @@ function ImageBlock({ node, data }: BlockProps<"image">) {
   );
 }
 
-// The store checked the quote against its trace at write time; if the trace
-// cannot be loaded now, the words still show instead of the canvas failing.
-function TraceQuoteBlock({ node, data }: BlockProps<"trace_quote">) {
-  const trace = data.traces.get(node.traceId);
-
-  const event =
-    trace?.events.findIndex((item) => item.id === node.eventId) ?? -1;
-
-  if (!trace || event < 0)
-    return (
-      <blockquote
-        data-unavailable="trace"
-        {...stylex.props(
-          documentStyles.serif,
-          documentStyles.column,
-          drawStyles.blockChild,
-        )}
-      >
-        {node.text}
-      </blockquote>
-    );
-
-  return (
-    <TraceQuote sessionId={node.traceId} event={event}>
-      {node.text}
-    </TraceQuote>
-  );
-}
-
 function SoftwareMapBlock({ node, data }: BlockProps<"software_map">) {
   return (
     <SoftwareMap
@@ -298,7 +245,6 @@ export const blockComponents = {
   call_stack_diff: CallStackDiffBlock,
   database_lens: DatabaseLensBlock,
   image: ImageBlock,
-  trace_quote: TraceQuoteBlock,
   flow_diagram: ({ node, data }) => (
     <FlowDiagram node={node} snapshot={data.snapshot} />
   ),

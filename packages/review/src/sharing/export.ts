@@ -142,7 +142,7 @@ export async function exportShare(input: {
     const resource = input.store.resource(id);
     resources.push({
       id,
-      kind: z.enum(["image", "trace", "map"]).parse(resource.kind),
+      kind: z.enum(["image", "map"]).parse(resource.kind),
       mimeType: z
         .enum(["image/png", "application/json"])
         .parse(resource.mimeType),

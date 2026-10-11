@@ -434,15 +434,6 @@ export type TutorialViewButtonProps = z.infer<
   typeof tutorialViewButtonPropsSchema
 >;
 
-export const traceQuotePropsSchema = z.strictObject({
-  sessionId: nonEmptyStringSchema,
-  trace: optionalNonEmptyStringSchema,
-  event: z.number().int().nonnegative().optional(),
-  children: reactNodeSchema.optional(),
-});
-
-export type TraceQuoteProps = z.infer<typeof traceQuotePropsSchema>;
-
 export const callsAssertionSchema = z.strictObject({
   __kind: z.literal("call-assertion"),
   parent: peekableAnchorRefSchema,
@@ -558,7 +549,7 @@ export interface ReviewAuthoringComponentRegistry {
   DbWrite: ComponentType<DbWriteProps>;
   ReviewSection: ComponentType<ReviewSectionProps>;
   SequenceDiagram: ComponentType<SequenceDiagramProps>;
-  TraceQuote: ComponentType<TraceQuoteProps>;
+
   TutorialAuthoringConversation: ComponentType<TutorialAuthoringConversationProps>;
   TutorialFeature: ComponentType<TutorialFeatureProps>;
   TutorialKeymapPicker: ComponentType<TutorialKeymapPickerProps>;
@@ -580,7 +571,7 @@ export const reviewAuthoringPropsSchemas = {
   DbWrite: dbWritePropsSchema,
   ReviewSection: reviewSectionPropsSchema,
   SequenceDiagram: sequenceDiagramPropsSchema,
-  TraceQuote: traceQuotePropsSchema,
+
   TutorialAuthoringConversation: tutorialAuthoringConversationPropsSchema,
   TutorialFeature: tutorialFeaturePropsSchema,
   TutorialKeymapPicker: tutorialKeymapPickerPropsSchema,
@@ -798,11 +789,7 @@ export const reviewComponentDataSchemas = {
     actors: sequenceSchema.shape.actors,
     steps: sequenceSchema.shape.steps,
   }),
-  TraceQuote: z.strictObject({
-    sessionId: nonEmptyStringSchema,
-    trace: optionalNonEmptyStringSchema,
-    event: z.int().nonnegative().optional(),
-  }),
+
   TutorialAuthoringConversation: z.strictObject({
     conversation: tutorialAuthoringConversationSchema,
   }),

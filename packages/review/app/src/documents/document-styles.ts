@@ -16,14 +16,14 @@ import * as stylex from "@stylexjs/stylex";
 // The review document: the article column and the prose it renders. Prose
 // styles hold only inside a document, so a renderer used elsewhere keeps the
 // browser's defaults. The article carries documentMarker, a block its
-// `data-review-node-id` and a Markdown or trace quote block proseMarker.
+// `data-review-node-id` and a Markdown block proseMarker.
 
 const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
 
 // A block's own element: it sits in the prose column.
 const inDocumentBlock = () => `${inDocument()}:is([data-review-node-id] > *)`;
 
-// Inside a Markdown or trace quote block.
+// Inside a Markdown block.
 const inProse = () =>
   `${inDocument()}${stylex.when.ancestor(":is(*)", proseMarker)}`;
 

@@ -1,11 +1,6 @@
 import type { TutorialStepId } from "@dev.fast/review-protocol";
 
-export type TutorialChapterId =
-  | "welcome"
-  | "commits"
-  | "diagrams"
-  | "traces"
-  | "finish";
+export type TutorialChapterId = "welcome" | "commits" | "diagrams" | "finish";
 
 export type TutorialStepCompletion =
   | "external"
@@ -33,7 +28,7 @@ export const TUTORIAL_CHAPTERS: readonly TutorialChapterDefinition[] = [
   { id: "welcome", title: "Welcome" },
   { id: "commits", title: "Commits and diffs" },
   { id: "diagrams", title: "Interactive Diagrams" },
-  { id: "traces", title: "Agent traces" },
+
   { id: "finish", title: "Get help" },
 ];
 
@@ -126,15 +121,7 @@ const tutorialSteps: readonly TutorialStepDefinition[] = [
     targetSelector:
       '[data-review-section="Interactive Diagrams"] .database-lens .diagram-tour-button',
   },
-  {
-    id: "openTraceQuote",
-    chapter: "traces",
-    title: "Read the agent conversation",
-    instruction:
-      "Select the trace quote to read it in context. Enable capture for your own sessions in Settings → Experimental Features → Trace capture.",
-    completion: "click",
-    targetSelector: '[data-review-section="Agent traces"] a[href^="#trace-"]',
-  },
+
   {
     id: "getHelp",
     chapter: "finish",

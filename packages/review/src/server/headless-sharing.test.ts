@@ -130,16 +130,6 @@ it("commits and uploads through a real headless server and CLI without Desktop, 
       },
     });
 
-    const traceId = randomUUID();
-    await client.post("/resources", {
-      id: traceId,
-      repositoryId: registered.id,
-      kind: "trace",
-      trace: {
-        label: "Evidence",
-        events: [{ id: "one", role: "user", text: "Explain the answer" }],
-      },
-    });
     await client.post("/commands", {
       commandId: randomUUID(),
       operation: {
@@ -158,12 +148,6 @@ it("commits and uploads through a real headless server and CLI without Desktop, 
                   start: { side: "head", line: 1 },
                   end: { side: "head", line: 1 },
                 },
-              },
-              {
-                type: "trace_quote",
-                traceId,
-                eventId: "one",
-                text: "Explain the answer",
               },
             ],
           },

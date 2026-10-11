@@ -96,7 +96,7 @@ export const shareManifestSchema = z
       .array(
         z.strictObject({
           id: z.string().min(1).max(256),
-          kind: z.enum(["image", "trace", "map"]),
+          kind: z.enum(["image", "map"]),
           mimeType: z.enum(["image/png", "application/json"]),
           object: objectIdSchema,
         }),

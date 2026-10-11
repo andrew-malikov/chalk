@@ -16,7 +16,7 @@ import {
 import { sourceReferences } from "@review/review-api/document";
 import { describe, expect, it } from "vitest";
 
-import { el, footnoteTraceQuoteSection, text } from "./import-test-utils";
+import { el, text } from "./import-test-utils";
 import {
   collectFootnoteDefinitions,
   isProseNode,
@@ -222,7 +222,7 @@ describe("proseToMarkdown", () => {
     expect(proseToMarkdown([definitions], footnotes)).toBe("\n");
   });
 
-  it("keeps a nested CodePeek as a source link and reports other nested components", () => {
+  it("keeps a nested CodePeek as a source link", () => {
     const warnings: string[] = [];
 
     const peek = selectSource({
@@ -251,43 +251,18 @@ describe("proseToMarkdown", () => {
             } as ReviewNode,
           ]),
         ]),
-        el("p", [
-          text("Said: "),
-          {
-            type: "component",
-            name: "TraceQuote",
-            props: { sessionId: "s1", event: 1 },
-            children: [text("quoted")],
-          } as ReviewNode,
-        ]),
+
       ],
       undefined,
       warnings,
     );
 
     expect(markdown).toBe(
-      "- [Peek](review-source:head/src/a.ts#L4-L6)\n\nSaid: quoted\n",
+      "- [Peek](review-source:head/src/a.ts#L4-L6)\n",
     );
     expect(warnings).toEqual([
       "CodePeek inside prose became a source link (Peek)",
-      "TraceQuote inside prose kept only its text",
     ]);
-  });
-
-  it("routes footnote definition content through the caller's renderer", () => {
-    const warnings: string[] = [];
-
-    const footnotes = collectFootnoteDefinitions(
-      [footnoteTraceQuoteSection("1")],
-      warnings,
-      (node) =>
-        node.name === "TraceQuote" ? "[said so](review-trace:t1#2)" : undefined,
-    );
-
-    expect([...footnotes]).toEqual([
-      ["1", "The agent [said so](review-trace:t1#2)."],
-    ]);
-    expect(warnings).toEqual([]);
   });
 
   it("round-trips list, code, footnote and numbering semantics through the parser", () => {

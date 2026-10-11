@@ -2,11 +2,17 @@ import { type JsonValue, parseJsonText } from "@dev.fast/json";
 import { z } from "zod";
 
 const DEVICE_CODE_PATH = "/api/auth/device/code";
+
 const DEVICE_TOKEN_PATH = "/api/auth/device/token";
+
 const SESSION_PATH = "/api/auth/get-session";
+
 const STORE_CLIENT_ID = "review-cli";
+
 const storeErrorCodeSchema = z.string().min(1);
+
 type StoreErrorCode = string;
+
 const storeErrorEnvelopeSchema = z.object({
   error: z.object({ code: storeErrorCodeSchema, message: z.string() }),
 });

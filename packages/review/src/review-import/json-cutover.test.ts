@@ -243,3 +243,99 @@ it("starts with healthy reviews when a published review's repository is unavaila
     await installed.store.close();
   }
 });
+
+it("skips an unsupported trace review beside healthy reviews and saved Ask history", async () => {
+  const repo = await scratchGitRepo();
+
+  const healthy = await syntheticLegacyReview(
+    "schema4-bug-report-dialog",
+    repo,
+  );
+
+  const retired = await syntheticLegacyReview(
+    "schema4-bug-report-dialog",
+    repo,
+    { overrides: { uuid: randomUUID() } },
+  );
+
+  homes.push(healthy.home, retired.home);
+  await sealPresentedRevision(healthy);
+
+  const documentPath = path.join(
+    retired.dir,
+    ".revisions",
+    retired.oids.at(-1)!,
+    ".bundle/document/review-document.json",
+  );
+
+  const document = JSON.parse(await readFile(documentPath, "utf8"));
+  document.body.push({
+    type: "component",
+    name: "TraceQuote",
+    props: { sessionId: "old" },
+    children: [{ type: "text", value: "old quote" }],
+  });
+  await writeFile(documentPath, JSON.stringify(document));
+  await sealPresentedRevision(retired);
+  const copied = path.join(healthy.home, "reviews", retired.record.uuid);
+  await cp(retired.dir, copied, { recursive: true });
+  const original = await readFile(path.join(copied, "review.json"));
+  const { reviewId, snapshot } = await seed(healthy.home);
+  const local = openLocalReviewStore(path.join(healthy.home, "review-api.db"));
+
+  const record = {
+    id: "thread",
+    reviewId,
+    agent: "claude" as const,
+    sessionId: "ask-session",
+    version: 0,
+    head: snapshot.pins!.head,
+    cwd: repo.root,
+    title: "A question",
+    selection: {
+      title: "Paragraph",
+      target: { kind: "text" as const, quote: "Healthy" },
+    },
+    createdAt: "2026-09-01T10:00:00.000Z",
+    updatedAt: "2026-09-01T10:00:00.000Z",
+  };
+
+  const entries = [
+    { kind: "user" as const, id: "q", text: "Why?", at: 1 },
+    { kind: "agent" as const, id: "a", text: "Because." },
+  ];
+
+  local.store.askHistory.save(record);
+  local.store.askHistory.saveEntries("thread", entries);
+  await local.data.close();
+  await local.store.close();
+  const report = await migrateJsonReviews({ home: healthy.home });
+  expect(report.errors).toEqual([]);
+  expect(report.skipped).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        reviewId: retired.record.uuid,
+        reason: expect.stringMatching(/no longer supported/),
+      }),
+    ]),
+  );
+  await ensureJsonCutover(healthy.home, () => {});
+  const reopened = openLocalReviewStore(report.database);
+
+  try {
+    expect(reopened.store.read(reviewId)).toEqual(snapshot);
+    expect(
+      reopened.store.read(healthy.record.uuid).document.length,
+    ).toBeGreaterThan(0);
+    expect(reopened.store.has(retired.record.uuid)).toBe(false);
+    expect(reopened.store.askHistory.get("thread")).toEqual({
+      ...record,
+      entries,
+      bypass: false,
+    });
+    expect(await readFile(path.join(copied, "review.json"))).toEqual(original);
+  } finally {
+    await reopened.data.close();
+    await reopened.store.close();
+  }
+});

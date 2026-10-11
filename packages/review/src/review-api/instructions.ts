@@ -8,7 +8,6 @@ export const INSTRUCTION_TOPICS = [
   "authoring",
   "file-lenses",
   "scratchpad",
-  "trace-archaeology",
 ] as const;
 
 export type InstructionTopic = (typeof INSTRUCTION_TOPICS)[number];
@@ -20,7 +19,6 @@ export const instructionsQuerySchema = z.strictObject({
 export interface InstructionContext {
   desktopAvailable: boolean;
   scratchpadEnabled: boolean;
-  traceEnabled: boolean;
 }
 
 export function scratchpadAvailable(context: InstructionContext): boolean {
@@ -53,9 +51,6 @@ export async function renderInstructions(
     return "The Blackboard scratchpad is turned off or Blackboard Desktop is not running. Answer in chat; the scratchpad can be turned on in Blackboard Desktop Settings.";
   }
 
-  if (topic === "trace-archaeology" && !context.traceEnabled)
-    return "Trace capture is off on this machine, so no agent traces are available. It can be turned on in Blackboard Desktop Settings under Experimental Features.";
-
   if (topic !== "authoring") return read(root, topic);
 
   const more = [
@@ -64,20 +59,10 @@ export async function renderInstructions(
           '- Explaining code visually outside a review: `session_get_instructions({topic:"scratchpad"})`',
         ]
       : []),
-    ...(context.traceEnabled
-      ? [
-          '- Why code exists / past agent sessions: `session_get_instructions({topic:"trace-archaeology"})`',
-        ]
-      : []),
   ];
 
   return [
     await read(root, "authoring"),
-    ...(context.traceEnabled
-      ? [
-          '## Traces\n\nAt the end, check if traces are available via `session_get_instructions({topic:"trace-archaeology"})`, and rewrite as much as possible of the what/why, design, and requirements sections in terms of literal trace quotes from the user.',
-        ]
-      : []),
     ...(more.length ? [`## More guidance\n\n${more.join("\n")}`] : []),
   ].join("\n\n");
 }

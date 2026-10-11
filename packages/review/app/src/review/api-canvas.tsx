@@ -18,7 +18,6 @@ import {
 } from "@canvas/host/review-session";
 import { fontSize } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import { retainedTrace } from "@canvas/traces/api-trace";
 import { TutorialProvider } from "@canvas/tutorial/tutorial-context";
 import {
   type ReviewCanvasContent,
@@ -302,9 +301,7 @@ export function ApiCanvas({
         headBranch: snapshot.origin?.branch,
         pullRequestNumber: snapshot.origin?.pullRequestNumber,
         pullRequestUrl: snapshot.origin?.pullRequestUrl,
-        traces: new Map(
-          [...data.traces].map(([id, trace]) => [id, retainedTrace(id, trace)]),
-        ),
+
         stack: async (signal: AbortSignal) =>
           parseReviewStackResponse(
             await client.read(

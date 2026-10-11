@@ -8,7 +8,6 @@ import {
   dbUseCasePropsSchema,
   reviewAuthoringPropsSchemas,
   sequenceDiagramPropsSchema,
-  traceQuotePropsSchema,
 } from "@review/documents/authoring";
 import { errorMessage } from "@review/lib/error-message";
 import { z } from "zod";
@@ -279,11 +278,20 @@ function publishValidationReactMembers() {
   };
 }
 
-export interface PublishAuditTraceQuote {
-  sessionId: string;
-  trace?: string;
-  event?: number;
-  text: string;
+const retiredComponents = new WeakSet<Function>();
+
+export function createRetiredTraceComponent(
+  report: () => void,
+): PublishAuditComponent {
+  const component: PublishAuditComponent = () => {
+    report();
+
+    return null;
+  };
+
+  retiredComponents.add(component);
+
+  return component;
 }
 
 export interface ReviewDocumentPublishAudit {
@@ -315,9 +323,9 @@ export function auditReviewDocumentComponent(input: {
   // deleted and added lines; the audit is the one walk that sees each
   // element, so it hands the parsed props to the evaluation.
   collectCallStackDiff?: (props: CallStackDiffProps) => void;
-  collectTraceQuote?: (quote: PublishAuditTraceQuote) => void;
+  retiredTraceComponent?: PublishAuditComponent;
 }): ReviewDocumentPublishAudit | null {
-  const components = new Map<AuthoringComponentName, PublishAuditComponent>();
+  const components = new Map<string, PublishAuditComponent>();
 
   const componentNames = new Map<
     PublishAuditElementType,
@@ -332,6 +340,9 @@ export function auditReviewDocumentComponent(input: {
     components.set(name, stub);
     componentNames.set(stub, name);
   }
+
+  if (input.retiredTraceComponent)
+    components.set("TraceQuote", input.retiredTraceComponent);
 
   let tree: PublishAuditNode;
 
@@ -351,6 +362,15 @@ export function auditReviewDocumentComponent(input: {
   ) => {
     for (const child of flattenChildren(node)) {
       if (!isAuditElement(child)) continue;
+
+      if (
+        isPublishAuditComponent(child.type) &&
+        retiredComponents.has(child.type)
+      ) {
+        child.type(child.props);
+        continue;
+      }
+
       const name = componentNames.get(child.type) ?? null;
 
       if (name) {
@@ -361,7 +381,6 @@ export function auditReviewDocumentComponent(input: {
           componentNames,
           input.reportError,
           input.collectCallStackDiff,
-          input.collectTraceQuote,
         );
 
         if (audited) componentProps.set(child, audited);
@@ -400,7 +419,6 @@ function auditElement(
   componentNames: ReadonlyMap<PublishAuditElementType, AuthoringComponentName>,
   reportError: (message: string) => void,
   collectCallStackDiff?: (props: CallStackDiffProps) => void,
-  collectTraceQuote?: (quote: PublishAuditTraceQuote) => void,
 ): AuditedComponentProps | null {
   let audited: AuditedComponentProps | null;
 
@@ -418,19 +436,6 @@ function auditElement(
     const parsed = sequenceDiagramPropsSchema.safeParse(element.props);
     reportParseErrors(name, parsed, reportError);
     audited = parsed.success ? { name, props: parsed.data } : null;
-  } else if (name === "TraceQuote") {
-    const parsed = traceQuotePropsSchema.safeParse(element.props);
-    reportParseErrors(name, parsed, reportError);
-    audited = parsed.success ? { name, props: parsed.data } : null;
-
-    if (parsed.success && collectTraceQuote) {
-      collectTraceQuote({
-        sessionId: parsed.data.sessionId,
-        trace: parsed.data.trace,
-        event: parsed.data.event,
-        text: extractAuditText(element.props.children),
-      });
-    }
   } else {
     const parsed = reviewAuthoringPropsSchemas[name].safeParse(element.props);
     reportParseErrors(name, parsed, reportError);

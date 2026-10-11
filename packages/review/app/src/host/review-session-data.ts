@@ -1,4 +1,3 @@
-import type { LoadedAgentTrace } from "@canvas/traces/use-agent-trace";
 import type {
   GitLabIdentity,
   ReviewStackLayer,
@@ -19,7 +18,7 @@ export interface ReviewSessionData {
   headBranch?: string;
   pullRequestNumber?: number;
   pullRequestUrl?: string;
-  traces: ReadonlyMap<string, LoadedAgentTrace>;
+
   stack(signal: AbortSignal): Promise<ReviewStackLayer[]>;
   dismiss(): Promise<void>;
 }

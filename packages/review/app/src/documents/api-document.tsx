@@ -40,18 +40,13 @@ import { reportReviewDocumentRenderError } from "./review-document-error-report"
 import { ReviewDocumentTitle } from "./review-document-surface";
 import { cssIdentifier, scrollToReviewHeading } from "./review-heading-scroll";
 
-interface Trace {
-  label: string;
-  events: { id: string; role: string; text: string }[];
-}
-
 export interface ApiDocumentData {
   snapshot: Snapshot;
   headings: ApiHeadingIds;
   commits: ReviewCommitSummary[];
   anchors: Map<string, DocumentPeekableAnchor>;
   images: Map<string, string>;
-  traces: Map<string, Trace>;
+
   maps: Map<
     string,
     NormalizedSoftwareModel & {
@@ -104,7 +99,7 @@ export function createDocumentLoader(client: ReviewApiClient) {
               ),
         anchors: new Map(),
         images: new Map(),
-        traces: new Map(),
+
         maps: new Map(),
       };
 
@@ -141,17 +136,6 @@ export function createDocumentLoader(client: ReviewApiClient) {
             });
 
             data.images.set(node.assetId, url);
-          }
-
-          // A trace that cannot be loaded leaves its quote to render as text.
-          if (node.type === "trace_quote") {
-            const loaded = await once(`trace:${node.traceId}`, () =>
-              client.read<Trace>(
-                `/${encodeURIComponent(snapshot.reviewId)}/resources/${encodeURIComponent(node.traceId)}`,
-              ),
-            ).catch(() => undefined);
-
-            if (loaded) data.traces.set(node.traceId, loaded);
           }
 
           if (node.type === "software_map") {
@@ -394,7 +378,7 @@ export const DocumentNode = memo(function DocumentNode({
       data.snapshot.staleSources?.includes(reference.id),
     );
 
-  const prose = node.type === "markdown" || node.type === "trace_quote";
+  const prose = node.type === "markdown";
 
   // Document and drawing styles find a block's own elements by its
   // data-review-node-id, and its prose by proseMarker.

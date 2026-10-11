@@ -21,31 +21,40 @@ export async function retireAgentHooks(
   input: RetirementInput,
 ): Promise<string[]> {
   const warnings: string[] = [];
+
   const configHome =
     input.env.XDG_CONFIG_HOME?.trim() || path.join(input.homeDir, ".config");
+
   for (const file of [
     path.join(input.homeDir, ".pi/agent/extensions/review-trace.ts"),
     path.join(configHome, "opencode/plugins/review-trace.ts"),
   ]) {
     const source = await readRetiredFile(file);
+
     if (source === null) continue;
+
     const match = source
       .trimStart()
       .startsWith("// Managed by Review Desktop trace setup")
       ? /spawn\(("(?:[^"\\]|\\.)*"), \["trace", "hook"/.exec(source)
       : null;
+
     const command = match ? jsonString(parseJsonText(match[1])) : undefined;
+
     if (command && input.ownedCommands.includes(command)) await rm(file);
     else warnings.push(`preserved ${file}: unknown or foreign hook ownership`);
   }
+
   const claude = path.join(input.homeDir, ".claude/settings.json");
   const settings = await readRetiredFile(claude);
+
   if (settings?.includes(" trace hook "))
     warnings.push(
       `preserved ${claude}: unmarked lifecycle entries have unknown ownership`,
     );
   const codex = path.join(input.homeDir, ".codex/config.toml");
   const source = await readRetiredFile(codex);
+
   if (source !== null) {
     const next = source.replace(
       /^# review-trace-hooks:start\n[\s\S]*?^# review-trace-hooks:end(?:\n|$)/gm,
@@ -57,19 +66,23 @@ export async function retireAgentHooks(
             ? ""
             : block,
         );
+
         return removed.replace(
           /^# review-trace-hooks:start\n\s*# review-trace-hooks:end(?:\n|$)/,
           "",
         );
       },
     );
+
     if (next !== source)
       await writeFileAtomicAsync(codex, next, { encoding: "utf8" });
+
     if (next.includes(" trace hook "))
       warnings.push(
         `preserved ${codex}: unknown or foreign lifecycle ownership`,
       );
   }
+
   return warnings;
 }
 

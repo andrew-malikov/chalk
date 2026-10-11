@@ -43,6 +43,7 @@ import {
   type WrittenComponent,
   anchorPins,
   applyEdit,
+  assertNoRetiredTraceContent,
   assignFreshIds,
   checkReferences,
   documentSchema,
@@ -825,20 +826,16 @@ export class ReviewStore {
 
     if (!row) throw new ReviewInputError("Review or version not found.", 404);
 
-    // SAFETY: versions contains only snapshots validated by execute before committing.
+    // SAFETY: snapshot metadata was validated on write; its document is revalidated below.
     const snapshot = JSON.parse(String(row.snapshot)) as Snapshot;
+    assertNoRetiredTraceContent(snapshot.document);
 
-    // SAFETY: stored blocks were validated on write; migration only replaces
-    // retired attachment representations with their canonical equivalent and
-    // drops retired fields.
-    // Lenses saved as document blocks read as the snapshot's own.
     const { document, lenses } = liftFileLenses(
       migrateStoredDocument(snapshot.document),
     );
 
-    // SAFETY: stored blocks were validated on write; migration only replaces
-    // retired representations and lifts retired lens blocks out.
-    snapshot.document = document as Block[];
+    snapshot.document = documentSchema.parse(document);
+    checkReferences(snapshot.document);
 
     if (lenses.length)
       snapshot.lenses = [...(snapshot.lenses ?? []), ...lenses];
@@ -852,7 +849,12 @@ export class ReviewStore {
       };
     const live = version === undefined ? this.liveSources.get(id) : undefined;
 
-    if (live?.version === snapshot.version) return structuredClone(live);
+    if (live?.version === snapshot.version) {
+      assertNoRetiredTraceContent(live.document);
+      checkReferences(documentSchema.parse(live.document));
+
+      return structuredClone(live);
+    }
 
     return snapshot;
   }
