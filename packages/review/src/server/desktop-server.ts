@@ -4,7 +4,7 @@ import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { jsonString } from "@dev.fast/json";
+import { jsonString } from "@blackboard/json";
 import {
   type JsonValue,
   REVIEW_DESKTOP_DISCOVERY_VERSION,
@@ -14,7 +14,7 @@ import {
   isJsonObject,
   parseReviewCliInstallApplyRequest,
   reviewDiffrSummarizerInputSchema,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import {
   applyCliInstall,
   declineCliInstall,

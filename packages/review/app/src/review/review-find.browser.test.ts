@@ -1,4 +1,4 @@
-import type { ReviewFindQuery } from "@dev.fast/review-protocol";
+import type { ReviewFindQuery } from "@blackboard/review-protocol";
 import { describe, expect, it } from "vitest";
 
 import {

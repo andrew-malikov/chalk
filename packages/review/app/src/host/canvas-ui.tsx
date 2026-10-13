@@ -1,7 +1,7 @@
 import type {
   ReviewCanvasUi,
   ReviewMenuRequest,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import {
   type KeyboardEvent,
   type MouseEvent,

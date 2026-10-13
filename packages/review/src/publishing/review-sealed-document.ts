@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { jsonObject, parseJsonText } from "@dev.fast/review-protocol";
+import { jsonObject, parseJsonText } from "@blackboard/review-protocol";
 import { isMissingFileError } from "@review/lib/fs-utils";
 import { UnsupportedReviewContentError } from "@review/review-api/input-error";
 

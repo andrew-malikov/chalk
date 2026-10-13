@@ -1,3 +1,7 @@
+import type {
+  ReviewCanvasUi,
+  ReviewDisposable,
+} from "@blackboard/review-protocol";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,10 +19,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@canvas/components/ui/dropdown-menu";
-import type {
-  ReviewCanvasUi,
-  ReviewDisposable,
-} from "@dev.fast/review-protocol";
 import type { ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";

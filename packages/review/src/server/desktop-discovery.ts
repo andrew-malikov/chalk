@@ -10,7 +10,7 @@ import {
   jsonProperty,
   parseJsonText,
   parseReviewDesktopDiscovery,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import {
   reviewDefaultInstancePath,
   reviewDevInstanceKey,

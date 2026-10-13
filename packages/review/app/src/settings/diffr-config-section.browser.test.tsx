@@ -2,7 +2,7 @@ import {
   type JsonObject,
   type ReviewDiffrConfig,
   type ReviewDiffrConfigActions,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";

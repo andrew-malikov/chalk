@@ -6,7 +6,7 @@ import {
   type StructuralSource,
   type StructuralVisibility,
   structuralRows,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import type { AlignmentRow } from "@review/documents/lens-selection.js";
 import type { FileLineRange } from "@review/documents/source.js";
 import {

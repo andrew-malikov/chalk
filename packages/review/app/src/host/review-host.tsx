@@ -7,7 +7,7 @@ import type {
   ReviewSourcePins,
   ReviewSurfaceEvent,
   ReviewVerbRequest,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 
 export interface ReviewSurface {
   openFileDiff(file: ReviewDiffFileWire): void;

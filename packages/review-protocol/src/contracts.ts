@@ -1,4 +1,8 @@
-import { type JsonObject, type JsonValue, isJsonObject } from "@dev.fast/json";
+import {
+  type JsonObject,
+  type JsonValue,
+  isJsonObject,
+} from "@blackboard/json";
 import { z } from "zod";
 
 import type { ReviewApiSummary } from "./review-api-client.js";

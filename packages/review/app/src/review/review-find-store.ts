@@ -1,5 +1,5 @@
+import type { ReviewFindQuery } from "@blackboard/review-protocol";
 import type { ReviewClientConfig } from "@canvas/host/review-client";
-import type { ReviewFindQuery } from "@dev.fast/review-protocol";
 import { z } from "zod";
 import { persist } from "zustand/middleware";
 import { type StateCreator, createStore } from "zustand/vanilla";

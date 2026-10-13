@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { PassThrough, Readable, Writable } from "node:stream";
 
-import type { JsonObject } from "@dev.fast/json";
+import type { JsonObject } from "@blackboard/json";
 import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { afterAll, afterEach, expect, it, vi } from "vitest";
 

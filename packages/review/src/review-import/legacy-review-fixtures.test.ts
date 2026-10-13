@@ -3,7 +3,7 @@ import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { jsonObject, parseJsonText } from "@dev.fast/review-protocol";
+import { jsonObject, parseJsonText } from "@blackboard/review-protocol";
 import {
   extractLegacyReviewFixture,
   listLegacyReviewFixtures,

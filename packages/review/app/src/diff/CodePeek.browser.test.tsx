@@ -1,10 +1,10 @@
+import type { ReviewVerbRequest } from "@blackboard/review-protocol";
 import {
   type ReviewSession,
   ReviewSessionProvider,
 } from "@canvas/host/review-session";
 import type { ReviewLensView } from "@canvas/review/review-lenses";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
-import type { ReviewVerbRequest } from "@dev.fast/review-protocol";
 import { selectSource, sourceAnchors } from "@review/documents/lens-selection";
 import { type ReactNode, act } from "react";
 import { createRoot } from "react-dom/client";

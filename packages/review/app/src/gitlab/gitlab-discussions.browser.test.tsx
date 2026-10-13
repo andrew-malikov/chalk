@@ -1,15 +1,15 @@
 import "@canvas/global.css";
 import "@canvas/ui.css";
+import type {
+  GitLabState,
+  ReviewDiffFileWire,
+} from "@blackboard/review-protocol";
 import { AgentSelectionProvider } from "@canvas/agent-context/agent-selection";
 import { PierreDiffView } from "@canvas/diff/PierreDiffView";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDiffFilesProvider } from "@canvas/review/review-diff-files-context";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
-import type {
-  GitLabState,
-  ReviewDiffFileWire,
-} from "@dev.fast/review-protocol";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";

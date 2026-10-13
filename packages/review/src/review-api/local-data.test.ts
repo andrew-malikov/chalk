@@ -17,12 +17,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { setLocalVcsCommandObserver } from "@dev.fast/local-vcs";
+import { setLocalVcsCommandObserver } from "@blackboard/local-vcs";
 import {
   type JsonValue,
   REVIEW_CLIENT_HEADER,
   REVIEW_CLIENT_REMOTE,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { selectSource } from "@review/documents/lens-selection";
 import { createGlobalReviewServer } from "@review/server/desktop-server.js";
 import { Hono } from "hono";

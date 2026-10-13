@@ -1,7 +1,7 @@
 import { lstat, realpath, rm, rmdir } from "node:fs/promises";
 import path from "node:path";
 
-import { gitAt } from "@dev.fast/local-vcs";
+import { gitAt } from "@blackboard/local-vcs";
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { errorMessage } from "@review/lib/error-message";
 import { shellQuote } from "@review/lib/shell-quote";

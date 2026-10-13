@@ -1,10 +1,10 @@
+import type { JsonValue } from "@blackboard/review-protocol";
 import type { ReviewSession } from "@canvas/host/review-session";
 import { useReviewSession } from "@canvas/host/review-session";
 import {
   readReviewUiState,
   writeReviewUiState,
 } from "@canvas/review/review-ui-state";
-import type { JsonValue } from "@dev.fast/review-protocol";
 import {
   type ReactNode,
   createContext,

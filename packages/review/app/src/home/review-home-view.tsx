@@ -1,3 +1,9 @@
+import type {
+  ReviewApiSummary,
+  ReviewCanvasInstallContent,
+  ReviewCanvasOnboarding,
+  ReviewCanvasSetupActions,
+} from "@blackboard/review-protocol";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { Input } from "@canvas/components/ui/input";
 import { documentType } from "@canvas/documents/document-type.stylex";
@@ -16,12 +22,6 @@ import { Button, IconButton } from "@canvas/ui/button";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { OptionMenu } from "@canvas/ui/option-menu";
 import { textStyles } from "@canvas/ui/text";
-import type {
-  ReviewApiSummary,
-  ReviewCanvasInstallContent,
-  ReviewCanvasOnboarding,
-  ReviewCanvasSetupActions,
-} from "@dev.fast/review-protocol";
 import { fuzzyMatches, fuzzySegments } from "@review/lib/fuzzy-match";
 import * as stylex from "@stylexjs/stylex";
 import {

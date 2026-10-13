@@ -13,9 +13,21 @@ export default {
       "dist/index.html": "views/mainview/index.html",
       "dist/assets": "views/mainview/assets",
     },
-    mac: { bundleCEF: true, defaultRenderer: "cef" },
-    linux: { bundleCEF: true, defaultRenderer: "cef" },
-    win: { bundleCEF: true, defaultRenderer: "cef" },
+    mac: {
+      bundleCEF: true,
+      defaultRenderer: "cef",
+      icons: "../../packages/review/app/icons/review.iconset",
+    },
+    linux: {
+      bundleCEF: true,
+      defaultRenderer: "cef",
+      icon: "../../packages/review/app/icons/review-square-512.png",
+    },
+    win: {
+      bundleCEF: true,
+      defaultRenderer: "cef",
+      icon: "../../packages/review/app/icons/review.ico",
+    },
   },
   runtime: { exitOnLastWindowClosed: true },
 } satisfies ElectrobunConfig;

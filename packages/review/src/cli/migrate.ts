@@ -19,7 +19,7 @@ import {
   jsonBoolean,
   jsonString,
   parseJsonText,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { emitJsonEvent, humanStream } from "@review/cli/cli-output";
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { errorMessage } from "@review/lib/error-message";

@@ -1,3 +1,7 @@
+import {
+  type ReviewDiffStats,
+  summarizeReviewDiffFiles,
+} from "@blackboard/review-protocol";
 import { DiffCount } from "@canvas/diff/diff-count";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { useReviewSession } from "@canvas/host/review-session";
@@ -9,10 +13,6 @@ import {
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
 import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import {
-  type ReviewDiffStats,
-  summarizeReviewDiffFiles,
-} from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
 import { ArrowUpRight, GitBranch } from "lucide-react";
 import {

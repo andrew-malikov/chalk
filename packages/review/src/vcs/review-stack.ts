@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
-import type { ReviewStackLayer } from "@dev.fast/review-protocol";
+import type { ReviewStackLayer } from "@blackboard/review-protocol";
 import { z } from "zod";
 
 const execFileAsync = promisify(execFile);

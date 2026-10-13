@@ -1,5 +1,5 @@
 {
-  "name": "@dev.fast/review",
+  "name": "@blackboard/review",
   "version": "0.2.0",
   "private": false,
   "license": "MIT",
@@ -43,7 +43,7 @@
     "build:tutorial-assets": "bun scripts/build-tutorial-assets.ts",
     "ensure:tutorial-assets": "bun scripts/ensure-tutorial-assets.ts",
     "check:tutorial": "bun scripts/check-tutorial.ts",
-    "build:workspace-deps": "bun run --filter @dev.fast/json --filter @dev.fast/local-vcs build && bun run --filter @dev.fast/review-protocol build",
+    "build:workspace-deps": "bun run --filter @blackboard/json --filter @blackboard/local-vcs build && bun run --filter @blackboard/review-protocol build",
     "pretypecheck": "bun run ensure:tutorial-assets",
     "pretest": "bun run ensure:tutorial-assets",
     "pretest:node": "bun run ensure:tutorial-assets",
@@ -77,10 +77,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@blackboard/json": "workspace:*",
+    "@blackboard/local-vcs": "^0.1.0",
+    "@blackboard/review-protocol": "workspace:*",
     "@dev.fast/diffr": "0.1.10",
-    "@dev.fast/json": "workspace:*",
-    "@dev.fast/local-vcs": "^0.1.0",
-    "@dev.fast/review-protocol": "workspace:*",
     "@types/node": "24.12.2",
     "@types/react": "19.2.14",
     "@types/semver": "7.7.1",

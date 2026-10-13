@@ -1,4 +1,4 @@
-import type { StructuralDiffEvent } from "@dev.fast/review-protocol";
+import type { StructuralDiffEvent } from "@blackboard/review-protocol";
 
 import {
   type StructuralDiffRequest,

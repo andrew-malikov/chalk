@@ -1,10 +1,10 @@
-import type { JsonObject } from "@dev.fast/review-protocol";
+import type { JsonObject } from "@blackboard/review-protocol";
 import {
   type JsonValue,
   isJsonObject,
   isStringValue,
   parseJsonText,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import {
   type SoftwareModelData,
   softwareModelDataSchema,

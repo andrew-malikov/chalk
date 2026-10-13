@@ -5,7 +5,7 @@ import {
   type JsonObject,
   jsonObject,
   parseJsonText,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import type { ReviewDocumentData } from "@review/documents/review-document-data";
 import {
   LEGACY_REVIEW_FIXTURES_ROOT,

@@ -3,13 +3,13 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
-import { resolveRepoContextSync } from "@dev.fast/local-vcs";
+import { resolveRepoContextSync } from "@blackboard/local-vcs";
 import {
   type GitLabIdentity,
   type GitLabState,
   type ReviewApiSummary,
   SCRATCHPAD_REVIEW_ID,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { sourceAnchors } from "@review/documents/lens-selection.js";
 import {
   type Coverage,

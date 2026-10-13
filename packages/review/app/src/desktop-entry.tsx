@@ -1,11 +1,11 @@
-import { fontSize } from "@canvas/styles/scale.stylex";
-import { EmptyState } from "@canvas/ui/empty-state";
-import { textStyles } from "@canvas/ui/text";
 import type {
   ReviewCanvasContent,
   ReviewCanvasHandle,
   ReviewCanvasUi,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
+import { fontSize } from "@canvas/styles/scale.stylex";
+import { EmptyState } from "@canvas/ui/empty-state";
+import { textStyles } from "@canvas/ui/text";
 import * as stylex from "@stylexjs/stylex";
 import { createRoot } from "react-dom/client";
 

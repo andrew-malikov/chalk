@@ -1,7 +1,7 @@
 import {
   ReviewApiClient,
   type ReviewApiSummary,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { resolveReviewRoot } from "@review/runtime";
 import { requireHealthyReviewDesktop } from "@review/server/desktop-discovery";
 

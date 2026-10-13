@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-import { type JsonValue, parseJsonText } from "@dev.fast/review-protocol";
+import { type JsonValue, parseJsonText } from "@blackboard/review-protocol";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import { StreamLimitError, readBoundedStream } from "./bounded-stream.js";

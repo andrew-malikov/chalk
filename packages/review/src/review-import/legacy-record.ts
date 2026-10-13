@@ -3,7 +3,7 @@ import {
   ReviewAgentSessionAttributionSchema,
   ReviewSourceIdentitySchema,
   ReviewStatusSchema,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 // Storage contract read only by the legacy importer and its support tools.
 import { z } from "zod";
 

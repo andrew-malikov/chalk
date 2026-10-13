@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { jsonString } from "@dev.fast/review-protocol";
+import { jsonString } from "@blackboard/review-protocol";
 import { readBuildInfo } from "@review/package-paths";
 
 /** Build identity belongs to the executable, never the current checkout. */

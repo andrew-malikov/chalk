@@ -1,8 +1,8 @@
 import {
   type LocalVcsKind,
   diff as readLocalVcsDiff,
-} from "@dev.fast/local-vcs";
-import { jsonString, parseJsonText } from "@dev.fast/review-protocol";
+} from "@blackboard/local-vcs";
+import { jsonString, parseJsonText } from "@blackboard/review-protocol";
 import { type DiffHunkLine, parseUnifiedPatch } from "@review/vcs/unified-diff";
 
 export interface SoftwareMapDiffLineCount {

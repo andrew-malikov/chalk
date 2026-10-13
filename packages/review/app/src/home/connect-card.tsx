@@ -1,3 +1,9 @@
+import {
+  type ReviewCanvasInstallContent,
+  type ReviewCliInstallStatus,
+  type ReviewCliInstallTarget,
+  ReviewCliInstallTargetSchema,
+} from "@blackboard/review-protocol";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { newTabLinkProps } from "@canvas/documents/link-props";
 import { AGENT_LOGOS } from "@canvas/home/agent-logos";
@@ -10,12 +16,6 @@ import { Button } from "@canvas/ui/button";
 import { CopyIcon, copyText } from "@canvas/ui/copy-text";
 import { CheckIcon } from "@canvas/ui/icons";
 import { OptionMenu } from "@canvas/ui/option-menu";
-import {
-  type ReviewCanvasInstallContent,
-  type ReviewCliInstallStatus,
-  type ReviewCliInstallTarget,
-  ReviewCliInstallTargetSchema,
-} from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
 import { useEffect, useRef, useState } from "react";
 

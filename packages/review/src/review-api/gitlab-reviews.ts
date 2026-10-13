@@ -9,7 +9,7 @@ import type {
   GitLabRefs,
   GitLabState,
   GitLabTarget,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { devReviewHome } from "@review/storage/review-home-paths.js";
 
 import { type Pins, ReviewInputError } from "./document.js";

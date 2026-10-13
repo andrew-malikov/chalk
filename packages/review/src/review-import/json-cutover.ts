@@ -13,7 +13,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 
-import { parseJsonText } from "@dev.fast/review-protocol";
+import { parseJsonText } from "@blackboard/review-protocol";
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { errorMessage } from "@review/lib/error-message";
 import { isMissingFileError } from "@review/lib/fs-utils";

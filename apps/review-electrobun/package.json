@@ -1,5 +1,5 @@
 {
-  "name": "@dev.fast/review-electrobun",
+  "name": "@blackboard/review-electrobun",
   "version": "0.2.0",
   "private": true,
   "type": "module",
@@ -10,9 +10,9 @@
     "test": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run"
   },
   "dependencies": {
-    "@dev.fast/review": "workspace:*",
-    "@dev.fast/review-canvas": "workspace:*",
-    "@dev.fast/review-protocol": "workspace:*",
+    "@blackboard/review": "workspace:*",
+    "@blackboard/review-canvas": "workspace:*",
+    "@blackboard/review-protocol": "workspace:*",
     "@mr_mint/elkjs-libavoid": "0.5.0",
     "@pierre/diffs": "1.5.1",
     "lucide-react": "1.48.0",

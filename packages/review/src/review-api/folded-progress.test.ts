@@ -7,7 +7,7 @@ import type {
   StructuralDiff,
   StructuralDiffEvent,
   StructuralRegion,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import {
   coverageProgress,
   coverageSources,

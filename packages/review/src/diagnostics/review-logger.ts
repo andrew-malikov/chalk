@@ -3,7 +3,7 @@ import {
   isJsonObject,
   jsonString,
   parseJsonText,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import pino from "pino";
 import pretty from "pino-pretty";
 

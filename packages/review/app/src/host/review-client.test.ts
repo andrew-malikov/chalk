@@ -1,4 +1,4 @@
-import type { ReviewRuntimeConfig } from "@dev.fast/review-protocol";
+import type { ReviewRuntimeConfig } from "@blackboard/review-protocol";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { jsonReviewApiUrl, reviewFetchUrl } from "./review-client";

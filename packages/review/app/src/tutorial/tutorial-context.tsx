@@ -1,4 +1,4 @@
-import type { ReviewCanvasTutorialBridge } from "@dev.fast/review-protocol";
+import type { ReviewCanvasTutorialBridge } from "@blackboard/review-protocol";
 import { type ReactNode, createContext, useContext } from "react";
 
 const TutorialContext = createContext<ReviewCanvasTutorialBridge | null>(null);

@@ -1,1 +1,1 @@
-export { ReviewApiClient, ReviewApiError } from "@dev.fast/review-protocol";
+export { ReviewApiClient, ReviewApiError } from "@blackboard/review-protocol";

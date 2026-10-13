@@ -14,7 +14,7 @@ const migrationFrameSchema = z.object({
 import {
   type ReviewDesktopDiscovery,
   ReviewDesktopDiscoverySchema,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 
 export interface ServerOptions {
   runtimePath: string;

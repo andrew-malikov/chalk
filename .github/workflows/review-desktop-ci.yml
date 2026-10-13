@@ -53,7 +53,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: bun run desktop:build
       - name: Check tutorial assets
-        run: bun run --filter @dev.fast/review check:tutorial
+        run: bun run --filter @blackboard/review check:tutorial
       - name: Lint
         run: bun run lint
       - name: Check formatting

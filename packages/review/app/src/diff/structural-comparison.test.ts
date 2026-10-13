@@ -1,7 +1,7 @@
 import type {
   StructuralDiff,
   StructuralRegion,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { expect, it } from "vitest";
 
 import { loadPierreComparison } from "./pierre-comparison";

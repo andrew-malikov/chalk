@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { jsonObject, parseJsonText } from "@dev.fast/review-protocol";
+import { jsonObject, parseJsonText } from "@blackboard/review-protocol";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {

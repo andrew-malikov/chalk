@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { jsonObject, jsonString, parseJsonText } from "@dev.fast/json";
+import { jsonObject, jsonString, parseJsonText } from "@blackboard/json";
 
 export function findReviewPackageRoot(
   moduleUrl: string = import.meta.url,

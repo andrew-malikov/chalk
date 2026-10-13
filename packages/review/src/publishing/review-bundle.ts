@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { type JsonValue, parseJsonText } from "@dev.fast/review-protocol";
+import { type JsonValue, parseJsonText } from "@blackboard/review-protocol";
 import {
   type ReviewDocumentData,
   reviewDocumentDataSchema,

@@ -8,13 +8,13 @@ export const sourceAliases = {
 
 export const reviewTestAliases = {
   ...sourceAliases,
-  "@dev.fast/json": fileURLToPath(
+  "@blackboard/json": fileURLToPath(
     new URL("../json/src/index.ts", import.meta.url),
   ),
-  "@dev.fast/local-vcs": fileURLToPath(
+  "@blackboard/local-vcs": fileURLToPath(
     new URL("../local-vcs/src/index.ts", import.meta.url),
   ),
-  "@dev.fast/review-protocol": fileURLToPath(
+  "@blackboard/review-protocol": fileURLToPath(
     new URL("../review-protocol/src/index.ts", import.meta.url),
   ),
 };

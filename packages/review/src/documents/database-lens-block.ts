@@ -1,4 +1,4 @@
-import { isStringValue, jsonValueSchema } from "@dev.fast/review-protocol";
+import { isStringValue, jsonValueSchema } from "@blackboard/review-protocol";
 import { slugify } from "@review/lib/slug";
 import type {
   DatabaseActor,

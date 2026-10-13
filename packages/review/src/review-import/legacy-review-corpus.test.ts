@@ -22,7 +22,7 @@ import {
   jsonObject,
   jsonString,
   parseJsonText,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { snapshotReviewTree } from "@review/fixtures/legacy-reviews/legacy-review-fixture";
 import { readReviewDocumentBundle } from "@review/publishing/review-bundle";
 import {

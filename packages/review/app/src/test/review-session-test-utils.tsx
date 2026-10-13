@@ -1,3 +1,7 @@
+import type {
+  ReviewCanvasBridge,
+  ReviewRuntimeConfig,
+} from "@blackboard/review-protocol";
 import type { ApiDocumentData } from "@canvas/documents/api-document";
 import { apiHeadingIds } from "@canvas/documents/api-document-headings";
 import { reviewFetchUrl } from "@canvas/host/review-client";
@@ -6,10 +10,6 @@ import {
   ReviewSessionProvider,
   createReviewSession,
 } from "@canvas/host/review-session";
-import type {
-  ReviewCanvasBridge,
-  ReviewRuntimeConfig,
-} from "@dev.fast/review-protocol";
 import type { Block } from "@review/review-api/document";
 import type { ReactNode } from "react";
 

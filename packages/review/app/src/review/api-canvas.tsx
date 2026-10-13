@@ -1,3 +1,9 @@
+import {
+  type ReviewCanvasContent,
+  type ReviewDocumentWidthChoice,
+  parseReviewStackResponse,
+  resolveReviewSourceView,
+} from "@blackboard/review-protocol";
 import { App } from "@canvas/App";
 import type { RenderedReviewDocument } from "@canvas/App";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
@@ -19,12 +25,6 @@ import {
 import { fontSize } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { TutorialProvider } from "@canvas/tutorial/tutorial-context";
-import {
-  type ReviewCanvasContent,
-  type ReviewDocumentWidthChoice,
-  parseReviewStackResponse,
-  resolveReviewSourceView,
-} from "@dev.fast/review-protocol";
 import type { ActivitySnapshot } from "@review/review-api/activity";
 import { ReviewApiClient, ReviewApiError } from "@review/review-api/client";
 import { elements } from "@review/review-api/document";

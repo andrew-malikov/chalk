@@ -1,7 +1,7 @@
 import type {
   ReviewCanvasInstallContent,
   ReviewCliInstallStatus,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

@@ -1,8 +1,8 @@
-import { useReviewSession } from "@canvas/host/review-session";
 import type {
   ReviewCanvasBridge,
   ReviewDiffFileWire,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
+import { useReviewSession } from "@canvas/host/review-session";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, createContext, useContext, useMemo } from "react";
 

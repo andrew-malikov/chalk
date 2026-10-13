@@ -1,7 +1,7 @@
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
-import { jsonString, parseJsonText } from "@dev.fast/json";
+import { jsonString, parseJsonText } from "@blackboard/json";
 import { writeFileAtomicAsync } from "@review/lib/atomic-write";
 import { shellQuote } from "@review/lib/shell-quote";
 

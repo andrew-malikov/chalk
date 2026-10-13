@@ -1,4 +1,4 @@
-import { structuralChangeCounts } from "@dev.fast/review-protocol";
+import { structuralChangeCounts } from "@blackboard/review-protocol";
 import { z } from "zod";
 
 import type { FileLineRange } from "./source.js";

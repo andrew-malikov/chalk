@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import {
   REVIEW_DESKTOP_DISCOVERY_VERSION,
   ReviewApiClient,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { afterEach, expect, test, vi } from "vitest";
 
 import { readQuerySchemas } from "../../../packages/review/src/review-api/read-schemas";

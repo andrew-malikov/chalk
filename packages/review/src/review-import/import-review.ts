@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { parseJsonText } from "@dev.fast/review-protocol";
+import { parseJsonText } from "@blackboard/review-protocol";
 import {
   reviewDocumentDataSchema,
   upgradeReviewDocumentJson,

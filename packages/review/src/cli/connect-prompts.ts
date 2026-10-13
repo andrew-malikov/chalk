@@ -26,7 +26,7 @@ export interface ConnectPromptInput {
   platform?: NodeJS.Platform;
 }
 
-export const PI_BLACKBOARD_PACKAGE = "npm:@dev.fast/pi-blackboard";
+export const PI_BLACKBOARD_PACKAGE = "npm:@blackboard/pi-blackboard";
 
 /** A stdio MCP server launch, as harness configs spell it. */
 export interface McpLaunch {

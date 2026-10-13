@@ -8,7 +8,7 @@ import {
   type StructuralDiffEvent,
   type StructuralProblem,
   decodeStructuralDiffEvent,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { findReviewPackageRoot } from "@review/package-paths";
 
 import { installedFullDiffr } from "./diffr-languages.js";
@@ -46,7 +46,7 @@ export function diffrExecutable(
 
 export function diffrMissingError(): Error {
   return new Error(
-    `Cannot find diffr at ${diffrExecutable()}. Blackboard Desktop bundles it at bin/diffr under its runtime; in a checkout, run \`bun run --filter @dev.fast/review ensure:diffr\` or install diffr on PATH, or set REVIEW_DIFFR_BINARY to its executable.`,
+    `Cannot find diffr at ${diffrExecutable()}. Blackboard Desktop bundles it at bin/diffr under its runtime; in a checkout, run \`bun run --filter @blackboard/review ensure:diffr\` or install diffr on PATH, or set REVIEW_DIFFR_BINARY to its executable.`,
   );
 }
 

@@ -1,4 +1,7 @@
-import type { JsonValue, ReviewCanvasBridge } from "@dev.fast/review-protocol";
+import type {
+  JsonValue,
+  ReviewCanvasBridge,
+} from "@blackboard/review-protocol";
 import type { ReviewProgress } from "@review/review-api/review-progress";
 import type { Snapshot } from "@review/review-api/store";
 import { act } from "react";

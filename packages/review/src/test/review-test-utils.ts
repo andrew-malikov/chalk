@@ -9,7 +9,7 @@ import {
   REVIEW_SCHEMA_VERSION,
   type ReviewDesktopDiscovery,
   type ReviewSourceIdentity,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import {
   type ReviewInstanceSelection,

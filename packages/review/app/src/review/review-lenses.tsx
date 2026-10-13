@@ -1,4 +1,4 @@
-import type { ReviewDiffLens } from "@dev.fast/review-protocol";
+import type { ReviewDiffLens } from "@blackboard/review-protocol";
 import {
   type LensSource,
   comparisonKey,

@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import crypto from "node:crypto";
 import { readFile, rm, writeFile } from "node:fs/promises";
 
-import { jsonObject, parseJsonText } from "@dev.fast/review-protocol";
+import { jsonObject, parseJsonText } from "@blackboard/review-protocol";
 import { withFileLock } from "@review/lib/with-file-lock";
 
 // Dependency preparation for pinned worktrees. The repo owner configures the

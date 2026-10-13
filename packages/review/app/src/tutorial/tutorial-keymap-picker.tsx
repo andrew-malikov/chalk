@@ -1,7 +1,7 @@
+import type { ReviewKeymapChoice } from "@blackboard/review-protocol";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { withClass } from "@canvas/styles/stylex-props";
-import type { ReviewKeymapChoice } from "@dev.fast/review-protocol";
 import type { ReviewComponentProps } from "@review/documents/review-document-data";
 import * as stylex from "@stylexjs/stylex";
 import { useState } from "react";

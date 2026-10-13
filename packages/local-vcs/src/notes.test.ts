@@ -186,7 +186,7 @@ describe("git notes primitives", () => {
     const head = commit(rootPath, "one");
     // Deliberately hostile to stripspace: consecutive blank lines, trailing
     // whitespace, leading blank line, no trailing newline.
-    const content = `\nimport { defineSoftwareMap } from "@dev.fast/progressive-review/software-map-model";\n\n\nexport default defineSoftwareMap({\n  people: {},  \n\n\n  systems: {},\n});`;
+    const content = `\nimport { defineSoftwareMap } from "@blackboard/progressive-review/software-map-model";\n\n\nexport default defineSoftwareMap({\n  people: {},  \n\n\n  systems: {},\n});`;
     await writeNote({ rootPath, ref: MAP_REF, commit: head, content });
     expect(await readNote({ rootPath, ref: MAP_REF, commit: head })).toBe(
       content,

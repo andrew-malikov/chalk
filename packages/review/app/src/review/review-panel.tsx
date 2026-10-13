@@ -1,4 +1,4 @@
-import { REVIEW_CANVAS_RESUME_EVENT } from "@dev.fast/review-protocol";
+import { REVIEW_CANVAS_RESUME_EVENT } from "@blackboard/review-protocol";
 import {
   type ReactNode,
   type RefObject,

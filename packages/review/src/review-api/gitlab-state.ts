@@ -6,7 +6,7 @@ import {
   type GitLabState,
   gitLabSaveDraftSchema,
   gitLabStateSchema,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import type { z } from "zod";
 
 import { ReviewInputError } from "./document.js";

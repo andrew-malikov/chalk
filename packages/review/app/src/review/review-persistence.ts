@@ -3,7 +3,7 @@ import {
   isJsonObject,
   jsonNumber,
   jsonValueSchema,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import type { PersistOptions, PersistStorage } from "zustand/middleware";
 
 import {

@@ -7,7 +7,7 @@ import {
   gitCommonDir,
   jjRevisionIsConflicted,
   resolveRevision,
-} from "@dev.fast/local-vcs";
+} from "@blackboard/local-vcs";
 import { errorMessage } from "@review/lib/error-message";
 import { withFileLock } from "@review/lib/with-file-lock";
 

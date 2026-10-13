@@ -23,13 +23,13 @@ import {
   readFileAtCommit,
   resolveRepoContext,
   splitGitPatchFiles,
-} from "@dev.fast/local-vcs";
-import { structuralChangeCounts } from "@dev.fast/review-protocol";
+} from "@blackboard/local-vcs";
+import { structuralChangeCounts } from "@blackboard/review-protocol";
 import type {
   ReviewLanguageEnvironment,
   ReviewSourceEntry,
   StructuralDiffEvent,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import {
   SourceRangeError,
   checkSourcePath,

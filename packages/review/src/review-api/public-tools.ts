@@ -1,4 +1,4 @@
-import { type JsonValue, isJsonObject, isStringValue } from "@dev.fast/json";
+import { type JsonValue, isJsonObject, isStringValue } from "@blackboard/json";
 
 import {
   type AuthoringTool,

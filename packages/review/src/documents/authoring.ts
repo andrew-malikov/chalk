@@ -11,7 +11,7 @@ export {
   type TutorialAuthoringConversation,
 } from "@review/tutorial/tutorial-conversation";
 
-import { isObjectValue, jsonValueSchema } from "@dev.fast/review-protocol";
+import { isObjectValue, jsonValueSchema } from "@blackboard/review-protocol";
 import {
   databaseLensSchema,
   frameSchema,

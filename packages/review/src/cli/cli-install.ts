@@ -9,7 +9,7 @@ import {
   type ReviewCliInstallStamp,
   ReviewCliInstallStampSchema,
   type ReviewCliInstallStatus,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import {
   writeFileAtomicAsync,
   writePrivateJsonAtomic,
@@ -705,7 +705,7 @@ if [ -z "$cli" ] || [ ! -f "$cli" ] || { [ -n "$runtime" ] && [ ! -x "$runtime" 
 fi
 
 if [ ! -f "$cli" ]; then
-  echo "Blackboard CLI not found at $cli. Start Blackboard Desktop, or run npx @dev.fast/review instead." >&2
+  echo "Blackboard CLI not found at $cli. Start Blackboard Desktop, or run npx @blackboard/review instead." >&2
   exit 1
 fi
 

@@ -14,7 +14,7 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { parseJsonText } from "@dev.fast/review-protocol";
+import { parseJsonText } from "@blackboard/review-protocol";
 import { sourceReferences } from "@review/review-api/document";
 import { openLocalReviewStore } from "@review/review-api/local-data";
 import { createNativeTutorial } from "@review/server/tutorial-service";

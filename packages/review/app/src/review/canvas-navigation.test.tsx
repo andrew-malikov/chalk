@@ -4,9 +4,9 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import type { ReviewCanvasBridge } from "@blackboard/review-protocol";
 import { mountReviewCanvas as mount } from "@canvas/desktop-entry";
 import { testReviewBridge } from "@canvas/test/review-session-test-utils";
-import type { ReviewCanvasBridge } from "@dev.fast/review-protocol";
 import { createReviewApi } from "@review/review-api/http";
 import { ReviewStore } from "@review/review-api/store";
 import { Hono } from "hono";

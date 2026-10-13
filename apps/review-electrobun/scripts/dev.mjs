@@ -43,7 +43,7 @@ function run(command, args, cwd = app, overrides = {}) {
 
 run(
   process.execPath,
-  ["run", "--filter", "@dev.fast/review", "build"],
+  ["run", "--filter", "@blackboard/review", "build"],
   checkout,
 );
 

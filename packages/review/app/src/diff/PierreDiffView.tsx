@@ -1,3 +1,9 @@
+import type {
+  ReviewCommitScope,
+  ReviewDiffFileWire,
+  ReviewDiffLens,
+  ReviewDiffProgress,
+} from "@blackboard/review-protocol";
 import { useAgentSelection } from "@canvas/agent-context/agent-selection";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { NativeSelect } from "@canvas/components/ui/native-select";
@@ -19,12 +25,6 @@ import { fontSize, radius } from "@canvas/styles/scale.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button, IconButton } from "@canvas/ui/button";
-import type {
-  ReviewCommitScope,
-  ReviewDiffFileWire,
-  ReviewDiffLens,
-  ReviewDiffProgress,
-} from "@dev.fast/review-protocol";
 import type {
   CodeViewItem,
   CodeViewLineSelection,

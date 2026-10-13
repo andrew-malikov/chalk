@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { parseReviewDesktopVerbFrame } from "@dev.fast/review-protocol";
+import { parseReviewDesktopVerbFrame } from "@blackboard/review-protocol";
 import { connectReviewApi } from "@review/review-api/agent-client.js";
 import { openLocalReviewStore } from "@review/review-api/local-data.js";
 import { expect, it } from "vitest";

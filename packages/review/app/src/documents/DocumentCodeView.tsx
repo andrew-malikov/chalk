@@ -1,3 +1,12 @@
+import type {
+  ReviewDiffProgress,
+  ReviewDiffSide,
+  ReviewFindQuery,
+  ReviewInlineEditorHandle,
+  ReviewInlineEditorHeightMode,
+  ReviewInlineEditorRange,
+  ReviewSourcePins,
+} from "@blackboard/review-protocol";
 import { createPierreInlineEditors } from "@canvas/diff/pierre-inline-editors";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useReviewFindRegistration } from "@canvas/review/review-find";
@@ -8,15 +17,6 @@ import {
 } from "@canvas/review/review-lenses";
 import { fontSize, radius } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import type {
-  ReviewDiffProgress,
-  ReviewDiffSide,
-  ReviewFindQuery,
-  ReviewInlineEditorHandle,
-  ReviewInlineEditorHeightMode,
-  ReviewInlineEditorRange,
-  ReviewSourcePins,
-} from "@dev.fast/review-protocol";
 import {
   coverageProgress,
   coverageSources,

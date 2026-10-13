@@ -1,6 +1,6 @@
+import { isNumberValue, isStringValue } from "@blackboard/review-protocol";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { withClass } from "@canvas/styles/stylex-props";
-import { isNumberValue, isStringValue } from "@dev.fast/review-protocol";
 import { type MarkdownNode, parseMarkdown } from "@review/documents/markdown";
 import * as stylex from "@stylexjs/stylex";
 import {

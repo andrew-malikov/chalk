@@ -1,3 +1,24 @@
+import {
+  REVIEW_CANVAS_RESUME_EVENT,
+  REVIEW_DISCORD_URL,
+  ReviewApiClient,
+  ReviewApiError,
+  parseReviewCliInstallStatus,
+  reviewSourceAnchor,
+  reviewSourceComparison,
+} from "@blackboard/review-protocol";
+import type {
+  ReviewApiSummary,
+  ReviewCanvasContent,
+  ReviewCanvasHandle,
+  ReviewCanvasInstallContent,
+  ReviewCanvasTutorialBridge,
+  ReviewCanvasUi,
+  ReviewSourceView,
+  ReviewVerbRequest,
+  ReviewVerbResponse,
+  TutorialProgressV1,
+} from "@blackboard/review-protocol";
 import { Button } from "@canvas/components/ui/button";
 import {
   Dialog,
@@ -13,27 +34,6 @@ import {
   mountReviewCanvas,
   reviewCanvasThemeClass,
 } from "@canvas/desktop-entry";
-import {
-  REVIEW_CANVAS_RESUME_EVENT,
-  REVIEW_DISCORD_URL,
-  ReviewApiClient,
-  ReviewApiError,
-  parseReviewCliInstallStatus,
-  reviewSourceAnchor,
-  reviewSourceComparison,
-} from "@dev.fast/review-protocol";
-import type {
-  ReviewApiSummary,
-  ReviewCanvasContent,
-  ReviewCanvasHandle,
-  ReviewCanvasInstallContent,
-  ReviewCanvasTutorialBridge,
-  ReviewCanvasUi,
-  ReviewSourceView,
-  ReviewVerbRequest,
-  ReviewVerbResponse,
-  TutorialProgressV1,
-} from "@dev.fast/review-protocol";
 import {
   BookOpenIcon,
   FileTextIcon,
@@ -1075,9 +1075,6 @@ function Shell(
             }
           }}
         >
-          <div className="review-shell-sidebar-heading tw:px-2 tw:pb-4 tw:text-sm tw:font-semibold tw:tracking-[-0.04em]">
-            Blackboard
-          </div>
           <div className="review-shell-sidebar-search tw:mb-4 tw:flex tw:items-center tw:gap-2 tw:rounded-md tw:border tw:border-border tw:bg-background tw:p-2 tw:text-muted-foreground tw:[&_svg]:size-4 tw:[&_svg]:flex-none">
             <SearchIcon aria-hidden="true" />
             <Input

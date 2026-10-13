@@ -1,13 +1,13 @@
+import {
+  type JsonValue,
+  type ReviewCanvasTutorialBridge,
+  parseJsonText,
+} from "@blackboard/review-protocol";
 import { mountReviewCanvas as mount } from "@canvas/desktop-entry";
 import {
   fixtureReviewBridge,
   settled,
 } from "@canvas/test/fixture-review-bridge";
-import {
-  type JsonValue,
-  type ReviewCanvasTutorialBridge,
-  parseJsonText,
-} from "@dev.fast/review-protocol";
 import { selectionKey } from "@review/documents/lens-selection";
 import { FIXTURE_IMAGE_ID, FIXTURE_MAP_ID } from "@review/fixtures/blocks/ids";
 import {

@@ -2,7 +2,7 @@ export * from "@dev.fast/diffr";
 
 export * from "./structural-diff.js";
 
-import type { JsonValue } from "@dev.fast/json";
+import type { JsonValue } from "@blackboard/json";
 import { z } from "zod";
 
 export {
@@ -44,7 +44,7 @@ import {
   ReviewVerbResponseSchema,
 } from "./contracts.js";
 
-export * from "@dev.fast/json";
+export * from "@blackboard/json";
 
 export * from "./contracts.js";
 

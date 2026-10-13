@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { SCRATCHPAD_REVIEW_ID } from "@dev.fast/review-protocol";
+import { SCRATCHPAD_REVIEW_ID } from "@blackboard/review-protocol";
 import { openLocalReviewStore } from "@review/review-api/local-data";
 import { readReviewPreferences } from "@review/storage/review-preferences";
 import { afterEach, expect, it, vi } from "vitest";

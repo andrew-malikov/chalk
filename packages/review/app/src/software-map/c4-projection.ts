@@ -1,4 +1,4 @@
-import { isStringValue } from "@dev.fast/review-protocol";
+import { isStringValue } from "@blackboard/review-protocol";
 import { z } from "zod";
 
 import { parseDataStoreSchemaEndpoint } from "./model";

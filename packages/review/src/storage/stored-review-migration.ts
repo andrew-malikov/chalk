@@ -9,7 +9,7 @@ import {
   jsonObject,
   jsonString,
   parseJsonText,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { errorMessage } from "@review/lib/error-message";
 import { isMissingFileError } from "@review/lib/fs-utils";

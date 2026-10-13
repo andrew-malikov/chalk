@@ -1,4 +1,4 @@
-import { type JsonValue, isJsonObject } from "@dev.fast/review-protocol";
+import { type JsonValue, isJsonObject } from "@blackboard/review-protocol";
 import { migrateDiffSelections } from "@review/documents/diff-selection-migration.js";
 import { label } from "@review/review-api/blocks/definition.js";
 import {

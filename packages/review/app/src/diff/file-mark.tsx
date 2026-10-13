@@ -1,5 +1,5 @@
+import type { ReviewDiffFileWire } from "@blackboard/review-protocol";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import type { ReviewDiffFileWire } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, CircleSmall, File, Minus, Plus } from "lucide-react";
 import type { ReactElement } from "react";

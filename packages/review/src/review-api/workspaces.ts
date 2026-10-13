@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
-import { git, gitCommonDir } from "@dev.fast/local-vcs";
+import { git, gitCommonDir } from "@blackboard/local-vcs";
 import { errorMessage } from "@review/lib/error-message";
 import { processIsAlive } from "@review/lib/with-file-lock";
 import { reviewManagedCheckoutRoot } from "@review/vcs/review-checkout-paths.js";

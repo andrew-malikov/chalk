@@ -1,6 +1,6 @@
 import type { Readable, Writable } from "node:stream";
 
-import type { JsonValue } from "@dev.fast/json";
+import type { JsonValue } from "@blackboard/json";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {

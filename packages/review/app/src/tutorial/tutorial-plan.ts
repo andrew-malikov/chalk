@@ -1,4 +1,4 @@
-import type { TutorialStepId } from "@dev.fast/review-protocol";
+import type { TutorialStepId } from "@blackboard/review-protocol";
 
 export type TutorialChapterId = "welcome" | "commits" | "diagrams" | "finish";
 

@@ -1,4 +1,4 @@
-import type { ReviewDiffFileWire } from "@dev.fast/review-protocol";
+import type { ReviewDiffFileWire } from "@blackboard/review-protocol";
 import { parsePatchFiles } from "@pierre/diffs";
 import { describe, expect, it, vi } from "vitest";
 

@@ -1,3 +1,4 @@
+import { type JsonValue, isStringValue } from "@blackboard/review-protocol";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { NativeSelect } from "@canvas/components/ui/native-select";
 import { drawStyles } from "@canvas/drawing/draw-styles";
@@ -21,7 +22,6 @@ import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Chip } from "@canvas/ui/chip";
 import { EmptyState } from "@canvas/ui/empty-state";
-import { type JsonValue, isStringValue } from "@dev.fast/review-protocol";
 import type { DatabaseLensBlockProps } from "@review/documents/database-lens-block";
 import { type DiffSelection } from "@review/documents/lens-selection";
 import type {

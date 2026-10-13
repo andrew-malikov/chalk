@@ -1,7 +1,7 @@
 {
-  "name": "@dev.fast/pi-blackboard",
+  "name": "@blackboard/pi-blackboard",
   "version": "0.1.2",
-  "description": "Connect Pi before 0.99.0 to dev.fast Blackboard",
+  "description": "Connect Pi before 0.99.0 to Blackboard",
   "keywords": [
     "pi-package"
   ],

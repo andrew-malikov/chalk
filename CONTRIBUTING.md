@@ -84,14 +84,14 @@ browser once, then run the headless suite or watch mode:
 cd packages/review/app
 bun --bun run playwright install chromium
 cd ../../..
-bun run --filter @dev.fast/review-canvas test:browser
-bun run --filter @dev.fast/review-canvas test:browser:watch
+bun run --filter @blackboard/review-canvas test:browser
+bun run --filter @blackboard/review-canvas test:browser:watch
 ```
 
 Filesystem and server tests run through
-`bun run --filter @dev.fast/review test:node`.
+`bun run --filter @blackboard/review test:node`.
 
-`bun run --filter @dev.fast/review test:legacy-corpus` replays a private corpus of
+`bun run --filter @blackboard/review test:legacy-corpus` replays a private corpus of
 legacy Reviews (from before the original product rename) through migration. Point
 `REVIEW_LEGACY_CORPUS` at a directory whose children are Review UUID folders;
 the script fails if the variable is unset. The corpus is copied before it is

@@ -1,4 +1,4 @@
-import type { ReviewCliInstallStatus } from "@dev.fast/review-protocol";
+import type { ReviewCliInstallStatus } from "@blackboard/review-protocol";
 
 export function cliInstallReady(status?: ReviewCliInstallStatus): boolean {
   return (

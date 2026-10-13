@@ -4,7 +4,7 @@ import {
   isNumberValue,
   isObjectValue,
   isStringValue,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import {
   type AuditedComponentProps,
   FRAGMENT,

@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { parseJsonText } from "@dev.fast/review-protocol";
+import { parseJsonText } from "@blackboard/review-protocol";
 import { selectSource } from "@review/documents/lens-selection";
 import { markdownNodes, parseMarkdown } from "@review/documents/markdown";
 import {

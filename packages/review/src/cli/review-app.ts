@@ -3,7 +3,7 @@ import type { Writable } from "node:stream";
 import {
   ReviewApiClient,
   type ReviewApiSummary,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { resolveReviewRoot } from "@review/runtime";
 import {
   type ReviewInstanceSelection,

@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import type { ReviewCliInstallStamp } from "@dev.fast/review-protocol";
+import type { ReviewCliInstallStamp } from "@blackboard/review-protocol";
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 

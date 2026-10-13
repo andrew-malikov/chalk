@@ -6,7 +6,7 @@ import path from "node:path";
 import {
   type ReviewDesktopDiscovery,
   parseReviewVerbResponse,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import {
   type ReviewInstanceSelection,
   healthyReviewInstance,

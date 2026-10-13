@@ -17,7 +17,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 
-import { setLocalVcsCommandObserver } from "@dev.fast/local-vcs";
+import { setLocalVcsCommandObserver } from "@blackboard/local-vcs";
 import { errorMessage } from "@review/lib/error-message";
 
 interface TraceSpanRecord {
@@ -217,7 +217,7 @@ function resolveTraceFile(env: NodeJS.ProcessEnv): string | undefined {
 
 if (traceEnabled) {
   process.on("exit", flushTrace);
-  // Every git/jj spawn inside @dev.fast/local-vcs becomes a `$ …` span under
+  // Every git/jj spawn inside @blackboard/local-vcs becomes a `$ …` span under
   // whatever span is active in the caller's async context.
   setLocalVcsCommandObserver({
     start({ file, args, cwd }) {

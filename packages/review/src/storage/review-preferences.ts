@@ -5,7 +5,7 @@ import {
   type JsonValue,
   isJsonObject,
   parseJsonText,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 
 import { devReviewHome } from "./review-home-paths";

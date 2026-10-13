@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 
-import { type JsonObject, isJsonObject } from "@dev.fast/json";
+import { type JsonObject, isJsonObject } from "@blackboard/json";
 import {
   REVIEW_CLIENT_HEADER,
   REVIEW_CLIENT_REMOTE,
   type ReviewStructuralDiffEvent,
   gitLabSaveDraftSchema,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { scopedCoverage } from "@review/documents/viewed-coverage.js";
 import { errorMessage } from "@review/lib/error-message";
 import {

@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { type JsonValue, parseJsonText } from "@dev.fast/review-protocol";
+import { type JsonValue, parseJsonText } from "@blackboard/review-protocol";
 import { selectSource } from "@review/documents/lens-selection.js";
 import {
   FIXTURE_IMAGE_ID,

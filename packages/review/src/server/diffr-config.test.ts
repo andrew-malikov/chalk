@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type { JsonObject } from "@dev.fast/json";
+import type { JsonObject } from "@blackboard/json";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import {

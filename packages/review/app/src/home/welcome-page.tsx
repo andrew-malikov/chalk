@@ -1,3 +1,10 @@
+import {
+  REVIEW_DISCORD_URL,
+  type ReviewCanvasInstallContent,
+  type ReviewCanvasOnboarding,
+  type ReviewCanvasSetupActions,
+  type ReviewCliInstallStatus,
+} from "@blackboard/review-protocol";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { newTabLinkProps } from "@canvas/documents/link-props";
 import { welcomeType } from "@canvas/home/welcome-page.stylex";
@@ -10,13 +17,6 @@ import { Button } from "@canvas/ui/button";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { CheckIcon, DisclosureChevron } from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
-import {
-  REVIEW_DISCORD_URL,
-  type ReviewCanvasInstallContent,
-  type ReviewCanvasOnboarding,
-  type ReviewCanvasSetupActions,
-  type ReviewCliInstallStatus,
-} from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
 import { Check } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
@@ -168,7 +168,7 @@ export function WelcomePage({
             <>
               CLI build missing. If you’re running from source, run{" "}
               <code {...stylex.props(styles.hintCode)}>
-                bun run --filter @dev.fast/review build
+                bun run --filter @blackboard/review build
               </code>{" "}
               from the repository root, then restart Blackboard. Otherwise,
               reinstall Blackboard.

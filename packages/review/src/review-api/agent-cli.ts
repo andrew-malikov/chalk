@@ -147,4 +147,4 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
   }
 }
 
-import { isJsonObject, parseJsonText } from "@dev.fast/json";
+import { isJsonObject, parseJsonText } from "@blackboard/json";

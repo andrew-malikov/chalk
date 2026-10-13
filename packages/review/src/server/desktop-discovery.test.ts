@@ -5,7 +5,7 @@ import path from "node:path";
 import {
   REVIEW_DESKTOP_DISCOVERY_VERSION,
   type ReviewDesktopDiscovery,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { describe, expect, it, vi } from "vitest";
 
 import {

@@ -1,5 +1,5 @@
+import type { ReviewTooltipOptions } from "@blackboard/review-protocol";
 import { useOptionalReviewSession } from "@canvas/host/review-session";
-import type { ReviewTooltipOptions } from "@dev.fast/review-protocol";
 import { useCallback } from "react";
 
 /**

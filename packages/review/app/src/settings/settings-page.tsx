@@ -1,9 +1,3 @@
-import { Switch } from "@canvas/components/ui/switch";
-import { ConnectCard, LegacySkillsRow } from "@canvas/home/connect-card";
-import { homeStyles } from "@canvas/home/home-styles";
-import { withClass } from "@canvas/styles/stylex-props";
-import { Button } from "@canvas/ui/button";
-import { textStyles } from "@canvas/ui/text";
 import type {
   ReviewCanvasSettingsContent,
   ReviewCliInstallStatus,
@@ -12,7 +6,13 @@ import type {
   ReviewKeymapChoice,
   ReviewReadyNotificationChoice,
   ReviewThemeChoice,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
+import { Switch } from "@canvas/components/ui/switch";
+import { ConnectCard, LegacySkillsRow } from "@canvas/home/connect-card";
+import { homeStyles } from "@canvas/home/home-styles";
+import { withClass } from "@canvas/styles/stylex-props";
+import { Button } from "@canvas/ui/button";
+import { textStyles } from "@canvas/ui/text";
 import * as stylex from "@stylexjs/stylex";
 import { type ReactNode, useEffect, useState } from "react";
 

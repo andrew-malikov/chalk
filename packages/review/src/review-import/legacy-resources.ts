@@ -1,4 +1,4 @@
-import { jsonObject, parseJsonText } from "@dev.fast/review-protocol";
+import { jsonObject, parseJsonText } from "@blackboard/review-protocol";
 import type { ReviewSoftwareMapBundle } from "@review/software-map/software-map-bundle";
 import {
   hydrateSoftwareModel,

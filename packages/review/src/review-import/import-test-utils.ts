@@ -8,7 +8,7 @@ import {
   type JsonValue,
   jsonObject,
   parseJsonText,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import type {
   ProseTag,
   ReviewNode,

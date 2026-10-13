@@ -1,9 +1,9 @@
+import type { JsonValue } from "@blackboard/review-protocol";
 import { mountReviewCanvas as mount } from "@canvas/desktop-entry";
 import {
   fixtureReviewBridge,
   settled,
 } from "@canvas/test/fixture-review-bridge";
-import type { JsonValue } from "@dev.fast/review-protocol";
 import {
   assignFreshIds,
   documentSchema,

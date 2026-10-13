@@ -1,6 +1,6 @@
-import type { ReviewView } from "@dev.fast/review-protocol";
+import type { ReviewView } from "@blackboard/review-protocol";
 
-export type { ReviewView } from "@dev.fast/review-protocol";
+export type { ReviewView } from "@blackboard/review-protocol";
 
 /** The views a canvas offers, in switcher order. */
 export function offeredReviewViews({

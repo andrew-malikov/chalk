@@ -1,4 +1,4 @@
-import { isStringValue } from "@dev.fast/review-protocol";
+import { isStringValue } from "@blackboard/review-protocol";
 import { slugify, uniqueId } from "@review/lib/slug";
 import type { Step } from "@review/review-api/document";
 

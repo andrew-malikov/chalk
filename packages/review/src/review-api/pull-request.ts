@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 
-import { type LocalVcsKind, parseGitRemote } from "@dev.fast/local-vcs";
+import { type LocalVcsKind, parseGitRemote } from "@blackboard/local-vcs";
 import { errorMessage } from "@review/lib/error-message";
 import { z } from "zod";
 

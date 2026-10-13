@@ -1,24 +1,24 @@
 {
-  "name": "@dev.fast/review-canvas",
+  "name": "@blackboard/review-canvas",
   "version": "0.0.1",
   "private": true,
   "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "BUN_JSC_useFTLJIT=0 bun --bun run vite build --config desktop.vite.config.ts",
-    "pretest": "bun run --filter @dev.fast/review ensure:tutorial-assets",
+    "pretest": "bun run --filter @blackboard/review ensure:tutorial-assets",
     "test": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts",
     "test:node": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts --project canvas-node",
     "test:browser": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts --project browser",
     "test:browser:watch": "BUN_JSC_useFTLJIT=0 bun --bun run vitest --config vitest.config.ts --project browser --browser.headless=false",
     "typecheck": "bun --bun run tsc --noEmit -p .",
-    "pretest:node": "bun run --filter @dev.fast/review ensure:tutorial-assets",
-    "pretest:browser": "bun run --filter @dev.fast/review ensure:tutorial-assets",
-    "pretypecheck": "bun run --filter @dev.fast/review ensure:tutorial-assets"
+    "pretest:node": "bun run --filter @blackboard/review ensure:tutorial-assets",
+    "pretest:browser": "bun run --filter @blackboard/review ensure:tutorial-assets",
+    "pretypecheck": "bun run --filter @blackboard/review ensure:tutorial-assets"
   },
   "dependencies": {
-    "@dev.fast/review": "workspace:*",
-    "@dev.fast/review-protocol": "workspace:*",
+    "@blackboard/review": "workspace:*",
+    "@blackboard/review-protocol": "workspace:*",
     "@mr_mint/elkjs-libavoid": "0.5.0",
     "@pierre/diffs": "1.5.1",
     "@speed-highlight/core": "1.2.15",

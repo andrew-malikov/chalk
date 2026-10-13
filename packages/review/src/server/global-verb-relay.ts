@@ -6,7 +6,7 @@ import {
   type ReviewVerbResponse,
   parseReviewDesktopVerbResult,
   parseReviewVerbRequest,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 
 const DEFAULT_VERB_TIMEOUT_MS = 45_000;
 

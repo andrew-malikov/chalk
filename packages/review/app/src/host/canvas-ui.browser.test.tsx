@@ -1,5 +1,5 @@
+import type { ReviewMenuRequest } from "@blackboard/review-protocol";
 import { themeStyles } from "@canvas/styles/theme-styles";
-import type { ReviewMenuRequest } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
 import { act } from "react";
 import { afterEach, expect, test, vi } from "vitest";

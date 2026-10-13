@@ -9,7 +9,7 @@ import {
   jsonObject,
   jsonString,
   parseJsonText,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { errorMessage } from "@review/lib/error-message";
 import {
   type ReviewRecord,

@@ -4,7 +4,7 @@ import {
   isNumberValue,
   isStringValue,
   jsonValueSchema,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 
 /** Upgrade retained document attachments at the read/import boundary. New edits
  * use the strict DiffSelection schema and never accept these retired forms. */

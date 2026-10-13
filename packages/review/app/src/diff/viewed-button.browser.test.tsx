@@ -1,6 +1,6 @@
+import type { ReviewTooltipOptions } from "@blackboard/review-protocol";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
-import type { ReviewTooltipOptions } from "@dev.fast/review-protocol";
 import type { CoverageProgress } from "@review/documents/viewed-coverage";
 import { act } from "react";
 import { createRoot } from "react-dom/client";

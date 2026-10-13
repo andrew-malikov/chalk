@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { REVIEW_SCHEMA_VERSION } from "@dev.fast/review-protocol";
+import { REVIEW_SCHEMA_VERSION } from "@blackboard/review-protocol";
 import {
   readReviewDocumentBundle,
   reviewDocumentBundleData,

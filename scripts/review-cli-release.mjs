@@ -10,7 +10,7 @@ const registrySchema = z.object({
 
 const stable = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
-export const packageName = "@dev.fast/review";
+export const packageName = "@blackboard/review";
 
 export function parseVersion(version) {
   if (!stable.test(version))

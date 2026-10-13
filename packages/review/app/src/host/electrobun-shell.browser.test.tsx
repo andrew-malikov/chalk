@@ -1,14 +1,14 @@
+import {
+  type ReviewCliInstallStatus,
+  type ReviewDesktopVerbFrame,
+  parseJsonText,
+} from "@blackboard/review-protocol";
 // oxlint-enable no-restricted-imports
 import { mountReviewCanvas } from "@canvas/desktop-entry";
 import {
   fixtureReviewBridge,
   libavoidWasmUrl,
 } from "@canvas/test/fixture-review-bridge";
-import {
-  type ReviewCliInstallStatus,
-  type ReviewDesktopVerbFrame,
-  parseJsonText,
-} from "@dev.fast/review-protocol";
 import { defineSoftwareMap } from "@review/software-map/software-map-model";
 import { act } from "react";
 import { afterEach, expect, test, vi } from "vitest";

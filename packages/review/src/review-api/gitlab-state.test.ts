@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type { GitLabState } from "@dev.fast/review-protocol";
+import type { GitLabState } from "@blackboard/review-protocol";
 import { expect, it } from "vitest";
 
 import { GitLabStorage } from "./gitlab-state.js";

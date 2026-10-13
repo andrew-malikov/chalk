@@ -1,4 +1,8 @@
 import {
+  type JsonObject,
+  type ReviewCanvasTutorialBridge,
+} from "@blackboard/review-protocol";
+import {
   type ReviewSession,
   ReviewSessionProvider,
 } from "@canvas/host/review-session";
@@ -13,10 +17,6 @@ import { controlStyles } from "@canvas/styles/controls-styles";
 import { shellStyles } from "@canvas/styles/shell-styles";
 import { withClass } from "@canvas/styles/stylex-props";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
-import {
-  type JsonObject,
-  type ReviewCanvasTutorialBridge,
-} from "@dev.fast/review-protocol";
 import { type ReactElement, act, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

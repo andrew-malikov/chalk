@@ -1,12 +1,12 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 
-import type { JsonValue } from "@dev.fast/json";
+import type { JsonValue } from "@blackboard/json";
 import {
   type GitLabDiscussion,
   type GitLabPosition,
   gitLabAccountSchema,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { z } from "zod";
 
 import { ReviewInputError } from "./document.js";

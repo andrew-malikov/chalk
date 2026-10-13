@@ -2,7 +2,7 @@ import {
   type ReviewCommitSummary,
   type ReviewView,
   reviewViewSchema,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { createStore } from "zustand/vanilla";
 
 import type { PeekPanel, ReviewPanelMotion } from "./review-panel-model";

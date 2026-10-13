@@ -27,7 +27,7 @@ export async function stageDiffrBinary(
 ) {
   if (!(await stat(source).catch(() => null))?.isFile()) {
     throw new Error(
-      `Missing ${source}. Run bun run --filter @dev.fast/review ensure:diffr before packaging.`,
+      `Missing ${source}. Run bun run --filter @blackboard/review ensure:diffr before packaging.`,
     );
   }
 

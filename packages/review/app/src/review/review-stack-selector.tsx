@@ -1,3 +1,4 @@
+import type { ReviewStackLayer } from "@blackboard/review-protocol";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import {
   DropdownMenu,
@@ -17,7 +18,6 @@ import { shellStyles } from "@canvas/styles/shell-styles";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button } from "@canvas/ui/button";
 import { StackIcon } from "@canvas/ui/icons";
-import type { ReviewStackLayer } from "@dev.fast/review-protocol";
 import * as stylex from "@stylexjs/stylex";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";

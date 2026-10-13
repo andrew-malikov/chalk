@@ -3,7 +3,7 @@ import {
   type StructuralRegion,
   decodeReviewStructuralDiffEvent,
   structuralRows,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { type FileDiffMetadata, parsePatchFiles } from "@pierre/diffs";
 
 import type { PierreComparisonEntry } from "./pierre-comparison";

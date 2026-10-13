@@ -1,7 +1,7 @@
 import type {
   GitLabIdentity,
   ReviewStackLayer,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 
 export interface ReviewSessionData {
   /** Absent for a review. The scratchpad hides review-only chrome. */

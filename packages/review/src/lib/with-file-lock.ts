@@ -9,7 +9,7 @@ import {
   jsonObject,
   jsonString,
   parseJsonText,
-} from "@dev.fast/json";
+} from "@blackboard/json";
 
 const LOCK_OWNER_FILE = "owner.json";
 

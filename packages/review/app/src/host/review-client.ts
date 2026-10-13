@@ -1,4 +1,4 @@
-import type { ReviewRuntimeConfig } from "@dev.fast/review-protocol";
+import type { ReviewRuntimeConfig } from "@blackboard/review-protocol";
 
 export type ReviewClientConfig = Partial<
   Pick<ReviewRuntimeConfig, "serverUrl" | "reviewId" | "token" | "wasmUrl">

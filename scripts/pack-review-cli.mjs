@@ -34,7 +34,7 @@ export async function packReviewCli({ version, commit }, outputDirectory) {
     });
     execFileSync("tar", [
       "-xzf",
-      path.join(scratch, `dev.fast-review-${version}.tgz`),
+      path.join(scratch, `blackboard-review-${version}.tgz`),
       "-C",
       scratch,
     ]);
@@ -47,7 +47,7 @@ export async function packReviewCli({ version, commit }, outputDirectory) {
       { cwd: staged, stdio: "inherit" },
     );
 
-    return path.join(output, `dev.fast-review-${version}.tgz`);
+    return path.join(output, `blackboard-review-${version}.tgz`);
   } finally {
     await writeFile(manifestPath, original);
     await rm(scratch, { recursive: true, force: true });

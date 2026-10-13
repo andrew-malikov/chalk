@@ -1,3 +1,4 @@
+import type { ReviewCommitSummary } from "@blackboard/review-protocol";
 import { AuthoringCursorContext, Courier } from "@canvas/drawing/courier";
 import { withErasedBlocks } from "@canvas/drawing/draw-queue";
 import {
@@ -11,7 +12,6 @@ import { scopeLive } from "@canvas/review/authoring-cursor";
 import { useReviewRoots } from "@canvas/review/review-root-context";
 import type { SoftwareMapResolvedDataPayload } from "@canvas/software-map/software-map-snapshot";
 import { documentNodeMarker, proseMarker } from "@canvas/styles/markers.stylex";
-import type { ReviewCommitSummary } from "@dev.fast/review-protocol";
 import { type DiffSelection } from "@review/documents/lens-selection";
 import type { DocumentPeekableAnchor } from "@review/documents/review-document-data";
 import type { ReviewApiClient } from "@review/review-api/client";

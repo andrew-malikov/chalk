@@ -1,3 +1,8 @@
+import {
+  type ReviewCanvasRange,
+  type ReviewCommitSummary,
+  type ReviewDocumentWidthChoice,
+} from "@blackboard/review-protocol";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import {
   Popover,
@@ -9,11 +14,6 @@ import { Choice } from "@canvas/settings/settings-choice";
 import { Button, IconButton } from "@canvas/ui/button";
 import { StatusBanner } from "@canvas/ui/status-banner";
 import { textStyles } from "@canvas/ui/text";
-import {
-  type ReviewCanvasRange,
-  type ReviewCommitSummary,
-  type ReviewDocumentWidthChoice,
-} from "@dev.fast/review-protocol";
 import {
   type SoftwareMapTopologyDiff,
   diffSoftwareMaps,

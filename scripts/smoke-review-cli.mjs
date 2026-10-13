@@ -47,7 +47,7 @@ try {
   console.log(
     `Production dependency audit passed (${dependencyCount} unique packages).`,
   );
-  const pkgRoot = path.join(prefix, "node_modules/@dev.fast/review");
+  const pkgRoot = path.join(prefix, "node_modules/@blackboard/review");
 
   const pkg = JSON.parse(
     await readFile(path.join(pkgRoot, "package.json"), "utf8"),

@@ -12,7 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "paths": {
-      "@dev.fast/*": ["./packages/*/src"],
+      "@blackboard/*": ["./packages/*/src"],
       // Source aliases; Vite and Vitest mirror them in packages/review/test-config.ts.
       "@review/*": ["./packages/review/src/*"],
       "@canvas/*": ["./packages/review/app/src/*"]

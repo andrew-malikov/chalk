@@ -171,5 +171,5 @@ import {
   isStringValue,
   type JsonValue,
   parseJsonText,
-} from "@dev.fast/json";
+} from "@blackboard/json";
 import type { CallToolRequest, Tool } from "@modelcontextprotocol/sdk/types.js";

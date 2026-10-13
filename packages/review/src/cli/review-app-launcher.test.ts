@@ -14,7 +14,7 @@ import { promisify } from "node:util";
 import {
   REVIEW_DESKTOP_DISCOVERY_VERSION,
   type ReviewDesktopDiscovery,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import type { ReviewInstanceSelection } from "@review/server/desktop-discovery";
 import { selectingDesktop } from "@review/test/review-test-utils";
 import { describe, expect, it, vi } from "vitest";

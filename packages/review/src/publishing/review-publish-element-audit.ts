@@ -1,4 +1,4 @@
-import { isCallableValue, isObjectValue } from "@dev.fast/review-protocol";
+import { isCallableValue, isObjectValue } from "@blackboard/review-protocol";
 import {
   type CallStackDiffProps,
   type DatabaseLensProps,

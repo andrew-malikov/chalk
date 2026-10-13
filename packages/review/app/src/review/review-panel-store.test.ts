@@ -1,4 +1,4 @@
-import type { ReviewCommitSummary } from "@dev.fast/review-protocol";
+import type { ReviewCommitSummary } from "@blackboard/review-protocol";
 import type { AnchorRef } from "@review/documents/authoring";
 import { describe, expect, it } from "vitest";
 

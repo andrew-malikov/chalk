@@ -1,10 +1,10 @@
-import { ReviewSessionProvider } from "@canvas/host/review-session";
-import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
-import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import type {
   ReviewCanvasBridge,
   ReviewStackLayer,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
+import { ReviewSessionProvider } from "@canvas/host/review-session";
+import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
+import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";

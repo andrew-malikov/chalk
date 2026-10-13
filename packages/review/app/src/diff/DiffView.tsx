@@ -1,3 +1,8 @@
+import type {
+  ReviewCommitScope,
+  ReviewDiffLens,
+  ReviewDiffProgress,
+} from "@blackboard/review-protocol";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import {
   Courier,
@@ -35,11 +40,6 @@ import { tokens } from "@canvas/styles/tokens.stylex";
 import { IconButton } from "@canvas/ui/button";
 import { ProgressRing } from "@canvas/ui/progress-ring";
 import { textStyles } from "@canvas/ui/text";
-import type {
-  ReviewCommitScope,
-  ReviewDiffLens,
-  ReviewDiffProgress,
-} from "@dev.fast/review-protocol";
 import {
   type CoverageProgress,
   coverageProgress,

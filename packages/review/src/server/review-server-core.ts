@@ -1,7 +1,7 @@
 import type {
   ReviewServerHealth,
   ReviewServerHealthWithToken,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import {
   readBuildCommit,
   readReviewPackageVersion,

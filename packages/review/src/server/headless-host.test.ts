@@ -20,7 +20,7 @@ import {
   REVIEW_CLIENT_HEADER,
   REVIEW_CLIENT_REMOTE,
   parseReviewDesktopVerbFrame,
-} from "@dev.fast/review-protocol";
+} from "@blackboard/review-protocol";
 import { runReviewCli } from "@review/cli/cli-runner.js";
 import {
   connectReviewApi,
