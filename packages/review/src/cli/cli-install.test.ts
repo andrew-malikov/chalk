@@ -35,8 +35,6 @@ import {
   skipCliInstall,
   writePathShim,
 } from "./cli-install";
-import { reviewMcpLaunch } from "./connect-prompts";
-import { cursorInstallDeeplink } from "./cursor-deeplink";
 
 const temporaryDirectories: string[] = [];
 
@@ -791,35 +789,6 @@ describe("MCP self-install", () => {
       expect(source.connect).toMatchObject({
         command: "blackboard",
         args: ["mcp"],
-      });
-    });
-
-    it("offers each harness's plugin, with the Cursor link only when the shim exists", async () => {
-      await writePathShim(shim, cliPath, undefined, path.join(homeDir, ".dev"));
-
-      const built = await resolveCliInstallStatus({
-        packageRoot: builtRoot,
-        homeDir,
-        env,
-      });
-
-      const { plugins } = built.connect;
-
-      expect(plugins.cursor).toEqual({
-        label: "Install in Cursor",
-        url: cursorInstallDeeplink(reviewMcpLaunch(true)),
-      });
-
-      await rm(shim);
-
-      const withoutShim = await resolveCliInstallStatus({
-        packageRoot: builtRoot,
-        homeDir,
-        env,
-      });
-
-      expect(withoutShim.connect.plugins.cursor).toEqual({
-        label: "Install in Cursor",
       });
     });
 

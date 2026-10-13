@@ -3,7 +3,6 @@ import { findReviewPackageRoot } from "@review/package-paths";
 export type InstallTarget =
   | "claude"
   | "codex"
-  | "cursor"
   | "opencode"
   | "pi"
   | "omp"
@@ -12,7 +11,6 @@ export type InstallTarget =
 export const ALL_INSTALL_TARGETS: InstallTarget[] = [
   "claude",
   "codex",
-  "cursor",
   "opencode",
   "pi",
   "omp",

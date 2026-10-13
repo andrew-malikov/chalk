@@ -216,7 +216,6 @@ async function setup(
           prompts: {
             claude: "Connect Claude",
             codex: "Connect Codex",
-            cursor: "Connect Cursor",
             opencode: "Connect OpenCode",
             pi: "Connect Pi",
             omp: "Connect omp",
@@ -225,7 +224,6 @@ async function setup(
           plugins: {
             claude: { label: "Claude" },
             codex: { label: "Codex" },
-            cursor: { label: "Cursor" },
             opencode: { label: "OpenCode" },
             pi: { label: "Pi" },
             omp: { label: "omp" },

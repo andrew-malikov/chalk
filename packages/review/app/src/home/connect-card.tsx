@@ -5,7 +5,6 @@ import {
   ReviewCliInstallTargetSchema,
 } from "@blackboard/review-protocol";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
-import { newTabLinkProps } from "@canvas/documents/link-props";
 import { AGENT_LOGOS } from "@canvas/home/agent-logos";
 import { cliInstallReady } from "@canvas/settings/cli-install-status";
 import { controlStyles } from "@canvas/styles/controls-styles";
@@ -24,7 +23,6 @@ import { promptStyles } from "./prompt-styles";
 export const TARGET_LABELS: Record<ReviewCliInstallTarget, string> = {
   claude: "Claude Code",
   codex: "Codex",
-  cursor: "Cursor",
   opencode: "OpenCode",
   pi: "Pi",
   omp: "oh-my-pi",
@@ -32,7 +30,7 @@ export const TARGET_LABELS: Record<ReviewCliInstallTarget, string> = {
 };
 
 /** The rest share the Other menu. */
-const TAB_TARGETS = ["claude", "codex", "cursor", "opencode"] as const;
+const TAB_TARGETS = ["claude", "codex", "opencode"] as const;
 
 const OTHER_TARGETS = ReviewCliInstallTargetSchema.options.filter(
   (target) => !TAB_TARGETS.some((tab) => tab === target),
@@ -55,7 +53,7 @@ const MODES: ReadonlyArray<{ mode: Mode; label: string }> = [
 
 /**
  * One agent at a time: a paste-in prompt that has the agent add Blackboard's MCP
- * server, or the published plugin (an install command, or Cursor's link).
+ * server, or an install command for the published plugin.
  */
 export function ConnectCard({
   install,
@@ -272,21 +270,6 @@ export function ConnectCard({
                 ? "Copied"
                 : `Copy ${mode === "prompt" ? "prompt" : "command"}`}
             </ButtonPrimitive>
-          </div>
-        </>
-      ) : plugin.url ? (
-        <>
-          <p {...stylex.props(promptStyles.body)}>
-            Opens {agent} and adds the Blackboard server.
-          </p>
-          <div {...stylex.props(promptStyles.actions)}>
-            <a
-              {...stylex.props(promptStyles.copy)}
-              href={plugin.url}
-              {...newTabLinkProps(plugin.url)}
-            >
-              {plugin.label}
-            </a>
           </div>
         </>
       ) : (

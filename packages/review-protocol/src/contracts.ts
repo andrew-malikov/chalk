@@ -873,8 +873,8 @@ export type ReviewTutorialOpenResponse = z.infer<
 >;
 
 export const ReviewCliInstallTargetSchema = z.enum(
-  ["claude", "codex", "cursor", "opencode", "pi", "omp", "copilot"],
-  { error: "must be claude, codex, cursor, opencode, pi, omp, or copilot" },
+  ["claude", "codex", "opencode", "pi", "omp", "copilot"],
+  { error: "must be claude, codex, opencode, pi, omp, or copilot" },
 );
 
 export type ReviewCliInstallTarget = z.infer<
@@ -928,13 +928,12 @@ export const ReviewCliInstallStatusSchema = z.strictObject({
     // ["-c", "exec \"$HOME/.local/bin/blackboard\" mcp"], or ["mcp"].
     args: z.array(z.string()),
     prompts: z.record(ReviewCliInstallTargetSchema, requiredString),
-    // The published plugin per harness: an install command, or Cursor's link.
+    // The published plugin or MCP install command per harness.
     plugins: z.record(
       ReviewCliInstallTargetSchema,
       z.strictObject({
         label: requiredString,
         command: requiredString.optional(),
-        url: requiredString.optional(),
       }),
     ),
   }),

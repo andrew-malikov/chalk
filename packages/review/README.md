@@ -65,12 +65,13 @@ Use `blackboard app pick --session <uuid>` to select a specific review. Bare
 `blackboard info` is read-only: it lists active reviews bound to the current
 worktree, or every worktree in the repository with `--all`.
 
-Blackboard Desktop is the primary install path for Claude Code, Codex, Cursor,
-Pi, and other coding agents. On startup it detects installed agents, offers to
-install the CLI and connect them over MCP, and re-syncs after each app
-update. It also writes a `blackboard` shim to `~/.local/bin` that always resolves
-to the app's bundled CLI. A standalone CLI defers to the app's bundled copy
-whenever Blackboard Desktop is running.
+Blackboard Desktop is the primary install path for Claude Code, Codex,
+OpenCode, Pi, oh-my-pi, and Copilot CLI. Install the `blackboard` command from
+the welcome screen, then select your agent and either copy the setup prompt
+or follow its install command. On macOS and Linux, Desktop writes a
+`blackboard` shim to `~/.local/bin` that resolves to the app's bundled CLI.
+A standalone CLI defers to the app's bundled copy whenever Blackboard
+Desktop is running.
 
 Agent setup installs only the Blackboard CLI and the MCP connection. Enabling
 Trace capture in Settings ▸ Experimental Features also installs FFF: it
@@ -141,6 +142,7 @@ To connect an agent by hand, run:
 blackboard connect <target>
 ```
 
-for `claude`, `claude-code`, `codex`, `cursor`, `opencode`, `pi`, `omp`, or
-`all`. It prints the plugin-install or MCP-registration steps for that agent;
-Blackboard Desktop runs the same steps automatically during agent setup.
+Use `claude`, `claude-code`, `codex`, `opencode`, `pi`, `omp`, or `copilot` as
+the target, or `all` for every supported agent. The command prints the
+plugin-install or MCP-registration steps for your agent. The Desktop welcome
+screen also offers setup prompts and install commands.

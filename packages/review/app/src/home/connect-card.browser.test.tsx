@@ -33,7 +33,6 @@ const status: ReviewCliInstallStatus = {
     prompts: {
       claude: "CLAUDE PROMPT",
       codex: "CODEX PROMPT",
-      cursor: "CURSOR PROMPT",
       opencode: "OPENCODE PROMPT",
       pi: "PI PROMPT",
       omp: "OMP PROMPT",
@@ -45,10 +44,6 @@ const status: ReviewCliInstallStatus = {
         command: "CLAUDE COMMAND",
       },
       codex: { label: "Install the Codex plugin", command: "CODEX COMMAND" },
-      cursor: {
-        label: "Install in Cursor",
-        url: "cursor://anysphere.cursor-deeplink/mcp/install?name=review",
-      },
       opencode: {
         label: "Install the OpenCode plugin",
         command: "OPENCODE COMMAND",
@@ -159,6 +154,20 @@ describe("ConnectCard", () => {
     expect(body(container)).toBe("PI PROMPT");
   });
 
+  it.each(["cursor", "unknown"])(
+    "falls back to Claude Code for an unsupported stored agent: %s",
+    async (target) => {
+      localStorage.setItem(REVIEW_CONNECT_TARGET_STORAGE_KEY, target);
+
+      const container = await mount(<ConnectCard install={content()} />);
+
+      expect(
+        button(container, "Claude Code")?.getAttribute("aria-pressed"),
+      ).toBe("true");
+      expect(body(container)).toBe("CLAUDE PROMPT");
+    },
+  );
+
   it("swaps between the other agents from the menu", async () => {
     const host = testCanvasUi();
 
@@ -243,40 +252,6 @@ describe("ConnectCard", () => {
     await act(async () => copyButton(container)?.click());
     expect(onCopied).toHaveBeenCalledOnce();
     writeText.mockRestore();
-  });
-
-  it("links to Cursor's installer, or asks for the blackboard command without one", async () => {
-    localStorage.setItem(REVIEW_CONNECT_TARGET_STORAGE_KEY, "cursor");
-
-    const container = await mount(<ConnectCard install={content()} />);
-
-    await act(async () => button(container, "Install the plugin")?.click());
-
-    const link = container.querySelector("a");
-
-    expect(link?.textContent).toBe("Install in Cursor");
-    expect(link?.getAttribute("href")).toMatch(/^cursor:\/\//);
-    expect(link?.getAttribute("target")).toBe("_blank");
-
-    const bare = await mount(
-      <ConnectCard
-        install={content({
-          cli: null,
-          shim: { ...status.shim, installed: false },
-          connect: {
-            ...status.connect,
-            plugins: {
-              ...status.connect.plugins,
-              cursor: { label: "Install in Cursor" },
-            },
-          },
-        })}
-      />,
-    );
-
-    await act(async () => button(bare, "Install the plugin")?.click());
-    expect(bare.querySelector("a")).toBeNull();
-    expect(bare.querySelector("button")).toBeNull();
   });
 
   it.each([

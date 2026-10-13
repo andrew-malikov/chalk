@@ -11,27 +11,16 @@ import { runReviewAppLaunch as runReviewAppLaunchActual } from "./review-app-lau
 import { runReviewInfo as runReviewInfoActual } from "./review-info";
 
 describe("Blackboard CLI", () => {
-  it("routes Cursor install instructions without connecting to Desktop", async () => {
-    const { code, stdout, stderr } = await runConnect(
-      ["connect", "cursor", "--json"],
-      installTestShim,
-    );
+  it.each(["cursor", "unknown"])(
+    "rejects an unsupported connection target: %s",
+    async (target) => {
+      const { code, stdout, stderr } = await runConnect(["connect", target]);
 
-    expect(code).toBe(0);
-    expect(stderr).toBe("");
-    const result = JSON.parse(stdout);
-    expect(Object.keys(result.prompts)).toEqual(["cursor"]);
-    const link = new URL(result.prompts.cursor.match(/cursor:\/\/\S+/)[0]);
-    expect(link.hostname).toBe("anysphere.cursor-deeplink");
-    expect(
-      JSON.parse(
-        Buffer.from(link.searchParams.get("config")!, "base64").toString(),
-      ),
-    ).toEqual({
-      command: "sh",
-      args: ["-c", 'exec "$HOME/.local/bin/blackboard" mcp'],
-    });
-  });
+      expect(code).toBe(1);
+      expect(stdout).toBe("");
+      expect(stderr).toContain("Allowed choices are");
+    },
+  );
 
   it("prints only scanner-owned cleanup paths", async () => {
     let owned = "";

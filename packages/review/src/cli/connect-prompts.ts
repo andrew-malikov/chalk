@@ -1,7 +1,6 @@
-import { cursorInstallDeeplink } from "./cursor-deeplink";
 import type { InstallTarget } from "./install";
 
-/** The macOS and Linux launch form; the Claude and Cursor plugins must match it byte for byte, and the Codex plugin's bin/blackboard-mcp runs the same command. */
+/** The macOS and Linux launch form; the Claude plugin must match it byte for byte, and the Codex plugin's bin/blackboard-mcp runs the same command. */
 export const REVIEW_MCP_LAUNCH = {
   command: "sh",
   args: ["-c", 'exec "$HOME/.local/bin/blackboard" mcp'],
@@ -67,7 +66,7 @@ export const CLAUDE_WINDOWS_MCP_ADD = `claude mcp add -s user blackboard -- ${WI
 export const COPILOT_WINDOWS_MCP_ADD = `copilot mcp add blackboard -- ${WINDOWS_MCP_LAUNCH.command} ${WINDOWS_MCP_LAUNCH.args.join(" ")}`;
 
 function pluginSteps(
-  target: Exclude<InstallTarget, "cursor">,
+  target: InstallTarget,
   platform: NodeJS.Platform,
 ): string[] {
   switch (target) {
@@ -138,17 +137,6 @@ export function launchCommand(launch: McpLaunch): string {
     .join(" ");
 }
 
-function cursorSteps(): string[] {
-  const launch = reviewMcpLaunch(true);
-  const deeplink = cursorInstallDeeplink(launch);
-  const entry = JSON.stringify({ blackboard: launch }, null, 2);
-
-  return [
-    `Do not paste the install link in chat. Chat clients do not open cursor:// links. Open Cursor's MCP install deeplink with the OS URL handler using the command for this operating system, then stop and let me confirm the install:\n\nmacOS: open ${shellQuote(deeplink)}\nLinux: xdg-open ${shellQuote(deeplink)}\nWindows: cmd /c start "" "${deeplink}"`,
-    `After I confirm, check for a blackboard server in ~/.cursor/mcp.json. If the deeplink did not add it, merge this entry into the file's mcpServers object without removing other servers or settings (create the file and object if missing). Do not use this fallback if I declined the install:\n\n\`\`\`json\n${entry}\n\`\`\``,
-  ];
-}
-
 export function connectPrompt(
   target: InstallTarget,
   input: ConnectPromptInput,
@@ -175,9 +163,7 @@ export function connectPrompt(
             `Delete these old Blackboard skill folders and plugin files:\n${input.legacyPaths.map((item) => `- ${JSON.stringify(item)}`).join("\n")}`,
           ]
         : []),
-      ...(target === "cursor"
-        ? cursorSteps()
-        : [...pluginSteps(target, input.platform ?? process.platform)]),
+      ...pluginSteps(target, input.platform ?? process.platform),
       verify,
     ]),
   ].join("\n");
@@ -191,7 +177,6 @@ export function connectSetupPrompts(): Record<InstallTarget, string> {
   return {
     claude: connectSetupPrompt("claude"),
     codex: connectSetupPrompt("codex"),
-    cursor: connectSetupPrompt("cursor"),
     opencode: connectSetupPrompt("opencode"),
     pi: connectSetupPrompt("pi"),
     omp: connectSetupPrompt("omp"),
@@ -205,7 +190,6 @@ export function connectPrompts(
   return {
     claude: connectPrompt("claude", input),
     codex: connectPrompt("codex", input),
-    cursor: connectPrompt("cursor", input),
     opencode: connectPrompt("opencode", input),
     pi: connectPrompt("pi", input),
     omp: connectPrompt("omp", input),

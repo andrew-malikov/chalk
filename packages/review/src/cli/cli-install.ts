@@ -28,7 +28,6 @@ import {
   launchCommand,
   reviewMcpLaunch,
 } from "./connect-prompts";
-import { cursorInstallDeeplink } from "./cursor-deeplink";
 import { removeLegacySkills, scanLegacySkills } from "./legacy-skills";
 import { readRetiredFile } from "./retired-agent-hooks";
 import {
@@ -386,7 +385,7 @@ function withShimPath(
   return result;
 }
 
-/** The published plugin per harness; Cursor's link needs the shim it launches. */
+/** The published plugin or MCP install command per harness. */
 function connectPlugins(
   hasShim: boolean,
 ): ReviewCliInstallStatus["connect"]["plugins"] {
@@ -407,12 +406,6 @@ function connectPlugins(
       command:
         "codex plugin marketplace add devdotfast/whiteboard\ncodex plugin add blackboard@devfast",
     },
-    cursor: hasShim
-      ? {
-          label: "Install in Cursor",
-          url: cursorInstallDeeplink(reviewMcpLaunch(true)),
-        }
-      : { label: "Install in Cursor" },
     opencode: {
       label: "Add the OpenCode MCP server (OpenCode 2+)",
       command: `opencode mcp add --global blackboard -- ${launchCommand(reviewMcpLaunch(hasShim))}`,

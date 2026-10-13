@@ -551,7 +551,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
           "claude",
           "claude-code",
           "codex",
-          "cursor",
           "opencode",
           "pi",
           "omp",
@@ -700,7 +699,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
 const TARGET_LABELS: Record<InstallTarget, string> = {
   claude: "Claude Code",
   codex: "Codex",
-  cursor: "Cursor",
   opencode: "OpenCode",
   pi: "Pi",
   omp: "oh-my-pi",

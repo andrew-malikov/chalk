@@ -32,7 +32,6 @@ const fresh: ReviewCliInstallStatus = {
     prompts: {
       claude: "claude prompt",
       codex: "codex prompt",
-      cursor: "cursor prompt",
       opencode: "opencode prompt",
       pi: "pi prompt",
       omp: "omp prompt",
@@ -41,7 +40,6 @@ const fresh: ReviewCliInstallStatus = {
     plugins: {
       claude: { label: "claude plugin", command: "claude command" },
       codex: { label: "codex plugin", command: "codex command" },
-      cursor: { label: "cursor plugin", url: "cursor://install" },
       opencode: { label: "opencode plugin", command: "opencode command" },
       pi: { label: "pi plugin", command: "pi command" },
       omp: { label: "omp plugin", command: "omp command" },
