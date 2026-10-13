@@ -27,7 +27,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it("exposes JSON section and Markdown headings plus PR and stack navigation", async () => {
+it("exposes JSON section and Markdown headings with table of contents navigation", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.stubGlobal(
     "ResizeObserver",
@@ -55,7 +55,6 @@ it("exposes JSON section and Markdown headings plus PR and stack navigation", as
         type: "create",
         title: "Navigation",
         pins: { repositoryId: "repo", base: "base", head: "head" },
-        pullRequestUrl: "https://github.com/example/repo/pull/42",
       },
     },
     {
@@ -74,28 +73,6 @@ it("exposes JSON section and Markdown headings plus PR and stack navigation", as
   );
 
   const app = new Hono();
-  app.get("/reviews-api/:id/stack", (c) =>
-    c.json({
-      layers: [
-        {
-          branch: "first",
-          pullRequestNumber: 41,
-          pullRequestUrl: null,
-          reviewUuid: "11111111-1111-4111-8111-111111111111",
-          reviewTitle: "Earlier",
-          relation: "earlier",
-        },
-        {
-          branch: "second",
-          pullRequestNumber: 42,
-          pullRequestUrl: null,
-          reviewUuid: reviewId,
-          reviewTitle: "Navigation",
-          relation: "current",
-        },
-      ],
-    }),
-  );
   app.route("/reviews-api", createReviewApi(store));
   app.get("/reviews-api/:id/commits", (c) => c.json([]));
   const post = vi.fn<() => Promise<{ ok: true }>>(async () => ({ ok: true }));
@@ -121,10 +98,6 @@ it("exposes JSON section and Markdown headings plus PR and stack navigation", as
       expect(container.textContent).toContain("Nested text"),
     );
   });
-  expect(
-    container.querySelector('a[href="https://github.com/example/repo/pull/42"]')
-      ?.textContent,
-  ).toContain("42");
   const headings = [...container.querySelectorAll("article h2, article h3")];
   expect(headings.map((heading) => heading.textContent)).toEqual([
     "Summary",
@@ -162,7 +135,4 @@ it("exposes JSON section and Markdown headings plus PR and stack navigation", as
 
   for (const link of links) await act(async () => link.click());
   expect(scroll).toHaveBeenCalledTimes(4);
-  expect(
-    container.querySelector('[aria-label="Pull request stack, 2 of 2"]'),
-  ).not.toBeNull();
 });

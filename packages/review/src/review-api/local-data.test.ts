@@ -403,41 +403,22 @@ it("opens a created review in Desktop unless the author opts out", async () => {
   expect(opened).toEqual([shownReview.reviewId, quietReview.reviewId]);
 });
 
-it("opens the PR's existing review that create returns instead of a new one", async () => {
-  const opened: string[] = [];
+it("rejects unsupported import commands without creating a review", async () => {
+  const app = createReviewApi(local.store, local.data);
 
-  const app = createReviewApi(local.store, local.data, async ({ reviewId }) => {
-    opened.push(reviewId);
-
-    return { softwareMapEnabled: false };
-  });
-
-  const pullRequestUrl = "https://github.com/devdotfast/review/pull/452";
-
-  const first = await (
-    await postJson(
-      app,
-      "/commands",
-      command({ type: "create", title: "PR", pins, pullRequestUrl }),
-    )
-  ).json();
-
-  const again = await postJson(
+  const response = await postJson(
     app,
     "/commands",
-    command({ type: "create", title: "PR again", pins, pullRequestUrl }),
+    command({
+      type: "create",
+      title: "Unsupported import",
+      pins,
+      pullRequestUrl: "https://github.com/devdotfast/review/pull/452",
+    }),
   );
 
-  expect(again.status).toBe(200);
-  const body = await again.json();
-  expect(body).toMatchObject({
-    created: false,
-    reviewId: first.reviewId,
-    opened: true,
-  });
-  expect(body.note).toEqual(expect.any(String));
-  expect(Object.keys(body).slice(0, 2)).toEqual(["created", "note"]);
-  expect(opened).toEqual([first.reviewId, first.reviewId]);
+  expect(response.status).toBe(400);
+  expect(local.store.list()).toEqual([]);
 });
 
 it("does not open a created review when Desktop is not attached", async () => {

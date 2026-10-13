@@ -470,7 +470,7 @@ function RestoreReviewButton({ review }: { review: ReviewApiSummary }) {
   );
 }
 
-type ReviewSort = "newest" | "oldest" | "updated" | "pr" | "title";
+type ReviewSort = "newest" | "oldest" | "updated" | "title";
 
 function ReviewTable({
   reviews,
@@ -496,11 +496,6 @@ function ReviewTable({
         return created(left) - created(right);
       case "updated":
         return latestFirst(left, right);
-      case "pr":
-        return (
-          (right.origin?.pullRequestNumber ?? -1) -
-            (left.origin?.pullRequestNumber ?? -1) || latestFirst(left, right)
-        );
       case "title":
         return reviewTitle(left).localeCompare(reviewTitle(right));
       default:
@@ -531,7 +526,6 @@ function ReviewTable({
               { value: "newest", label: "Newest first" },
               { value: "oldest", label: "Oldest first" },
               { value: "updated", label: "Recently updated" },
-              { value: "pr", label: "PR number" },
               { value: "title", label: "Title A–Z" },
             ]}
             onChange={setSort}
@@ -541,7 +535,6 @@ function ReviewTable({
       <div {...stylex.props(styles.tableScroll)}>
         <table {...stylex.props(styles.table)}>
           <colgroup>
-            <col {...stylex.props(styles.colPr)} />
             <col />
             <col {...stylex.props(styles.colBranch)} />
             <col {...stylex.props(styles.colDate)} />
@@ -551,9 +544,6 @@ function ReviewTable({
           <thead>
             <tr>
               <th scope="col" {...stylex.props(styles.th, styles.firstCell)}>
-                PR
-              </th>
-              <th scope="col" {...stylex.props(styles.th)}>
                 Title
               </th>
               <th scope="col" {...stylex.props(styles.th)}>
@@ -584,15 +574,9 @@ function ReviewTable({
                     {...stylex.props(
                       styles.td,
                       styles.firstCell,
-                      styles.strongCell,
                       last && styles.lastRowCell,
                     )}
                   >
-                    {review.origin?.pullRequestNumber
-                      ? `#${review.origin.pullRequestNumber}`
-                      : "—"}
-                  </td>
-                  <td {...stylex.props(styles.td, last && styles.lastRowCell)}>
                     <ButtonPrimitive
                       variant="ghost"
                       size="xs"
@@ -655,7 +639,7 @@ function ReviewTable({
             {sorted.length === 0 ? (
               <tr {...stylex.props(styles.row)}>
                 <td
-                  colSpan={6}
+                  colSpan={5}
                   {...stylex.props(
                     styles.td,
                     styles.firstCell,
@@ -1385,9 +1369,6 @@ const styles = stylex.create({
     borderCollapse: "collapse",
     tableLayout: "fixed",
     font: `${fontSize.body}/18px ${tokens.fontSans}`,
-  },
-  colPr: {
-    width: "88px",
   },
   colBranch: {
     width: {

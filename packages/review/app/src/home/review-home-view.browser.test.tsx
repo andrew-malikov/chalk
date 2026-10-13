@@ -91,7 +91,6 @@ describe("ReviewHome", () => {
         repositoryName: "alpha",
         firstCreatedAt: "2026-01-01T00:00:00Z",
         createdAt: "2026-03-01T00:00:00Z",
-        origin: { pullRequestNumber: 10 },
       }),
       summary({
         reviewId: uuid(2),
@@ -99,7 +98,6 @@ describe("ReviewHome", () => {
         repositoryName: "beta",
         firstCreatedAt: "2026-02-01T00:00:00Z",
         createdAt: "2026-02-01T00:00:00Z",
-        origin: { pullRequestNumber: 20 },
       }),
     ];
 
@@ -138,8 +136,6 @@ describe("ReviewHome", () => {
     expect(titles()).toEqual(["Zulu", "Alpha"]);
     await select("Sort reviews", "oldest");
     expect(titles()).toEqual(["Zulu", "Alpha"]);
-    await select("Sort reviews", "pr");
-    expect(titles()).toEqual(["Alpha", "Zulu"]);
     await select("Sort reviews", "title");
     expect(titles()).toEqual(["Alpha", "Zulu"]);
     await select("Filter by repository", "alpha");
@@ -153,7 +149,7 @@ describe("ReviewHome", () => {
     expect(onOpen).not.toHaveBeenCalled();
     await act(async () =>
       container
-        .querySelector<HTMLButtonElement>("td:nth-child(2) > button")!
+        .querySelector<HTMLButtonElement>("td:first-child > button")!
         .click(),
     );
     expect(onOpen).toHaveBeenCalledWith(reviews[0]);
@@ -465,7 +461,6 @@ describe("ReviewHome", () => {
     const review = summary({
       title: "Native review",
       version: 0,
-      origin: { pullRequestNumber: 320 },
     });
 
     const onOpen = vi.fn<(review: ReviewApiSummary) => void>();
@@ -491,7 +486,6 @@ describe("ReviewHome", () => {
       );
 
     await render(review);
-    expect(container.textContent).toContain("#320");
     await act(async () =>
       container
         .querySelector<HTMLButtonElement>(
@@ -526,7 +520,7 @@ describe("ReviewHome", () => {
     expect(onRestore).toHaveBeenCalledWith(dismissed);
     await render({ ...dismissed, dismissedAt: null });
     expect(
-      container.querySelector("td:nth-child(2) > button")?.textContent,
+      container.querySelector("td:first-child > button")?.textContent,
     ).toContain("Native review");
   });
 

@@ -384,14 +384,14 @@ it("prints readable CLI output by default and raw objects with --json", async ()
   }
 });
 
-it("binds existing content through the host-advertised PR tool", async () => {
+it("repins existing content through the host-advertised tool", async () => {
   const tools = await client.read<AuthoringTool[]>("/authoring");
 
   const created = await store.execute({
     commandId: randomUUID(),
     operation: {
       type: "create",
-      title: "PR",
+      title: "Source review",
       pins: { repositoryId: "repo", base: "base", head: "head" },
     },
   });
@@ -416,17 +416,11 @@ it("binds existing content through the host-advertised PR tool", async () => {
     {
       commandId: randomUUID(),
       reviewId: created.reviewId,
-      pins: { repositoryId: "repo", base: "base", head: "head" },
-      pullRequestUrl: "https://github.com/devdotfast/review/pull/310",
+      pins: { repositoryId: "repo", base: "base", head: "next-head" },
     },
   );
   expect(store.read(created.reviewId).document).toEqual(authored);
-  expect(
-    store.list().find((review) => review.reviewId === created.reviewId)?.origin,
-  ).toEqual({
-    pullRequestNumber: 310,
-    pullRequestUrl: "https://github.com/devdotfast/review/pull/310",
-  });
+  expect(store.read(created.reviewId).pins?.head).toBe("next-head");
 });
 
 it("keeps an MCP session on the instance key it first reached", async () => {

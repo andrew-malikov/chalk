@@ -59,7 +59,7 @@ All paths below are relative to `/reviews-api`.
 | `GET /:id/inspect` | Agent reading view: nested text outline with IDs; `targetId` reads one component completely, `full=true` includes all content, `version` selects history. `format=json` returns raw data instead. |
 | `POST /:id/open` | Open the review in the attached Desktop; report an error when none is attached |
 | `GET /:id/watch`                          | NDJSON snapshots: current state immediately, then committed updates    |
-| `POST /commands`                          | Apply one command; return review ID, version, and for an edit the target ID, its `type`, and — after an insert or replace — `children`: its first-level children as `{id,type}` (a container's blocks; a diagram's steps, or nodes then edges), so new components are addressable without a read. A `create` with `pullRequestUrl` returns the newest existing review for that PR instead (owner/repository matched case-insensitively) unless `operation.reuseExisting` is `false`: `created:false`, a `note`, its stored `target`, `headMoved`, and `activeLeaseId`/`otherReviewIds` when they apply; its target is never moved. A new review reports `created:true`. Either way the result carries `review`, the review's `GET /` catalog entry (target, origin, repository name and path). An interactive `create` also opens the new review in an attached Desktop unless `operation.open` is `false`, and reports `opened` with the open result or an `openError`; the review is saved either way |
+| `POST /commands`                          | Apply one command; return review ID and version. An edit also returns the target ID and its `type`; an insert or replace returns `children`, its first-level children as `{id,type}`, so new components are addressable without a read. A new review reports `created:true`. A `create` with `mergeRequestUrl` returns the existing review for the same GitLab MR when one exists. The result carries `review`, the review's `GET /` catalog entry (target, origin, repository name and path). An interactive `create` opens the review in an attached Desktop unless `operation.open` is `false`, and reports `opened` with the open result or an `openError`; the review is saved either way |
 | `POST /commands {operation:{type:"lens_edit",reviewId,edit}}` | Write one file lens under the `lenses` lease: `insert {title,targets,afterId?}` (host id `lens-N`), `update {targetId,title?,targets?}` or `remove {targetId}`. Returns `{targetId, type:"lens", uncategorized}`, where `uncategorized` lists changed files and ranges no lens covers yet (at most 50 files) |
 | `GET /:id/lenses` | The current version's file lenses with each one's file count, plus the same `uncategorized` report |
 | `POST /repositories {path}`               | Register a local Git/jj repository; return ID/name                     |
@@ -121,11 +121,25 @@ marker, so the budget holds and each call makes progress. Legacy `file` is
 }
 ```
 
-Commands: `create {title,target,pullRequestUrl?,reuseExisting?}` or `create {pullRequestUrl,title?,repositoryId?,reuseExisting?}`, `set_target {reviewId,target}`, `edit {reviewId,edit}`, `rename {reviewId,title}`,
-`repin {reviewId,pins,pullRequestUrl?}`, `restore {reviewId,version}`. Legacy create with pins remains accepted. Pins contain
-`{repositoryId,base,head}` and must identify immutable commits.
-Retargeting preserves content and component IDs. Restore restores title, target, PR identity, and content. Live targets still read the current checkout.
-PR URLs must be canonical `https://github.com/owner/repository/pull/123` URLs. The PR number is derived from the URL; identity is metadata alongside immutable pins, not a moving source reference. A `create` with a target keeps that target and treats the URL as identity only. A `create` with the URL and no target resolves the PR when accepted: it reads the PR with `gh pr view` (falling back to the public GitHub API), picks the registered checkout named by `repositoryId`, else the checkout of the PR's existing review, else the first registered checkout with a remote whose configured URL is `github.com/owner/repository`, and fetches `refs/pull/N/head` and the base branch from that remote into `refs/review/github/owner/repository/pull/N/*`, never moving branches or bookmarks (a jj repository indexes the commits through a transient tag). It pins that head and its merge base with the base branch; for a PR absorbed by a merge commit it uses the merge base with GitHub's frozen base commit instead. The title defaults to the PR title. A repeat with a new `commandId` resolves the PR again, so `headMoved` compares the existing review with the PR's current head; a retry with the same `commandId` replays the first answer without contacting GitHub. `repin` preserves the document and component IDs, including when source commits change. Its response reports retained source ranges to verify and resources that no longer match the pins; agents repair these with `edit`. Existing versions keep their original pins and content. Repin preserves omitted PR identity within one repository, clears it when switching repositories, and accepts an explicit URL or null. A `create` that finds its PR's review saves only the command's receipt, so a retry with the same `commandId` replays that answer; `reuseExisting` is part of the saved command.
+Commands: `create {title,target}` or `create {mergeRequestUrl,title?}`,
+`set_target {reviewId,target}`, `edit {reviewId,edit}`, `rename {reviewId,title}`,
+`repin {reviewId,pins}`, `restore {reviewId,version}`. Legacy `create {title,pins}`
+remains accepted. Pins contain `{repositoryId,base,head}` and must identify
+immutable commits.
+Retargeting preserves content and component IDs. Restore restores title, target,
+source pins, and content. Live targets still read the current checkout.
+
+GitLab imports accept `mergeRequestUrl` with an optional title. The host uses
+`glab` authentication and an independent managed Git clone, pins the MR diff
+refs, and defaults the title to the MR title. The URL cannot be combined with
+`target`, `pins`, or scratchpad creation. Repeated creates for the same
+host/project/MR return its existing review. Use GitLab Refresh in Desktop to
+update the managed source. Discussion drafts and posting are manual in Desktop.
+
+`repin` preserves the document and component IDs, including when source commits
+change. Its response reports retained source ranges to verify and resources that
+no longer match the pins; agents repair these with `edit`. Existing versions keep
+their original pins and content.
 
 `attention {reviewId,action:"view"|"dismiss"|"restore"}` records viewing or
 reversible dismissal without creating a document version. Home summaries include

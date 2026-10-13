@@ -16,7 +16,6 @@ import {
 } from "@review/review-api/agent-selection.js";
 import { readBoundedRequestJson } from "@review/server/hono-http.js";
 import { HttpJsonError } from "@review/server/http-json.js";
-import { resolveReviewStackLayers } from "@review/vcs/review-stack.js";
 import { type Context, Hono, type MiddlewareHandler } from "hono";
 import { z } from "zod";
 
@@ -1062,35 +1061,6 @@ export function createReviewApi(
       "",
     ].join("\n");
   }
-
-  app.get("/:id/stack", async (context) => {
-    const query = readQuerySchemas.get.parse(context.req.query());
-    const id = context.req.param("id");
-    const snapshot = readReview(id, query.version);
-
-    if (!snapshot.pins) return context.json({ layers: [] });
-    const repositoryId = snapshot.pins.repositoryId;
-
-    const repoKey = (review: Pick<Snapshot, "origin" | "pins">) =>
-      review.origin?.pullRequestUrl?.replace(/\/pull\/\d+.*$/, "") ??
-      review.pins?.repositoryId ??
-      "";
-
-    const layers = await resolveReviewStackLayers(
-      {
-        pullRequestUrl: snapshot.origin?.pullRequestUrl,
-      },
-      store.list().map((review) => ({
-        uuid: review.reviewId,
-        title: review.title,
-        repoKey: repoKey(review),
-        pullRequestNumber: review.origin?.pullRequestNumber,
-        presentedDocumentRevision: String(review.version),
-      })),
-    );
-
-    return context.json({ layers });
-  });
 
   app.get("/:id/history", (context) =>
     context.json(store.history(context.req.param("id"))),

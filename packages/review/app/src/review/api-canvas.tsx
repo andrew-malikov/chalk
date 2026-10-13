@@ -1,7 +1,6 @@
 import {
   type ReviewCanvasContent,
   type ReviewDocumentWidthChoice,
-  parseReviewStackResponse,
   resolveReviewSourceView,
 } from "@blackboard/review-protocol";
 import { App } from "@canvas/App";
@@ -297,16 +296,6 @@ export function ApiCanvas({
         historicalRevision: version === undefined ? null : String(version),
         updatedAtMs: Date.parse(snapshot.createdAt),
         headBranch: snapshot.origin?.branch,
-        pullRequestNumber: snapshot.origin?.pullRequestNumber,
-        pullRequestUrl: snapshot.origin?.pullRequestUrl,
-
-        stack: async (signal: AbortSignal) =>
-          parseReviewStackResponse(
-            await client.read(
-              `/${snapshot.reviewId}/stack?version=${snapshot.version}`,
-              signal,
-            ),
-          ).layers,
         dismiss: async () => {
           await client.post("/commands", {
             commandId: crypto.randomUUID(),

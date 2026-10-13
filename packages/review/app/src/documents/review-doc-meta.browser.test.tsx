@@ -97,15 +97,13 @@ describe("ReviewDocumentMetaLine", () => {
     );
   });
 
-  it("refreshes PR identity and update time as the displayed version changes without remounting", async () => {
+  it("refreshes update time as the displayed version changes without remounting", async () => {
     const now = Date.UTC(2026, 6, 22, 12, 10);
     vi.spyOn(Date, "now").mockReturnValue(now);
 
     let meta = {
       ok: true,
       updatedAtMs: now - 300_000,
-      pullRequestNumber: null as number | null,
-      pullRequestUrl: null as string | null,
     };
 
     const session = testReviewSession();
@@ -118,8 +116,6 @@ describe("ReviewDocumentMetaLine", () => {
       session.review = {
         ...session.review!,
         updatedAtMs: meta.updatedAtMs,
-        pullRequestNumber: meta.pullRequestNumber ?? undefined,
-        pullRequestUrl: meta.pullRequestUrl ?? undefined,
       };
 
       await act(async () => {
@@ -139,28 +135,11 @@ describe("ReviewDocumentMetaLine", () => {
     await vi.waitFor(() =>
       expect(container.textContent).toContain("Updated 5 min ago"),
     );
-    expect(container.querySelector("a")).toBeNull();
     meta = {
       ok: true,
       updatedAtMs: now,
-      pullRequestNumber: 310,
-      pullRequestUrl: "https://github.com/devdotfast/review/pull/310",
     };
     await render(1);
-    await vi.waitFor(() =>
-      expect(container.querySelector("a")?.getAttribute("href")).toBe(
-        meta.pullRequestUrl,
-      ),
-    );
-    expect(container.textContent).toContain("PR #310");
     expect(container.textContent).toContain("Updated just now");
-    meta = {
-      ok: true,
-      updatedAtMs: now,
-      pullRequestNumber: null,
-      pullRequestUrl: null,
-    };
-    await render(2);
-    await vi.waitFor(() => expect(container.querySelector("a")).toBeNull());
   });
 });

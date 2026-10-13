@@ -78,7 +78,6 @@ import {
   ReviewRootsProvider,
   useReviewContainer,
 } from "./review/review-root-context";
-import { ReviewStackSelector } from "./review/review-stack-selector";
 import { ReviewToc } from "./review/review-toc";
 import {
   offeredReviewViews,
@@ -607,7 +606,6 @@ function ReviewLayoutContent({
                   }}
                 />
               </div>
-              <ReviewStackSelector />
               <ReviewBatonChip outcome={review.submissionOutcome} />
               <DiffLayoutControl />
               {gitlab && (

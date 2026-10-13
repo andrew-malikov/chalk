@@ -33,7 +33,6 @@ export type ReviewLifecycleEvent =
       base: string;
       head: string;
       repo?: string;
-      pullRequest?: number;
     }
   | {
       event: "phase";

@@ -872,23 +872,6 @@ export type ReviewTutorialOpenResponse = z.infer<
   typeof ReviewTutorialOpenResponseSchema
 >;
 
-export const ReviewStackLayerSchema = z.strictObject({
-  branch: requiredString,
-  pullRequestNumber: positiveInteger,
-  pullRequestUrl: absoluteUrlSchema.nullable(),
-  reviewUuid: z.uuid({ error: "must be a UUID" }).nullable(),
-  reviewTitle: stringAllowEmpty.nullable(),
-  relation: z.enum(["earlier", "current", "later"]),
-});
-
-export type ReviewStackLayer = z.infer<typeof ReviewStackLayerSchema>;
-
-export const ReviewStackResponseSchema = z.strictObject({
-  layers: z.array(ReviewStackLayerSchema),
-});
-
-export type ReviewStackResponse = z.infer<typeof ReviewStackResponseSchema>;
-
 export const ReviewCliInstallTargetSchema = z.enum(
   ["claude", "codex", "cursor", "opencode", "pi", "omp", "copilot"],
   { error: "must be claude, codex, cursor, opencode, pi, omp, or copilot" },

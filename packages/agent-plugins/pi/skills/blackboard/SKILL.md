@@ -1,6 +1,6 @@
 ---
 name: blackboard
-description: "Explain code in Blackboard, the architecture-visualization tool: author Blackboards of branches, changes and pull requests, draw on the Blackboard scratchpad, or research why code exists from past agent sessions."
+description: "Explain code in Blackboard, the architecture-visualization tool: author Blackboards of branches, changes and GitLab merge requests, draw on the Blackboard scratchpad, or research why code exists from past agent sessions."
 ---
 
 # dev.fast Blackboard

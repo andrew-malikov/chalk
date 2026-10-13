@@ -128,17 +128,6 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
     const checkout = local.store.repositoryPath(snapshot.pins!.repositoryId);
     expect(checkout).not.toBe(origin);
 
-    expect(() =>
-      local.store.execute({
-        commandId: randomUUID(),
-        operation: {
-          type: "create",
-          mergeRequestUrl: "https://gitlab.test/team/repo/-/merge_requests/1",
-          repositoryId: "no",
-        },
-      }),
-    ).toThrow(/cannot be combined/);
-
     const drafts = ["okay", "fail"].map((text) =>
       local.store.gitlab.save(first.reviewId, {
         id: randomUUID(),

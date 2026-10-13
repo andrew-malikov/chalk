@@ -11,10 +11,10 @@ import {
   WORKING_TREE,
 } from "@canvas/review/review-branch-range";
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
+import { fontSize, radius } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
-import { ArrowUpRight, GitBranch } from "lucide-react";
+import { GitBranch } from "lucide-react";
 import {
   Fragment,
   type ReactElement,
@@ -24,14 +24,8 @@ import {
   useState,
 } from "react";
 
-interface ReviewDocumentMetaState {
-  pullRequestNumber: number | null;
-  pullRequestUrl: string | null;
-  updatedAtMs: number | null;
-}
-
 /**
- * Automatic document header: repository and PR identity above the title,
+ * Automatic document header: update time above the title,
  * with one row of facts below it: saved branch, diff statistics and the
  * commit range, separated by dots.
  */
@@ -45,7 +39,6 @@ export function ReviewDocumentMetaLine({
   const diffFiles = useReviewDiffFiles();
 
   const review = session.review!;
-  const meta = documentMetaState(review);
 
   const [relativeTimeNowMs, setRelativeTimeNowMs] = useState<number | null>(
     null,
@@ -59,13 +52,9 @@ export function ReviewDocumentMetaLine({
     diffFiles.status === "loaded" ? reviewDiffStats(diffFiles) : null;
 
   const updatedLabel =
-    meta?.updatedAtMs != null && relativeTimeNowMs != null
-      ? relativeTimeLabel(meta.updatedAtMs, relativeTimeNowMs)
+    review.updatedAtMs != null && relativeTimeNowMs != null
+      ? relativeTimeLabel(review.updatedAtMs, relativeTimeNowMs)
       : null;
-
-  const repository = meta.pullRequestUrl?.match(
-    /^https:\/\/[^/]+\/([^/]+)\/([^/]+)\/pull\//,
-  );
 
   const branch = review.headBranch?.trim() ? review.headBranch : null;
 
@@ -147,38 +136,6 @@ export function ReviewDocumentMetaLine({
       data-review-document-header
     >
       <div {...stylex.props(styles.row, styles.top)} data-review-copy-ignore>
-        <div {...stylex.props(styles.row, styles.identity)}>
-          {repository ? (
-            <span>
-              {repository[1]} / {repository[2]}
-            </span>
-          ) : null}
-          {repository && meta.pullRequestNumber != null ? (
-            <span {...stylex.props(styles.separator)} aria-hidden="true">
-              ·
-            </span>
-          ) : null}
-          {meta.pullRequestNumber != null &&
-            (meta.pullRequestUrl ? (
-              <a
-                href={meta.pullRequestUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                {...stylex.props(styles.pullRequest, styles.pullRequestLink)}
-              >
-                PR #{meta.pullRequestNumber}
-                <ArrowUpRight
-                  size={11}
-                  aria-hidden="true"
-                  {...stylex.props(styles.icon)}
-                />
-              </a>
-            ) : (
-              <span {...stylex.props(styles.pullRequest)}>
-                PR #{meta.pullRequestNumber}
-              </span>
-            ))}
-        </div>
         {updatedLabel && (
           <span {...stylex.props(styles.updated)}>Updated {updatedLabel}</span>
         )}
@@ -206,18 +163,6 @@ function withFactDots(
       {node}
     </Fragment>
   ));
-}
-
-function documentMetaState(meta: {
-  updatedAtMs?: number;
-  pullRequestNumber?: number;
-  pullRequestUrl?: string;
-}): ReviewDocumentMetaState {
-  return {
-    pullRequestNumber: meta.pullRequestNumber ?? null,
-    pullRequestUrl: meta.pullRequestUrl ?? null,
-    updatedAtMs: meta.updatedAtMs ?? null,
-  };
 }
 
 function reviewDiffStats(diff: {
@@ -270,14 +215,6 @@ const styles = stylex.create({
     justifyContent: "space-between",
     gap: "10px 24px",
   },
-  identity: {
-    gap: "10px",
-    minWidth: 0,
-    overflowWrap: "anywhere",
-  },
-  separator: {
-    color: tokens.inkFaint,
-  },
   updated: {
     marginLeft: "auto",
   },
@@ -288,17 +225,6 @@ const styles = stylex.create({
     strokeWidth: "1.8",
     strokeLinecap: "round",
     strokeLinejoin: "round",
-  },
-  pullRequest: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "5px",
-    color: tokens.accent,
-    fontWeight: fontWeight.medium,
-    textDecoration: "none",
-  },
-  pullRequestLink: {
-    textDecoration: { default: "none", ":hover": "underline" },
   },
   // Facts in the details row are divided by small ink-faint dots.
   details: {

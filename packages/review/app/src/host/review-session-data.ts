@@ -1,7 +1,4 @@
-import type {
-  GitLabIdentity,
-  ReviewStackLayer,
-} from "@blackboard/review-protocol";
+import type { GitLabIdentity } from "@blackboard/review-protocol";
 
 export interface ReviewSessionData {
   /** Absent for a review. The scratchpad hides review-only chrome. */
@@ -16,9 +13,5 @@ export interface ReviewSessionData {
   updatedAtMs: number;
   /** Head branch captured with the displayed snapshot. */
   headBranch?: string;
-  pullRequestNumber?: number;
-  pullRequestUrl?: string;
-
-  stack(signal: AbortSignal): Promise<ReviewStackLayer[]>;
   dismiss(): Promise<void>;
 }

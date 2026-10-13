@@ -69,7 +69,6 @@ export function testReviewSession(
       historicalRevision: null,
       updatedAtMs: Date.now(),
 
-      stack: async () => [],
       dismiss: async () => {},
     },
   };

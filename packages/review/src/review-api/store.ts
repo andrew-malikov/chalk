@@ -58,7 +58,6 @@ import {
 } from "./document.js";
 import { GitLabStorage } from "./gitlab-state.js";
 import { mergeRequestUrlSchema } from "./gitlab.js";
-import { pullRequestKey, pullRequestUrl, setPullRequest } from "./origin.js";
 
 const reviewId = z.string().min(1);
 
@@ -90,30 +89,14 @@ export const commandSchema = z.strictObject({
     }),
     z.strictObject({
       type: z.literal("create"),
-      /** Required unless pullRequestUrl alone names the source; then the PR title. */
+      /** Required for local sources; GitLab imports default to the MR title. */
       title: z.string().trim().min(1).optional(),
       pins: pinsSchema.optional(),
       target: reviewTargetSchema.optional(),
-      pullRequestUrl: pullRequestUrl.optional(),
       mergeRequestUrl: mergeRequestUrlSchema
         .optional()
         .describe(
           "GitLab MR URL; uses an independent managed clone and reopens the same MR review. Requires glab and Git authentication.",
-        ),
-      /** With pullRequestUrl and no target: the checkout to fetch the PR into. */
-      repositoryId: z
-        .string()
-        .min(1)
-        .optional()
-        .describe(
-          "Only with pullRequestUrl and no target: the registered checkout to fetch the PR into. Default: the existing review's, else the first registered checkout with a remote for the PR's repository.",
-        ),
-      /** Return the existing review for pullRequestUrl instead of creating one. */
-      reuseExisting: z
-        .boolean()
-        .optional()
-        .describe(
-          "Default true: return the existing review for pullRequestUrl. false creates a separate review.",
         ),
       /** The one scratchpad: no target, no pins; every reference names its own. */
       kind: z.literal("scratchpad").optional(),
@@ -138,7 +121,6 @@ export const commandSchema = z.strictObject({
       type: z.literal("repin"),
       reviewId,
       pins: pinsSchema,
-      pullRequestUrl: pullRequestUrl.nullable().optional(),
     }),
     z.strictObject({
       type: z.literal("restore"),
@@ -155,8 +137,6 @@ export interface SnapshotOrigin {
   tutorial?: boolean;
   branch?: string;
   baseRef?: string;
-  pullRequestNumber?: number;
-  pullRequestUrl?: string;
 }
 
 export interface Snapshot {
@@ -183,20 +163,10 @@ export interface Snapshot {
 }
 
 export interface Result {
-  /** Create only: false when an existing review for the same PR came back. */
+  /** Create only: true when a new review was created. */
   created?: boolean;
-  /** Why an existing review came back, and what to do next, in words. */
-  note?: string;
   reviewId: string;
   version: number;
-  /** The existing review's stored target; the requested one is not applied. */
-  target?: ReviewTarget;
-  /** The requested head differs from the existing review's. */
-  headMoved?: boolean;
-  /** The live document lease on the existing review, whoever holds it. */
-  activeLeaseId?: string;
-  /** Older reviews that also name the PR, newest first. */
-  otherReviewIds?: string[];
   /** The component an edit landed on, its type, and — for an insert or
    * replace — its first-level children with their fresh IDs. */
   targetId?: string;
@@ -207,8 +177,8 @@ export interface Result {
   warnings?: string[];
 }
 
-/** A PR's current comparison: GitHub's head and diff base, fetched locally. */
-export interface ResolvedPullRequest {
+/** The source comparison and title resolved for a managed GitLab MR. */
+export interface ResolvedMergeRequest {
   target: ReviewTarget;
   pins: Pins;
   title: string;
@@ -217,15 +187,9 @@ export interface ResolvedPullRequest {
 export interface ReviewProviders {
   resolveMergeRequest?(
     url: string,
-  ): Promise<ResolvedPullRequest & { gitlab: GitLabState }>;
+  ): Promise<ResolvedMergeRequest & { gitlab: GitLabState }>;
   headBranch?(pins: Pins, headRef?: string): Promise<string | undefined>;
   projectSource?(snapshot: Snapshot, pins: Pins): Promise<Snapshot>;
-  /** Fetch a PR into a registered checkout: the named one, else the first
-   * preferred one that still matches, else any whose remote is the PR's. */
-  resolvePullRequest?(
-    url: string,
-    repository: { id?: string; preferred?: string },
-  ): Promise<ResolvedPullRequest>;
   resolveTarget?(
     target: ReviewTarget,
     pinned?: Pins,
@@ -983,13 +947,10 @@ export class ReviewStore {
       command.operation.mergeRequestUrl &&
       (command.operation.pins ||
         command.operation.target ||
-        command.operation.repositoryId ||
-        command.operation.pullRequestUrl ||
-        command.operation.kind ||
-        command.operation.reuseExisting === false)
+        command.operation.kind)
     )
       throw new ReviewInputError(
-        "mergeRequestUrl cannot be combined with local source, GitHub PR, scratchpad, or reuseExisting:false.",
+        "mergeRequestUrl cannot be combined with local source or scratchpad.",
       );
 
     const mergeRequest =
@@ -1004,9 +965,6 @@ export class ReviewStore {
         : undefined;
 
     mergeRequest?.catch(() => {});
-    const pullRequest = this.startPullRequest(command);
-
-    pullRequest?.catch(() => {});
 
     const run = this.pending.then(async () => {
       const receipt = this.db
@@ -1067,14 +1025,9 @@ export class ReviewStore {
             "Supply exactly one of target or legacy pins.",
           );
 
-        if (!op.pins && !op.target && !op.pullRequestUrl && !op.mergeRequestUrl)
+        if (!op.pins && !op.target && !op.mergeRequestUrl)
           throw new ReviewInputError(
-            "Supply a target, legacy pins, or a pullRequestUrl.",
-          );
-
-        if (op.repositoryId && (op.pins || op.target))
-          throw new ReviewInputError(
-            "repositoryId applies only to a create from pullRequestUrl alone; put it in the target instead.",
+            "Supply a target, legacy pins, or a mergeRequestUrl.",
           );
 
         if (!op.title && (op.pins || op.target))
@@ -1126,42 +1079,12 @@ export class ReviewStore {
         }
       }
 
-      const fromPullRequest = fromMergeRequest ?? (await pullRequest);
-
       const resolvedTarget = requestedTarget
         ? await this.providers.resolveTarget?.(requestedTarget)
-        : fromPullRequest;
+        : fromMergeRequest;
 
       if (requestedTarget && !resolvedTarget)
         throw new ReviewInputError("Review targets are unavailable.");
-
-      if (
-        op.type === "create" &&
-        op.pullRequestUrl &&
-        op.reuseExisting !== false
-      ) {
-        const [found, ...others] = this.reviewsForPullRequest(
-          op.pullRequestUrl,
-        );
-
-        if (found) {
-          const result = this.existingReview(
-            found,
-            others,
-            resolvedTarget?.pins ?? op.pins!,
-          );
-
-          // Nothing is written but the receipt: a retry replays this answer,
-          // and deleting the review erases it like any other command's.
-          this.db
-            .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
-              "INSERT INTO receipts(command_id,request,response) VALUES(?,?,?)",
-            )
-            .run(command.commandId, request, JSON.stringify(result));
-
-          return result;
-        }
-      }
 
       if (op.type === "delete") {
         const result: Result = {
@@ -1252,7 +1175,7 @@ export class ReviewStore {
 
       let snapshot: Snapshot =
         op.type === "create"
-          ? createdSnapshot(id, op, resolvedTarget, fromPullRequest?.title)
+          ? createdSnapshot(id, op, resolvedTarget, fromMergeRequest?.title)
           : structuredClone(previous!);
 
       // Overlay state: a degraded read must not persist unavailability.
@@ -1313,28 +1236,16 @@ export class ReviewStore {
               ...snapshot.origin,
               gitlab: fromMergeRequest.gitlab.identity,
             };
-          setPullRequest(snapshot, op.pullRequestUrl);
           break;
         case "rename":
           snapshot.title = op.title;
           break;
         case "set_target":
-          if (snapshot.pins?.repositoryId !== resolvedTarget!.pins.repositoryId)
-            setPullRequest(snapshot, null);
           snapshot.staleSources = [];
           snapshot.target = resolvedTarget!.target;
           snapshot.pins = resolvedTarget!.pins;
           break;
         case "repin":
-          setPullRequest(
-            snapshot,
-            op.pullRequestUrl ??
-              (op.pullRequestUrl === null ||
-              snapshot.pins?.repositoryId !== op.pins.repositoryId
-                ? null
-                : undefined),
-          );
-
           snapshot.staleSources = [];
           snapshot.pins = op.pins;
           snapshot.target = { kind: "commits", ...op.pins };
@@ -1493,92 +1404,6 @@ export class ReviewStore {
     this.pending = run.catch(() => {});
 
     return run;
-  }
-  /** Resolve a target-less PR create before it queues, when it will need it. */
-  private startPullRequest(
-    command: z.infer<typeof commandSchema>,
-  ): Promise<ResolvedPullRequest> | undefined {
-    const op = command.operation;
-
-    if (
-      op.type !== "create" ||
-      op.kind ||
-      op.pins ||
-      op.target ||
-      !op.pullRequestUrl ||
-      this.db
-        .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
-          "SELECT 1 FROM receipts WHERE command_id=?",
-        )
-        .get(command.commandId)
-    )
-      return undefined;
-
-    if (!this.providers.resolvePullRequest)
-      return Promise.reject(
-        new ReviewInputError("Pull request targets are unavailable."),
-      );
-
-    // Keep an existing review's checkout so headMoved compares like with like.
-    const [existing] =
-      op.reuseExisting === false
-        ? []
-        : this.reviewsForPullRequest(op.pullRequestUrl);
-
-    return this.providers.resolvePullRequest(op.pullRequestUrl, {
-      id: op.repositoryId,
-      preferred: existing && this.read(existing).pins?.repositoryId,
-    });
-  }
-  /** Reviews whose PR is this one, newest version first. Summaries only. */
-  private reviewsForPullRequest(url: string): string[] {
-    return this.db
-      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
-        `SELECT reviews.id FROM reviews
-        JOIN versions ON versions.review_id=reviews.id AND versions.version=reviews.version
-        WHERE lower(json_extract(versions.snapshot,'$.origin.pullRequestUrl'))=?
-          AND COALESCE(json_extract(versions.snapshot,'$.origin.tutorial'), 0) = 0
-        ORDER BY json_extract(versions.snapshot,'$.createdAt') DESC, reviews.rowid DESC`,
-      )
-      .all(pullRequestKey(url))
-      .map((row) => String(row.id));
-  }
-  /** The answer to a create that found its PR's review. Its target stays:
-   * moving it would silently point existing links at different code. */
-  private existingReview(
-    reviewId: string,
-    others: string[],
-    requested: Pins,
-  ): Result {
-    const snapshot = this.read(reviewId);
-
-    const headMoved =
-      snapshot.pins?.repositoryId !== requested.repositoryId ||
-      snapshot.pins?.head !== requested.head;
-
-    const activeLeaseId = this.activity.liveLeaseId(reviewId);
-
-    const note = [
-      "Returned the existing review for this PR instead of creating one; the requested title and target were not applied. Update it in place (read it with session_get first), or pass reuseExisting:false to create a separate review.",
-      headMoved &&
-        "The PR head moved since this review's target was set, and the target was NOT changed: call review_set_target to move it, then repair the source references it reports.",
-      activeLeaseId && `Lease ${activeLeaseId} is currently authoring it.`,
-      others.length > 0 &&
-        "Older reviews also name this PR; see otherReviewIds.",
-    ]
-      .filter(Boolean)
-      .join(" ");
-
-    return {
-      created: false,
-      note,
-      reviewId,
-      version: snapshot.version,
-      target: snapshot.target,
-      headMoved,
-      ...(activeLeaseId && { activeLeaseId }),
-      ...(others.length > 0 && { otherReviewIds: others }),
-    };
   }
   private commitCommand(
     commandId: string,

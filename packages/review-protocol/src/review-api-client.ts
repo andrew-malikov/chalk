@@ -30,8 +30,6 @@ export interface ReviewApiSummary {
     tutorial?: boolean;
     branch?: string;
     baseRef?: string;
-    pullRequestNumber?: number;
-    pullRequestUrl?: string;
     revision?: string;
   };
   /** Display grouping only; source pins remain bound to their own checkout. */
