@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 // Mirrors the `@review/*` and `@canvas/*` paths in tsconfig.base.json.
 export const sourceAliases = {
   "@review": fileURLToPath(new URL("src", import.meta.url)),
+  "@cli": fileURLToPath(new URL("../cli/src", import.meta.url)),
   "@canvas": fileURLToPath(new URL("app/src", import.meta.url)),
 };
 

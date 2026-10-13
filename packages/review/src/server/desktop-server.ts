@@ -23,7 +23,7 @@ import {
   resetCliInstall,
   resolveCliInstallStatus,
   skipCliInstall,
-} from "@review/cli/cli-install";
+} from "@cli/cli-install";
 import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { readReviewPackageVersion } from "@review/package-paths";
 import { createReviewApi } from "@review/review-api/http.js";
@@ -70,6 +70,7 @@ export interface GlobalReviewServerInput {
   reviewData: LocalReviewData;
   appPid: number;
   packageRoot: string;
+  cliPackageRoot?: string;
   toolingRoot: string;
   cliRuntimePath?: string;
   port: number;
@@ -122,7 +123,8 @@ export function createGlobalReviewServer(
   });
 
   let closing = false;
-  const cliPath = path.join(input.packageRoot, "dist", "cli.js");
+  const cliPackageRoot = input.cliPackageRoot ?? input.packageRoot;
+  const cliPath = path.join(cliPackageRoot, "dist", "cli.js");
 
   // The scratchpad preference, read once at listen and kept current by the
   // settings endpoint below: this server is the only writer while it runs.
@@ -295,7 +297,7 @@ export function createGlobalReviewServer(
   app.get("/install/status", async () =>
     serverJson(
       200,
-      await resolveCliInstallStatus({ packageRoot: input.packageRoot }),
+      await resolveCliInstallStatus({ packageRoot: cliPackageRoot }),
     ),
   );
   app.post("/install/apply", async (context) => {
@@ -304,7 +306,7 @@ export function createGlobalReviewServer(
     );
 
     const applyInput: Parameters<typeof applyCliInstall>[0] = {
-      packageRoot: input.packageRoot,
+      packageRoot: cliPackageRoot,
     };
 
     if (request.shim !== undefined) applyInput.shim = request.shim;

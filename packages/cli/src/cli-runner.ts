@@ -10,7 +10,7 @@ import {
   emitJsonEvent,
   humanStream,
   jsonRequestedInArgv,
-} from "@review/cli/cli-output";
+} from "@cli/cli-output";
 import {
   emitReviewEvent,
   serializeReviewError,

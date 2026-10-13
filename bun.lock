@@ -19,6 +19,7 @@
       "name": "@blackboard/review-electrobun",
       "version": "0.2.0",
       "dependencies": {
+        "@blackboard/cli": "workspace:*",
         "@blackboard/review": "workspace:*",
         "@blackboard/review-canvas": "workspace:*",
         "@blackboard/review-protocol": "workspace:*",
@@ -42,6 +43,43 @@
     "packages/agent-plugins/pi": {
       "name": "@blackboard/pi-blackboard",
       "version": "0.1.2",
+    },
+    "packages/cli": {
+      "name": "@blackboard/cli",
+      "version": "0.2.0",
+      "bin": {
+        "blackboard": "./dist/cli.js",
+        "review": "./dist/cli.js",
+        "whiteboard": "./dist/cli.js",
+      },
+      "dependencies": {
+        "@img/sharp-wasm32": "0.35.4",
+        "@modelcontextprotocol/sdk": "1.30.0",
+        "commander": "14.0.3",
+        "fuzzysort": "4.0.2",
+        "hono": "4.13.7",
+        "mdast-util-from-markdown": "2.0.3",
+        "mdast-util-gfm": "3.1.0",
+        "mdast-util-math": "3.0.0",
+        "micromark-extension-gfm": "3.0.0",
+        "pino": "10.3.1",
+        "sharp": "0.35.4",
+        "smol-toml": "1.8.0",
+        "zod": "catalog:",
+      },
+      "devDependencies": {
+        "@blackboard/json": "workspace:*",
+        "@blackboard/local-vcs": "^0.1.0",
+        "@blackboard/review": "workspace:*",
+        "@blackboard/review-protocol": "workspace:*",
+        "@dev.fast/diffr": "0.1.10",
+        "@types/node": "24.12.2",
+        "isomorphic-git": "1.38.10",
+        "micromark-extension-math": "3.1.0",
+        "tsdown": "0.22.14",
+        "typescript": "6.0.3",
+        "vitest": "4.1.11",
+      },
     },
     "packages/json": {
       "name": "@blackboard/json",
@@ -68,15 +106,9 @@
     "packages/review": {
       "name": "@blackboard/review",
       "version": "0.2.0",
-      "bin": {
-        "blackboard": "./dist/cli.js",
-        "review": "./dist/cli.js",
-        "whiteboard": "./dist/cli.js",
-      },
       "dependencies": {
         "@img/sharp-wasm32": "0.35.4",
         "@modelcontextprotocol/sdk": "1.30.0",
-        "commander": "14.0.3",
         "fuzzysort": "4.0.2",
         "hono": "4.13.7",
         "mdast-util-from-markdown": "2.0.3",
@@ -89,10 +121,11 @@
         "zod": "catalog:",
       },
       "devDependencies": {
-        "@dev.fast/diffr": "0.1.10",
+        "@blackboard/cli": "workspace:*",
         "@blackboard/json": "workspace:*",
         "@blackboard/local-vcs": "^0.1.0",
         "@blackboard/review-protocol": "workspace:*",
+        "@dev.fast/diffr": "0.1.10",
         "@types/node": "24.12.2",
         "isomorphic-git": "1.38.10",
         "micromark-extension-math": "3.1.0",
@@ -106,8 +139,8 @@
       "name": "@blackboard/review-protocol",
       "version": "0.0.0",
       "dependencies": {
-        "@dev.fast/diffr": "0.1.10",
         "@blackboard/json": "workspace:*",
+        "@dev.fast/diffr": "0.1.10",
         "eventsource-parser": "3.1.1",
         "zod": "catalog:",
       },
@@ -221,6 +254,22 @@
 
     "@babel/types": ["@babel/types@7.29.8", "", { "dependencies": { "@babel/helper-string-parser": "7.29.7", "@babel/helper-validator-identifier": "7.29.7" } }, "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="],
 
+    "@blackboard/cli": ["@blackboard/cli@workspace:packages/cli"],
+
+    "@blackboard/json": ["@blackboard/json@workspace:packages/json"],
+
+    "@blackboard/local-vcs": ["@blackboard/local-vcs@workspace:packages/local-vcs"],
+
+    "@blackboard/pi-blackboard": ["@blackboard/pi-blackboard@workspace:packages/agent-plugins/pi"],
+
+    "@blackboard/review": ["@blackboard/review@workspace:packages/review"],
+
+    "@blackboard/review-canvas": ["@blackboard/review-canvas@workspace:packages/review/app"],
+
+    "@blackboard/review-electrobun": ["@blackboard/review-electrobun@workspace:apps/review-electrobun"],
+
+    "@blackboard/review-protocol": ["@blackboard/review-protocol@workspace:packages/review-protocol"],
+
     "@blazediff/core": ["@blazediff/core@1.9.1", "", {}, "sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA=="],
 
     "@bramus/specificity": ["@bramus/specificity@2.4.2", "", { "dependencies": { "css-tree": "3.2.1" }, "bin": { "specificity": "bin/cli.js" } }, "sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw=="],
@@ -238,20 +287,6 @@
     "@csstools/css-tokenizer": ["@csstools/css-tokenizer@4.0.0", "", {}, "sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA=="],
 
     "@dev.fast/diffr": ["@dev.fast/diffr@0.1.10", "", { "peerDependencies": { "zod": "^4.0.0" }, "bin": { "diffr-fetch": "bin/fetch.mjs" } }, "sha512-C5bU+lmZ5LRWt3HsgW37lp4cXU+7RVERGmD+50Rwf9+Vi368fYfiP9Brx1o8O13TQui5uTp6fsP8FrpgpOQ/Vw=="],
-
-    "@blackboard/json": ["@blackboard/json@workspace:packages/json"],
-
-    "@blackboard/local-vcs": ["@blackboard/local-vcs@workspace:packages/local-vcs"],
-
-    "@blackboard/pi-blackboard": ["@blackboard/pi-blackboard@workspace:packages/agent-plugins/pi"],
-
-    "@blackboard/review": ["@blackboard/review@workspace:packages/review"],
-
-    "@blackboard/review-canvas": ["@blackboard/review-canvas@workspace:packages/review/app"],
-
-    "@blackboard/review-electrobun": ["@blackboard/review-electrobun@workspace:apps/review-electrobun"],
-
-    "@blackboard/review-protocol": ["@blackboard/review-protocol@workspace:packages/review-protocol"],
 
     "@dual-bundle/import-meta-resolve": ["@dual-bundle/import-meta-resolve@4.2.1", "", {}, "sha512-id+7YRUgoUX6CgV0DtuhirQWodeeA7Lf4i2x71JS/vtA5pRb/hIGWlw+G6MeXvsM+MXrz0VAydTGElX1rAfgPg=="],
 
@@ -1578,6 +1613,8 @@
     "@babel/helper-compilation-targets/lru-cache": ["lru-cache@5.1.1", "", { "dependencies": { "yallist": "3.1.1" } }, "sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w=="],
 
     "@babel/helper-compilation-targets/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
+
+    "@blackboard/cli/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
     "@blackboard/local-vcs/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 

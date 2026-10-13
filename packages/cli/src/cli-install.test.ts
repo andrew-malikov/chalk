@@ -37,7 +37,7 @@ import {
 
 const temporaryDirectories: string[] = [];
 
-const packageRoot = path.resolve(import.meta.dirname, "../..");
+const packageRoot = path.resolve(import.meta.dirname, "../../review");
 
 const profileMarker =
   "# Managed by Review Desktop: review command PATH. Do not edit.";

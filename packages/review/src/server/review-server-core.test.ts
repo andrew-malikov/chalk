@@ -286,7 +286,7 @@ const processes = {
     }),
   headless: (home: string, stateDir = path.join(home, "server")) =>
     spawnSource(
-      "src/cli.ts",
+      "../cli/src/cli.ts",
       ["server", "start", "--json", "--state-dir", stateDir],
       { DEV_REVIEW_HOME: home },
     ),
@@ -410,7 +410,7 @@ it("refuses to reset the id while a paused headless server holds the store", asy
   child.kill("SIGSTOP");
 
   const reset = spawnSource(
-    "src/cli.ts",
+    "../cli/src/cli.ts",
     ["--state-dir", stateDir, "server", "reset-id", "--json"],
     { DEV_REVIEW_HOME: root },
   );

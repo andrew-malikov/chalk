@@ -12,6 +12,7 @@
       "electrobun/view": ["./.hutch/devkit/api/browser/index.ts"],
       "@blackboard/*": ["../../packages/*/src"],
       "@review/*": ["../../packages/review/src/*"],
+      "@cli/*": ["../../packages/cli/src/*"],
       "@canvas/*": ["../../packages/review/app/src/*"],
       "@shell/*": ["./src/*"]
     }

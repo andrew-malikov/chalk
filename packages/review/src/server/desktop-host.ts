@@ -28,6 +28,7 @@ export async function runDesktopHost(
   const serverInput = {
     appPid,
     packageRoot,
+    cliPackageRoot: env.DEV_FAST_REVIEW_CLI_ROOT,
     toolingRoot,
     port,
     token: env.DEV_FAST_REVIEW_SERVER_TOKEN,

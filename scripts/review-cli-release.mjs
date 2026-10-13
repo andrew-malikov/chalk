@@ -10,7 +10,7 @@ const registrySchema = z.object({
 
 const stable = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
-export const packageName = "@blackboard/review";
+export const packageName = "@blackboard/cli";
 
 export function parseVersion(version) {
   if (!stable.test(version))
@@ -113,9 +113,7 @@ export async function resolveRelease(env = process.env, send = fetch) {
         .split("\n")
         .map((value) => value.slice("review-v".length));
 
-      const pkg = JSON.parse(
-        readFileSync("packages/review/package.json", "utf8"),
-      );
+      const pkg = JSON.parse(readFileSync("packages/cli/package.json", "utf8"));
 
       tag = `review-v${nextVersion([...Object.keys(metadata.versions), ...tags, pkg.version], env.RELEASE_BUMP)}`;
     }

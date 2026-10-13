@@ -7,8 +7,6 @@ import { defineConfig } from "tsdown";
 
 const packageRoot = dirname(fileURLToPath(import.meta.url));
 
-const cliPath = resolve(packageRoot, "dist", "cli.js");
-
 function gitOutput(args: string[]): string | null {
   try {
     return execFileSync("git", args, {
@@ -34,7 +32,6 @@ const desktopHostPath = resolve(
 
 export default defineConfig({
   entry: {
-    cli: "src/cli.ts",
     runtime: "src/runtime.ts",
     "server/desktop-host": "src/server/desktop-host.ts",
   },
@@ -73,12 +70,8 @@ export default defineConfig({
         builtAt: new Date().toISOString(),
       }) + "\n",
     );
-    await Promise.all(
-      [cliPath, desktopHostPath].map(async (executablePath) => {
-        await normalizeExecutable(executablePath);
-        await chmod(executablePath, 0o755);
-      }),
-    );
+    await normalizeExecutable(desktopHostPath);
+    await chmod(desktopHostPath, 0o755);
   },
 });
 

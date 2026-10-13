@@ -683,7 +683,7 @@ if [ -z "$cli" ] || [ ! -f "$cli" ] || { [ -n "$runtime" ] && [ ! -x "$runtime" 
 fi
 
 if [ ! -f "$cli" ]; then
-  echo "Blackboard CLI not found at $cli. Start Blackboard Desktop, or run npx @blackboard/review instead." >&2
+  echo "Blackboard CLI not found at $cli. Start Blackboard Desktop, or run npx @blackboard/cli instead." >&2
   exit 1
 fi
 

@@ -10,6 +10,7 @@
     "test": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run"
   },
   "dependencies": {
+    "@blackboard/cli": "workspace:*",
     "@blackboard/review": "workspace:*",
     "@blackboard/review-canvas": "workspace:*",
     "@blackboard/review-protocol": "workspace:*",

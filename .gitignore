@@ -85,6 +85,8 @@ scripts/acceptance/evidence/
 
 packages/review/tutorial/pins.json
 packages/review/bin/
+packages/cli/instructions/
+packages/cli/THIRD_PARTY_NOTICES.md
 
 # Electrobun generated SDK and native bundles
 apps/review-electrobun/.hutch/

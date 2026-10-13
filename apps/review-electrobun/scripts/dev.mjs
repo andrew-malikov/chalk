@@ -47,6 +47,12 @@ run(
   checkout,
 );
 
+run(
+  process.execPath,
+  ["run", "--filter", "@blackboard/cli", "build"],
+  checkout,
+);
+
 run(hutch, ["electrobun", "prepare"]);
 
 // Bun 1.4.2 FTL miscompiles StyleX media-query parsing; keep the baseline JIT.

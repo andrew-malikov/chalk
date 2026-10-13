@@ -94,9 +94,9 @@ function repository(t) {
   git("init", "-q", "-b", "main");
   git("config", "user.name", "Release test");
   git("config", "user.email", "release@example.com");
-  mkdirSync(path.join(directory, "packages/review"), { recursive: true });
+  mkdirSync(path.join(directory, "packages/cli"), { recursive: true });
   writeFileSync(
-    path.join(directory, "packages/review/package.json"),
+    path.join(directory, "packages/cli/package.json"),
     '{"version":"0.0.1"}\n',
   );
   git("add", ".");
@@ -123,7 +123,7 @@ test("dispatch plans without mutations, reserves an annotated tag, and retries t
   assert.equal(plan.version, "0.2.11");
   assert.equal(git("tag", "--list"), "");
   assert.equal(
-    JSON.parse(readFileSync("packages/review/package.json", "utf8")).version,
+    JSON.parse(readFileSync("packages/cli/package.json", "utf8")).version,
     "0.0.1",
   );
   createTag(plan);

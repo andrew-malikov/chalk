@@ -20,7 +20,7 @@ export async function packReviewCli({ version, commit }, outputDirectory) {
   const output = path.resolve(outputDirectory);
   await mkdir(output, { recursive: true });
   const scratch = await mkdtemp(path.join(os.tmpdir(), "review-cli-pack-"));
-  const manifestPath = "packages/review/package.json";
+  const manifestPath = "packages/cli/package.json";
   const original = await readFile(manifestPath, "utf8");
 
   try {
@@ -29,12 +29,12 @@ export async function packReviewCli({ version, commit }, outputDirectory) {
     pkg.gitHead = commit;
     await writeFile(manifestPath, `${JSON.stringify(pkg, null, 2)}\n`);
     execFileSync(process.execPath, ["pm", "pack", "--destination", scratch], {
-      cwd: "packages/review",
+      cwd: "packages/cli",
       stdio: "inherit",
     });
     execFileSync("tar", [
       "-xzf",
-      path.join(scratch, `blackboard-review-${version}.tgz`),
+      path.join(scratch, `blackboard-cli-${version}.tgz`),
       "-C",
       scratch,
     ]);
@@ -47,7 +47,7 @@ export async function packReviewCli({ version, commit }, outputDirectory) {
       { cwd: staged, stdio: "inherit" },
     );
 
-    return path.join(output, `blackboard-review-${version}.tgz`);
+    return path.join(output, `blackboard-cli-${version}.tgz`);
   } finally {
     await writeFile(manifestPath, original);
     await rm(scratch, { recursive: true, force: true });

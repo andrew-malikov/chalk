@@ -21,7 +21,7 @@ import {
   REVIEW_CLIENT_REMOTE,
   parseReviewDesktopVerbFrame,
 } from "@blackboard/review-protocol";
-import { runReviewCli } from "@review/cli/cli-runner.js";
+import { runReviewCli } from "@cli/cli-runner.js";
 import {
   connectReviewApi,
   connectReviewInstance,

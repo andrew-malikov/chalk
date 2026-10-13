@@ -35,7 +35,7 @@ async function runCli(effectivePath: string): Promise<number> {
     return 1;
   }
 
-  const { runReviewCli } = await import("./cli/cli-runner.js");
+  const { runReviewCli } = await import("./cli-runner.js");
 
   return runReviewCli({
     argv,

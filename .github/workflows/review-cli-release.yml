@@ -56,7 +56,8 @@ jobs:
         run: |
           bun test scripts/review-cli-release.test.mjs scripts/review-cli-dependencies.test.mjs
           bun run --filter @blackboard/review ensure:tutorial-assets
-          bun run --filter @blackboard/review test -- --project shared-module-graph src/server/headless-host.test.ts src/cli/cli-install.test.ts
+          bun run --filter @blackboard/review test -- --project shared-module-graph src/server/headless-host.test.ts
+          bun run --filter @blackboard/cli test
       - name: Build release tarball
         if: steps.release.outputs.published != 'true'
         run: bun scripts/pack-review-cli.mjs release-artifacts
@@ -64,12 +65,12 @@ jobs:
         if: steps.release.outputs.published != 'true'
         env:
           VERSION: ${{ steps.release.outputs.version }}
-        run: bun scripts/smoke-review-cli.mjs "release-artifacts/blackboard-review-${VERSION}.tgz" "$VERSION"
+        run: bun scripts/smoke-review-cli.mjs "release-artifacts/blackboard-cli-${VERSION}.tgz" "$VERSION"
       - name: Validate npm publish command
         if: steps.release.outputs.published != 'true'
         env:
           VERSION: ${{ steps.release.outputs.version }}
-        run: bunx --bun npm@12.2.0 publish "./release-artifacts/blackboard-review-${VERSION}.tgz" --dry-run --registry=https://registry.npmjs.org --access public --tag latest --ignore-scripts
+        run: bunx --bun npm@12.2.0 publish "./release-artifacts/blackboard-cli-${VERSION}.tgz" --dry-run --registry=https://registry.npmjs.org --access public --tag latest --ignore-scripts
       - name: Retain tested package
         if: steps.release.outputs.published != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -93,7 +94,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.release.outputs.version }}
-        run: bunx --bun npm@12.2.0 publish "./release-artifacts/blackboard-review-${VERSION}.tgz" --registry=https://registry.npmjs.org --access public --tag latest --provenance --ignore-scripts
+        run: bunx --bun npm@12.2.0 publish "./release-artifacts/blackboard-cli-${VERSION}.tgz" --registry=https://registry.npmjs.org --access public --tag latest --provenance --ignore-scripts
       - name: Release summary
         env:
           VERSION: ${{ steps.release.outputs.version }}
@@ -110,6 +111,6 @@ jobs:
             elif [ "$PUBLISHED" = true ]; then
               echo 'This exact version and source commit were already published; no changes made.'
             else
-              echo "Install: bun add --global @blackboard/review@${VERSION}"
+              echo "Install: bun add --global @blackboard/cli@${VERSION}"
             fi
           } >> "$GITHUB_STEP_SUMMARY"

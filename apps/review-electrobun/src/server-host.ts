@@ -127,6 +127,7 @@ export async function startServer(
       DEV_FAST_REVIEW_INSTANCE_ID: instanceId,
       DEV_FAST_REVIEW_DESKTOP_HOST_AUTOSTART: "1",
       DEV_FAST_REVIEW_CLI_RUNTIME: options.runtimePath,
+      DEV_FAST_REVIEW_CLI_ROOT: path.join(options.checkout, "packages/cli"),
       DEV_FAST_REVIEW_RELEASE_CHANNEL: "dev",
       DEV_FAST_REVIEW_APP_VERSION: "0.2.0",
     },

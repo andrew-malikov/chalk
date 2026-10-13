@@ -15,6 +15,7 @@
       "@blackboard/*": ["./packages/*/src"],
       // Source aliases; Vite and Vitest mirror them in packages/review/test-config.ts.
       "@review/*": ["./packages/review/src/*"],
+      "@cli/*": ["./packages/cli/src/*"],
       "@canvas/*": ["./packages/review/app/src/*"]
     }
   },

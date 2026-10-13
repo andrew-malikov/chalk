@@ -21,7 +21,7 @@
     "desktop:build": "bun run --filter @blackboard/review-electrobun app:build",
     "electrobun:dev": "bun run desktop:dev",
     "electrobun:build": "bun run desktop:build",
-    "review": "bun run --filter @blackboard/review review",
+    "review": "bun run --filter @blackboard/cli review",
     "format": "oxfmt --write \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!packages/review/app/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
     "format:check": "oxfmt --check \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!packages/review/app/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
     "lint": "oxlint --disable-nested-config .",
