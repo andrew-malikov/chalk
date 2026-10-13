@@ -64,7 +64,7 @@ test("pinned renamed source retains its side and line identity", async () => {
     urls.push(new URL(url));
 
     return Response.json({
-      workspacePath: "/tmp/pinned.code-workspace",
+      rootPath: "/tmp/pinned",
       filePath: "/tmp/old π.ts",
     });
   };
@@ -93,7 +93,7 @@ test("pinned renamed source retains its side and line identity", async () => {
   expect(urls[0]!.searchParams.get("file")).toBe("old π.ts");
   expect(open).toHaveBeenCalledWith({
     kind: "file",
-    workspacePath: "/tmp/pinned.code-workspace",
+    rootPath: "/tmp/pinned",
     filePath: "/tmp/old π.ts",
     range: { startLine: 42, endLine: 43 },
   });
@@ -122,7 +122,7 @@ test.each(["renamed", "added", "deleted"])(
       queries.push(parsed);
 
       return Response.json({
-        workspacePath: "/tmp/w",
+        rootPath: "/tmp/w",
         filePath:
           parsed.searchParams.get("empty") === "true"
             ? "/tmp/empty"

@@ -28,7 +28,6 @@ import {
   pathShimPath,
   readCliInstallStamp,
   removeCliInstall,
-  removeLegacyReviewSkills,
   removeShellProfilePath,
   resetCliInstall,
   resolveCliInstallStatus,
@@ -670,17 +669,6 @@ describe("Desktop installation alongside npm", () => {
   });
 });
 
-const STAMPED_SKILL = `---
-name: dev-review
-description: x
-metadata:
-  review-managed-by: "Review Desktop"
-  review-generated: "Do not edit."
-  review-version: "1.2.3"
----
-# body
-`;
-
 async function builtPackageRoot(): Promise<string> {
   const root = await temporaryHome("review-built-package-");
   await mkdir(path.join(root, "dist"), { recursive: true });
@@ -713,11 +701,6 @@ describe("MCP self-install", () => {
     },
   ) => writePrivateJsonAtomic(cliInstallStampPath(env), stamp);
 
-  const writeStampedSkill = async (skillDir: string) => {
-    await mkdir(skillDir, { recursive: true });
-    await writeFile(path.join(skillDir, "SKILL.md"), STAMPED_SKILL);
-  };
-
   describe("install status", () => {
     it("reports updateNeeded for a granted stamp without the update marker and none of its old fields", async () => {
       await writeStamp({
@@ -738,31 +721,6 @@ describe("MCP self-install", () => {
       expect(Object.keys(status)).not.toContain("agents");
       expect(Object.keys(status.stamp ?? {})).not.toContain("targets");
     });
-
-    it.each([null, "granted", "declined", "skipped"] as const)(
-      "requires the update while legacy skills remain with consent %s, even after Done",
-      async (consent) => {
-        if (consent) await writeStamp({ consent, updatedAt: now });
-        await writeStampedSkill(
-          path.join(homeDir, ".agents", "skills", "dev-review"),
-        );
-        const input = { packageRoot: builtRoot, homeDir, env };
-
-        expect((await resolveCliInstallStatus(input)).updateNeeded).toBe(true);
-        await mkdir(path.dirname(cliInstallUpdateMarkerPath(env)), {
-          recursive: true,
-        });
-        await writeFile(cliInstallUpdateMarkerPath(env), "");
-        await finishCliInstallUpdate(env);
-        expect((await resolveCliInstallStatus(input)).updateNeeded).toBe(true);
-
-        await removeLegacyReviewSkills({ homeDir, env });
-        expect((await resolveCliInstallStatus(input)).updateNeeded).toBe(false);
-        expect(
-          (await readCliInstallStamp(cliInstallStampPath(env)))?.consent,
-        ).toBe(consent ?? undefined);
-      },
-    );
 
     it("generates prompts with the sh launch form when the shim exists and the bare command otherwise", async () => {
       await writePathShim(shim, cliPath, undefined, path.join(homeDir, ".dev"));
@@ -790,22 +748,6 @@ describe("MCP self-install", () => {
         command: "blackboard",
         args: ["mcp"],
       });
-    });
-
-    it("lists Review-stamped legacy skills", async () => {
-      await writeStampedSkill(
-        path.join(homeDir, ".claude", "skills", "dev-review"),
-      );
-
-      const status = await resolveCliInstallStatus({
-        packageRoot: builtRoot,
-        homeDir,
-        env,
-      });
-
-      expect(status.legacySkills).toEqual([
-        { path: "~/.claude/skills/dev-review" },
-      ]);
     });
   });
 

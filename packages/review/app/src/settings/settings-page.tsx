@@ -8,7 +8,7 @@ import type {
   ReviewThemeChoice,
 } from "@blackboard/review-protocol";
 import { Switch } from "@canvas/components/ui/switch";
-import { ConnectCard, LegacySkillsRow } from "@canvas/home/connect-card";
+import { ConnectCard } from "@canvas/home/connect-card";
 import { homeStyles } from "@canvas/home/home-styles";
 import { withClass } from "@canvas/styles/stylex-props";
 import { Button } from "@canvas/ui/button";
@@ -129,10 +129,6 @@ export function SettingsPage({
 
           {install ? (
             <Section label="Agents">
-              <LegacySkillsRow
-                install={install}
-                onStatusChange={setInstallStatus}
-              />
               <ConnectCard install={install} />
             </Section>
           ) : null}

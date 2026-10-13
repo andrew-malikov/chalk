@@ -209,7 +209,6 @@ async function setup(
         },
         cli: { path: "/tmp/cli.js", version: "0.2.0" },
 
-        legacySkills: [],
         connect: {
           command: "blackboard",
           args: ["mcp"],
@@ -385,7 +384,7 @@ async function setup(
 
     if (url.pathname.endsWith("/navigator"))
       return Response.json({
-        workspacePath: `/tmp/${url.pathname.split("/")[2]}`,
+        rootPath: `/tmp/${url.pathname.split("/")[2]}`,
       });
 
     const id = url.pathname.split("/")[2];
@@ -458,7 +457,7 @@ test("restores catalog tabs and drops missing review IDs", async () => {
   expect(container.textContent).not.toContain("missing");
 });
 
-test("title bar opens the selected workspace and closing Settings preserves its review", async () => {
+test("title bar opens the selected source directory and closing Settings preserves its review", async () => {
   const rpc = await setup([a, b], a);
   await expect.poll(() => container.textContent).toContain("Alpha document");
   await act(async () =>
@@ -473,8 +472,8 @@ test("title bar opens the selected workspace and closing Settings preserves its 
   );
   await vi.waitFor(() =>
     expect(rpc.request.openSource).toHaveBeenCalledWith({
-      kind: "workspace",
-      workspacePath: `/tmp/${b}`,
+      kind: "directory",
+      rootPath: `/tmp/${b}`,
     }),
   );
   await act(async () => mounted!.command("settings"));

@@ -17,7 +17,7 @@ test("VS Code receives paths as separate arguments, with original line numbers",
   expect(
     sourceArguments({
       kind: "file",
-      workspacePath: "/tmp/project space",
+      rootPath: "/tmp/project space",
       filePath: file,
       range: { startLine: 42, endLine: 44 },
     }),
@@ -25,7 +25,7 @@ test("VS Code receives paths as separate arguments, with original line numbers",
   expect(
     sourceArguments({
       kind: "diff",
-      workspacePath: "/tmp/w",
+      rootPath: "/tmp/w",
       originalPath: "/tmp/old.ts",
       modifiedPath: "/tmp/new.ts",
     }),
@@ -33,7 +33,7 @@ test("VS Code receives paths as separate arguments, with original line numbers",
   expect(() =>
     sourceArguments({
       kind: "file",
-      workspacePath: "/tmp/w",
+      rootPath: "/tmp/w",
       filePath: "--flag",
     }),
   ).toThrow(Error);
@@ -54,7 +54,7 @@ test("real CLI execution preserves literal Unicode and shell characters", async 
   try {
     await openVSCode({
       kind: "file",
-      workspacePath: "/tmp/work space",
+      rootPath: "/tmp/work space",
       filePath: '/tmp/π "quoted"; $(touch nope).ts',
       range: { startLine: 42, endLine: 43 },
     });
@@ -79,7 +79,7 @@ test("missing and failing VS Code launchers report failure", async () => {
   process.env.PATH = root;
 
   try {
-    const request = { kind: "workspace" as const, workspacePath: "/tmp/w" };
+    const request = { kind: "directory" as const, rootPath: "/tmp/w" };
     await expect(openVSCode(request)).rejects.toThrow(/VS Code/);
     const code = path.join(root, "code");
     await writeFile(code, `#!${process.execPath}\nprocess.exit(7);`);

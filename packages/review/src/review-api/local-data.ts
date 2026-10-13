@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { type FSWatcher, existsSync, watch } from "node:fs";
-import { mkdir, readFile, realpath, stat, writeFile } from "node:fs/promises";
+import { mkdir, realpath, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -21,7 +21,6 @@ import {
   listCommitRange,
   listTrackedFilesAtCommit,
   readFileAtCommit,
-  resolveRepoContext,
   splitGitPatchFiles,
 } from "@blackboard/local-vcs";
 import { structuralChangeCounts } from "@blackboard/review-protocol";
@@ -36,7 +35,6 @@ import {
   requireVisibleSource,
   sliceSourceRange,
 } from "@review/documents/source.js";
-import { writePrivateJsonAtomic } from "@review/lib/atomic-write";
 import { isMissingFileError } from "@review/lib/fs-utils.js";
 import { StructuralComparisons } from "@review/server/structural-comparisons.js";
 import { resolveSoftwareMapDiffCounts } from "@review/software-map/software-map-diff-counts.js";
@@ -290,8 +288,8 @@ export class LocalReviewData {
     return { snapshot, pins };
   }
 
-  /** Resolve a native workspace without replacing the selected source with today's HEAD. */
-  async navigatorWorkspace(
+  /** Resolve source paths without replacing the selected source with today's HEAD. */
+  async navigatorSource(
     snapshot: Snapshot,
     source: {
       side?: "base" | "head";
@@ -300,7 +298,7 @@ export class LocalReviewData {
       commit?: string;
       anchor?: SourcePins;
     } = {},
-  ): Promise<{ workspacePath: string; filePath?: string }> {
+  ): Promise<{ rootPath: string; filePath?: string }> {
     const { pins } = await this.resolveSource(
       snapshot,
       source.commit,
@@ -328,9 +326,7 @@ export class LocalReviewData {
       : (await this.workspaces.source(snapshot.reviewId, pins, checkoutSide))
           .rootPath;
 
-    const context = await resolveRepoContext(repository);
-
-    if (!rootPath || !context)
+    if (!rootPath)
       throw new ReviewInputError(
         "Could not open the selected source checkout.",
         409,
@@ -352,69 +348,20 @@ export class LocalReviewData {
         );
     }
 
-    // Name the workspace after the repository, not the registered checkout:
-    // a linked worktree's directory is an arbitrary branch slug. This matches
-    // the repository label on Home.
-    const name =
-      context.githubSlug?.split("/").at(-1) ??
-      path.basename(path.dirname(context.commonDir));
-
-    const workspaceDirectory = path.join(
-      reviewManagedCheckoutRoot(context.commonDir, snapshot.reviewId),
-      "navigator",
-      "workspaces",
-      live ? "worktree" : ref,
-    );
-
-    // VS Code labels a saved workspace by its file name and identifies its
-    // window by the file's path, so the file name is the repository name.
-    const workspacePath = path.join(
-      workspaceDirectory,
-      `${name}.code-workspace`,
-    );
-
-    // A native workspace gives VS Code stable restoration, search scope and
-    // editor read-only behavior without changing files in the source checkout.
-    // Keep the preferences VS Code and the user add, carrying them over from a
-    // workspace previously named after the checkout directory. That file stays
-    // in place for any window still open on it.
-    const current = await readWorkspace(workspacePath);
-
-    if (current !== null) {
-      const previous =
-        current ??
-        (await readWorkspace(
-          path.join(
-            workspaceDirectory,
-            `${path.basename(repository)}.code-workspace`,
-          ),
-        ));
-
-      const title = `${snapshot.title} — ${live ? "Live source" : side === "base" ? "Base source" : "Source"} — Blackboard`;
-
-      const workspace = previous ?? {
-        folders: [],
-        settings: { "files.readonlyInclude": { "**/*": true } },
-      };
-
-      const next = {
-        ...workspace,
-        folders: [{ path: rootPath, name }, ...workspace.folders.slice(1)],
-        settings: { ...workspace.settings, "window.title": title },
-      };
-
-      if (JSON.stringify(next) !== JSON.stringify(current))
-        await writePrivateJsonAtomic(workspacePath, next);
-    }
-
     let filePath: string | undefined;
 
     if (source.file) {
       if (source.empty) {
         // Native diffs need a real empty file for an added/deleted side.
+        const commonDir = await gitCommonDir(repository);
+
+        if (!commonDir) throw unavailableCheckout();
+
         filePath = path.join(
-          path.dirname(workspacePath),
+          reviewManagedCheckoutRoot(commonDir, snapshot.reviewId),
+          "navigator",
           "empty",
+          ref,
           path.basename(source.file),
         );
         await mkdir(path.dirname(filePath), { recursive: true });
@@ -433,7 +380,7 @@ export class LocalReviewData {
       }
     }
 
-    return { workspacePath, filePath };
+    return { rootPath, filePath };
   }
 
   /** A document read that needs default pins; 409 when the document has none. */
@@ -1703,30 +1650,4 @@ function pathspecMatches(
     (path) =>
       path !== undefined && (path === prefix || path.startsWith(prefix + "/")),
   );
-}
-
-/** The parts of a VS Code workspace file the navigator owns; everything else
- * VS Code or the user adds is kept as is. */
-const codeWorkspaceSchema = z.looseObject({
-  folders: z.array(z.json()).default([]),
-  settings: z.record(z.string(), z.json()).default({}),
-});
-
-/** A workspace file's contents, undefined when it does not exist, or null when
- * it is not plain JSON (VS Code accepts comments), which is left untouched. */
-async function readWorkspace(
-  file: string,
-): Promise<z.infer<typeof codeWorkspaceSchema> | null | undefined> {
-  const text = await readFile(file, "utf8").catch((error) => {
-    if (isMissingFileError(error)) return undefined;
-    throw error;
-  });
-
-  if (text === undefined) return undefined;
-
-  try {
-    return codeWorkspaceSchema.safeParse(JSON.parse(text)).data ?? null;
-  } catch {
-    return null;
-  }
 }

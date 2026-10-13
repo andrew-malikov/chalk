@@ -840,11 +840,11 @@ it("gives a remote caller no local paths and no source window", async () => {
     expect(await workspaceFiles()).toEqual([]);
     expect(desktop.verbs).toEqual([]);
 
-    // The same search finds the file an unmarked call writes.
+    // A local caller opens the checkout directory directly.
     const navigator = await call(worktree, "/navigator", false, "POST");
     expect(navigator.status).toBe(200);
-    expect(await navigator.json()).toHaveProperty("workspacePath");
-    expect(await workspaceFiles()).toHaveLength(1);
+    expect(await navigator.json()).toHaveProperty("rootPath");
+    expect(await workspaceFiles()).toEqual([]);
   } finally {
     desktop.detach();
   }

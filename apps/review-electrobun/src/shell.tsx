@@ -59,8 +59,8 @@ import {
   createAuthenticatedRequest,
   createCanvasBridge,
   openSourceDiff,
+  openSourceDirectory,
   openSourceFile,
-  openSourceWorkspace,
 } from "./bridge";
 import { createCanvasUi } from "./canvas-ui";
 import { mountExternalLinks } from "./external-links";
@@ -260,7 +260,6 @@ function Shell(
       status,
       apply: (body) => mutate("apply", body),
       remove: (body) => mutate("remove", body),
-      removeLegacySkills: () => mutate("legacy-skills/remove"),
       finishUpdate: () => mutate("finish-update"),
       decline: () => mutate("decline"),
       skip: () => mutate("skip"),
@@ -544,7 +543,7 @@ function Shell(
           return tab.content.bridge.post(value);
         case "openSourceTree":
           if (!tab) throw new Error("Open a review first.");
-          await openSourceWorkspace(
+          await openSourceDirectory(
             api,
             options.rpc.request.openSource,
             tab.view,
@@ -1005,7 +1004,7 @@ function Shell(
               variant="outline"
               className="review-shell-editor tw:mr-2 tw:border-border tw:text-xs tw:[&_span]:leading-5 tw:max-[760px]:mr-0 tw:max-[760px]:w-9 tw:max-[760px]:p-0 tw:max-[760px]:[&_span]:hidden"
               aria-label="Open in VS Code"
-              title="Open review workspace in VS Code"
+              title="Open review source in VS Code"
               disabled={!connected}
               onClick={() =>
                 void dispatch({ name: "openSourceTree", args: {} })

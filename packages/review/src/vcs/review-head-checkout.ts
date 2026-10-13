@@ -185,7 +185,7 @@ export async function removeReviewManagedCheckouts(
     const dir = path.join(root, entry.name);
 
     // base/<commit> and head/<commit> are checkouts; anything else (the
-    // navigator workspaces) goes whole.
+    // navigator files) goes whole.
     const checkouts =
       entry.isDirectory() && (entry.name === "base" || entry.name === "head")
         ? (await entries(dir)).map((child) => path.join(dir, child.name))

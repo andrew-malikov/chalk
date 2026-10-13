@@ -354,7 +354,6 @@ export interface ReviewCanvasInstallContent {
   status: ReviewCliInstallStatus;
   apply(request: { shim?: boolean }): Promise<ReviewCliInstallStatus>;
   remove(request: { shim?: boolean }): Promise<ReviewCliInstallStatus>;
-  removeLegacySkills(): Promise<ReviewCliInstallStatus>;
   finishUpdate(): Promise<ReviewCliInstallStatus>;
   decline(): Promise<ReviewCliInstallStatus>;
   skip(): Promise<ReviewCliInstallStatus>;
@@ -937,7 +936,6 @@ export const ReviewCliInstallStatusSchema = z.strictObject({
       }),
     ),
   }),
-  legacySkills: z.array(z.strictObject({ path: requiredString })),
 });
 
 export type ReviewCliInstallStatus = z.infer<

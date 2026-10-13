@@ -490,8 +490,9 @@ it("keeps the checkouts of a restored review", async () => {
 it.skipIf(process.getuid?.() === 0)(
   "fails a release only for the checkout it could not remove, and a retry finishes it",
   async () => {
-    const { workspacePath } = await local.data.navigatorWorkspace(
+    const { filePath } = await local.data.navigatorSource(
       local.store.read(reviewId),
+      { file: "value.ts", empty: true },
     );
 
     const base = await local.data.workspaces.source(reviewId, pins, "base");
@@ -507,7 +508,7 @@ it.skipIf(process.getuid?.() === 0)(
         { id: head.id, rootPath: head.rootPath, state: "cleanup-failed" },
       ]);
       expect(existsSync(base.rootPath!)).toBe(false);
-      expect(existsSync(workspacePath)).toBe(false);
+      expect(existsSync(filePath!)).toBe(false);
       expect(existsSync(head.rootPath!)).toBe(true);
     } finally {
       chmodSync(head.rootPath!, 0o700);

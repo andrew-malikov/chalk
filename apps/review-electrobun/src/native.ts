@@ -17,16 +17,16 @@ const range = z.strictObject({
 });
 
 const openSchema = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("workspace"), workspacePath: absolutePath }),
+  z.strictObject({ kind: z.literal("directory"), rootPath: absolutePath }),
   z.strictObject({
     kind: z.literal("file"),
-    workspacePath: absolutePath,
+    rootPath: absolutePath,
     filePath: absolutePath,
     range: range.optional(),
   }),
   z.strictObject({
     kind: z.literal("diff"),
-    workspacePath: absolutePath,
+    rootPath: absolutePath,
     originalPath: absolutePath,
     modifiedPath: absolutePath,
   }),
@@ -35,8 +35,7 @@ const openSchema = z.discriminatedUnion("kind", [
 export function sourceArguments(input: NativeOpenRequest): string[] {
   const request = openSchema.parse(input);
 
-  if (request.kind === "workspace")
-    return ["--new-window", request.workspacePath];
+  if (request.kind === "directory") return ["--new-window", request.rootPath];
 
   if (request.kind === "diff")
     return ["--diff", request.originalPath, request.modifiedPath];
@@ -97,8 +96,8 @@ export async function openVSCode(request: NativeOpenRequest): Promise<void> {
     }
   };
 
-  if (request.kind !== "workspace")
-    await run(["--new-window", request.workspacePath]);
+  if (request.kind !== "directory")
+    await run(["--new-window", request.rootPath]);
   await run(args);
 }
 

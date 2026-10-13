@@ -49,16 +49,16 @@ export type HostState =
   | { status: "error" | "disconnected"; message: string };
 
 export type NativeOpenRequest =
-  | { kind: "workspace"; workspacePath: string }
+  | { kind: "directory"; rootPath: string }
   | {
       kind: "file";
-      workspacePath: string;
+      rootPath: string;
       filePath: string;
       range?: ReviewInlineEditorRange;
     }
   | {
       kind: "diff";
-      workspacePath: string;
+      rootPath: string;
       originalPath: string;
       modifiedPath: string;
     };

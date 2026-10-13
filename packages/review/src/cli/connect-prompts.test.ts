@@ -11,7 +11,6 @@ import { ALL_INSTALL_TARGETS } from "./install";
 
 const input = {
   hasShim: true,
-  legacyPaths: [],
 };
 
 describe("connectPrompt", () => {

@@ -21,7 +21,7 @@ import * as stylex from "@stylexjs/stylex";
 import { Check } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 
-import { ConnectCard, LegacySkillsRow } from "./connect-card";
+import { ConnectCard } from "./connect-card";
 import { homeStyles } from "./home-styles";
 import { PromptCard } from "./prompt-card";
 import { promptStyles } from "./prompt-styles";
@@ -32,7 +32,7 @@ export const REVIEW_CONNECT_COPIED_STORAGE_KEY =
 /** Long enough for a finished step's check to draw before the next opens. */
 export const STEP_ADVANCE_DELAY_MS = 900;
 
-/** First-run setup and migration from legacy agent skills to MCP. */
+/** First-run CLI installation and agent connection setup. */
 export function WelcomePage({
   install: initialInstall,
   setupActions,
@@ -99,7 +99,7 @@ export function WelcomePage({
     const next = await setupActions.load();
     setLoadedInstall(next);
 
-    if (cliInstallReady(next.status) && next.status.legacySkills.length === 0)
+    if (cliInstallReady(next.status))
       setFinishing({
         from: "Install the blackboard command",
         to: "Connect your agents",
@@ -108,30 +108,15 @@ export function WelcomePage({
   };
 
   const installed = cliInstallReady(status);
+  const updating = status?.updateNeeded ?? false;
   const cliBuildMissing = status?.cli === null && !installed;
-
-  const hasLegacySkills = (status?.legacySkills.length ?? 0) > 0;
-  const setupReady = installed && !hasLegacySkills;
-  // Once shown, the removal step stays, even if an agent following the
-  // connect prompt deletes the skills first.
-  const [showLegacyStep, setShowLegacyStep] = useState(hasLegacySkills);
-  const updating = (status?.updateNeeded ?? false) || showLegacyStep;
-
-  if (hasLegacySkills && !showLegacyStep) setShowLegacyStep(true);
-
-  const [replaceInstallStep, setReplaceInstallStep] = useState(
-    () => installed && hasLegacySkills,
-  );
-
-  if (installed && hasLegacySkills && !replaceInstallStep)
-    setReplaceInstallStep(true);
 
   // Blackboard cannot see agent configs, so a copied prompt or command is the
   // closest signal that an agent got connected.
   const [connectCopied, setConnectCopied] = useState(readConnectCopied);
   const [updateFinished, setUpdateFinished] = useState(false);
   const [connectOpened, setConnectOpened] = useState(false);
-  const canDismiss = setupReady && connectOpened;
+  const canDismiss = installed && connectOpened;
 
   const markConnectCopied = () => {
     setConnectCopied(true);
@@ -157,7 +142,6 @@ export function WelcomePage({
 
   const installStep: WelcomeStep = {
     title: "Install the blackboard command",
-    disabled: hasLegacySkills,
     done: installed,
     body: (
       <>
@@ -234,42 +218,10 @@ export function WelcomePage({
   };
 
   const steps: WelcomeStep[] = [
-    ...(showLegacyStep && install && status
-      ? [
-          {
-            title: "Remove deprecated skills",
-            done: !hasLegacySkills,
-            label: hasLegacySkills
-              ? undefined
-              : "Deprecated skills removed successfully",
-            body:
-              finishing?.from === "Remove deprecated skills" ? (
-                <StepDoneButton label="Removed" />
-              ) : !hasLegacySkills ? (
-                <p role="status">Deprecated skills removed successfully</p>
-              ) : (
-                <LegacySkillsRow
-                  install={{ ...install, status }}
-                  onStatusChange={(next) => {
-                    setCardStatus(next);
-
-                    if (next.legacySkills.length === 0)
-                      setFinishing({
-                        from: "Remove deprecated skills",
-                        to: cliInstallReady(next)
-                          ? "Connect your agents"
-                          : "Install the blackboard command",
-                      });
-                  }}
-                />
-              ),
-          },
-        ]
-      : []),
-    ...(replaceInstallStep && installed ? [] : [installStep]),
+    installStep,
     {
       title: "Connect your agents",
-      disabled: !setupReady,
+      disabled: !installed,
       done: connectCopied || updateFinished,
       note: "paste a prompt into each agent",
       body:
@@ -284,7 +236,7 @@ export function WelcomePage({
     },
   ];
 
-  if ((updating || showLegacyStep) && install)
+  if (updating && install)
     steps.push({
       title: "Continue shipping thoughtful code",
       disabled: !canDismiss,
@@ -302,11 +254,11 @@ export function WelcomePage({
       ),
     });
 
-  if (!updating && !showLegacyStep)
+  if (!updating)
     steps.push(
       {
         title: "Take the tour",
-        disabled: !setupReady,
+        disabled: !installed,
         done: tourTotal > 0 && tourChecked >= tourTotal,
         note: onboarding
           ? `${tourChecked} of ${tourTotal} checks`
@@ -330,7 +282,7 @@ export function WelcomePage({
       },
       {
         title: "Create your first session",
-        disabled: !setupReady,
+        disabled: !installed,
         done: onboarding?.published ?? false,
         note: onboarding?.published ? "published" : "your agent writes it",
         body: <PromptCard />,
@@ -339,7 +291,7 @@ export function WelcomePage({
 
   // Keep step identity stable as status and completion labels change.
   const [openStep, setOpenStep] = useState(() =>
-    updating && installed && !hasLegacySkills
+    updating && installed
       ? "Connect your agents"
       : steps.find((step) => !step.done)?.title,
   );
@@ -347,7 +299,7 @@ export function WelcomePage({
   if (openStep && !steps.some((step) => step.title === openStep))
     setOpenStep(steps.find((step) => !step.done && !step.disabled)?.title);
 
-  if (openStep === "Connect your agents" && setupReady && !connectOpened)
+  if (openStep === "Connect your agents" && installed && !connectOpened)
     setConnectOpened(true);
 
   return (
@@ -370,11 +322,8 @@ export function WelcomePage({
                     Blackboard now connects to your agents over MCP
                   </h1>
                   <p {...stylex.props(styles.sub)}>
-                    Blackboard (fka. Review) no longer installs skills. Your
-                    agents connect via MCP which makes updating and lifecycle
-                    simpler! To continue using Blackboard, axe the skills,
-                    install the plugin in your harness of choice, and you're
-                    good to go.
+                    Install the Blackboard plugin or add its MCP server to each
+                    agent you use.
                   </p>
                 </>
               ) : (
@@ -392,7 +341,7 @@ export function WelcomePage({
                   </p>
                 </>
               )}
-              {(updating || showLegacyStep) && install ? (
+              {updating && install ? (
                 <Button
                   xstyle={styles.dismiss}
                   disabled={setupBusy || !canDismiss}
@@ -467,7 +416,7 @@ export function WelcomePage({
             </ol>
           </div>
           <p {...stylex.props(styles.feedback)}>
-            {updating || showLegacyStep
+            {updating
               ? "Thoughts on the rename or product direction?"
               : "Questions about getting started? Suggestions for new features?"}{" "}
             Ask us on{" "}

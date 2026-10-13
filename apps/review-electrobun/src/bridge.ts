@@ -61,20 +61,20 @@ async function navigator(
   view: ReviewSourceView,
   values: Record<string, string | boolean | undefined> = {},
 ) {
-  return api.post<{ workspacePath: string; filePath?: string }>(
+  return api.post<{ rootPath: string; filePath?: string }>(
     `/${encodeURIComponent(view.reviewId)}/navigator?${query(view, values)}`,
     {},
     AbortSignal.timeout(60_000),
   );
 }
 
-export async function openSourceWorkspace(
+export async function openSourceDirectory(
   api: ReviewApiClient,
   open: (request: NativeOpenRequest) => Promise<void>,
   view: ReviewSourceView,
 ) {
   const destination = await navigator(api, view);
-  await open({ kind: "workspace", workspacePath: destination.workspacePath });
+  await open({ kind: "directory", rootPath: destination.rootPath });
 }
 
 export async function openSourceFile(
@@ -92,7 +92,7 @@ export async function openSourceFile(
     throw new Error("Pinned source file is unavailable.");
   await open({
     kind: "file",
-    workspacePath: destination.workspacePath,
+    rootPath: destination.rootPath,
     filePath: destination.filePath,
     range,
   });
@@ -131,7 +131,7 @@ export async function openSourceDiff(
     throw new Error("Pinned diff source is unavailable.");
   await open({
     kind: "diff",
-    workspacePath: head.workspacePath,
+    rootPath: head.rootPath,
     originalPath: base.filePath,
     modifiedPath: head.filePath,
   });

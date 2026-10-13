@@ -8,11 +8,7 @@ import { type ReactNode, act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  ConnectCard,
-  LegacySkillsRow,
-  REVIEW_CONNECT_TARGET_STORAGE_KEY,
-} from "./connect-card";
+import { ConnectCard, REVIEW_CONNECT_TARGET_STORAGE_KEY } from "./connect-card";
 
 const status: ReviewCliInstallStatus = {
   fingerprint: "f",
@@ -56,7 +52,6 @@ const status: ReviewCliInstallStatus = {
       },
     },
   },
-  legacySkills: [],
 };
 
 function content(
@@ -70,9 +65,6 @@ function content(
     status: s,
     apply: vi.fn<ReviewCanvasInstallContent["apply"]>(same),
     remove: vi.fn<ReviewCanvasInstallContent["remove"]>(same),
-    removeLegacySkills: vi.fn<ReviewCanvasInstallContent["removeLegacySkills"]>(
-      async () => ({ ...s, legacySkills: [] }),
-    ),
     finishUpdate: vi.fn<ReviewCanvasInstallContent["finishUpdate"]>(same),
     decline: vi.fn<ReviewCanvasInstallContent["decline"]>(same),
     skip: vi.fn<ReviewCanvasInstallContent["skip"]>(same),
@@ -255,7 +247,6 @@ describe("ConnectCard", () => {
   });
 
   it.each([
-    { legacySkills: [{ path: "~/.claude/skills/dev-review" }] },
     { cli: null, shim: { ...status.shim, installed: false } },
     { shim: { ...status.shim, installed: false } },
     { shim: { ...status.shim, onPath: false, profileConfigured: false } },
@@ -314,51 +305,5 @@ describe("ConnectCard", () => {
     const short = await mount(<ConnectCard install={content()} />);
     expect(short.querySelector("pre")?.dataset.collapsed).toBe("false");
     expect(short.querySelector("pre + [aria-expanded]")).toBeNull();
-  });
-});
-
-describe("LegacySkillsRow", () => {
-  it("renders nothing without legacy skills and reports what it removed", async () => {
-    const install = content({
-      legacySkills: [{ path: "/h/.claude/skills/review" }],
-    });
-
-    const onStatusChange = vi.fn<(status: ReviewCliInstallStatus) => void>();
-
-    const container = await mount(
-      <LegacySkillsRow install={install} onStatusChange={onStatusChange} />,
-    );
-
-    expect(container.textContent).toContain("Blackboard no longer uses them.");
-    expect(container.textContent).toContain("/h/.claude/skills/review");
-
-    const button = [...container.querySelectorAll("button")].find(
-      (b) => b.textContent === "Remove deprecated skills",
-    );
-
-    await act(async () => button?.click());
-    expect(install.removeLegacySkills).toHaveBeenCalled();
-
-    const next = onStatusChange.mock.calls[0]?.[0];
-
-    expect(next?.legacySkills).toEqual([]);
-
-    await act(async () => {
-      if (next) {
-        mounted[0]?.root.render(
-          <LegacySkillsRow
-            install={{ ...install, status: next }}
-            onStatusChange={onStatusChange}
-          />,
-        );
-      }
-    });
-    expect(container.textContent).toContain("Removed 1 skill");
-    expect(container.textContent).toContain("/h/.claude/skills/review");
-    expect(container.querySelector("button")).toBeNull();
-
-    const empty = await mount(<LegacySkillsRow install={content()} />);
-
-    expect(empty.textContent).toBe("");
   });
 });

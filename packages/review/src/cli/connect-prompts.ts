@@ -19,7 +19,6 @@ export const WINDOWS_MCP_LAUNCH = {
 export interface ConnectPromptInput {
   /** False when the serving package has no built CLI (Desktop from source): prompts fall back to a bare `blackboard`. */
   hasShim: boolean;
-  legacyPaths: string[];
 
   /** Defaults to this process's platform. */
   platform?: NodeJS.Platform;
@@ -158,11 +157,6 @@ export function connectPrompt(
     "Connect this agent to dev.fast Blackboard.",
     "",
     ...numbered([
-      ...(input.legacyPaths.length
-        ? [
-            `Delete these old Blackboard skill folders and plugin files:\n${input.legacyPaths.map((item) => `- ${JSON.stringify(item)}`).join("\n")}`,
-          ]
-        : []),
       ...pluginSteps(target, input.platform ?? process.platform),
       verify,
     ]),

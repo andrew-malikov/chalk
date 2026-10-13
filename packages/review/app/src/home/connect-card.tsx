@@ -1,6 +1,5 @@
 import {
   type ReviewCanvasInstallContent,
-  type ReviewCliInstallStatus,
   type ReviewCliInstallTarget,
   ReviewCliInstallTargetSchema,
 } from "@blackboard/review-protocol";
@@ -11,7 +10,6 @@ import { controlStyles } from "@canvas/styles/controls-styles";
 import { fontSize, radius } from "@canvas/styles/scale.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import { Button } from "@canvas/ui/button";
 import { CopyIcon, copyText } from "@canvas/ui/copy-text";
 import { CheckIcon } from "@canvas/ui/icons";
 import { OptionMenu } from "@canvas/ui/option-menu";
@@ -127,13 +125,11 @@ export function ConnectCard({
 
   const collapsed = collapsible && !expanded;
 
-  if (status.legacySkills.length > 0 || !cliInstallReady(status)) {
+  if (!cliInstallReady(status)) {
     return (
       <section aria-label="Connect your agents">
         <p {...stylex.props(styles.note)}>
-          {status.legacySkills.length > 0
-            ? "Remove deprecated skills first."
-            : "Install the blackboard command in PATH first."}
+          Install the blackboard command in PATH first.
         </p>
       </section>
     );
@@ -337,103 +333,6 @@ function readStoredTarget(): ReviewCliInstallTarget {
   return "claude";
 }
 
-/**
- * Skills that earlier versions of Blackboard installed into agent configs. After
- * a removal the row names what went, until the next status refresh.
- */
-export function LegacySkillsRow({
-  install,
-  onStatusChange,
-}: {
-  install: ReviewCanvasInstallContent;
-  onStatusChange?: (status: ReviewCliInstallStatus) => void;
-}) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [removal, setRemoval] = useState<{
-    paths: string[];
-    status: ReviewCliInstallStatus;
-  } | null>(null);
-
-  const { legacySkills } = install.status;
-
-  const removed = removal?.status === install.status ? removal.paths : [];
-
-  if (legacySkills.length === 0 && removed.length === 0) return null;
-
-  const removeSkills = async () => {
-    setBusy(true);
-    setError(null);
-
-    try {
-      const next = await install.removeLegacySkills();
-
-      const remaining = new Set(next.legacySkills.map((skill) => skill.path));
-
-      const paths = legacySkills
-        .map((skill) => skill.path)
-        .filter((path) => !remaining.has(path));
-
-      setRemoval({ paths, status: next });
-      onStatusChange?.(next);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <section
-      {...stylex.props(styles.legacy)}
-      aria-label="Deprecated Blackboard skills"
-    >
-      {legacySkills.length > 0 ? (
-        <>
-          <p {...stylex.props(styles.legacyText)}>
-            Earlier versions of Blackboard installed these skills. Blackboard no
-            longer uses them.
-          </p>
-          <ul {...stylex.props(styles.legacyList)}>
-            {legacySkills.map((skill) => (
-              <li key={skill.path}>
-                <code {...stylex.props(styles.legacyCode)}>{skill.path}</code>
-              </li>
-            ))}
-          </ul>
-          <Button
-            size="large"
-            xstyle={styles.legacyButton}
-            loading={busy}
-            disabled={busy}
-            onClick={() => void removeSkills()}
-          >
-            Remove deprecated skills
-          </Button>
-        </>
-      ) : null}
-      {removed.length > 0 ? (
-        <>
-          <p {...stylex.props(styles.legacyText)}>
-            Removed {removed.length} skill{removed.length === 1 ? "" : "s"}
-          </p>
-          <ul {...stylex.props(styles.legacyList)}>
-            {removed.map((path) => (
-              <li key={path}>
-                <code {...stylex.props(styles.legacyCode)}>{path}</code>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-      {error ? (
-        <p {...stylex.props(promptStyles.error, styles.legacyText)}>{error}</p>
-      ) : null}
-    </section>
-  );
-}
-
 const styles = stylex.create({
   note: {
     margin: "0 0 8px",
@@ -492,27 +391,5 @@ const styles = stylex.create({
     color: { default: tokens.inkMuted, ":hover": tokens.ink },
     font: `${fontSize.body}/22px ${tokens.fontSans}`,
     cursor: "pointer",
-  },
-  legacy: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: "8px",
-    fontSize: fontSize.body,
-  },
-  legacyText: {
-    margin: 0,
-  },
-  legacyList: {
-    margin: 0,
-    padding: 0,
-    listStyle: "none",
-    color: tokens.reviewHomeMeta,
-  },
-  legacyCode: {
-    fontFamily: tokens.fontMono,
-  },
-  legacyButton: {
-    marginTop: "8px",
   },
 });

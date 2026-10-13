@@ -48,7 +48,6 @@ import {
   type InstallTarget,
   isInstallTarget,
 } from "./install";
-import { scanLegacySkills } from "./legacy-skills";
 import { type ReviewAppEvent, runReviewAppPick } from "./review-app";
 import {
   type ReviewAppLaunchEvent,
@@ -567,7 +566,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     const homeDir = env.HOME || os.homedir();
 
     const prompts = connectPrompts({
-      legacyPaths: await scanLegacySkills(homeDir),
       hasShim:
         (await isOwnedShim(pathShimPath(homeDir))) ||
         (await windowsInstallerCommand(

@@ -66,7 +66,6 @@
     "mdast-util-math": "3.0.0",
     "micromark-extension-gfm": "3.0.0",
     "pino": "10.3.1",
-    "semver": "7.8.5",
     "sharp": "0.35.4",
     "smol-toml": "1.8.0",
     "zod": "catalog:"
@@ -77,7 +76,6 @@
     "@blackboard/review-protocol": "workspace:*",
     "@dev.fast/diffr": "0.1.10",
     "@types/node": "24.12.2",
-    "@types/semver": "7.7.1",
     "isomorphic-git": "1.38.10",
     "micromark-extension-math": "3.1.0",
     "pino-pretty": "13.1.3",

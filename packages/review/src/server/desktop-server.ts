@@ -20,7 +20,6 @@ import {
   declineCliInstall,
   finishCliInstallUpdate,
   removeCliInstall,
-  removeLegacyReviewSkills,
   resetCliInstall,
   resolveCliInstallStatus,
   skipCliInstall,
@@ -341,11 +340,6 @@ export function createGlobalReviewServer(
     const result = await removeCliInstall(removeInput);
 
     return serverJson(200, { ok: true, output: result.output });
-  });
-  app.post("/install/legacy-skills/remove", async () => {
-    const { removed } = await removeLegacyReviewSkills();
-
-    return serverJson(200, { ok: true, removed });
   });
   app.post("/install/finish-update", async () => {
     await finishCliInstallUpdate();

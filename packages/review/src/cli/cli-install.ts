@@ -28,7 +28,6 @@ import {
   launchCommand,
   reviewMcpLaunch,
 } from "./connect-prompts";
-import { removeLegacySkills, scanLegacySkills } from "./legacy-skills";
 import { readRetiredFile } from "./retired-agent-hooks";
 import {
   type RetirementResult,
@@ -105,15 +104,13 @@ export async function resolveCliInstallStatus(input: {
   const shimPath = pathShimPath(homeDir);
   const cliPath = path.join(input.packageRoot, "dist", "cli.js");
 
-  const [fingerprint, stamp, updated, legacySkills, cliBuilt, hasShim] =
-    await Promise.all([
-      installFingerprint(input.packageRoot),
-      readCliInstallStamp(cliInstallStampPath(env)),
-      isFile(cliInstallUpdateMarkerPath(env)),
-      scanLegacySkills(homeDir),
-      isFile(cliPath),
-      isOwnedShim(shimPath),
-    ]);
+  const [fingerprint, stamp, updated, cliBuilt, hasShim] = await Promise.all([
+    installFingerprint(input.packageRoot),
+    readCliInstallStamp(cliInstallStampPath(env)),
+    isFile(cliInstallUpdateMarkerPath(env)),
+    isFile(cliPath),
+    isOwnedShim(shimPath),
+  ]);
 
   const granted = stamp?.consent === "granted";
 
@@ -127,7 +124,7 @@ export async function resolveCliInstallStatus(input: {
     fingerprint,
     stamp,
     stale: granted && stamp.fingerprint !== fingerprint,
-    updateNeeded: legacySkills.length > 0 || (granted && !updated),
+    updateNeeded: granted && !updated,
     shim: installerCommand ?? {
       path: shimPath,
       installed: hasShim,
@@ -151,9 +148,6 @@ export async function resolveCliInstallStatus(input: {
       prompts: connectSetupPrompts(),
       plugins: connectPlugins(hasCommand),
     },
-    legacySkills: legacySkills.map((skillPath) => ({
-      path: homeRelative(homeDir, skillPath),
-    })),
   };
 
   const error = installErrors.get(homeDir);
@@ -432,16 +426,7 @@ function connectPlugins(
   };
 }
 
-/** Removes the skills Blackboard Desktop installed before it connected over MCP. */
-export async function removeLegacyReviewSkills(
-  input: { homeDir?: string; env?: NodeJS.ProcessEnv } = {},
-): Promise<{ removed: string[] }> {
-  return withDesktopInstallLock(input.env, () =>
-    removeLegacySkills(input.homeDir ?? os.homedir()),
-  );
-}
-
-/** Records setup completion; remaining legacy skills still require the update screen. */
+/** Records setup completion. */
 export async function finishCliInstallUpdate(
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<void> {
@@ -942,15 +927,6 @@ async function isExecutableFile(target: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-/** `~/…` for paths under the home directory; the card shows these, removal rescans. */
-function homeRelative(homeDir: string, target: string): string {
-  const relative = path.relative(homeDir, target);
-
-  return relative.startsWith("..") || path.isAbsolute(relative)
-    ? target
-    : `~/${relative.split(path.sep).join("/")}`;
 }
 
 async function retireInstallationHooks(input: {

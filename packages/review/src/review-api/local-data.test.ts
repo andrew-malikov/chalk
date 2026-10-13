@@ -987,7 +987,7 @@ it("gives a remote caller a fixed issue when a commit review's checkout fails", 
   });
 });
 
-it("opens a stable native workspace on the Review's pinned checkout at the selected version", async () => {
+it("opens the pinned source directory at the selected version", async () => {
   const { reviewId } = await local.store.execute(
     command({ type: "create", title: "Navigator", pins }),
   );
@@ -1020,34 +1020,27 @@ it("opens a stable native workspace on the Review's pinned checkout at the selec
     });
 
     expect(response.status).toBe(200);
-    const { workspacePath } = await response.json();
-    const workspace = JSON.parse(readFileSync(workspacePath, "utf8"));
 
-    return { workspacePath, workspace, root: workspace.folders[0].path };
+    return response.json();
   };
 
   const old = await open("?version=0");
   const current = await open();
-  expect(old.workspacePath).not.toBe(current.workspacePath);
-  old.workspace.settings["editor.wordWrap"] = "on";
-  writeFileSync(old.workspacePath, JSON.stringify(old.workspace));
-  expect((await open("?version=0")).workspacePath).toBe(old.workspacePath);
-  expect((await open("?version=0")).workspace.settings["editor.wordWrap"]).toBe(
-    "on",
-  );
-  expect(readFileSync(path.join(old.root, source.file), "utf8")).toBe(
+  expect(old.rootPath).toBe(language.rootPath);
+  expect(current.rootPath).not.toBe(old.rootPath);
+  expect((await open("?version=0")).rootPath).toBe(old.rootPath);
+  expect(readFileSync(path.join(old.rootPath, source.file), "utf8")).toBe(
     "export const value = 2;\nexport const saved = true;\n",
   );
-  expect(readFileSync(path.join(current.root, source.file), "utf8")).toBe(
+  expect(readFileSync(path.join(current.rootPath, source.file), "utf8")).toBe(
     "new HEAD\n",
   );
-  expect(old.root).toBe(language.rootPath);
-  writeFileSync(path.join(old.root, source.file), "unexpected edit\n");
+  writeFileSync(path.join(old.rootPath, source.file), "unexpected edit\n");
   expect(
     (await app.request(`/${reviewId}/navigator?version=0`, { method: "POST" }))
       .status,
   ).toBe(409);
-  expect(readFileSync(path.join(old.root, source.file), "utf8")).toBe(
+  expect(readFileSync(path.join(old.rootPath, source.file), "utf8")).toBe(
     "unexpected edit\n",
   );
   expect(
@@ -1081,7 +1074,7 @@ it("opens navigator files at their base, head, commit and explicit pins", async 
   const base = await open({ version: "0", side: "base", file: source.file });
   expect(readFileSync(head.filePath, "utf8")).toContain("value = 2");
   expect(readFileSync(base.filePath, "utf8")).toContain("value = 1");
-  expect(head.workspacePath).not.toBe(base.workspacePath);
+  expect(head.rootPath).not.toBe(base.rootPath);
   expect(
     (
       await open({
@@ -1143,12 +1136,10 @@ it("keeps a live navigator attached to the live checkout without preparing it", 
   git("config", "devfast.prepare", "echo unexpected > prepared");
   const before = git("worktree", "list", "--porcelain");
 
-  const { workspacePath } = await local.data.navigatorWorkspace(
+  const { rootPath: root } = await local.data.navigatorSource(
     local.store.read(reviewId),
   );
 
-  const workspace = JSON.parse(readFileSync(workspacePath, "utf8"));
-  const root = workspace.folders[0].path;
   expect(root).toBe(realpathSync(repository));
   writeFileSync(path.join(repository, source.file), "live edit\n");
   expect(readFileSync(path.join(root, source.file), "utf8")).toBe(
@@ -1157,13 +1148,13 @@ it("keeps a live navigator attached to the live checkout without preparing it", 
   expect(git("worktree", "list", "--porcelain")).toBe(before);
   expect(existsSync(path.join(root, "prepared"))).toBe(false);
 
-  const live = await local.data.navigatorWorkspace(local.store.read(reviewId), {
+  const live = await local.data.navigatorSource(local.store.read(reviewId), {
     file: source.file,
   });
 
   expect(live.filePath).toBe(path.join(root, source.file));
 
-  const base = await local.data.navigatorWorkspace(local.store.read(reviewId), {
+  const base = await local.data.navigatorSource(local.store.read(reviewId), {
     side: "base",
     file: source.file,
   });
@@ -1173,81 +1164,10 @@ it("keeps a live navigator attached to the live checkout without preparing it", 
   writeFileSync(outside, "outside source\n");
   symlinkSync(outside, path.join(repository, "outside-link.ts"));
   await expect(
-    local.data.navigatorWorkspace(local.store.read(reviewId), {
+    local.data.navigatorSource(local.store.read(reviewId), {
       file: "outside-link.ts",
     }),
   ).rejects.toThrow("leaves the selected worktree");
-});
-
-it("names a linked worktree's source workspace after its repository", async () => {
-  const worktree = path.join(directory, "autocompact-500k-f92161");
-  git("worktree", "add", "--detach", worktree, pins.head);
-  const registered = await local.data.register(worktree);
-
-  const { reviewId } = await local.store.execute(
-    command({
-      type: "create",
-      title: "Worktree source",
-      target: { kind: "worktree", repositoryId: registered.id },
-    }),
-  );
-
-  const open = async () => {
-    const { workspacePath } = await local.data.navigatorWorkspace(
-      local.store.read(reviewId),
-    );
-
-    return {
-      workspacePath,
-      workspace: JSON.parse(readFileSync(workspacePath, "utf8")),
-    };
-  };
-
-  const first = await open();
-  expect(path.basename(first.workspacePath)).toBe("repository.code-workspace");
-  expect(first.workspace.folders).toEqual([
-    { path: realpathSync(worktree), name: "repository" },
-  ]);
-  expect(first.workspace.settings["window.title"]).toBe(
-    "Worktree source — Live source — Blackboard",
-  );
-
-  // A workspace named after the checkout directory carries its preferences
-  // over and stays in place for a window still open on it.
-  const legacy = path.join(
-    path.dirname(first.workspacePath),
-    "autocompact-500k-f92161.code-workspace",
-  );
-
-  writeFileSync(
-    legacy,
-    JSON.stringify({
-      folders: [
-        { path: realpathSync(worktree), name: "autocompact-500k-f92161" },
-      ],
-      settings: {
-        "files.readonlyInclude": { "**/*": true },
-        "editor.wordWrap": "on",
-        "window.title": "Worktree source — Live source — Review",
-      },
-    }),
-  );
-  rmSync(first.workspacePath);
-
-  const migrated = await open();
-  expect(migrated.workspacePath).toBe(first.workspacePath);
-  expect(migrated.workspace.folders[0].name).toBe("repository");
-  expect(migrated.workspace.settings).toEqual({
-    "files.readonlyInclude": { "**/*": true },
-    "editor.wordWrap": "on",
-    "window.title": "Worktree source — Live source — Blackboard",
-  });
-  expect(existsSync(legacy)).toBe(true);
-
-  git("remote", "add", "origin", "git@github.com:acme/blackboard.git");
-  const remote = await open();
-  expect(path.basename(remote.workspacePath)).toBe("blackboard.code-workspace");
-  expect(remote.workspace.folders[0].name).toBe("blackboard");
 });
 
 it("browses committed directories, including history, without listing untracked files", async () => {

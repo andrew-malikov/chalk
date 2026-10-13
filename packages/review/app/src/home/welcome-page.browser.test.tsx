@@ -46,7 +46,6 @@ const fresh: ReviewCliInstallStatus = {
       copilot: { label: "copilot plugin", command: "copilot command" },
     },
   },
-  legacySkills: [],
 };
 
 function content(status: ReviewCliInstallStatus): ReviewCanvasInstallContent {
@@ -56,9 +55,6 @@ function content(status: ReviewCliInstallStatus): ReviewCanvasInstallContent {
     status,
     apply: vi.fn<ReviewCanvasInstallContent["apply"]>(same),
     remove: vi.fn<ReviewCanvasInstallContent["remove"]>(same),
-    removeLegacySkills: vi.fn<ReviewCanvasInstallContent["removeLegacySkills"]>(
-      async () => ({ ...status, legacySkills: [] }),
-    ),
     finishUpdate: vi.fn<ReviewCanvasInstallContent["finishUpdate"]>(
       async () => ({ ...status, updateNeeded: false }),
     ),
@@ -140,37 +136,6 @@ describe("WelcomePage", () => {
     expect(stepState(0)).toBe("done");
     expect(stepOpen(1)).toBe("true");
     expect(buttons("Install blackboard in PATH")).toHaveLength(0);
-    expect(
-      (step(1)?.querySelector("button") as HTMLButtonElement).disabled,
-    ).toBe(false);
-  });
-
-  it("replaces the install step when returning-user status arrives late", async () => {
-    await act(async () => root.render(<WelcomePage />));
-    expect(stepOpen(0)).toBe("true");
-
-    const install = content({
-      ...fresh,
-      updateNeeded: true,
-      shim: { ...fresh.shim, installed: true, profileConfigured: true },
-      legacySkills: [{ path: "/h/.agents/skills/dev-review" }],
-    });
-
-    await act(async () => root.render(<WelcomePage install={install} />));
-    expect(container.querySelectorAll("ol > li")).toHaveLength(3);
-    expect(container.textContent).not.toContain(
-      "Install the blackboard command",
-    );
-    expect(stepOpen(0)).toBe("true");
-    expect(buttons("Remove deprecated skills")).toHaveLength(1);
-
-    await act(async () => buttons("Remove deprecated skills")[0]?.click());
-    await waitForStepAdvance();
-    expect(install.removeLegacySkills).toHaveBeenCalledOnce();
-    expect(container.querySelectorAll("ol > li")).toHaveLength(3);
-    expect(stepOpen(0)).toBe("false");
-    expect(stepOpen(1)).toBe("true");
-    expect(stepState(0)).toBe("done");
     expect(
       (step(1)?.querySelector("button") as HTMLButtonElement).disabled,
     ).toBe(false);
@@ -369,148 +334,6 @@ describe("WelcomePage", () => {
     expect(install.finishUpdate).toHaveBeenCalledOnce();
     expect(container.querySelector("ol")).toBeNull();
     expect(container.querySelector("h1")?.textContent).toBe("Sessions");
-  });
-
-  it("requires skill removal, PATH readiness, and opening the agent card before dismissal", async () => {
-    localStorage.setItem(REVIEW_CONNECT_COPIED_STORAGE_KEY, "1");
-
-    const install = content({
-      ...fresh,
-      updateNeeded: true,
-      legacySkills: [{ path: "/h/.agents/skills/blackboard" }],
-    });
-
-    const ready = content({
-      ...fresh,
-      updateNeeded: true,
-      shim: { ...fresh.shim, installed: true, onPath: true },
-    });
-
-    const setupActions = {
-      load: vi.fn<() => Promise<ReviewCanvasInstallContent>>(async () => ready),
-      installCli: vi.fn<() => Promise<void>>(async () => {}),
-    };
-
-    const onClose = vi.fn<() => void>();
-    await act(async () =>
-      root.render(
-        <WelcomePage
-          install={install}
-          setupActions={setupActions}
-          onClose={onClose}
-        />,
-      ),
-    );
-    expect(buttons("Dismiss")[0]?.disabled).toBe(true);
-    await act(async () => buttons("Remove deprecated skills")[0]?.click());
-    await waitForStepAdvance();
-    expect(stepOpen(1)).toBe("true");
-    expect(container.textContent).toContain(
-      "Deprecated skills removed successfully",
-    );
-    expect(buttons("Dismiss")[0]?.disabled).toBe(true);
-    await act(async () => buttons("Dismiss")[0]?.click());
-    expect(onClose).not.toHaveBeenCalled();
-    await act(async () => buttons("Install blackboard in PATH")[0]?.click());
-    await waitForStepAdvance();
-    expect(stepOpen(2)).toBe("true");
-    expect(buttons("Dismiss")[0]?.disabled).toBe(false);
-    await act(async () => buttons("Dismiss")[0]?.click());
-    expect(ready.finishUpdate).toHaveBeenCalledOnce();
-    expect(onClose).toHaveBeenCalledOnce();
-  });
-
-  it("puts removal before installation when the command is missing", async () => {
-    const status = {
-      ...fresh,
-      updateNeeded: true,
-      legacySkills: [{ path: "/h/.codex/skills/blackboard" }],
-    };
-
-    const setupActions = {
-      load: vi.fn<() => Promise<ReviewCanvasInstallContent>>(async () =>
-        content({
-          ...status,
-          shim: { ...status.shim, installed: true, profileConfigured: true },
-          legacySkills: [],
-        }),
-      ),
-      installCli: vi.fn<() => Promise<void>>(async () => {}),
-    };
-
-    await act(async () =>
-      root.render(
-        <WelcomePage install={content(status)} setupActions={setupActions} />,
-      ),
-    );
-    expect(stepOpen(0)).toBe("true");
-    expect(buttons("Remove deprecated skills")).toHaveLength(1);
-    expect(buttons("Install blackboard in PATH")).toHaveLength(0);
-    expect(
-      (step(1)?.querySelector("button") as HTMLButtonElement).disabled,
-    ).toBe(true);
-    await act(async () => buttons("Remove deprecated skills")[0]?.click());
-    await waitForStepAdvance();
-    expect(
-      (step(1)?.querySelector("button") as HTMLButtonElement).disabled,
-    ).toBe(false);
-    expect(stepState(0)).toBe("done");
-    expect(stepOpen(1)).toBe("true");
-    expect(stepState(1)).toBe("todo");
-    await act(async () => buttons("Install blackboard in PATH")[0]?.click());
-    expect(setupActions.installCli).toHaveBeenCalledOnce();
-    expect(stepState(1)).toBe("done");
-    expect(stepState(0)).toBe("done");
-  });
-
-  it("keeps the open step when an agent removes the skills", async () => {
-    const status = {
-      ...fresh,
-      updateNeeded: true,
-      shim: { ...fresh.shim, installed: true, profileConfigured: true },
-      legacySkills: [{ path: "/h/.agents/skills/blackboard" }],
-    };
-
-    await act(async () =>
-      root.render(<WelcomePage install={content(status)} />),
-    );
-    await act(async () =>
-      (step(1)?.querySelector("button") as HTMLButtonElement)?.click(),
-    );
-    expect(buttons("Copy prompt")).toHaveLength(0);
-    expect(stepOpen(0)).toBe("true");
-
-    await act(async () =>
-      root.render(
-        <WelcomePage install={content({ ...status, legacySkills: [] })} />,
-      ),
-    );
-    expect(stepState(0)).toBe("done");
-    expect(stepOpen(0)).toBe("true");
-    expect(
-      (step(1)?.querySelector("button") as HTMLButtonElement).disabled,
-    ).toBe(false);
-    await act(async () =>
-      (step(1)?.querySelector("button") as HTMLButtonElement).click(),
-    );
-    expect(stepOpen(1)).toBe("true");
-    expect(buttons("Copy prompt")).toHaveLength(1);
-  });
-
-  it("keeps removal incomplete when skills remain", async () => {
-    const status = {
-      ...fresh,
-      shim: { ...fresh.shim, installed: true, profileConfigured: true },
-      legacySkills: [{ path: "/h/.codex/skills/blackboard" }],
-    };
-
-    const install = content(status);
-    vi.mocked(install.removeLegacySkills).mockResolvedValue(status);
-    await act(async () => root.render(<WelcomePage install={install} />));
-    await act(async () => buttons("Remove deprecated skills")[0]?.click());
-    expect(install.removeLegacySkills).toHaveBeenCalledOnce();
-    expect(stepState(0)).toBe("todo");
-    expect(buttons("Remove deprecated skills")).toHaveLength(1);
   });
 });
 

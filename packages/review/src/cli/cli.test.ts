@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { PassThrough, Readable } from "node:stream";
@@ -21,42 +21,6 @@ describe("Blackboard CLI", () => {
       expect(stderr).toContain("Allowed choices are");
     },
   );
-
-  it("prints only scanner-owned cleanup paths", async () => {
-    let owned = "";
-    let plugin = "";
-    let unrelated = "";
-
-    const { code, stdout } = await runConnect(
-      ["connect", "--json"],
-      async (home) => {
-        await installTestShim(home);
-        owned = path.join(home, ".agents", "skills", "dev-review");
-        unrelated = path.join(home, ".agents", "skills", "review");
-        plugin = path.join(home, ".config", "opencode", "plugins", "review.ts");
-        await mkdir(owned, { recursive: true });
-        await mkdir(unrelated, { recursive: true });
-        await mkdir(path.dirname(plugin), { recursive: true });
-        await writeFile(
-          path.join(owned, "SKILL.md"),
-          '---\nmetadata:\n  review-managed-by: "Review Desktop"\n  review-generated: "Do not edit."\n  review-version: "development"\n---\n',
-        );
-        await writeFile(path.join(unrelated, "SKILL.md"), "User-owned skill");
-        await writeFile(
-          plugin,
-          "// Managed by Review Desktop (@dev.fast/review).\n",
-        );
-      },
-    );
-
-    expect(code).toBe(0);
-
-    for (const prompt of Object.values(JSON.parse(stdout).prompts)) {
-      expect(prompt).toContain(JSON.stringify(owned));
-      expect(prompt).toContain(JSON.stringify(plugin));
-      expect(prompt).not.toContain(JSON.stringify(unrelated));
-    }
-  });
 
   it("prints every prompt with headings by default", async () => {
     const { code, stdout } = await runConnect(["connect"]);
@@ -285,15 +249,8 @@ function outputStream(): PassThrough {
   return new PassThrough();
 }
 
-async function installTestShim(home: string): Promise<void> {
-  const bin = path.join(home, ".local", "bin");
-  await mkdir(bin, { recursive: true });
-  await writeFile(path.join(bin, "blackboard"), "# Managed by Blackboard\n");
-}
-
 async function runConnect(
   argv: string[],
-  setup?: (homeDir: string) => Promise<void>,
 ): Promise<{ code: number; stdout: string; stderr: string }> {
   const homeDir = await mkdtemp(path.join(os.tmpdir(), "review-connect-"));
 
@@ -307,8 +264,6 @@ async function runConnect(
   stderr.on("data", (chunk) => (stderrText += String(chunk)));
 
   try {
-    await setup?.(homeDir);
-
     const code = await runReviewCli({
       argv,
       cwd: homeDir,

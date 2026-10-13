@@ -632,7 +632,7 @@ export function createReviewApi(
         .parse(context.req.query());
 
       return context.json(
-        await data.navigatorWorkspace(
+        await data.navigatorSource(
           readReview(context.req.param("id"), input.version),
           {
             ...input,
