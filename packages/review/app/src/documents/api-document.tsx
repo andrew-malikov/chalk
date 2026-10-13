@@ -12,8 +12,8 @@ import { scopeLive } from "@canvas/review/authoring-cursor";
 import { useReviewRoots } from "@canvas/review/review-root-context";
 import type { SoftwareMapResolvedDataPayload } from "@canvas/software-map/software-map-snapshot";
 import { documentNodeMarker, proseMarker } from "@canvas/styles/markers.stylex";
+import type { PeekableAnchorRef as DocumentPeekableAnchor } from "@review/documents/authoring";
 import { type DiffSelection } from "@review/documents/lens-selection";
-import type { DocumentPeekableAnchor } from "@review/documents/review-document-data";
 import type { ReviewApiClient } from "@review/review-api/client";
 import {
   type Block,

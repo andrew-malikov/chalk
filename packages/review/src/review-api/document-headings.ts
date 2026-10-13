@@ -16,8 +16,7 @@ export interface DocumentHeading {
   index?: number;
 }
 
-/** Heading ids by the rule the MDX renderer published, `slugify(text)` made
- * unique in document order, so imported `#fragment` links still land. */
+/** Heading slugs are unique in document order so fragment links resolve. */
 export function documentHeadings(blocks: Block[]): DocumentHeading[] {
   const used = new Set<string>();
 

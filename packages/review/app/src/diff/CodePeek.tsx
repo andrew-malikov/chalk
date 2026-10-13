@@ -16,12 +16,12 @@ import {
 } from "@canvas/styles/markers.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
+import type { ReviewComponentProps } from "@review/documents/authoring";
 import {
   type DiffSelection,
   selectionKey,
   sourceAnchor,
 } from "@review/documents/lens-selection";
-import type { ReviewComponentProps } from "@review/documents/review-document-data";
 import { type FileLineRange, codePeekSource } from "@review/documents/source";
 import * as stylex from "@stylexjs/stylex";
 import { useMemo, useRef } from "react";

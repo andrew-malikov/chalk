@@ -146,20 +146,12 @@ describe("snapshot authoring", () => {
     expect(store.read(reviewId).document).toEqual(authored.document);
   });
 
-  it("preserves imported provenance when attaching a PR and supports explicit repin identity", async () => {
-    const { reviewId } = await create();
-    await store.importVersion({
-      reviewId,
-      title: "Imported",
-      pins,
-      document: [],
-      createdAt: new Date().toISOString(),
-      origin: {
-        branch: "feature",
-        baseRef: "main",
-        revision: "legacy-revision",
-      },
-    });
+  it("preserves branch provenance when attaching a PR and supports explicit repin identity", async () => {
+    const { reviewId } = await store.execute(
+      request({ type: "create", title: "Branch review", pins }),
+      { document: [], origin: { branch: "feature", baseRef: "main" } },
+    );
+
     await store.execute(
       request({
         type: "repin",
@@ -171,7 +163,6 @@ describe("snapshot authoring", () => {
     expect(store.read(reviewId).origin).toEqual({
       branch: "feature",
       baseRef: "main",
-      revision: "legacy-revision",
       pullRequestNumber: 319,
       pullRequestUrl: "https://github.com/devdotfast/review/pull/319",
     });
@@ -181,7 +172,6 @@ describe("snapshot authoring", () => {
     expect(store.read(reviewId).origin).toEqual({
       branch: "feature",
       baseRef: "main",
-      revision: "legacy-revision",
     });
   });
 

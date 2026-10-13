@@ -5,7 +5,7 @@ import {
   tracking,
 } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import type { ReviewComponentProps } from "@review/documents/review-document-data";
+import type { ReviewComponentProps } from "@review/documents/authoring";
 import * as stylex from "@stylexjs/stylex";
 import type { ReactElement } from "react";
 

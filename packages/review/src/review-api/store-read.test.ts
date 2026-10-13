@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -19,9 +20,9 @@ const pins = {
   head: "b".repeat(40),
 };
 
-const oldId = "11111111-1111-4111-8111-111111111111";
+let oldId: string;
 
-const healthyId = "22222222-2222-4222-8222-222222222222";
+let healthyId: string;
 
 beforeEach(async () => {
   directory = mkdtempSync(path.join(tmpdir(), "review-read-"));
@@ -32,14 +33,8 @@ beforeEach(async () => {
     validateResource,
   });
 
-  for (const reviewId of [oldId, healthyId])
-    await store.importVersion({
-      reviewId,
-      title: "Saved",
-      pins,
-      document: [{ type: "markdown", markdown: "Healthy" }],
-      createdAt: "2026-01-02T03:04:05.000Z",
-    });
+  oldId = await savedReview("Healthy");
+  healthyId = await savedReview("Healthy");
 });
 
 afterEach(async () => {
@@ -88,32 +83,27 @@ it.each([
   "[quote](review-trace:old#event)",
   "[quote][old]\n\n[old]: review-trace:old#event",
 ])("rejects active retired Markdown links: %s", async (markdown) => {
-  await expect(
-    store.importVersion({
-      reviewId: "33333333-3333-4333-8333-333333333333",
-      title: "Old",
-      pins,
-      document: [{ type: "markdown", markdown }],
-      createdAt: "2026-01-02T03:04:05.000Z",
-    }),
-  ).rejects.toThrow(/agent traces.*no longer supported/i);
+  await expect(savedReview(markdown)).rejects.toThrow(
+    /agent traces.*no longer supported/i,
+  );
 });
 
 it("accepts retired-scheme text in code literals and ordinary quotations", async () => {
-  await store.importVersion({
-    reviewId: "33333333-3333-4333-8333-333333333333",
-    title: "Literal",
-    pins,
-    document: [
-      {
-        type: "markdown",
-        markdown:
-          "> A quotation\n\n`review-trace:old#event`\n\n```\n[quote](review-trace:old#event)\n```",
-      },
-    ],
-    createdAt: "2026-01-02T03:04:05.000Z",
-  });
-  expect(
-    store.read("33333333-3333-4333-8333-333333333333").document,
-  ).toHaveLength(1);
+  const reviewId = await savedReview(
+    "> A quotation\n\n`review-trace:old#event`\n\n```\n[quote](review-trace:old#event)\n```",
+  );
+
+  expect(store.read(reviewId).document).toHaveLength(1);
 });
+
+async function savedReview(markdown: string): Promise<string> {
+  const created = await store.execute(
+    {
+      commandId: randomUUID(),
+      operation: { type: "create", title: "Saved", pins },
+    },
+    { document: [{ type: "markdown", markdown }], origin: {} },
+  );
+
+  return created.reviewId;
+}

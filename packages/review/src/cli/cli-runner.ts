@@ -49,7 +49,6 @@ import {
   isInstallTarget,
 } from "./install";
 import { scanLegacySkills } from "./legacy-skills";
-import { runReviewMigration } from "./migrate";
 import { type ReviewAppEvent, runReviewAppPick } from "./review-app";
 import {
   type ReviewAppLaunchEvent,
@@ -66,7 +65,6 @@ interface ReviewCliRuntime {
   runReviewAppLaunch: typeof runReviewAppLaunch;
   runReviewAppPick: typeof runReviewAppPick;
   runReviewInfo: typeof runReviewInfo;
-  runReviewMigration: typeof runReviewMigration;
 }
 
 export interface ReviewCliInput {
@@ -605,27 +603,6 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     humanStream(output).write(`${sections.join("\n\n")}\n`);
   });
 
-  const migrate = configureOutput(
-    program.command("migrate").description("Migrate legacy review data"),
-    "plain",
-  );
-
-  configureJsonOutput(
-    migrate
-      .command("apply")
-      .description("Apply the legacy review migration")
-      .option("--force", "restart an interrupted migration"),
-    "plain",
-  ).action(async (options: { force?: boolean; json?: boolean }) => {
-    state.exitCode = await runtime.runReviewMigration({
-      env,
-      force: options.force,
-      json: options.json,
-      stdout: input.stdout,
-      stderr: input.stderr,
-    });
-  });
-
   // The JSON authoring surface is owned by review-api/agent-cli.ts. Commander
   // passes the tool name and JSON payload through untouched, so these commands
   // share the top-level help and the leading `--json` form without a separate
@@ -752,7 +729,6 @@ function reviewCliRuntime(
     runReviewAppLaunch,
     runReviewAppPick,
     runReviewInfo,
-    runReviewMigration,
 
     ...overrides,
   };

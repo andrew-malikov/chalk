@@ -22,7 +22,7 @@ import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Chip } from "@canvas/ui/chip";
 import { EmptyState } from "@canvas/ui/empty-state";
-import type { DatabaseLensBlockProps } from "@review/documents/database-lens-block";
+import type { ReviewComponentProps } from "@review/documents/authoring";
 import { type DiffSelection } from "@review/documents/lens-selection";
 import type {
   DatabaseField,
@@ -51,7 +51,7 @@ import { DiagramTourOverlay, useDiagramTourShell } from "./diagram-tour";
 type OperationKind = "read" | "write";
 
 /** The canonical `database_lens` block as the document stores it. */
-export type DatabaseLensProps = DatabaseLensBlockProps;
+export type DatabaseLensProps = ReviewComponentProps<"DatabaseLens">;
 
 export type LensStores = Record<string, DatabaseStore>;
 

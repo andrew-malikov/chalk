@@ -12,7 +12,6 @@ import type { ReviewApiSummary } from "./review-api-client.js";
 export const REVIEW_DESKTOP_DISCOVERY_VERSION = 3;
 
 // Version 5: document and software-map bundles are JSON.
-export const REVIEW_SCHEMA_VERSION = 5;
 
 // A gateway sets the client header on every call it forwards from another
 // machine; the server then leaves local paths out. The host header names the
@@ -831,35 +830,6 @@ export const ReviewRepositoryIdentitySchema = z.strictObject({
 export type ReviewRepositoryIdentity = z.infer<
   typeof ReviewRepositoryIdentitySchema
 >;
-
-export const ReviewStatusSchema = z.enum([
-  "draft",
-  "awaiting-review",
-  "awaiting-agent-updates",
-  "accepted",
-  "rejected",
-]);
-
-export const ReviewSourceIdentitySchema = z.strictObject({
-  kind: z.enum(["git-branch", "git-commit", "jj-bookmark", "jj-change"]),
-  name: requiredString,
-});
-
-export type ReviewSourceIdentity = z.infer<typeof ReviewSourceIdentitySchema>;
-
-export const ReviewAgentSessionRoleSchema = z.enum([
-  "author",
-  "map-worker",
-  "publisher",
-  "updater",
-  "question",
-]);
-
-export const ReviewAgentSessionAttributionSchema = z.strictObject({
-  roles: z.array(ReviewAgentSessionRoleSchema),
-  firstSeenAt: requiredString,
-  lastSeenAt: requiredString,
-});
 
 export const ReviewCommitSummarySchema = z.strictObject({
   commit: z

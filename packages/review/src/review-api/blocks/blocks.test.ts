@@ -1,4 +1,4 @@
-import { readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import {
@@ -15,11 +15,6 @@ import {
 } from "./index.js";
 
 const fixturesDir = path.resolve(import.meta.dirname, "../../fixtures/blocks");
-
-const goldensDir = path.resolve(
-  import.meta.dirname,
-  "../../fixtures/legacy-reviews",
-);
 
 async function fixture<T extends BlockType>(type: T) {
   const raw = JSON.parse(
@@ -43,22 +38,6 @@ describe("block definitions", () => {
       }
     },
   );
-
-  it("accepts the three real reviews", async () => {
-    const goldens = (await readdir(goldensDir)).filter((f) =>
-      f.endsWith(".expected-blocks.json"),
-    );
-
-    expect(goldens).toHaveLength(3);
-
-    for (const name of goldens) {
-      const document = documentSchema.parse(
-        JSON.parse(await readFile(path.join(goldensDir, name), "utf8")),
-      );
-
-      expect(() => checkReferences(document)).not.toThrow();
-    }
-  });
 
   describe("check rules", () => {
     it("sequence: a step must name declared actors", async () => {

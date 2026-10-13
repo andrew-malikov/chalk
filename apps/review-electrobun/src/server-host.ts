@@ -4,13 +4,6 @@ import { mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { z } from "zod";
-
-const migrationFrameSchema = z.object({
-  event: z.literal("migration"),
-  message: z.string(),
-});
-
 import {
   type ReviewDesktopDiscovery,
   ReviewDesktopDiscoverySchema,
@@ -229,14 +222,7 @@ export async function startServer(
             try {
               const value = JSON.parse(line);
 
-              const migration = migrationFrameSchema.safeParse(value);
-
-              if (migration.success)
-                options.onState?.({
-                  status: "starting",
-                  message: migration.data.message,
-                });
-              else if (value.event === "ready") {
+              if (value.event === "ready") {
                 const result = ReviewDesktopDiscoverySchema.parse(value);
 
                 if (

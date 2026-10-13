@@ -24,7 +24,6 @@ try {
   const assetsRoot = path.join(temporaryRoot, "assets");
   await cp(tutorialRoot, assetsRoot, {
     recursive: true,
-    filter: (source) => !source.includes("/.bundle"),
   });
   await buildTutorialAssets({ outDir: assetsRoot });
   const manifest = await readTutorialRuntimeManifest(assetsRoot);

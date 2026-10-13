@@ -1,11 +1,11 @@
 import { ReviewDocumentBoundary } from "@canvas/documents/review-document-boundary";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDebugSettingsProvider } from "@canvas/settings/debug-settings";
-import { defineSoftwareModel } from "@canvas/software-map/model";
 import { detailHostMarker } from "@canvas/styles/markers.stylex";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import { createTestReviewDefinitionSession } from "@canvas/test/review-definition-test-utils";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import type { PeekableAnchorRef } from "@review/documents/authoring";
+import { selectSource } from "@review/documents/lens-selection";
 import * as stylex from "@stylexjs/stylex";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -43,26 +43,21 @@ describe("side-peek validation boundary", () => {
     vi.restoreAllMocks();
   });
 
-  it("opens an eagerly validated anchor CodePeek outside the document provider", async () => {
+  it("opens a source anchor CodePeek outside the document provider", async () => {
     const session = testReviewSession();
-    const model = defineSoftwareModel({ systems: {} });
-    const validatedRoots: string[] = [];
 
-    const definitions = createTestReviewDefinitionSession({
-      softwareMap: model,
-      validateCodePeek: async (props) => {
-        validatedRoots.push(props.file);
-      },
-    });
+    const anchor: PeekableAnchorRef = {
+      __kind: "db-anchor-ref",
+      id: "startup",
+      title: "Startup",
+      peek: selectSource({
+        side: "head",
+        file: "src/example.ts",
+        fromLine: 1,
+        toLine: 3,
+      }),
+    };
 
-    const anchors = definitions.defineAnchors({
-      startup: {
-        title: "Startup",
-        peek: { file: "src/example.ts", fromLine: 1, toLine: 3 },
-      },
-    });
-
-    await definitions.ready();
     const container = document.createElement("div");
     document.body.append(container);
     const root = createRoot(container);
@@ -75,7 +70,7 @@ describe("side-peek validation boundary", () => {
             <ReviewProvider>
               <ReviewPanelProvider>
                 <ReviewDocumentBoundary revision="valid" onError={() => {}}>
-                  <AnchorLink anchor={anchors.startup}>Startup</AnchorLink>
+                  <AnchorLink anchor={anchor}>Startup</AnchorLink>
                 </ReviewDocumentBoundary>
                 <div
                   {...stylex.props(shellStyles.detailHost, detailHostMarker)}
@@ -89,8 +84,6 @@ describe("side-peek validation boundary", () => {
       );
       await Promise.resolve();
     });
-
-    const validationCountBeforeOpen = validatedRoots.length;
 
     const link = container.querySelector<HTMLAnchorElement>(
       'a[href="#review-anchor-startup"]',
@@ -107,7 +100,6 @@ describe("side-peek validation boundary", () => {
 
     expect(container.querySelector('[role="alert"]')).toBeNull();
     expect(container.querySelector(".side-panel section")).not.toBeNull();
-    expect(validatedRoots).toHaveLength(validationCountBeforeOpen);
 
     const codePeekFetches = vi
       .mocked(fetch)

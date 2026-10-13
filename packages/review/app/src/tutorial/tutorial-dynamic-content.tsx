@@ -3,7 +3,7 @@ import { useReviewActions } from "@canvas/review/review-context";
 import { fontSize } from "@canvas/styles/scale.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
-import type { ReviewComponentProps } from "@review/documents/review-document-data";
+import type { ReviewComponentProps } from "@review/documents/authoring";
 import * as stylex from "@stylexjs/stylex";
 import { ArrowRight } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";

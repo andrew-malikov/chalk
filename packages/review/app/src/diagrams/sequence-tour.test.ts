@@ -1,11 +1,5 @@
-import { createTestReviewDefinitionSession } from "@canvas/test/review-definition-test-utils";
-import {
-  type SequenceDiagramProps as AuthoredSequenceProps,
-  sequenceDiagramPropsSchema,
-} from "@review/documents/authoring";
-import { sequenceBlockFromProps } from "@review/documents/sequence-steps";
+import { selectSource } from "@review/documents/lens-selection";
 import { describe, expect, it } from "vitest";
-import { ZodError } from "zod";
 
 import {
   createSequenceTourEntry,
@@ -14,52 +8,51 @@ import {
   sequenceView,
 } from "./diagrams";
 
-const definitions = createTestReviewDefinitionSession();
-
-const { defineActors, defineAnchors } = definitions;
-
-/** Legacy authoring → canonical block → renderer view, the way a published
- * legacy review reaches the diagram. */
-const view = (props: AuthoredSequenceProps) =>
-  sequenceView(sequenceBlockFromProps(props));
+const source = selectSource({
+  side: "head",
+  file: "src/example.ts",
+  fromLine: 1,
+  toLine: 3,
+});
 
 describe("sequence diagram guided tour", () => {
-  it("turns anchored messages into ordered code-tour stops", async () => {
-    const actors = defineActors({
-      auth: { label: "Better Auth" },
-      org: { label: "Organization helper" },
-      db: { label: "Web D1" },
-      settings: { label: "Settings page" },
-    });
-
-    const anchors = defineAnchors({
-      authUserWrite: anchorWithPeek("Better Auth writes the user row"),
-      orgCreate: anchorWithPeek("Organization helper creates the workspace"),
-      settingsOrgRead: anchorWithPeek("Settings reads organization state"),
-    });
-
-    await definitions.ready();
-
-    const sequence = view({
-      label: "Sign in and workspace bootstrap",
-      messages: [
+  it("turns source steps into ordered code-tour stops", () => {
+    const sequence = sequenceView({
+      id: "sequence-bootstrap",
+      title: "Sign in and workspace bootstrap",
+      actors: {
+        auth: "Better Auth",
+        org: "Organization helper",
+        db: "Web D1",
+        settings: "Settings page",
+      },
+      steps: [
         {
-          from: actors.auth,
-          to: actors.db,
+          type: "step",
+          style: "call",
+          id: "authUserWrite",
+          from: "auth",
+          to: "db",
           label: "write user",
-          anchor: anchors.authUserWrite,
+          source,
         },
         {
-          from: actors.org,
-          to: actors.db,
+          type: "step",
+          style: "call",
+          id: "orgCreate",
+          from: "org",
+          to: "db",
           label: "create organization",
-          anchor: anchors.orgCreate,
+          source,
         },
         {
-          from: actors.db,
-          to: actors.settings,
+          type: "step",
+          style: "call",
+          id: "settingsOrgRead",
+          from: "db",
+          to: "settings",
           label: "read organization",
-          anchor: anchors.settingsOrgRead,
+          source,
         },
       ],
     });
@@ -95,212 +88,109 @@ describe("sequence diagram guided tour", () => {
     ]);
   });
 
-  it("derives stable participant ids for inline sequence actors", () => {
-    const anchors = defineAnchors({
-      targetFrontmatter: anchorWithPeek("Software map frontmatter target"),
-      targetResolution: anchorWithPeek("Shared map and graph target"),
-      mapMaterialization: anchorWithPeek("Head/base map materialization"),
-      reviewDocuments: anchorWithPeek("Review document map imports"),
-    });
-
-    const sequence = view({
-      label: "Review target resolution",
-      messages: [
+  it("includes inline code in a tour stop without a source range", () => {
+    const sequence = sequenceView({
+      id: "sequence-labels",
+      title: "Label readability",
+      actors: { code: "Code element node", symbol: "Symbol label" },
+      steps: [
         {
-          from: { label: "Review MDX" },
-          to: { label: "Target parser" },
-          label: "parse softwareMap frontmatter",
-          anchor: anchors.targetFrontmatter,
-        },
-        {
-          from: { label: "Target parser" },
-          to: { label: "Graph resolver" },
-          label: "resolve head/base graph target",
-          anchor: anchors.targetResolution,
-        },
-        {
-          from: { label: "Review MDX" },
-          to: { label: "Map loader" },
-          label: "materialize head/base maps",
-          anchor: anchors.mapMaterialization,
-        },
-        {
-          from: { label: "Map loader" },
-          to: { label: "Map tab" },
-          label: "diff topology and render",
-          anchor: anchors.reviewDocuments,
-        },
-      ],
-    });
-
-    expect(
-      sequence.participants.map((participant) => [
-        participant.id,
-        participant.label,
-      ]),
-    ).toEqual([
-      ["inline-review-mdx", "Review MDX"],
-      ["inline-target-parser", "Target parser"],
-      ["inline-graph-resolver", "Graph resolver"],
-      ["inline-map-loader", "Map loader"],
-      ["inline-map-tab", "Map tab"],
-    ]);
-    expect(
-      sequence.messages.map((message) => [message.from.id, message.to.id]),
-    ).toEqual([
-      ["inline-review-mdx", "inline-target-parser"],
-      ["inline-target-parser", "inline-graph-resolver"],
-      ["inline-review-mdx", "inline-map-loader"],
-      ["inline-map-loader", "inline-map-tab"],
-    ]);
-  });
-
-  it("keeps stable ids for messages with inline code and no anchor", () => {
-    const sequence = view({
-      label: "Label readability",
-      messages: [
-        {
-          from: { label: "Code element node" },
-          to: { label: "Symbol label" },
+          type: "step",
+          style: "call",
+          id: "code-step",
+          from: "code",
+          to: "symbol",
           label: "allocates more horizontal room",
-          code: { language: "bash", text: "review map init/update" },
+          code: { language: "bash", text: "blackboard api review_edit" },
         },
       ],
     });
 
-    expect(sequence.messages[0]).toMatchObject({
-      id: "sequence-label-readability-message-1",
-      code: { language: "bash", text: "review map init/update" },
-    });
     expect(createSequenceTourEntry(sequence).stops).toEqual([
       {
-        anchor: {
-          id: "sequence-label-readability-message-1",
-          title: "allocates more horizontal room",
-        },
+        anchor: { id: "code-step", title: "allocates more horizontal room" },
         label: "allocates more horizontal room",
         detail: "Code element node -> Symbol label",
         content: {
           kind: "inline-code",
           language: "bash",
-          text: "review map init/update",
+          text: "blackboard api review_edit",
         },
       },
     ]);
   });
 
-  it("rejects sequence messages without code evidence at the authoring boundary", () => {
-    expectZodIssue(
-      () =>
-        sequenceDiagramPropsSchema.parse({
-          label: "No evidence",
-          messages: [
-            {
-              from: { label: "Reviewer" },
-              to: { label: "Map CLI" },
-              label: "run review map init/update",
-            },
-          ],
-        }),
-      ["messages", 0],
-    );
-  });
-
-  it("rejects sequence message anchors without CodePeek settings", () => {
-    const anchors = defineAnchors({
-      mapCommand: "Run the map command",
-    });
-
-    expectZodIssue(
-      () =>
-        sequenceDiagramPropsSchema.parse({
-          label: "No code anchor",
-          messages: [
-            {
-              from: { label: "Reviewer" },
-              to: { label: "Map CLI" },
-              label: "run review map init/update",
-              anchor: anchors.mapCommand,
-            },
-          ],
-        }),
-      ["messages", 0],
-    );
-  });
-
-  it("allows one code anchor to support multiple sequence messages", async () => {
-    const anchors = defineAnchors({
-      request: {
-        title: "Request",
-        peek: { file: "src/example.ts", fromLine: 1, toLine: 3 },
-      },
-    });
-
-    await definitions.ready();
-
-    const sequence = view({
-      label: "Reuse",
-      messages: [
+  it("keeps tour stops distinct when steps share a source range", () => {
+    const sequence = sequenceView({
+      id: "sequence-reuse",
+      title: "Reuse",
+      actors: { a: "A", b: "B" },
+      steps: [
         {
-          from: { label: "A" },
-          to: { label: "B" },
+          type: "step",
+          style: "call",
+          id: "send",
+          from: "a",
+          to: "b",
           label: "Send",
-          anchor: anchors.request,
+          source,
         },
         {
-          from: { label: "B" },
-          to: { label: "A" },
+          type: "step",
+          style: "call",
+          id: "reply",
+          from: "b",
+          to: "a",
           label: "Reply",
-          anchor: anchors.request,
+          source,
         },
       ],
     });
 
-    expect(sequence.messages.map((message) => message.id)).toEqual([
-      "request",
-      "request--sequence-use-2",
-    ]);
-    expect(sequence.messages[1]?.source).toEqual(anchors.request.peek);
     expect(
       createSequenceTourEntry(sequence).stops.map((stop) => stop.anchor.id),
-    ).toEqual(["request", "request--sequence-use-2"]);
+    ).toEqual(["send", "reply"]);
+    expect(sequence.messages[1]?.source).toEqual(source);
   });
 
   it("calculates scroll targets that reveal the active message participants", () => {
-    const actors = defineActors({
-      reviewer: { label: "Reviewer" },
-      app: { label: "Review app" },
-      server: { label: "Server" },
-      source: { label: "Source reader" },
-      worker: { label: "Worker" },
-    });
-
-    const anchors = defineAnchors({
-      localPreview: anchorWithPeek("Open local preview"),
-      sourceLookup: anchorWithPeek("Resolve source range"),
-      workerRefresh: anchorWithPeek("Refresh worker evidence"),
-    });
-
-    const sequence = view({
-      label: "Evidence tour",
-      messages: [
+    const sequence = sequenceView({
+      id: "sequence-evidence",
+      title: "Evidence tour",
+      actors: {
+        reviewer: "Reviewer",
+        app: "Review app",
+        server: "Server",
+        source: "Source reader",
+        worker: "Worker",
+      },
+      steps: [
         {
-          from: actors.reviewer,
-          to: actors.app,
+          type: "step",
+          style: "call",
+          id: "localPreview",
+          from: "reviewer",
+          to: "app",
           label: "open preview",
-          anchor: anchors.localPreview,
+          source,
         },
         {
-          from: actors.app,
-          to: actors.server,
+          type: "step",
+          style: "call",
+          id: "sourceLookup",
+          from: "app",
+          to: "server",
           label: "resolve source range",
-          anchor: anchors.sourceLookup,
+          source,
         },
         {
-          from: actors.source,
-          to: actors.worker,
+          type: "step",
+          style: "call",
+          id: "workerRefresh",
+          from: "source",
+          to: "worker",
           label: "refresh worker evidence",
-          anchor: anchors.workerRefresh,
+          source,
         },
       ],
     });
@@ -389,26 +279,3 @@ describe("sequence diagram guided tour", () => {
     ).toBeNull();
   });
 });
-
-function expectZodIssue(
-  run: () => void,
-  path: PropertyKey[],
-  message?: string,
-): void {
-  let caught: unknown;
-
-  try {
-    run();
-  } catch (error) {
-    caught = error;
-  }
-
-  expect(caught).toBeInstanceOf(ZodError);
-  const error = caught as ZodError;
-  expect(error.issues[0]?.path).toEqual(path);
-  expect(error.issues[0]?.message).toContain(message ?? "");
-}
-
-function anchorWithPeek(title: string) {
-  return { title, peek: { file: "src/example.ts", fromLine: 1, toLine: 3 } };
-}

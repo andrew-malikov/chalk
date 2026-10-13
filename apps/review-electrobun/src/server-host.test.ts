@@ -45,7 +45,6 @@ async function fixture(mode = "ready"): Promise<ServerOptions> {
  if(mode==='exit') process.exit(7);
  if(mode==='ignore-stop') process.on('SIGTERM',()=>{});
  if(mode!=='silent') {
-  process.stdout.write(JSON.stringify({event:'migration',message:'Preparing profile'})+'\\n');
   const text=JSON.stringify(ready)+'\\n';process.stdout.write(text.slice(0,17));setTimeout(()=>process.stdout.write(text.slice(17)),5);
  }
  setInterval(()=>{},1000);
@@ -116,15 +115,12 @@ test("server still starts when the configured shell is unavailable", async () =>
   expect(host.discovery.key).toBe(options.key);
 });
 
-test("assembles split ready frames and reports migrations, then reaps the child", async () => {
-  const events: string[] = [];
+test("assembles split ready frames, then reaps the child", async () => {
   const options = await fixture();
-  options.onState = (s) => events.push(s.message);
   const host = await startServer(options);
   hosts.push(host);
   expect(host.discovery.key).toBe(options.key);
   expect(host.discovery.appPid).toBe(process.pid);
-  expect(events).toContain("Preparing profile");
   await host.stop();
   expect(() => process.kill(host.discovery.serverPid, 0)).toThrow(Error);
 });

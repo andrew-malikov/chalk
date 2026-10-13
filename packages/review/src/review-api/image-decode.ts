@@ -1,7 +1,6 @@
 import { ReviewInputError } from "./document.js";
 
-/** The one decoder for images entering the store, whether uploaded by a client
- * or read from a legacy review: bounded, single frame, re-encoded as PNG. */
+/** Decode incoming images: bounded, single frame, re-encoded as PNG. */
 export async function decodeImage(bytes: Uint8Array): Promise<Buffer> {
   const { default: sharp } = await import("sharp");
 

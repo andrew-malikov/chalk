@@ -72,8 +72,6 @@ export const operationSchema = z.strictObject({
   source: lensSourceSchema,
 });
 
-// The legacy MDX audit rejected these empty forms after a lens with
-// unresolved operations published clean and rendered a blank canvas.
 export const databaseLensSchema = defineBlock("database_lens", {
   title: label,
   actors: z.record(text, databaseActorSchema),

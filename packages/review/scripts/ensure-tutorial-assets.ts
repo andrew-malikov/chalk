@@ -40,10 +40,7 @@ async function newestInput(input: string): Promise<number> {
   const modified = await Promise.all(
     children
       .filter(
-        (child) =>
-          child.name !== ".bundle" &&
-          child.name !== "git-stub" &&
-          child.name !== "pins.json",
+        (child) => child.name !== "git-stub" && child.name !== "pins.json",
       )
       .map((child) => newestInput(path.join(input, child.name))),
   );

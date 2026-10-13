@@ -6,7 +6,6 @@ import { PassThrough, Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
 import { runReviewCli } from "./cli-runner";
-import { runReviewMigration as runReviewMigrationActual } from "./migrate";
 import { runReviewAppPick as runReviewAppActual } from "./review-app";
 import { runReviewAppLaunch as runReviewAppLaunchActual } from "./review-app-launcher";
 import { runReviewInfo as runReviewInfoActual } from "./review-info";
@@ -290,38 +289,6 @@ describe("Blackboard CLI", () => {
         stderr: outputStream(),
       }),
     ).resolves.toBe(1);
-  });
-
-  it("accepts only migrate apply and migrate apply --force", async () => {
-    const runReviewMigration = vi.fn<typeof runReviewMigrationActual>(
-      async () => 0,
-    );
-
-    await expect(
-      runReviewCli({
-        argv: ["migrate", "apply"],
-        stdout: outputStream(),
-        stderr: outputStream(),
-        runtime: { runReviewMigration },
-      }),
-    ).resolves.toBe(0);
-    await expect(
-      runReviewCli({
-        argv: ["migrate", "apply", "--force"],
-        stdout: outputStream(),
-        stderr: outputStream(),
-        runtime: { runReviewMigration },
-      }),
-    ).resolves.toBe(0);
-
-    expect(runReviewMigration).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ force: undefined }),
-    );
-    expect(runReviewMigration).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ force: true }),
-    );
   });
 });
 

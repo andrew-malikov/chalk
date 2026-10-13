@@ -1,8 +1,7 @@
 /** Lowercase ASCII slug: runs of anything but `a-z0-9` become one `-`, outer
  * dashes go. Empty input, or input with no letters or digits, yields `""`;
  * callers choose their own fallback (`"section"`, `"diagram"`, `"database"`).
- * This is the rule sequence and lens ids were already published with, so it
- * must not change. */
+ * Existing fragment links depend on this rule. */
 export function slugify(text: string): string {
   return text
     .trim()

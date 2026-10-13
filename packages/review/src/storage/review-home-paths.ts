@@ -2,11 +2,6 @@ import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 
-/** Return the repository-specific storage root under the shared Review home. */
-export function reviewRepoStorageRoot(rootPath: string): string {
-  return path.join(devReviewHome(), "repos", hashedSegment(rootPath, "repo"));
-}
-
 /** `<basename>-<12 hex>` of a resolved path, one safe storage segment. */
 function hashedSegment(target: string, fallback: string): string {
   const resolved = path.resolve(target);
@@ -58,7 +53,7 @@ export function reviewDefaultInstancePath(
   return path.join(reviewDesktopRoot(env), "default-instance");
 }
 
-/** `dev-<name>-<hash>` for a source checkout, keyed like reviewRepoStorageRoot. */
+/** `dev-<name>-<hash>` identifies a development checkout. */
 export function reviewDevInstanceKey(checkout: string): string {
   return `dev-${hashedSegment(checkout, "checkout")}`;
 }

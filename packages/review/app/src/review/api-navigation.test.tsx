@@ -27,7 +27,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it("exposes JSON section and Markdown headings plus imported PR and stack navigation", async () => {
+it("exposes JSON section and Markdown headings plus PR and stack navigation", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.stubGlobal(
     "ResizeObserver",
@@ -47,25 +47,32 @@ it("exposes JSON section and Markdown headings plus imported PR and stack naviga
     validateSource: async () => {},
     validateResource: async () => {},
   });
-  const reviewId = randomUUID();
-  await store.importVersion({
-    reviewId,
-    title: "Navigation",
-    pins: { repositoryId: "repo", base: "base", head: "head" },
-    createdAt: new Date().toISOString(),
-    origin: {
-      pullRequestNumber: 42,
-      pullRequestUrl: "https://github.com/example/repo/pull/42",
-    },
-    document: [
-      { type: "markdown", markdown: "## Summary\n\nText\n\n### **Details**" },
-      {
-        type: "section",
-        title: "Implementation",
-        children: [{ type: "markdown", markdown: "## Details\n\nNested text" }],
+
+  const { reviewId } = await store.execute(
+    {
+      commandId: randomUUID(),
+      operation: {
+        type: "create",
+        title: "Navigation",
+        pins: { repositoryId: "repo", base: "base", head: "head" },
+        pullRequestUrl: "https://github.com/example/repo/pull/42",
       },
-    ],
-  });
+    },
+    {
+      origin: {},
+      document: [
+        { type: "markdown", markdown: "## Summary\n\nText\n\n### **Details**" },
+        {
+          type: "section",
+          title: "Implementation",
+          children: [
+            { type: "markdown", markdown: "## Details\n\nNested text" },
+          ],
+        },
+      ],
+    },
+  );
+
   const app = new Hono();
   app.get("/reviews-api/:id/stack", (c) =>
     c.json({
@@ -125,7 +132,7 @@ it("exposes JSON section and Markdown headings plus imported PR and stack naviga
     "Implementation",
     "Details",
   ]);
-  // The slugs legacy MDX published, so imported `#fragment` links still land.
+  // Repeated headings get unique fragment IDs.
   expect(headings.map((heading) => heading.id)).toEqual([
     "summary",
     "details",

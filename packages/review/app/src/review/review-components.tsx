@@ -25,7 +25,7 @@ import {
   MapPinIcon,
 } from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
-import type { ReviewComponentProps } from "@review/documents/review-document-data";
+import type { ReviewComponentProps } from "@review/documents/authoring";
 import * as stylex from "@stylexjs/stylex";
 import type {
   CSSProperties,
