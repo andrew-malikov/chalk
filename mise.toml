@@ -16,7 +16,7 @@ fi
 if [ "$("$HOME/.hutch/bin/hutch" --version 2>/dev/null || true)" != "0.27.1" ]; then
   installer=$(mktemp)
   trap 'rm -f "$installer"' EXIT
-  curl -fsSL "${HUTCH_INSTALL_URL:?Set HUTCH_INSTALL_URL to the Hutch installer URL}" -o "$installer"
+  curl -fsSL https://hutch.blackboard.sh/hutch/install.sh -o "$installer"
   bash "$installer" --version 0.27.1 --no-modify-path
 fi
 bun install --frozen-lockfile

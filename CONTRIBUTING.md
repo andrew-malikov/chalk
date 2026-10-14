@@ -27,8 +27,6 @@ mise run install
 open ~/Applications/Chalk.app
 ```
 
-Set `HUTCH_INSTALL_URL` to the Hutch installer URL if Hutch 0.27.1 is not
-already installed. CI uses the repository variable of the same name.
 Mise installs the pinned Bun version, Hutch, and workspace dependencies before
 building. The installed development app uses this checkout and mise's Bun;
 keep both in place and rerun `mise run install` after changing the code or moving
@@ -39,7 +37,7 @@ Use `mise run dev` to build and launch directly from the checkout, or
 Bun 1.4.2 or newer and Hutch, then run:
 
 ```sh
-curl -fsSL "${HUTCH_INSTALL_URL:?Set HUTCH_INSTALL_URL to the Hutch installer URL}" | bash -s -- --version 0.27.1
+curl -fsSL https://hutch.blackboard.sh/hutch/install.sh | bash -s -- --version 0.27.1
 bun install
 bun dev
 ```

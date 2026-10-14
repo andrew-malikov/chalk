@@ -70,10 +70,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Install Hutch
-        env:
-          HUTCH_INSTALL_URL: ${{ vars.HUTCH_INSTALL_URL }}
+        # The installer verifies the archive against the release manifest's sha256.
         run: |
-          curl -fsSL "${HUTCH_INSTALL_URL:?Set the HUTCH_INSTALL_URL repository variable}" -o "$RUNNER_TEMP/install-hutch.sh"
+          curl -fsSL https://hutch.blackboard.sh/hutch/install.sh -o "$RUNNER_TEMP/install-hutch.sh"
           bash "$RUNNER_TEMP/install-hutch.sh" --version 0.27.1 --no-modify-path
           echo "$HOME/.hutch/bin" >> "$GITHUB_PATH"
       - name: Build and bundle app
