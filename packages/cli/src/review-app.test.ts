@@ -172,7 +172,7 @@ describe("native Review picker", () => {
         },
       ),
     ).rejects.toThrow(
-      "Blackboard Desktop uses protocol 999, but this Blackboard CLI needs protocol 3.",
+      "Chalk Desktop uses protocol 999, but this Chalk CLI needs protocol 3.",
     );
     expect(launched).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
@@ -193,7 +193,7 @@ describe("native Review picker", () => {
         { ...runtime(fetch), launch: launched },
       ),
     ).rejects.toThrow(
-      "Blackboard `stable` is not running. Start it with `blackboard app launch`, or pick another instance with `blackboard instances`. No Blackboard is running.",
+      "Chalk `stable` is not running. Start it with `chalk app launch`, or pick another instance with `chalk instances`. No Chalk is running.",
     );
     expect(launched).not.toHaveBeenCalled();
   });

@@ -1,7 +1,7 @@
 import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 
-import { ReviewApiClient } from "@blackboard/review-contracts";
+import { ReviewApiClient } from "@chalk/review-contracts";
 import {
   ACTIVITY_TTL_MS,
   ReviewActivity,

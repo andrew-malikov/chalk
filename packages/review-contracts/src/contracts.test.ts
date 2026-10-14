@@ -1,4 +1,4 @@
-import { type JsonObject } from "@blackboard/json";
+import { type JsonObject } from "@chalk/json";
 import { describe, expect, it } from "vitest";
 import type { ZodType } from "zod";
 

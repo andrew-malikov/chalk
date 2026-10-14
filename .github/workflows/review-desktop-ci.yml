@@ -1,4 +1,4 @@
-name: Blackboard CI
+name: Chalk CI
 
 on:
   pull_request:
@@ -41,19 +41,21 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Install Hutch
+        env:
+          HUTCH_INSTALL_URL: ${{ vars.HUTCH_INSTALL_URL }}
         run: |
-          curl -fsSL https://hutch.blackboard.sh/hutch/install.sh -o "$RUNNER_TEMP/install-hutch.sh"
+          curl -fsSL "${HUTCH_INSTALL_URL:?Set the HUTCH_INSTALL_URL repository variable}" -o "$RUNNER_TEMP/install-hutch.sh"
           bash "$RUNNER_TEMP/install-hutch.sh" --version 0.27.1 --no-modify-path
           echo "$HOME/.hutch/bin" >> "$GITHUB_PATH"
       - name: Install Playwright Chromium
         working-directory: apps/review-canvas
         run: bun --bun run playwright install chromium --only-shell
-      - name: Build Blackboard
+      - name: Build Chalk
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: bun run desktop:build
       - name: Check tutorial assets
-        run: bun run --filter @blackboard/tutorial check
+        run: bun run --filter @chalk/tutorial check
       - name: Lint
         run: bun run lint
       - name: Check formatting
@@ -66,7 +68,7 @@ jobs:
         working-directory: packages/server
         run: |
           bun run ensure:diffr --required
-          bun run --filter @blackboard/server test:integration:diffr
+          bun run --filter @chalk/server test:integration:diffr
       - name: Upload browser test diagnostics
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

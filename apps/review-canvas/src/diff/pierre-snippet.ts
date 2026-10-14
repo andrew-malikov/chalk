@@ -1,12 +1,12 @@
-import type {
-  ReviewDiffSide,
-  ReviewFindQuery,
-  ReviewInlineEditorRange,
-} from "@blackboard/review-contracts";
 import {
   compileReviewFindQuery,
   regularExpressionMatches,
 } from "@canvas/review/review-find-query";
+import type {
+  ReviewDiffSide,
+  ReviewFindQuery,
+  ReviewInlineEditorRange,
+} from "@chalk/review-contracts";
 import {
   type FileDiffMetadata,
   parseDiffFromFile,

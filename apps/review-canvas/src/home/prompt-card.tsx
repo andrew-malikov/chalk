@@ -11,7 +11,7 @@ import { promptStyles } from "./prompt-styles";
 export type PromptKind = "change" | "architecture";
 
 export const REVIEW_HOME_PROMPT_KIND_STORAGE_KEY =
-  "dev.fast.review.homePromptKind";
+  "chalk.review.homePromptKind";
 
 const PROMPT_KINDS: ReadonlyArray<{ kind: PromptKind; label: string }> = [
   { kind: "change", label: "Review a change" },
@@ -19,14 +19,14 @@ const PROMPT_KINDS: ReadonlyArray<{ kind: PromptKind; label: string }> = [
 ];
 
 /**
- * Prompts name the subject and stop there: Blackboard's server gives the agent
+ * Prompts name the subject and stop there: Chalk's server gives the agent
  * the authoring instructions, so every agent gets the same wording.
  */
 export const PROMPTS: Record<PromptKind, string> = {
   change:
-    "Create a Blackboard of my current branch against up to date main, then open it in Blackboard.",
+    "Create a Chalk of my current branch against up to date main, then open it in Chalk.",
   architecture:
-    "Create a Blackboard that sketches out the main data flows, access patterns, and code paths in this repo, so I can do a full architecture review of it. Open it in Blackboard when you're done.",
+    "Create a Chalk that sketches out the main data flows, access patterns, and code paths in this repo, so I can do a full architecture review of it. Open it in Chalk when you're done.",
 };
 
 const COPIED_RESET_MS = 2000;
@@ -75,7 +75,7 @@ export function PromptCard() {
   };
 
   return (
-    <section {...stylex.props(styles.card)} aria-label="Blackboard prompt">
+    <section {...stylex.props(styles.card)} aria-label="Chalk prompt">
       <div
         {...stylex.props(controlStyles.segmented, promptStyles.tabs)}
         role="group"

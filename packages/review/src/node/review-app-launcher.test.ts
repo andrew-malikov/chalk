@@ -14,7 +14,7 @@ import { promisify } from "node:util";
 import {
   REVIEW_DESKTOP_DISCOVERY_VERSION,
   type ReviewDesktopDiscovery,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import { selectingDesktop } from "@review/node/test/review-test-utils";
 import { describe, expect, it, vi } from "vitest";
 
@@ -254,7 +254,7 @@ describe("Review Desktop launcher", () => {
           selectInstance: selectingDesktop(async () => null, fetch),
           fetch,
           launchDesktop: () => ({
-            method: 'the macOS bundle identifier "dev.fast.review"',
+            method: 'the macOS bundle identifier "chalk.review.electrobun"',
             completion: Promise.resolve({ code: 1, signal: null }),
           }),
           now: () => 0,
@@ -262,7 +262,7 @@ describe("Review Desktop launcher", () => {
         },
       ),
     ).rejects.toThrow(
-      'Could not launch Blackboard with the macOS bundle identifier "dev.fast.review": the launch process exited with code 1. Open Blackboard once, then run `blackboard app launch` again. A sandboxed agent must run it outside the sandbox.',
+      'Could not launch Chalk with the macOS bundle identifier "chalk.review.electrobun": the launch process exited with code 1. Open Chalk once, then run `chalk app launch` again. A sandboxed agent must run it outside the sandbox.',
     );
   });
 
@@ -293,7 +293,7 @@ describe("Review Desktop launcher", () => {
         },
       ),
     ).rejects.toThrow(
-      'Could not launch Blackboard with the Desktop-managed bundle at "/missing/Review": spawn ENOENT.',
+      'Could not launch Chalk with the Desktop-managed bundle at "/missing/Review": spawn ENOENT.',
     );
   });
 
@@ -322,7 +322,7 @@ describe("Review Desktop launcher", () => {
         },
       ),
     ).rejects.toThrow(
-      'Could not launch Blackboard with the Desktop-managed bundle at "/tmp/Review": the launch process exited before Desktop became ready.',
+      'Could not launch Chalk with the Desktop-managed bundle at "/tmp/Review": the launch process exited before Desktop became ready.',
     );
   });
 
@@ -338,7 +338,7 @@ describe("Review Desktop launcher", () => {
         "--env",
         "DEV_REVIEW_HOME=/tmp/home",
         "--env",
-        "DEV_FAST_REVIEW_DESKTOP_BACKGROUND=1",
+        "CHALK_REVIEW_DESKTOP_BACKGROUND=1",
       ],
     ],
     [
@@ -368,7 +368,7 @@ describe("Review Desktop launcher", () => {
         env: {
           ELECTRON_RUN_AS_NODE: "1",
           DEV_REVIEW_HOME: "/tmp/home",
-          DEV_FAST_REVIEW_CHECKOUT: "/tmp/checkout",
+          CHALK_REVIEW_CHECKOUT: "/tmp/checkout",
           PATH: "/usr/bin",
         },
         focus,
@@ -394,7 +394,7 @@ describe("Review Desktop launcher", () => {
       electron: true,
       focus: true,
       execPath: "/tmp/Review.app/Contents/MacOS/Review",
-      env: { DEV_FAST_REVIEW_DESKTOP_STATE_ROOT: "/tmp/review-state" },
+      env: { CHALK_REVIEW_DESKTOP_STATE_ROOT: "/tmp/review-state" },
       spawn,
     });
     expect(spawn.mock.calls[0]?.[1]).toEqual([
@@ -403,7 +403,7 @@ describe("Review Desktop launcher", () => {
       "-a",
       "/tmp/Review.app",
       "--env",
-      "DEV_FAST_REVIEW_DESKTOP_STATE_ROOT=/tmp/review-state",
+      "CHALK_REVIEW_DESKTOP_STATE_ROOT=/tmp/review-state",
       "--args",
       "--user-data-dir=/tmp/review-state/user-data",
       "--extensions-dir=/tmp/review-state/extensions",
@@ -411,7 +411,7 @@ describe("Review Desktop launcher", () => {
   });
 
   it.each([
-    [{ key: "preview" as const }, ["-b", "dev.fast.review.preview"]],
+    [{ key: "preview" as const }, ["-b", "chalk.review.electrobun.preview"]],
     [
       { key: "preview" as const, appPath: "/Apps/Preview.app" },
       ["-a", "/Apps/Preview.app"],
@@ -452,7 +452,7 @@ describe("Review Desktop launcher", () => {
       "-n",
       "-W",
       "-b",
-      "dev.fast.review",
+      "chalk.review.electrobun",
     ]);
   });
 
@@ -471,7 +471,7 @@ describe("Review Desktop launcher", () => {
 
       const environment = {
         ELECTRON_RUN_AS_NODE: "1",
-        DEV_FAST_REVIEW_DESKTOP_STATE_ROOT: "/tmp/linux-profile",
+        CHALK_REVIEW_DESKTOP_STATE_ROOT: "/tmp/linux-profile",
         VSCODE_DEV: "1",
         VSCODE_CLI: "1",
       };
@@ -494,8 +494,8 @@ describe("Review Desktop launcher", () => {
         ],
         expect.objectContaining({
           env: {
-            DEV_FAST_REVIEW_DESKTOP_STATE_ROOT: "/tmp/linux-profile",
-            DEV_FAST_REVIEW_DESKTOP_BACKGROUND: "1",
+            CHALK_REVIEW_DESKTOP_STATE_ROOT: "/tmp/linux-profile",
+            CHALK_REVIEW_DESKTOP_BACKGROUND: "1",
           },
           detached: true,
           stdio: ["ignore", "ignore", expect.any(Number)],
@@ -518,7 +518,7 @@ describe("Review Desktop launcher", () => {
         platform: "linux",
         electron,
         env: {
-          DEV_FAST_REVIEW_DESKTOP_COMMAND: "/usr/bin/review-preview-desktop",
+          CHALK_REVIEW_DESKTOP_COMMAND: "/usr/bin/review-preview-desktop",
         },
         spawn,
       });
@@ -537,7 +537,7 @@ describe("Review Desktop launcher", () => {
       "darwin",
       { key: "preview" },
       "/usr/bin/open",
-      ["-n", "-W", "-g", "-b", "dev.fast.review.preview"],
+      ["-n", "-W", "-g", "-b", "chalk.review.electrobun.preview"],
     ],
     [
       "darwin",
@@ -558,8 +558,8 @@ describe("Review Desktop launcher", () => {
         electron: false,
         instance,
         env: {
-          DEV_FAST_REVIEW_DESKTOP_COMMAND: "/usr/bin/review-desktop",
-          DEV_FAST_REVIEW_CHECKOUT: "/src/review",
+          CHALK_REVIEW_DESKTOP_COMMAND: "/usr/bin/review-desktop",
+          CHALK_REVIEW_CHECKOUT: "/src/review",
         },
         spawn,
       });
@@ -567,7 +567,7 @@ describe("Review Desktop launcher", () => {
       const [spawned, spawnedArgs, options] = spawn.mock.calls[0]!;
       expect(spawned).toBe(command);
       expect(spawnedArgs.slice(0, args.length)).toEqual(args);
-      expect(options.env?.DEV_FAST_REVIEW_CHECKOUT).toBeUndefined();
+      expect(options.env?.CHALK_REVIEW_CHECKOUT).toBeUndefined();
     },
   );
 
@@ -582,13 +582,11 @@ describe("Review Desktop launcher", () => {
       platform: "linux",
       electron: false,
       focus: true,
-      env: { DEV_FAST_REVIEW_DESKTOP_BACKGROUND: "1" },
+      env: { CHALK_REVIEW_DESKTOP_BACKGROUND: "1" },
       spawn,
     });
     const options = spawn.mock.calls[0]?.[2];
-    expect(options?.env).not.toHaveProperty(
-      "DEV_FAST_REVIEW_DESKTOP_BACKGROUND",
-    );
+    expect(options?.env).not.toHaveProperty("CHALK_REVIEW_DESKTOP_BACKGROUND");
   });
 
   it("releases captured output while Desktop is still running", async () => {
@@ -742,7 +740,7 @@ function healthyResponse(): Response {
 
 function pendingAttempt() {
   return {
-    method: 'the macOS bundle identifier "dev.fast.review"',
+    method: 'the macOS bundle identifier "chalk.review.electrobun"',
     completion: new Promise<never>(() => undefined),
   };
 }

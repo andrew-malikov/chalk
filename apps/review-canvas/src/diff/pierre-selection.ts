@@ -1,4 +1,4 @@
-import type { ReviewSurfaceEvent } from "@blackboard/review-contracts";
+import type { ReviewSurfaceEvent } from "@chalk/review-contracts";
 import type { FileDiffMetadata } from "@pierre/diffs";
 
 type SelectedDiff = NonNullable<

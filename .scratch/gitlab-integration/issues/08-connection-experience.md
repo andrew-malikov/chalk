@@ -18,7 +18,7 @@ Given the verified authentication constraints, what minimum setup should a user 
 
 ## Answer
 
-Require existing glab authentication for the MR's GitLab host and working Git transport credentials for clone/fetch. Git and glab must be available to Blackboard, including their relevant credential helper or SSH setup. Use glab for discussion API reads and writes, and existing Git credentials for the managed source repository. This applies to both GitLab.com and self-hosted GitLab. An in-app OAuth or token-entry flow is outside the first MVP.
+Require existing glab authentication for the MR's GitLab host and working Git transport credentials for clone/fetch. Git and glab must be available to Chalk, including their relevant credential helper or SSH setup. Use glab for discussion API reads and writes, and existing Git credentials for the managed source repository. This applies to both GitLab.com and self-hosted GitLab. An in-app OAuth or token-entry flow is outside the first MVP.
 
 Select the host from the MR URL and show the account used for posting. If API or Git authentication becomes unavailable or expires, preserve the saved review and drafts and report the reconnection requirement; do not discard state or silently switch account/host.
 

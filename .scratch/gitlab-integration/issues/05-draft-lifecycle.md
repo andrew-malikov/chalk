@@ -10,11 +10,11 @@ Blocked by: 02
 
 ## Question
 
-Given that unpublished replies and new comments persist locally in Blackboard, what does the user edit, save, discard, and ask an agent to help write? Define how a draft targets an existing discussion or a new discussion and the minimum persistence promise when the app is closed. The initial brief included agent assistance; it may be scoped out through this decision. Synchronization with GitLab's pending review drafts is outside this MVP.
+Given that unpublished replies and new comments persist locally in Chalk, what does the user edit, save, discard, and ask an agent to help write? Define how a draft targets an existing discussion or a new discussion and the minimum persistence promise when the app is closed. The initial brief included agent assistance; it may be scoped out through this decision. Synchronization with GitLab's pending review drafts is outside this MVP.
 
 ## Comments
 
-- Charting input from the user: persist unpublished drafts locally in Blackboard; support manual drafting with agent assistance.
+- Charting input from the user: persist unpublished drafts locally in Chalk; support manual drafting with agent assistance.
 
 ## Answer
 

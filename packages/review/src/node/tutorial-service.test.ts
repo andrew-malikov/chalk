@@ -2,7 +2,7 @@ import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { tutorialAssetsRoot } from "@blackboard/tutorial/asset-paths";
+import { tutorialAssetsRoot } from "@chalk/tutorial/asset-paths";
 import {
   elements,
   resourceReferences,

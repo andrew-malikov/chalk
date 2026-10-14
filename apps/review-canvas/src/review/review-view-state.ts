@@ -1,3 +1,5 @@
+import type { ReviewClientConfig } from "@canvas/host/review-client";
+import { useReviewSession } from "@canvas/host/review-session";
 import {
   type JsonObject,
   type JsonValue,
@@ -8,9 +10,7 @@ import {
   jsonProperty,
   jsonString,
   reviewViewSchema,
-} from "@blackboard/review-contracts";
-import type { ReviewClientConfig } from "@canvas/host/review-client";
-import { useReviewSession } from "@canvas/host/review-session";
+} from "@chalk/review-contracts";
 import type { RefObject } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { persist } from "zustand/middleware";

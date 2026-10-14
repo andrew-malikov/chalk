@@ -500,7 +500,7 @@ describe("SoftwareMap snapshot helpers", () => {
   it("rolls topology-only child modifications up to C4 parents", () => {
     const model = defineSoftwareModel({
       systems: {
-        devFast: {
+        chalk: {
           containers: {
             cli: {
               label: "dev CLI",
@@ -518,17 +518,17 @@ describe("SoftwareMap snapshot helpers", () => {
 
     const changeSummaries = buildSoftwareMapChangeSummaries(model);
 
-    expect(changeSummaries.get("devFast.cli.commandRouter")).toMatchObject({
+    expect(changeSummaries.get("chalk.cli.commandRouter")).toMatchObject({
       changeStatus: "modified",
       additions: 0,
       deletions: 0,
     });
-    expect(changeSummaries.get("devFast.cli")).toMatchObject({
+    expect(changeSummaries.get("chalk.cli")).toMatchObject({
       changeStatus: "modified",
       additions: 0,
       deletions: 0,
     });
-    expect(changeSummaries.get("devFast")).toMatchObject({
+    expect(changeSummaries.get("chalk")).toMatchObject({
       changeStatus: "modified",
       additions: 0,
       deletions: 0,

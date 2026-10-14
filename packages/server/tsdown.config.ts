@@ -37,7 +37,7 @@ export default defineConfig({
   dts: { tsconfig: "../../tsconfig.server-build.json" },
   deps: {
     alwaysBundle: [
-      /^@blackboard\//,
+      /^@chalk\//,
       /^@dev\.fast\/diffr$/,
       /^isomorphic-git$/,
       // Bundled to keep its KaTeX dependency out of the runtime.

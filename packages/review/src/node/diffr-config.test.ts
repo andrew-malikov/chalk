@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type { JsonObject } from "@blackboard/json";
+import type { JsonObject } from "@chalk/json";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import {
@@ -34,7 +34,7 @@ afterEach(async () => {
 const DEFAULT_PROMPT = "Summarize each fold.";
 
 // What diffr's schema says about each provider. "mistral" exists only here:
-// Blackboard must handle a provider it has never heard of.
+// Chalk must handle a provider it has never heard of.
 const PROVIDERS = [
   [
     "gemini",

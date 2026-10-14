@@ -1,8 +1,3 @@
-import type {
-  GitLabDiscussion,
-  GitLabDraft,
-  GitLabTarget,
-} from "@blackboard/review-contracts";
 import { Checkbox } from "@canvas/components/ui/checkbox";
 import { Input } from "@canvas/components/ui/input";
 import { Textarea } from "@canvas/components/ui/textarea";
@@ -12,6 +7,11 @@ import { resolvedDiscussionMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button } from "@canvas/ui/button";
+import type {
+  GitLabDiscussion,
+  GitLabDraft,
+  GitLabTarget,
+} from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { ChevronRightIcon, CornerDownRightIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";

@@ -10,7 +10,7 @@ import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { REVIEW_DESKTOP_DISCOVERY_VERSION } from "@blackboard/review-contracts";
+import { REVIEW_DESKTOP_DISCOVERY_VERSION } from "@chalk/review-contracts";
 import { afterEach, expect, test } from "vitest";
 
 import { type ServerOptions, startServer } from "./server-host";
@@ -34,7 +34,7 @@ async function fixture(mode = "ready"): Promise<ServerOptions> {
     entry,
     `
  const env=process.env;
- const ready={event:'ready',version:${REVIEW_DESKTOP_DISCOVERY_VERSION},instanceId:env.DEV_FAST_REVIEW_INSTANCE_ID,url:'http://127.0.0.1:5570',appPid:Number(env.DEV_FAST_REVIEW_APP_PID),serverPid:process.pid,token:env.DEV_FAST_REVIEW_SERVER_TOKEN,startedAt:Date.now(),key:env.DEV_FAST_REVIEW_INSTANCE_KEY,channel:'dev'};
+ const ready={event:'ready',version:${REVIEW_DESKTOP_DISCOVERY_VERSION},instanceId:env.CHALK_REVIEW_INSTANCE_ID,url:'http://127.0.0.1:5570',appPid:Number(env.CHALK_REVIEW_APP_PID),serverPid:process.pid,token:env.CHALK_REVIEW_SERVER_TOKEN,startedAt:Date.now(),key:env.CHALK_REVIEW_INSTANCE_KEY,channel:'dev'};
  const mode=env.REVIEW_TEST_MODE;
  if(mode==='tools') {
   const {execFileSync}=require('node:child_process');

@@ -1,5 +1,5 @@
-import type { ReviewVerbRequest } from "@blackboard/review-contracts";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import type { ReviewVerbRequest } from "@chalk/review-contracts";
 import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";

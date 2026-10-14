@@ -1,4 +1,4 @@
-import { jsonString, parseJsonText } from "@blackboard/review-contracts";
+import { jsonString, parseJsonText } from "@chalk/review-contracts";
 import {
   type DiffHunkLine,
   parseUnifiedPatch,

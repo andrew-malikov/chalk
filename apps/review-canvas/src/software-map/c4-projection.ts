@@ -1,4 +1,4 @@
-import { isStringValue } from "@blackboard/review-contracts";
+import { isStringValue } from "@chalk/review-contracts";
 import { z } from "zod";
 
 import { parseDataStoreSchemaEndpoint } from "./model";

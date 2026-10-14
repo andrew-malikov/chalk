@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { ReviewApiClient } from "@blackboard/review-contracts";
+import { ReviewApiClient } from "@chalk/review-contracts";
 import { ACTIVITY_TTL_MS } from "@review/node/review-api/activity.js";
 import {
   type ReviewProviders,
@@ -138,7 +138,7 @@ it("keeps a lease across restart and enforces it in an independent process witho
   );
 
   const script = `
-    import { ReviewStore } from ${JSON.stringify(import.meta.resolve("@blackboard/review/node/review-api/store.js"))};
+    import { ReviewStore } from ${JSON.stringify(import.meta.resolve("@chalk/review/node/review-api/store.js"))};
     const store = new ReviewStore(process.argv[1], { validatePins: async()=>{}, validateSource: async()=>{}, validateResource: async()=>{} });
     try { console.log(JSON.stringify(await store.execute(JSON.parse(process.argv[2])))); }
     catch(error) { console.log(JSON.stringify({status:error.status,message:error.message})); }

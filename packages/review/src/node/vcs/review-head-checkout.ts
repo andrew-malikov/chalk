@@ -7,7 +7,7 @@ import {
   gitCommonDir,
   jjRevisionIsConflicted,
   resolveRevision,
-} from "@blackboard/local-vcs";
+} from "@chalk/local-vcs";
 import { errorMessage } from "@review/node/lib/error-message";
 import { withFileLock } from "@review/node/lib/with-file-lock";
 
@@ -101,7 +101,7 @@ async function materializeReviewPinnedCheckout(input: {
   // of code — and the graph would index that. Refuse with the remedy instead.
   if (await jjRevisionIsConflicted(input.rootPath, input.commit)) {
     throw new Error(
-      `Blackboard cannot pin conflicted revision ${input.commit.slice(0, 12)}: the jj change has unresolved conflicts. Resolve them (jj resolve), then re-pin the review.`,
+      `Chalk cannot pin conflicted revision ${input.commit.slice(0, 12)}: the jj change has unresolved conflicts. Resolve them (jj resolve), then re-pin the review.`,
     );
   }
 

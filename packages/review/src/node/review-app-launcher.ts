@@ -6,7 +6,7 @@ import path from "node:path";
 import {
   type ReviewDesktopDiscovery,
   parseReviewVerbResponse,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 
 import {
   type ReviewInstanceSelection,
@@ -18,18 +18,17 @@ import {
 
 const RELEASE_APPS = {
   stable: {
-    bundleId: "dev.fast.review",
+    bundleId: "chalk.review.electrobun",
     linuxLauncher: "/usr/bin/review-desktop",
   },
   preview: {
-    bundleId: "dev.fast.review.preview",
+    bundleId: "chalk.review.electrobun.preview",
     linuxLauncher: "/usr/bin/review-preview-desktop",
   },
 };
 
 /** "1" on launches without --focus; Desktop opens inactive. */
-export const REVIEW_DESKTOP_BACKGROUND_ENV =
-  "DEV_FAST_REVIEW_DESKTOP_BACKGROUND";
+export const REVIEW_DESKTOP_BACKGROUND_ENV = "CHALK_REVIEW_DESKTOP_BACKGROUND";
 
 const DEFAULT_LAUNCH_TIMEOUT_MS = 90_000;
 
@@ -57,7 +56,7 @@ interface ReviewAppLauncherRuntime {
 
 export interface RunReviewAppLaunchInput {
   timeoutMs?: number;
-  /** Bring Blackboard Desktop forward. */
+  /** Bring Chalk Desktop forward. */
   focus?: boolean;
   /** Explicit Linux container opt-out from the Chromium sandbox. */
   noSandbox?: boolean;
@@ -129,7 +128,7 @@ export async function runReviewAppLaunch(
 
   if (selection.key !== "stable" && selection.key !== "preview")
     throw new Error(
-      `${reviewInstanceStartHint(selection)}; \`blackboard app launch\` starts only installed apps.`,
+      `${reviewInstanceStartHint(selection)}; \`chalk app launch\` starts only installed apps.`,
     );
 
   if (selection.source === "fallback" && running.length > 1)
@@ -202,7 +201,7 @@ export async function runReviewAppLaunch(
   }
 
   throw new Error(
-    `Blackboard Desktop did not become ready within ${Math.ceil((input.timeoutMs ?? DEFAULT_LAUNCH_TIMEOUT_MS) / 1_000)} seconds after ${attempt.method}. Open Blackboard Desktop once, then run \`blackboard app launch\` again.${launchDiagnostics(attempt.logPath)}`,
+    `Chalk Desktop did not become ready within ${Math.ceil((input.timeoutMs ?? DEFAULT_LAUNCH_TIMEOUT_MS) / 1_000)} seconds after ${attempt.method}. Open Chalk Desktop once, then run \`chalk app launch\` again.${launchDiagnostics(attempt.logPath)}`,
   );
 }
 
@@ -221,7 +220,7 @@ export async function focusReviewDesktop(
   if (!response.ok || !result.ok) {
     throw new Error(
       result.ok
-        ? `Blackboard Desktop focus returned ${response.status}.`
+        ? `Chalk Desktop focus returned ${response.status}.`
         : result.error,
     );
   }
@@ -260,9 +259,9 @@ export function launchDesktopApplication(
   delete env.ELECTRON_RUN_AS_NODE;
 
   // An installed app must never inherit a dev Desktop's identity.
-  delete env.DEV_FAST_REVIEW_CHECKOUT;
+  delete env.CHALK_REVIEW_CHECKOUT;
   const release = RELEASE_APPS[input.instance?.key ?? "stable"];
-  const stateRoot = env.DEV_FAST_REVIEW_DESKTOP_STATE_ROOT?.trim();
+  const stateRoot = env.CHALK_REVIEW_DESKTOP_STATE_ROOT?.trim();
 
   const profileArgs = stateRoot
     ? [
@@ -280,11 +279,11 @@ export function launchDesktopApplication(
     delete env.VSCODE_CLI;
     // With no selection, the Fedora CLI wrappers name their own channel's launcher.
     command =
-      (input.instance ? "" : env.DEV_FAST_REVIEW_DESKTOP_COMMAND?.trim()) ||
+      (input.instance ? "" : env.CHALK_REVIEW_DESKTOP_COMMAND?.trim()) ||
       release.linuxLauncher;
     method = `the installed Linux launcher at "${command}"`;
 
-    if (electron && !env.DEV_FAST_REVIEW_DESKTOP_COMMAND?.trim()) {
+    if (electron && !env.CHALK_REVIEW_DESKTOP_COMMAND?.trim()) {
       command = execPath;
       method = `the Desktop-managed bundle at "${command}"`;
     }
@@ -309,11 +308,11 @@ export function launchDesktopApplication(
       : `the macOS bundle identifier "${release.bundleId}"`;
 
     // -n allows parallel profiles; -W exits with Desktop, so a startup crash
-    // surfaces early; --env carries Blackboard's context.
+    // surfaces early; --env carries Chalk's context.
     args = ["-n", "-W", ...(focus ? [] : ["-g"]), ...target];
 
     for (const [key, value] of Object.entries(env)) {
-      if (value !== undefined && /^DEV_(REVIEW|FAST)_/.test(key))
+      if (value !== undefined && /^(DEV_REVIEW|CHALK)_/.test(key))
         args.push("--env", `${key}=${value}`);
     }
 
@@ -332,7 +331,7 @@ export function launchDesktopApplication(
   try {
     if (platform === "linux") {
       logPath = path.join(
-        mkdtempSync(path.join(tmpdir(), "blackboard-launch-")),
+        mkdtempSync(path.join(tmpdir(), "chalk-launch-")),
         "stderr.log",
       );
       logFd = openSync(logPath, "wx", 0o600);
@@ -373,7 +372,7 @@ function launchEvent(
 
 function launchFailure(attempt: DesktopLaunchAttempt, error: Error): Error {
   return new Error(
-    `Could not launch Blackboard with ${attempt.method}: ${error.message}. Open Blackboard once, then run \`blackboard app launch\` again. A sandboxed agent must run it outside the sandbox.${launchDiagnostics(attempt.logPath)}`,
+    `Could not launch Chalk with ${attempt.method}: ${error.message}. Open Chalk once, then run \`chalk app launch\` again. A sandboxed agent must run it outside the sandbox.${launchDiagnostics(attempt.logPath)}`,
   );
 }
 

@@ -1,7 +1,4 @@
-import type {
-  StructuralDiff,
-  StructuralRegion,
-} from "@blackboard/review-contracts";
+import type { StructuralDiff, StructuralRegion } from "@chalk/review-contracts";
 import { expect, it } from "vitest";
 
 import { loadPierreComparison } from "./pierre-comparison";

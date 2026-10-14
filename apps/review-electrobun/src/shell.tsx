@@ -1,24 +1,3 @@
-import {
-  REVIEW_CANVAS_RESUME_EVENT,
-  REVIEW_DISCORD_URL,
-  ReviewApiClient,
-  ReviewApiError,
-  parseReviewCliInstallStatus,
-  reviewSourceAnchor,
-  reviewSourceComparison,
-} from "@blackboard/review-contracts";
-import type {
-  ReviewApiSummary,
-  ReviewCanvasContent,
-  ReviewCanvasHandle,
-  ReviewCanvasInstallContent,
-  ReviewCanvasTutorialBridge,
-  ReviewCanvasUi,
-  ReviewSourceView,
-  ReviewVerbRequest,
-  ReviewVerbResponse,
-  TutorialProgressV1,
-} from "@blackboard/review-contracts";
 import { Button } from "@canvas/components/ui/button";
 import {
   Dialog,
@@ -34,6 +13,27 @@ import {
   mountReviewCanvas,
   reviewCanvasThemeClass,
 } from "@canvas/desktop-entry";
+import {
+  REVIEW_CANVAS_RESUME_EVENT,
+  REVIEW_DISCORD_URL,
+  ReviewApiClient,
+  ReviewApiError,
+  parseReviewCliInstallStatus,
+  reviewSourceAnchor,
+  reviewSourceComparison,
+} from "@chalk/review-contracts";
+import type {
+  ReviewApiSummary,
+  ReviewCanvasContent,
+  ReviewCanvasHandle,
+  ReviewCanvasInstallContent,
+  ReviewCanvasTutorialBridge,
+  ReviewCanvasUi,
+  ReviewSourceView,
+  ReviewVerbRequest,
+  ReviewVerbResponse,
+  TutorialProgressV1,
+} from "@chalk/review-contracts";
 import {
   BookOpenIcon,
   FileTextIcon,
@@ -231,7 +231,7 @@ function Shell(
       options.state.discovery.url + "/install/status",
     );
 
-    if (!response.ok) throw new Error("Cannot load Blackboard command setup.");
+    if (!response.ok) throw new Error("Cannot load Chalk command setup.");
     const status = parseReviewCliInstallStatus(await response.json());
 
     const mutate = async (path: string, body = {}) => {
@@ -249,7 +249,7 @@ function Shell(
       if (!response.ok) {
         const result = await response.json().catch(() => undefined);
         throw new Error(
-          result?.output ?? result?.error ?? "Blackboard command setup failed.",
+          result?.output ?? result?.error ?? "Chalk command setup failed.",
         );
       }
 
@@ -993,9 +993,9 @@ function Shell(
           )}
           <span
             className="review-shell-current-title tw:truncate tw:font-medium"
-            title={currentTab?.title || "Blackboard"}
+            title={currentTab?.title || "Chalk"}
           >
-            {currentTab?.title || "Blackboard"}
+            {currentTab?.title || "Chalk"}
           </span>
         </div>
         <div className="review-shell-actions tw:flex tw:flex-none tw:items-center tw:gap-1 tw:text-muted-foreground">
@@ -1148,7 +1148,7 @@ function Shell(
           {!loaded ? (
             <div className="review-shell-loading tw:p-8" role="status">
               {error
-                ? "Unable to load reviews. Close and reopen Blackboard to retry."
+                ? "Unable to load reviews. Close and reopen Chalk to retry."
                 : "Loading reviews…"}
             </div>
           ) : !currentTab ? (
@@ -1207,7 +1207,7 @@ function Shell(
             <DialogHeader>
               <DialogTitle>Command setup</DialogTitle>
               <DialogDescription>
-                Connect Blackboard to your coding agent.
+                Connect Chalk to your coding agent.
               </DialogDescription>
             </DialogHeader>
             <Canvas
@@ -1280,7 +1280,7 @@ function SettingsDialog({
       >
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
-          <DialogDescription>Make Blackboard feel at home.</DialogDescription>
+          <DialogDescription>Make Chalk feel at home.</DialogDescription>
         </DialogHeader>
         <div className="review-shell-settings-fields tw:grid tw:gap-4 tw:py-3 tw:[&_label]:flex tw:[&_label]:items-center tw:[&_label]:justify-between tw:[&_label]:gap-4 tw:[&_select]:min-w-[132px]">
           <label htmlFor="shell-appearance">

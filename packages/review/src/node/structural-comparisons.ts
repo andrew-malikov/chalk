@@ -1,4 +1,4 @@
-import type { StructuralDiffEvent } from "@blackboard/review-contracts";
+import type { StructuralDiffEvent } from "@chalk/review-contracts";
 
 import {
   type StructuralDiffRequest,

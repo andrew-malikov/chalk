@@ -1,5 +1,5 @@
-import type { ReviewMenuRequest } from "@blackboard/review-contracts";
 import { themeStyles } from "@canvas/styles/theme-styles";
+import type { ReviewMenuRequest } from "@chalk/review-contracts";
 // oxlint-disable no-restricted-imports -- Exercise the desktop host adapter through its public UI API.
 import { createCanvasUi } from "@shell/canvas-ui";
 import * as stylex from "@stylexjs/stylex";

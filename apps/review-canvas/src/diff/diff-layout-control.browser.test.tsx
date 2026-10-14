@@ -1,8 +1,8 @@
-import type { ReviewDiffLayout } from "@blackboard/review-contracts";
 import { CanvasUiContext } from "@canvas/host/canvas-ui";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { testCanvasUi } from "@canvas/test/canvas-ui-test-utils";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import type { ReviewDiffLayout } from "@chalk/review-contracts";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

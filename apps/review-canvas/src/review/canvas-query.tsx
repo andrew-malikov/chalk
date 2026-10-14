@@ -1,4 +1,4 @@
-import type { ReviewApiClient } from "@blackboard/review-contracts";
+import type { ReviewApiClient } from "@chalk/review-contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo } from "react";
 

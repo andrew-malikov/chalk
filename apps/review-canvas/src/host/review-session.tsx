@@ -1,10 +1,10 @@
+import type { NormalizedSoftwareModel } from "@canvas/software-map/model";
+import type { PinnedSoftwareMapData } from "@canvas/software-map/SoftwareMap";
 import type {
   ReviewCanvasBridge,
   ReviewCanvasDiagnostic,
   ReviewRuntimeConfig,
-} from "@blackboard/review-contracts";
-import type { NormalizedSoftwareModel } from "@canvas/software-map/model";
-import type { PinnedSoftwareMapData } from "@canvas/software-map/SoftwareMap";
+} from "@chalk/review-contracts";
 import { type ReactNode, createContext, useContext } from "react";
 
 import {

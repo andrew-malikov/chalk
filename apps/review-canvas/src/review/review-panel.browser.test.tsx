@@ -1,7 +1,7 @@
-import { REVIEW_CANVAS_RESUME_EVENT } from "@blackboard/review-contracts";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDebugSettingsProvider } from "@canvas/settings/debug-settings";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import { REVIEW_CANVAS_RESUME_EVENT } from "@chalk/review-contracts";
 import type { AnchorRef } from "@review/documents/authoring";
 import { type ReactNode, act, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";

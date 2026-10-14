@@ -5,7 +5,7 @@ Status: resolved
 
 ## Destination
 
-Agree on a small product outline for displaying GitLab MR discussions in Blackboard, drafting replies and new comments, and explicitly posting them. The route is clear when the first user journey and MVP boundaries are agreed; a detailed specification and implementation come afterward.
+Agree on a small product outline for displaying GitLab MR discussions in Chalk, drafting replies and new comments, and explicitly posting them. The route is clear when the first user journey and MVP boundaries are agreed; a detailed specification and implementation come afterward.
 
 ## Notes
 
@@ -17,11 +17,11 @@ Agree on a small product outline for displaying GitLab MR discussions in Blackbo
 - Review modes: Local review preserves today's workflow; GitLab MR review is created through MCP from the MR URL and owns an independent, app-managed clone in a configurable location.
 - Connection: existing glab authentication for the MR host, plus working Git credentials for managed clone/fetch. In-app authentication is outside this MVP.
 - New comments can start both inline code discussions and general MR discussions.
-- Unpublished drafts persist locally in Blackboard; synchronizing drafts with GitLab is beyond this MVP.
+- Unpublished drafts persist locally in Chalk; synchronizing drafts with GitLab is beyond this MVP.
 - Consult wayfinder, grilling, and domain-modeling when working a decision; research tickets consult research, and presentation tickets consult prototype.
 - This effort plans the product; it does not implement the integration.
 - Tracker: local Markdown fallback. Child tickets live in `issues/`; `Blocked by` records dependencies. An open, unassigned ticket whose blockers are resolved is on the frontier. Claim before work; record answers on the ticket, not here.
-- Existing Blackboard imports GitHub PR revisions but has no remote review-comment model. Existing Ask conversations are local agent conversations, not GitLab discussions.
+- Existing Chalk imports GitHub PR revisions but has no remote review-comment model. Existing Ask conversations are local agent conversations, not GitLab discussions.
 - Candidate vocabulary, to confirm in the relevant tickets: discussion = a GitLab thread; comment = one message; draft = an unpublished proposed reply or new comment.
 
 ## Decisions so far
@@ -29,7 +29,7 @@ Agree on a small product outline for displaying GitLab MR discussions in Blackbo
 - [Establish GitLab connection and authentication constraints](issues/01-gitlab-authentication-facts.md): User PAT, glab, and OAuth paths exist on both offerings; host registration, permission scope, policy, and versions constrain setup.
 
 - [Establish GitLab discussion, draft, and posting capabilities](issues/02-gitlab-discussion-facts.md): Core thread import/reply/general-inline posting is available; remote revision anchors and undocumented retry guarantees constrain the outline.
-- [Choose how an MR maps to a Blackboard review](issues/03-mr-entry-and-source.md): Earlier attachment/local-source model, superseded by [Choose local and MR review kinds with managed repositories](issues/10-review-kinds-and-managed-repositories.md).
+- [Choose how an MR maps to a Chalk review](issues/03-mr-entry-and-source.md): Earlier attachment/local-source model, superseded by [Choose local and MR review kinds with managed repositories](issues/10-review-kinds-and-managed-repositories.md).
 - [Choose the discussion review surface](issues/04-discussion-review-surface.md): Use a discussions panel and local code markers; open threads appear by default, resolved threads expand from a count, and system activity is omitted.
 - [Choose the draft lifecycle and agent assistance](issues/05-draft-lifecycle.md): Draft manually in threads, from code selections, or from the panel; autosave locally, retain drafts across reopening, and provide explicit discard.
 - [Choose explicit posting behavior and recovery from partial failure](issues/06-posting-contract.md): Post individually or attempt every unsent draft with Post all; confirmed successes are marked sent, and Resolve is a separate action.

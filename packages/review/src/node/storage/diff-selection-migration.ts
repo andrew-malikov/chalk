@@ -4,7 +4,7 @@ import {
   isNumberValue,
   isStringValue,
   jsonValueSchema,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 
 /** Upgrade retained document attachments at the read/import boundary. New edits
  * use the strict DiffSelection schema and never accept these retired forms. */

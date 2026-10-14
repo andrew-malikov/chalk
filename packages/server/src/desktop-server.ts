@@ -4,7 +4,7 @@ import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { jsonString } from "@blackboard/json";
+import { jsonString } from "@chalk/json";
 import {
   type JsonValue,
   REVIEW_DESKTOP_DISCOVERY_VERSION,
@@ -12,14 +12,14 @@ import {
   type ReviewTutorialOpenResponse,
   isJsonObject,
   reviewDiffrSummarizerInputSchema,
-} from "@blackboard/review-contracts";
-import { createReviewApi } from "@blackboard/server/review-api/http.js";
+} from "@chalk/review-contracts";
+import { createReviewApi } from "@chalk/server/review-api/http.js";
 import {
   createReviewServerApp,
   relayReviewCallbacks,
   serverJson,
-} from "@blackboard/server/review-server-core";
-import { tutorialAssetsRoot } from "@blackboard/tutorial/asset-paths";
+} from "@chalk/server/review-server-core";
+import { tutorialAssetsRoot } from "@chalk/tutorial/asset-paths";
 import { type ReviewInstanceIdentity } from "@review/node/desktop-discovery";
 import {
   readDiffrConfig,

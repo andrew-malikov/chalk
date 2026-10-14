@@ -10,7 +10,7 @@ import {
   jsonProperty,
   parseJsonText,
   parseReviewDesktopDiscovery,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import {
   reviewDefaultInstancePath,
   reviewDevInstanceKey,
@@ -26,7 +26,7 @@ export class ReviewDesktopProtocolMismatchError extends Error {
     readonly expectedVersion = REVIEW_DESKTOP_DISCOVERY_VERSION,
   ) {
     super(
-      `Blackboard Desktop uses protocol ${actualVersion}, but this Blackboard CLI needs protocol ${expectedVersion}. Update the Blackboard CLI and Blackboard Desktop to compatible versions, then try again.`,
+      `Chalk Desktop uses protocol ${actualVersion}, but this Chalk CLI needs protocol ${expectedVersion}. Update the Chalk CLI and Chalk Desktop to compatible versions, then try again.`,
     );
   }
 }
@@ -36,7 +36,7 @@ export class ReviewDesktopDiscoveryUnreadableError extends Error {
 
   constructor(filePath: string, detail?: string) {
     super(
-      `Blackboard Desktop discovery is unreadable at ${filePath}. Restart Blackboard Desktop and try again.${detail ? ` ${detail}` : ""}`,
+      `Chalk Desktop discovery is unreadable at ${filePath}. Restart Chalk Desktop and try again.${detail ? ` ${detail}` : ""}`,
     );
   }
 }
@@ -138,7 +138,7 @@ export const REVIEW_INSTANCE_ENV = "DEV_REVIEW_INSTANCE";
 function checkedInstanceKey(key: string, origin = "") {
   if (/^(?:stable|preview|dev-[A-Za-z0-9_.-]+)$/.test(key)) return key;
   throw new Error(
-    `Unknown Blackboard instance ${JSON.stringify(key)}${origin}. Use stable, preview, or a dev-… key from \`blackboard instances\`.`,
+    `Unknown Chalk instance ${JSON.stringify(key)}${origin}. Use stable, preview, or a dev-… key from \`chalk instances\`.`,
   );
 }
 
@@ -151,11 +151,11 @@ export type ReviewInstanceIdentity = Required<
 export function reviewInstanceIdentity(
   env: NodeJS.ProcessEnv,
 ): ReviewInstanceIdentity {
-  const checkout = env.DEV_FAST_REVIEW_CHECKOUT?.trim();
+  const checkout = env.CHALK_REVIEW_CHECKOUT?.trim();
 
   const channel = checkout
     ? "dev"
-    : env.DEV_FAST_REVIEW_RELEASE_CHANNEL === "preview"
+    : env.CHALK_REVIEW_RELEASE_CHANNEL === "preview"
       ? "preview"
       : "stable";
 
@@ -164,7 +164,7 @@ export function reviewInstanceIdentity(
     channel,
   };
 
-  const override = env.DEV_FAST_REVIEW_INSTANCE_KEY?.trim();
+  const override = env.CHALK_REVIEW_INSTANCE_KEY?.trim();
 
   if (override) {
     if (!checkout || !override.startsWith("dev-")) {
@@ -177,10 +177,10 @@ export function reviewInstanceIdentity(
   }
 
   if (checkout) identity.checkout = path.resolve(checkout);
-  const appPath = env.DEV_FAST_REVIEW_APP_PATH?.trim();
+  const appPath = env.CHALK_REVIEW_APP_PATH?.trim();
 
   if (appPath) identity.appPath = appPath;
-  const appVersion = env.DEV_FAST_REVIEW_APP_VERSION?.trim();
+  const appVersion = env.CHALK_REVIEW_APP_VERSION?.trim();
 
   if (appVersion) identity.appVersion = appVersion;
 
@@ -303,7 +303,7 @@ export async function selectReviewInstance(
       ? [
           checkedInstanceKey(
             fromDefault,
-            " as the machine default (`blackboard instances clear` removes it)",
+            " as the machine default (`chalk instances clear` removes it)",
           ),
           "default",
         ]
@@ -342,15 +342,15 @@ export function reviewInstanceUnavailable(
 
   const others = running.length
     ? ` Running: ${running.join(", ")}.`
-    : " No Blackboard is running.";
+    : " No Chalk is running.";
 
   if (selection.source === "fallback" && running.length > 1)
     return new Error(
-      `Several Blackboard instances are running and none is selected.${others} Choose one with \`blackboard instances use <key>\`, or \`export ${REVIEW_INSTANCE_ENV}=<key>\` for this shell.`,
+      `Several Chalk instances are running and none is selected.${others} Choose one with \`chalk instances use <key>\`, or \`export ${REVIEW_INSTANCE_ENV}=<key>\` for this shell.`,
     );
 
   return new Error(
-    `Blackboard \`${selection.key}\` is not running. ${reviewInstanceStartHint(selection)}, or pick another instance with \`blackboard instances\`.${others}`,
+    `Chalk \`${selection.key}\` is not running. ${reviewInstanceStartHint(selection)}, or pick another instance with \`chalk instances\`.${others}`,
   );
 }
 
@@ -358,7 +358,7 @@ export function reviewInstanceStartHint(
   selection: Pick<ReviewInstanceSelection, "key" | "instance">,
 ): string {
   if (!selection.key.startsWith("dev-"))
-    return "Start it with `blackboard app launch`";
+    return "Start it with `chalk app launch`";
   const checkout = selection.instance?.discovery.checkout;
 
   return checkout

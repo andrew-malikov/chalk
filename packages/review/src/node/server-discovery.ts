@@ -49,7 +49,7 @@ export async function readReviewServerDiscovery(
     return discoverySchema.parse(JSON.parse(source));
   } catch {
     throw new Error(
-      `Blackboard server discovery in ${stateDir} is invalid or incompatible. Restart it with this version of blackboard server start.`,
+      `Chalk server discovery in ${stateDir} is invalid or incompatible. Restart it with this version of chalk server start.`,
     );
   }
 }
@@ -89,6 +89,6 @@ export async function readReviewServerHealth(
 
 export function serverNotReady(stateDir: string) {
   return new Error(
-    `Blackboard server is not ready in ${stateDir}. Run blackboard server start --state-dir ${JSON.stringify(stateDir)}, then retry.`,
+    `Chalk server is not ready in ${stateDir}. Run chalk server start --state-dir ${JSON.stringify(stateDir)}, then retry.`,
   );
 }

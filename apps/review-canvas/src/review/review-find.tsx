@@ -1,7 +1,3 @@
-import type {
-  ReviewFindQuery,
-  ReviewInlineEditorHandle,
-} from "@blackboard/review-contracts";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { Input } from "@canvas/components/ui/input";
 import type { ReviewClientConfig } from "@canvas/host/review-client";
@@ -13,6 +9,10 @@ import { tokens } from "@canvas/styles/tokens.stylex";
 import { IconButton } from "@canvas/ui/button";
 import { surfaceStyles } from "@canvas/ui/surface";
 import { fieldStyles } from "@canvas/ui/text-field";
+import type {
+  ReviewFindQuery,
+  ReviewInlineEditorHandle,
+} from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import {

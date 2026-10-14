@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 
-import { type LocalVcs, gitCommonDir } from "@blackboard/local-vcs";
+import { type LocalVcs, gitCommonDir } from "@chalk/local-vcs";
 import { ReviewInputError } from "@review/documents/document.js";
 import { isMissingFileError } from "@review/node/lib/fs-utils.js";
 

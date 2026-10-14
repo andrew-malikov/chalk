@@ -4,12 +4,7 @@ import { mkdir, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
-import {
-  jsonNumber,
-  jsonObject,
-  jsonString,
-  parseJsonText,
-} from "@blackboard/json";
+import { jsonNumber, jsonObject, jsonString, parseJsonText } from "@chalk/json";
 
 const LOCK_OWNER_FILE = "owner.json";
 

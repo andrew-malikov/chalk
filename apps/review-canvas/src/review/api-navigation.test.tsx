@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { randomUUID } from "node:crypto";
 
-import { createReviewApi } from "@blackboard/server/review-api/http";
 import { mountReviewCanvas } from "@canvas/desktop-entry";
 import { testReviewBridge } from "@canvas/test/review-session-test-utils";
+import { createReviewApi } from "@chalk/server/review-api/http";
 import { ReviewStore } from "@review/node/review-api/store";
 import { Hono } from "hono";
 import { act } from "react";

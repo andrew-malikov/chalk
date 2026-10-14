@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { createReviewApi as createJsonReviewApi } from "@blackboard/server/review-api/http.js";
+import { createReviewApi as createJsonReviewApi } from "@chalk/server/review-api/http.js";
 import { openLocalReviewStore } from "@review/node/review-api/local-data.js";
 import { afterEach, expect, test, vi } from "vitest";
 

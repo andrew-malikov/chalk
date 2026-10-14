@@ -1,8 +1,4 @@
-import {
-  type JsonObject,
-  type JsonValue,
-  isJsonObject,
-} from "@blackboard/json";
+import { type JsonObject, type JsonValue, isJsonObject } from "@chalk/json";
 import { z } from "zod";
 
 import type { ReviewApiSummary } from "./review-api-client.js";
@@ -300,7 +296,7 @@ export interface ReviewCanvasDiagnostic {
 }
 
 /**
- * `instant` shows the Blackboard tooltip the moment the pointer lands, for
+ * `instant` shows the Chalk tooltip the moment the pointer lands, for
  * small targets like the viewed box and the diff counts; `quick` shows it
  * after half the delay; `detail` is its fainter second line. Without options
  * the host shows its delayed hover.
@@ -776,7 +772,7 @@ export interface ReviewCanvasModule {
 // bump; readers must ignore fields they do not understand.
 export const ReviewDesktopDiscoverySchema = z.object({
   version: z.literal(REVIEW_DESKTOP_DISCOVERY_VERSION, {
-    error: "Unsupported Blackboard Desktop discovery version",
+    error: "Unsupported Chalk Desktop discovery version",
   }),
   instanceId: requiredString,
   url: loopbackOriginSchema,
@@ -913,7 +909,7 @@ export const ReviewCliInstallStatusSchema = z.strictObject({
     installed: z.boolean(),
     profileConfigured: z.boolean(),
     onPath: z.boolean(),
-    /** The Windows installer put this command on PATH; uninstalling Blackboard removes it. */
+    /** The Windows installer put this command on PATH; uninstalling Chalk removes it. */
     installer: z.literal(true).optional(),
   }),
 
@@ -922,9 +918,9 @@ export const ReviewCliInstallStatusSchema = z.strictObject({
     .strictObject({ path: requiredString, version: requiredString })
     .nullable(),
   connect: z.strictObject({
-    // "sh", or "blackboard" when Desktop has no built CLI.
+    // "sh", or "chalk" when Desktop has no built CLI.
     command: requiredString,
-    // ["-c", "exec \"$HOME/.local/bin/blackboard\" mcp"], or ["mcp"].
+    // ["-c", "exec \"$HOME/.local/bin/chalk\" mcp"], or ["mcp"].
     args: z.array(z.string()),
     prompts: z.record(ReviewCliInstallTargetSchema, requiredString),
     // The published plugin or MCP install command per harness.

@@ -4,11 +4,6 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type {
-  ReviewCanvasBridge,
-  ReviewSurfaceEvent,
-} from "@blackboard/review-contracts";
-import { createReviewApi } from "@blackboard/server/review-api/http";
 import { mountReviewCanvas as mount } from "@canvas/desktop-entry";
 import {
   createSequenceTourEntry,
@@ -16,6 +11,11 @@ import {
 } from "@canvas/diagrams/diagrams";
 import { testReviewBridge } from "@canvas/test/review-session-test-utils";
 import * as clipboard from "@canvas/ui/copy-text";
+import type {
+  ReviewCanvasBridge,
+  ReviewSurfaceEvent,
+} from "@chalk/review-contracts";
+import { createReviewApi } from "@chalk/server/review-api/http";
 import { ReviewInputError } from "@review/documents/input-error";
 import { selectSource } from "@review/documents/lens-selection";
 import { LocalReviewData } from "@review/node/review-api/local-data";

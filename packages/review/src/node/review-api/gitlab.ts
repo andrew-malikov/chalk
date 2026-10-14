@@ -1,12 +1,12 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 
-import type { JsonValue } from "@blackboard/json";
+import type { JsonValue } from "@chalk/json";
 import {
   type GitLabDiscussion,
   type GitLabPosition,
   gitLabAccountSchema,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import { ReviewInputError } from "@review/documents/document.js";
 import { z } from "zod";
 
@@ -99,7 +99,7 @@ export class GitLabRequestError extends ReviewInputError {
   ) {
     super(
       missing
-        ? "Install glab and Git on Blackboard's PATH, then retry."
+        ? "Install glab and Git on Chalk's PATH, then retry."
         : httpStatus === 401 || httpStatus === 403
           ? "GitLab authentication or permission failed. Check glab auth status for this host and reconnect with an account that can access the MR."
           : "GitLab could not confirm the request. Check the MR and your connection before retrying.",

@@ -1,4 +1,4 @@
-import type { ReviewCommitSummary } from "@blackboard/review-contracts";
+import type { ReviewCommitSummary } from "@chalk/review-contracts";
 import type { AnchorRef } from "@review/documents/authoring";
 import { describe, expect, it } from "vitest";
 
@@ -54,7 +54,7 @@ describe("Review navigation", () => {
     });
   });
 
-  it("resumes on the blackboard when the stored view is not offered", () => {
+  it("resumes on the chalk when the stored view is not offered", () => {
     const store = createReviewPanelStore({
       view: "map",
       availableViews: ["review", "commits", "diff"],
@@ -63,7 +63,7 @@ describe("Review navigation", () => {
     expect(store.getState().view).toBe("review");
   });
 
-  it("returns to the blackboard when the current view stops being offered", () => {
+  it("returns to the chalk when the current view stops being offered", () => {
     const store = createReviewPanelStore();
     store.getState().openCommitDiff({ commit });
 
@@ -117,7 +117,7 @@ describe("Review navigation", () => {
 describe("Fullscreen tours", () => {
   const sequence = { tourId: "flow", kind: "sequence" } as const;
 
-  it("reveals each explicit step and closes when the reader leaves the blackboard", () => {
+  it("reveals each explicit step and closes when the reader leaves the chalk", () => {
     const store = createReviewPanelStore();
 
     store.getState().openOverlayTour(sequence, "first");

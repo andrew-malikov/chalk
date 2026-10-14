@@ -1,8 +1,8 @@
 import { Writable } from "node:stream";
 
-import * as agentClient from "@blackboard/mcp/agent-client.js";
-import { ReviewApiClient } from "@blackboard/review-contracts";
-import { createReviewApi } from "@blackboard/server/review-api/http.js";
+import * as agentClient from "@chalk/mcp/agent-client.js";
+import { ReviewApiClient } from "@chalk/review-contracts";
+import { createReviewApi } from "@chalk/server/review-api/http.js";
 import { ReviewStore } from "@review/node/review-api/store.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -61,7 +61,7 @@ describe("CLI instructions", () => {
           stderr: errors,
         }),
       ).toBe(0);
-      expect(stdout).toContain("rfc-style blackboard");
+      expect(stdout).toContain("rfc-style chalk");
       expect(stdout).not.toMatch(/^"/);
 
       connection.mockRejectedValueOnce(new Error("Desktop is down"));
@@ -72,7 +72,7 @@ describe("CLI instructions", () => {
           stderr: errors,
         }),
       ).toBe(1);
-      expect(stderr).toMatch(/^Blackboard is not running/);
+      expect(stderr).toMatch(/^Chalk is not running/);
     } finally {
       connection.mockRestore();
     }

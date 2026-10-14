@@ -1,9 +1,3 @@
-import {
-  type ReviewCanvasContent,
-  type ReviewDocumentWidthChoice,
-  resolveReviewSourceView,
-} from "@blackboard/review-contracts";
-import { ReviewApiClient, ReviewApiError } from "@blackboard/review-contracts";
 import { App } from "@canvas/App";
 import type { RenderedReviewDocument } from "@canvas/App";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
@@ -25,6 +19,12 @@ import {
 import { fontSize } from "@canvas/styles/scale.stylex";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { TutorialProvider } from "@canvas/tutorial/tutorial-context";
+import {
+  type ReviewCanvasContent,
+  type ReviewDocumentWidthChoice,
+  resolveReviewSourceView,
+} from "@chalk/review-contracts";
+import { ReviewApiClient, ReviewApiError } from "@chalk/review-contracts";
 import { elements } from "@review/documents/document";
 import type { ActivitySnapshot } from "@review/node/review-api/activity";
 import type { Snapshot } from "@review/node/review-api/store";

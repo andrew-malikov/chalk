@@ -1,8 +1,3 @@
-import {
-  type ReviewCanvasInstallContent,
-  type ReviewCliInstallTarget,
-  ReviewCliInstallTargetSchema,
-} from "@blackboard/review-contracts";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { AGENT_LOGOS } from "@canvas/home/agent-logos";
 import { cliInstallReady } from "@canvas/settings/cli-install-status";
@@ -13,6 +8,11 @@ import { tokens } from "@canvas/styles/tokens.stylex";
 import { CopyIcon, copyText } from "@canvas/ui/copy-text";
 import { CheckIcon } from "@canvas/ui/icons";
 import { OptionMenu } from "@canvas/ui/option-menu";
+import {
+  type ReviewCanvasInstallContent,
+  type ReviewCliInstallTarget,
+  ReviewCliInstallTargetSchema,
+} from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { useEffect, useRef, useState } from "react";
 
@@ -34,8 +34,7 @@ const OTHER_TARGETS = ReviewCliInstallTargetSchema.options.filter(
   (target) => !TAB_TARGETS.some((tab) => tab === target),
 );
 
-export const REVIEW_CONNECT_TARGET_STORAGE_KEY =
-  "dev.fast.review.connectTarget";
+export const REVIEW_CONNECT_TARGET_STORAGE_KEY = "chalk.review.connectTarget";
 
 const COPIED_RESET_MS = 2000;
 
@@ -50,7 +49,7 @@ const MODES: ReadonlyArray<{ mode: Mode; label: string }> = [
 ];
 
 /**
- * One agent at a time: a paste-in prompt that has the agent add Blackboard's MCP
+ * One agent at a time: a paste-in prompt that has the agent add Chalk's MCP
  * server, or an install command for the published plugin.
  */
 export function ConnectCard({
@@ -129,7 +128,7 @@ export function ConnectCard({
     return (
       <section aria-label="Connect your agents">
         <p {...stylex.props(styles.note)}>
-          Install the blackboard command in PATH first.
+          Install the chalk command in PATH first.
         </p>
       </section>
     );
@@ -270,7 +269,7 @@ export function ConnectCard({
         </>
       ) : (
         <p {...stylex.props(promptStyles.body)}>
-          {`${plugin.label}\nInstall the blackboard command first.`}
+          {`${plugin.label}\nInstall the chalk command first.`}
         </p>
       )}
       {status.error ? (

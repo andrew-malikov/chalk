@@ -1,7 +1,4 @@
-import {
-  type LocalVcsKind,
-  diff as readLocalVcsDiff,
-} from "@blackboard/local-vcs";
+import { type LocalVcsKind, diff as readLocalVcsDiff } from "@chalk/local-vcs";
 import {
   type SoftwareMapCodeElementInput,
   type SoftwareMapCoverageClaimInput,

@@ -19,12 +19,13 @@ import { createPreferencesStore } from "./preferences";
 import type { AppRPC, HostState } from "./rpc";
 import { startServer } from "./server-host";
 
+// Keep the existing profile so the rename preserves reviews and preferences.
 const profile = path.resolve(
   process.env.DEV_REVIEW_HOME ??
     path.join(homedir(), ".dev-fast/review-electrobun"),
 );
 
-const checkout = process.env.DEV_FAST_REVIEW_CHECKOUT;
+const checkout = process.env.CHALK_REVIEW_CHECKOUT;
 
 const key = `dev-electrobun-${createHash("sha256")
   .update(checkout ?? "")
@@ -33,7 +34,7 @@ const key = `dev-electrobun-${createHash("sha256")
 
 const abort = new AbortController();
 
-let state: HostState = { status: "starting", message: "Starting Blackboard…" };
+let state: HostState = { status: "starting", message: "Starting Chalk…" };
 
 let preferences: Awaited<ReturnType<typeof createPreferencesStore>> | undefined;
 
@@ -107,7 +108,7 @@ async function run() {
   });
 
   const window = new BrowserWindow({
-    title: "Blackboard",
+    title: "Chalk",
     url: "views://mainview/index.html",
     rpc,
     frame: { width: 1200, height: 850 },
@@ -141,11 +142,11 @@ async function run() {
 
   ApplicationMenu.setApplicationMenu([
     {
-      label: "Blackboard",
+      label: "Chalk",
       submenu: [
         { label: "Settings…", action: "settings", accelerator: "CmdOrCtrl+," },
         { type: "divider" },
-        { role: "quit", label: "Quit Blackboard", accelerator: "CmdOrCtrl+Q" },
+        { role: "quit", label: "Quit Chalk", accelerator: "CmdOrCtrl+Q" },
       ],
     },
     {
@@ -196,7 +197,7 @@ async function run() {
   if (
     !checkout ||
     !process.env.REVIEW_ELECTROBUN_BUN ||
-    !process.env.DEV_FAST_REVIEW_SERVER_ENTRY
+    !process.env.CHALK_REVIEW_SERVER_ENTRY
   ) {
     setState({
       status: "error",
@@ -212,7 +213,7 @@ async function run() {
     key,
     checkout,
     runtimePath: process.env.REVIEW_ELECTROBUN_BUN,
-    entry: process.env.DEV_FAST_REVIEW_SERVER_ENTRY,
+    entry: process.env.CHALK_REVIEW_SERVER_ENTRY,
     signal: abort.signal,
     onState: setState,
   });

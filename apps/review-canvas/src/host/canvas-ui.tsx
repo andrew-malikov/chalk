@@ -1,7 +1,7 @@
 import type {
   ReviewCanvasUi,
   ReviewMenuRequest,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import {
   type KeyboardEvent,
   type MouseEvent,

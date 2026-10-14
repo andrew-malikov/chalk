@@ -9,7 +9,7 @@ const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const checkout = path.resolve(app, "../..");
 
 if (!process.versions.bun) {
-  throw new Error("Blackboard requires Bun 1.4.2 or newer. Run: bun dev");
+  throw new Error("Chalk requires Bun 1.4.2 or newer. Run: bun dev");
 }
 
 const installedHutch = path.join(homedir(), ".hutch/bin/hutch");
@@ -21,8 +21,8 @@ const env = {
   PATH: `${path.dirname(process.execPath)}:${process.env.PATH ?? ""}`,
   HUTCH_NO_UPDATE_CHECK: "1",
   REVIEW_ELECTROBUN_BUN: process.execPath,
-  DEV_FAST_REVIEW_CHECKOUT: checkout,
-  DEV_FAST_REVIEW_SERVER_ENTRY: path.join(
+  CHALK_REVIEW_CHECKOUT: checkout,
+  CHALK_REVIEW_SERVER_ENTRY: path.join(
     checkout,
     "apps/review-electrobun/runtime/dist/desktop-host.js",
   ),
@@ -43,13 +43,13 @@ function run(command, args, cwd = app, overrides = {}) {
 
 run(
   process.execPath,
-  ["run", "--filter", "@blackboard/server", "build"],
+  ["run", "--filter", "@chalk/server", "build"],
   checkout,
 );
 
 run(
   process.execPath,
-  ["run", "--filter", "@blackboard/cli", "build"],
+  ["run", "--filter", "@chalk/cli", "build"],
   checkout,
 );
 

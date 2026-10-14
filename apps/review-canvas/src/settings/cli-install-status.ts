@@ -1,4 +1,4 @@
-import type { ReviewCliInstallStatus } from "@blackboard/review-contracts";
+import type { ReviewCliInstallStatus } from "@chalk/review-contracts";
 
 export function cliInstallReady(status?: ReviewCliInstallStatus): boolean {
   return (

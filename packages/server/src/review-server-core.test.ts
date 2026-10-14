@@ -281,8 +281,8 @@ const processes = {
   desktop: (home: string) =>
     spawnSource("../../apps/review-electrobun/src/desktop-host.ts", [], {
       DEV_REVIEW_HOME: home,
-      DEV_FAST_REVIEW_SERVER_PORT: "0",
-      DEV_FAST_REVIEW_APP_PID: String(process.pid),
+      CHALK_REVIEW_SERVER_PORT: "0",
+      CHALK_REVIEW_APP_PID: String(process.pid),
     }),
   headless: (home: string, stateDir = path.join(home, "server")) =>
     spawnSource(
@@ -443,7 +443,7 @@ function spawnSource(
     env: {
       ...process.env,
       ...env,
-      DEV_FAST_REVIEW_CLI_NO_DELEGATE: "1",
+      CHALK_REVIEW_CLI_NO_DELEGATE: "1",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });

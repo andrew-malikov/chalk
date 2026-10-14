@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import type { ReviewCliInstallStamp } from "@blackboard/review-contracts";
+import type { ReviewCliInstallStamp } from "@chalk/review-contracts";
 import { writePrivateJsonAtomic } from "@review/node/lib/atomic-write";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -175,7 +175,7 @@ describe("review command installation", () => {
     const homeDir = await temporaryHome("review-cli-symlink-shim-");
     const env = profileEnvironment(homeDir, "/bin/zsh");
     const cliPath = path.join(homeDir, "current-app", "cli.js");
-    const shimPath = path.join(homeDir, ".local", "bin", "blackboard");
+    const shimPath = path.join(homeDir, ".local", "bin", "chalk");
     await Promise.all([
       mkdir(path.dirname(cliPath), { recursive: true }),
       mkdir(path.dirname(shimPath), { recursive: true }),
@@ -202,7 +202,7 @@ describe("review command installation", () => {
     const homeDir = await temporaryHome("review-cli-only-shim-");
     const env = profileEnvironment(homeDir, "/bin/zsh");
     const cliPath = path.join(homeDir, "current-app", "cli.js");
-    const shimPath = path.join(homeDir, ".local", "bin", "blackboard");
+    const shimPath = path.join(homeDir, ".local", "bin", "chalk");
     await Promise.all([
       mkdir(path.dirname(cliPath), { recursive: true }),
       mkdir(path.dirname(shimPath), { recursive: true }),
@@ -211,7 +211,7 @@ describe("review command installation", () => {
       writeFile(cliPath, "// current CLI\n"),
       writeFile(
         shimPath,
-        "#!/bin/sh\n# Managed by Whiteboard Desktop\nFALLBACK_CLI='/Applications/Old Review.app/cli.js'\n",
+        "#!/bin/sh\n# Managed by Chalk Desktop\nFALLBACK_CLI='/Applications/Old Chalk.app/cli.js'\n",
         { mode: 0o755 },
       ),
     ]);
@@ -225,10 +225,10 @@ describe("review command installation", () => {
     });
 
     expect(applied).toMatchObject({ code: 0, shimPath });
-    expect(applied.output).toContain("blackboard command");
+    expect(applied.output).toContain("chalk command");
     const installed = await readFile(shimPath, "utf8");
     expect(installed).toContain(cliPath);
-    expect(installed).not.toContain("Old Review.app");
+    expect(installed).not.toContain("Old Chalk.app");
     expect(await readFile(path.join(homeDir, ".zprofile"), "utf8")).toContain(
       profileExport,
     );
@@ -254,6 +254,51 @@ describe("review command installation", () => {
       output: "",
     });
     expect(await readCliInstallStamp(cliInstallStampPath(env))).toBeNull();
+  });
+
+  it("installs and removes Chalk without changing predecessor integrations", async () => {
+    const homeDir = await temporaryHome("chalk-independent-install-");
+    const env = profileEnvironment(homeDir, "/bin/zsh");
+    const builtRoot = await builtPackageRoot();
+    const shimPath = pathShimPath(homeDir);
+
+    const extension = path.join(
+      homeDir,
+      ".pi/agent/extensions/review-trace.ts",
+    );
+
+    const registry = path.join(homeDir, ".config/dev-trace/repositories.json");
+    const previousCommand = path.join(homeDir, ".local/bin/review");
+
+    const sources: [string, string][] = [
+      [
+        extension,
+        `// Managed by Review Desktop trace setup\nspawn(${JSON.stringify(shimPath)}, ["trace", "hook", eventName]);\n`,
+      ],
+      [registry, "unrelated invalid registry"],
+      [previousCommand, "#!/bin/sh\n# Managed by Chalk\n"],
+    ];
+
+    for (const [file, source] of sources) {
+      await mkdir(path.dirname(file), { recursive: true });
+      await writeFile(file, source);
+    }
+
+    const result = await applyCliInstall({
+      packageRoot: builtRoot,
+      cliPath: path.join(builtRoot, "dist/cli.js"),
+      shim: true,
+      homeDir,
+      env,
+    });
+
+    expect(result.code).toBe(0);
+    expect(existsSync(shimPath)).toBe(true);
+    await removeCliInstall({ shim: true, homeDir, env });
+    expect(existsSync(shimPath)).toBe(false);
+
+    for (const [file, source] of sources)
+      expect(await readFile(file, "utf8")).toBe(source);
   });
 
   it("keeps a removed command removed until it is installed explicitly", async () => {
@@ -315,7 +360,7 @@ describe("review command installation", () => {
     await mkdir(foreignBin, { recursive: true });
     await Promise.all([
       writeFile(cliPath, "// test CLI\n"),
-      writeFile(path.join(foreignBin, "blackboard"), "#!/bin/sh\n", {
+      writeFile(path.join(foreignBin, "chalk"), "#!/bin/sh\n", {
         mode: 0o755,
       }),
     ]);
@@ -333,7 +378,7 @@ describe("review command installation", () => {
       env,
     });
 
-    expect(applied.output).toContain(path.join(foreignBin, "blackboard"));
+    expect(applied.output).toContain(path.join(foreignBin, "chalk"));
   });
 
   it("removes the owned command and profile block", async () => {
@@ -345,9 +390,9 @@ describe("review command installation", () => {
 
     const removed = await removeCliInstall({ shim: true, homeDir, env });
 
-    expect(removed.output).toContain("removed Blackboard PATH entry");
+    expect(removed.output).toContain("removed Chalk PATH entry");
     await expect(
-      readFile(path.join(homeDir, ".local", "bin", "blackboard"), "utf8"),
+      readFile(path.join(homeDir, ".local", "bin", "chalk"), "utf8"),
     ).rejects.toMatchObject({ code: "ENOENT" });
     expect(await readFile(path.join(homeDir, ".zprofile"), "utf8")).toBe("");
   });
@@ -355,7 +400,7 @@ describe("review command installation", () => {
   it("preserves a foreign command while removing the managed profile block", async () => {
     const homeDir = await temporaryHome("review-foreign-command-");
     const env = profileEnvironment(homeDir, "/bin/zsh");
-    const shimPath = path.join(homeDir, ".local", "bin", "blackboard");
+    const shimPath = path.join(homeDir, ".local", "bin", "chalk");
     await mkdir(path.dirname(shimPath), { recursive: true });
     await writeFile(shimPath, "#!/bin/sh\necho foreign\n", { mode: 0o755 });
     await ensureShellProfilePath({ homeDir, env });
@@ -396,7 +441,7 @@ function profileEnvironment(homeDir: string, shell: string): NodeJS.ProcessEnv {
 }
 
 describe("Windows command PATH", () => {
-  // A running Blackboard keeps its startup PATH, and the registry check can
+  // A running Chalk keeps its startup PATH, and the registry check can
   // disagree with the write the installer just made, so the stamp's record of
   // that write is what readies the command.
   const platform = Object.getOwnPropertyDescriptor(process, "platform")!;
@@ -415,7 +460,7 @@ describe("Windows command PATH", () => {
     await mkdir(path.dirname(shimPath), { recursive: true });
     await writeFile(
       shimPath,
-      "@echo off\r\nrem Managed by Blackboard Desktop. Do not edit.\r\n",
+      "@echo off\r\nrem Managed by Chalk Desktop. Do not edit.\r\n",
     );
 
     const stamp: ReviewCliInstallStamp = {
@@ -449,7 +494,7 @@ describe("installed launcher runtime selection", () => {
       cliPath,
       'console.log(JSON.stringify({build:"current",home:process.env.DEV_REVIEW_HOME}))',
     );
-    const shim = path.join(homeDir, ".local", "bin", "blackboard");
+    const shim = path.join(homeDir, ".local", "bin", "chalk");
     await writePathShim(
       shim,
       oldCli,
@@ -465,7 +510,7 @@ describe("installed launcher runtime selection", () => {
     });
 
     const { stdout } = await promisify(execFile)(shim, [], {
-      env: { PATH: "/usr/bin:/bin", DEV_FAST_REVIEW_CLI_NO_DELEGATE: "1" },
+      env: { PATH: "/usr/bin:/bin", CHALK_REVIEW_CLI_NO_DELEGATE: "1" },
     });
 
     expect(JSON.parse(stdout)).toEqual({
@@ -509,7 +554,7 @@ describe("installed launcher runtime selection", () => {
       await writeFile(fallbackCli, "// CLI fixture\n");
       await writeFile(
         fallbackRuntime,
-        '#!/bin/sh\nprintf "%s\\n" "fallback" "guard=$DEV_FAST_REVIEW_CLI_NO_DELEGATE" "delegated=$DEV_FAST_REVIEW_CLI_DELEGATED" "$@"\n',
+        '#!/bin/sh\nprintf "%s\\n" "fallback" "guard=$CHALK_REVIEW_CLI_NO_DELEGATE" "delegated=$CHALK_REVIEW_CLI_DELEGATED" "$@"\n',
         { mode: 0o755 },
       );
 
@@ -518,7 +563,7 @@ describe("installed launcher runtime selection", () => {
       if (runtimeExists)
         await writeFile(
           discoveredRuntime,
-          '#!/bin/sh\n[ "$ELECTRON_RUN_AS_NODE" = 1 ] || exit 42\nprintf "%s\\n" "discovered" "guard=$DEV_FAST_REVIEW_CLI_NO_DELEGATE" "delegated=$DEV_FAST_REVIEW_CLI_DELEGATED" "$@"\n',
+          '#!/bin/sh\n[ "$ELECTRON_RUN_AS_NODE" = 1 ] || exit 42\nprintf "%s\\n" "discovered" "guard=$CHALK_REVIEW_CLI_NO_DELEGATE" "delegated=$CHALK_REVIEW_CLI_DELEGATED" "$@"\n',
           { mode: 0o755 },
         );
       const discoveryDir = path.join(home, "review-desktop");
@@ -542,7 +587,7 @@ describe("installed launcher runtime selection", () => {
         env: {
           ...process.env,
           DEV_REVIEW_HOME: home,
-          DEV_FAST_REVIEW_CLI_NO_DELEGATE: noDelegate ? "1" : "",
+          CHALK_REVIEW_CLI_NO_DELEGATE: noDelegate ? "1" : "",
           ELECTRON_RUN_AS_NODE: "",
         },
       });
@@ -648,7 +693,7 @@ describe("Desktop installation alongside npm", () => {
   it("preserves the npm launcher and its target when npm uses ~/.local/bin", async () => {
     const homeDir = await temporaryHome("review-npm-coexist-");
     const cli = path.join(homeDir, "npm/cli.js");
-    const shim = path.join(homeDir, ".local/bin/blackboard");
+    const shim = path.join(homeDir, ".local/bin/chalk");
     await mkdir(path.dirname(cli), { recursive: true });
     await mkdir(path.dirname(shim), { recursive: true });
     await writeFile(cli, "#!/usr/bin/env node\n// npm-owned\n", {
@@ -733,7 +778,7 @@ describe("MCP self-install", () => {
 
       expect(built.connect).toMatchObject({
         command: "sh",
-        args: ["-c", 'exec "$HOME/.local/bin/blackboard" mcp'],
+        args: ["-c", 'exec "$HOME/.local/bin/chalk" mcp'],
       });
 
       await rm(shim);
@@ -745,7 +790,7 @@ describe("MCP self-install", () => {
       });
 
       expect(source.connect).toMatchObject({
-        command: "blackboard",
+        command: "chalk",
         args: ["mcp"],
       });
     });
@@ -782,11 +827,11 @@ describe("MCP self-install", () => {
   });
 
   describe("autoUpdate resync", () => {
-    it("updates the old command name and stamp without touching agent files", async () => {
+    it("updates a Chalk installation without touching agent files", async () => {
       await writeStamp({
         consent: "granted",
         fingerprint: "old",
-        shimPath: path.join(homeDir, ".local/bin/whiteboard"),
+        shimPath: shim,
         updatedAt: now,
       });
       const claudeConfig = path.join(homeDir, ".claude.json");
@@ -801,7 +846,7 @@ describe("MCP self-install", () => {
       });
 
       expect(result.code).toBe(0);
-      expect(await readFile(shim, "utf8")).toContain("Managed by Blackboard");
+      expect(await readFile(shim, "utf8")).toContain("Managed by Chalk");
       expect(await readFile(claudeConfig, "utf8")).toBe("{}");
       expect(await readCliInstallStamp(cliInstallStampPath(env))).toMatchObject(
         {
@@ -844,107 +889,4 @@ describe("MCP self-install", () => {
       ).toBe(true);
     });
   });
-});
-
-describe("retired capture upgrade", () => {
-  it.each(["granted", "declined"] as const)(
-    "retires owned extensions before same-fingerprint %s early return",
-    async (consent) => {
-      const homeDir = await temporaryHome("retired-upgrade-");
-
-      const env: NodeJS.ProcessEnv = {
-        ...(await isolatedEnvironment()),
-        XDG_CONFIG_HOME: path.join(homeDir, "config"),
-      };
-
-      const command = pathShimPath(homeDir);
-      await mkdir(path.dirname(command), { recursive: true });
-      await writePathShim(
-        command,
-        path.join(packageRoot, "dist/cli.js"),
-        undefined,
-        String(env.DEV_REVIEW_HOME),
-      );
-      await writePrivateJsonAtomic(cliInstallStampPath(env), {
-        consent,
-        shimPath: command,
-        traceManaged: true,
-        fingerprint: await installFingerprint(packageRoot),
-        updatedAt: "now",
-      });
-
-      const extension = path.join(
-        homeDir,
-        ".pi/agent/extensions/review-trace.ts",
-      );
-
-      await mkdir(path.dirname(extension), { recursive: true });
-      await writeFile(
-        extension,
-        `// Managed by Review Desktop trace setup\nspawn(${JSON.stringify(command)}, ["trace", "hook", eventName]);\n`,
-      );
-
-      const result = await applyCliInstall({
-        packageRoot,
-        homeDir,
-        env,
-        autoUpdate: true,
-      });
-
-      expect(result.code).toBe(0);
-      expect(existsSync(extension)).toBe(false);
-      expect(
-        (await readCliInstallStamp(cliInstallStampPath(env)))?.consent,
-      ).toBe(consent);
-    },
-  );
-});
-
-it("keeps stamp and launcher evidence when cleanup fails, then retries apply and uninstall", async () => {
-  const homeDir = await temporaryHome("retired-failure-");
-  const env = await isolatedEnvironment();
-  const command = pathShimPath(homeDir);
-  await mkdir(path.dirname(command), { recursive: true });
-  await writePathShim(
-    command,
-    "fixture-cli",
-    undefined,
-    String(env.DEV_REVIEW_HOME),
-  );
-
-  const stamp = {
-    consent: "granted",
-    shimPath: command,
-    fingerprint: await installFingerprint(packageRoot),
-    updatedAt: "now",
-  };
-
-  await writePrivateJsonAtomic(cliInstallStampPath(env), stamp);
-  const before = await readFile(cliInstallStampPath(env), "utf8");
-  const registry = path.join(homeDir, ".config/dev-trace/repositories.json");
-  await mkdir(path.dirname(registry), { recursive: true });
-  await writeFile(registry, "broken");
-
-  const result = await applyCliInstall({
-    packageRoot,
-    homeDir,
-    env,
-    autoUpdate: true,
-  });
-
-  expect(result.code).toBe(1);
-  expect(await readFile(cliInstallStampPath(env), "utf8")).toBe(before);
-  expect(existsSync(command)).toBe(true);
-  await expect(removeCliInstall({ shim: true, homeDir, env })).rejects.toThrow(
-    /retir|JSON|Unexpected/i,
-  );
-  expect(await readFile(cliInstallStampPath(env), "utf8")).toBe(before);
-  expect(existsSync(command)).toBe(true);
-  await writeFile(registry, "[]");
-  expect(
-    (await applyCliInstall({ packageRoot, homeDir, env, autoUpdate: true }))
-      .code,
-  ).toBe(0);
-  await removeCliInstall({ shim: true, homeDir, env });
-  expect(existsSync(command)).toBe(false);
 });

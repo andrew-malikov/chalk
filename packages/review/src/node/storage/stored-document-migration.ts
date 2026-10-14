@@ -1,4 +1,4 @@
-import { type JsonValue, isJsonObject } from "@blackboard/review-contracts";
+import { type JsonValue, isJsonObject } from "@chalk/review-contracts";
 import { label } from "@review/blocks/definition.js";
 import { type Lens, lensTargetsSchema } from "@review/documents/diff-lenses.js";
 import { z } from "zod";

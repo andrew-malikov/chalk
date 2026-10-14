@@ -1,5 +1,5 @@
 {
-  "name": "@blackboard/review-contracts",
+  "name": "@chalk/review-contracts",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -20,7 +20,7 @@
     "typecheck": "bun --bun run tsc -p ../review-contracts/tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@blackboard/json": "workspace:*",
+    "@chalk/json": "workspace:*",
     "@dev.fast/diffr": "0.1.10",
     "eventsource-parser": "3.1.1",
     "zod": "catalog:"

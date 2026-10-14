@@ -1,6 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 
-// The blackboard's draw beats. draw-queue.ts times each phase to cover these,
+// The chalk's draw beats. draw-queue.ts times each phase to cover these,
 // so change them together.
 export const drawMotion = stylex.defineConsts({
   tick: "120ms",

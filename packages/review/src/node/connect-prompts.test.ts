@@ -24,7 +24,7 @@ describe("connectPrompt", () => {
       expect(prompt).toContain(add);
       expect(prompt).not.toContain(`${target} plugin install`);
       expect(connectPrompt(target, { ...input, platform: "darwin" })).toContain(
-        `${target} plugin install blackboard@devfast`,
+        `${target} plugin install chalk@chalk`,
       );
     }
   });
@@ -34,21 +34,21 @@ describe("connectPrompt", () => {
       const launch = reviewMcpLaunch(true, platform);
 
       expect(connectPrompt("opencode", { ...input, platform })).toContain(
-        `opencode mcp add --global blackboard -- ${launchCommand(launch)}\n`,
+        `opencode mcp add --global chalk -- ${launchCommand(launch)}\n`,
       );
 
       expect(connectPrompt("pi", { ...input, platform })).toContain(
-        `pi mcp add blackboard -- ${launchCommand(launch)}\n`,
+        `pi mcp add chalk -- ${launchCommand(launch)}\n`,
       );
       expect(connectPrompt("omp", { ...input, platform })).toContain(
-        JSON.stringify({ blackboard: launch }, null, 2),
+        JSON.stringify({ chalk: launch }, null, 2),
       );
     }
   });
 
   it("quotes the sh launch so Pi stores it unchanged", () => {
     expect(launchCommand(reviewMcpLaunch(true, "darwin"))).toBe(
-      `sh -c 'exec "$HOME/.local/bin/blackboard" mcp'`,
+      `sh -c 'exec "$HOME/.local/bin/chalk" mcp'`,
     );
   });
 });

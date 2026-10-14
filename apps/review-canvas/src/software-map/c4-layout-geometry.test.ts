@@ -891,8 +891,8 @@ describe("runInlineC4Layout stability", () => {
       { id: "reviewer", label: "Reviewer", type: "person" },
       { id: "developer", label: "Developer", type: "person" },
       {
-        id: "devFast",
-        label: "dev.fast",
+        id: "chalk",
+        label: "chalk",
         type: "softwareSystem",
         expandable: true,
       },
@@ -907,31 +907,31 @@ describe("runInlineC4Layout stability", () => {
 
     const expandedNodes: SoftwareMapNodeSnapshot[] = [
       ...collapsedNodes.map((node) =>
-        node.id === "devFast" ? { ...node, expanded: true } : node,
+        node.id === "chalk" ? { ...node, expanded: true } : node,
       ),
       {
-        id: "devFast.web",
+        id: "chalk.web",
         label: "Web app",
         type: "container",
-        parentId: "devFast",
+        parentId: "chalk",
       },
       {
-        id: "devFast.ci",
+        id: "chalk.ci",
         label: "CI worker",
         type: "container",
-        parentId: "devFast",
+        parentId: "chalk",
       },
       {
-        id: "devFast.review",
+        id: "chalk.review.electrobun",
         label: "Review surface",
         type: "container",
-        parentId: "devFast",
+        parentId: "chalk",
       },
       {
-        id: "devFast.db",
+        id: "chalk.db",
         label: "Database",
         type: "container",
-        parentId: "devFast",
+        parentId: "chalk",
       },
     ];
 
@@ -942,7 +942,7 @@ describe("runInlineC4Layout stability", () => {
         ["agent", { x: 520, y: 0, width: 280, height: 112 }],
         ["reviewer", { x: 760, y: 180, width: 280, height: 112 }],
         ["developer", { x: 1060, y: 0, width: 280, height: 112 }],
-        ["devFast", { x: 1380, y: 180, width: 280, height: 112 }],
+        ["chalk", { x: 1380, y: 180, width: 280, height: 112 }],
         ["cloudflare", { x: 1560, y: 0, width: 280, height: 112 }],
         ["localMachine", { x: 1880, y: 180, width: 360, height: 112 }],
         ["e2b", { x: 2280, y: 0, width: 280, height: 112 }],
@@ -968,10 +968,10 @@ describe("runInlineC4Layout stability", () => {
     const contractedCenters = c4CentersById(contracted.layout.nodes);
 
     expect(contractedCenters.get("developer")!.y).toBeLessThan(
-      contractedCenters.get("devFast")!.y - 100,
+      contractedCenters.get("chalk")!.y - 100,
     );
     expect(contractedCenters.get("cloudflare")!.y).toBeLessThan(
-      contractedCenters.get("devFast")!.y - 100,
+      contractedCenters.get("chalk")!.y - 100,
     );
     expect(contractedCenters.get("agent")!.y).toBeLessThan(
       contractedCenters.get("github")!.y - 100,
@@ -1175,7 +1175,7 @@ describe("runInlineC4Layout stability", () => {
     const nodes: SoftwareMapNodeSnapshot[] = [
       {
         id: "system",
-        label: "dev.fast",
+        label: "chalk",
         type: "softwareSystem",
         expanded: true,
         expandable: true,
@@ -1276,8 +1276,8 @@ describe("runInlineC4Layout stability", () => {
       { id: "reviewer", label: "Reviewer", type: "person" },
       { id: "developer", label: "Developer", type: "person" },
       {
-        id: "devFast",
-        label: "dev.fast",
+        id: "chalk",
+        label: "chalk",
         type: "softwareSystem",
         expandable: true,
       },
@@ -1305,21 +1305,21 @@ describe("runInlineC4Layout stability", () => {
       "repoAutomation",
     ];
 
-    const devFastChildren: SoftwareMapNodeSnapshot[] = childIds.map((id) => ({
-      id: `devFast.${id}`,
+    const chalkChildren: SoftwareMapNodeSnapshot[] = childIds.map((id) => ({
+      id: `chalk.${id}`,
       label: id,
       type: "container",
-      parentId: "devFast",
+      parentId: "chalk",
       expandable: id === "progressiveReview",
     }));
 
     const progressiveChildren: SoftwareMapNodeSnapshot[] = Array.from(
       { length: 23 },
       (_, index) => ({
-        id: `devFast.progressiveReview.c${index}`,
+        id: `chalk.progressiveReview.c${index}`,
         label: `Component ${index}`,
         type: "component",
-        parentId: "devFast.progressiveReview",
+        parentId: "chalk.progressiveReview",
       }),
     );
 
@@ -1330,7 +1330,7 @@ describe("runInlineC4Layout stability", () => {
         ["agent", { x: 520, y: 0, width: 280, height: 112 }],
         ["reviewer", { x: 760, y: 180, width: 280, height: 112 }],
         ["developer", { x: 1060, y: 0, width: 280, height: 112 }],
-        ["devFast", { x: 1380, y: 180, width: 280, height: 112 }],
+        ["chalk", { x: 1380, y: 180, width: 280, height: 112 }],
         ["cloudflare", { x: 1560, y: 0, width: 280, height: 112 }],
         ["localMachine", { x: 1880, y: 180, width: 360, height: 112 }],
         ["e2b", { x: 2280, y: 0, width: 280, height: 112 }],
@@ -1346,12 +1346,12 @@ describe("runInlineC4Layout stability", () => {
       })),
     );
 
-    const expandedDevFast = await runInlineC4Layout(
+    const expandedChalk = await runInlineC4Layout(
       [
         ...topLevelNodes.map((node) =>
-          node.id === "devFast" ? { ...node, expanded: true } : node,
+          node.id === "chalk" ? { ...node, expanded: true } : node,
         ),
-        ...devFastChildren,
+        ...chalkChildren,
       ],
       [],
       undefined,
@@ -1361,10 +1361,10 @@ describe("runInlineC4Layout stability", () => {
     const expandedProgressiveReview = await runInlineC4Layout(
       [
         ...topLevelNodes.map((node) =>
-          node.id === "devFast" ? { ...node, expanded: true } : node,
+          node.id === "chalk" ? { ...node, expanded: true } : node,
         ),
-        ...devFastChildren.map((node) =>
-          node.id === "devFast.progressiveReview"
+        ...chalkChildren.map((node) =>
+          node.id === "chalk.progressiveReview"
             ? { ...node, expanded: true }
             : node,
         ),
@@ -1372,29 +1372,29 @@ describe("runInlineC4Layout stability", () => {
       ],
       [],
       undefined,
-      expandedDevFast.inlineLayout,
+      expandedChalk.inlineLayout,
     );
 
     const collapsedProgressiveReview = await runInlineC4Layout(
       [
         ...topLevelNodes.map((node) =>
-          node.id === "devFast" ? { ...node, expanded: true } : node,
+          node.id === "chalk" ? { ...node, expanded: true } : node,
         ),
-        ...devFastChildren,
+        ...chalkChildren,
       ],
       [],
       undefined,
       expandedProgressiveReview.inlineLayout,
     );
 
-    const collapsedDevFast = await runInlineC4Layout(
+    const collapsedChalk = await runInlineC4Layout(
       topLevelNodes,
       [],
       undefined,
       collapsedProgressiveReview.inlineLayout,
     );
 
-    const finalCenters = c4CentersById(collapsedDevFast.layout.nodes);
+    const finalCenters = c4CentersById(collapsedChalk.layout.nodes);
 
     const initialCenters = c4CentersById(
       [...collapsedPreviousLayout.nodeBboxes.entries()].map(([id, box]) => ({
@@ -1403,7 +1403,7 @@ describe("runInlineC4Layout stability", () => {
       })),
     );
 
-    const finalBbox = c4EntriesBboxForTest(collapsedDevFast.layout.nodes);
+    const finalBbox = c4EntriesBboxForTest(collapsedChalk.layout.nodes);
 
     expect(finalBbox.width).toBeLessThanOrEqual(initialBbox.width + 120);
     expect(finalBbox.height).toBeLessThanOrEqual(initialBbox.height + 120);

@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { runHeadlessServer } from "@blackboard/server/headless-host.js";
+import { runHeadlessServer } from "@chalk/server/headless-host.js";
 import {
   type ReviewServerDiscovery,
   reviewServerDiscoveryPath,
@@ -54,9 +54,7 @@ it("connects to the selected headless server and rejects stale discovery and sto
     await writeFile(discoveryPath, original);
     controller.abort();
     await running;
-    await expect(connectReviewApi(env)).rejects.toThrow(
-      /blackboard server start/,
-    );
+    await expect(connectReviewApi(env)).rejects.toThrow(/chalk server start/);
   } finally {
     controller.abort();
     await running;

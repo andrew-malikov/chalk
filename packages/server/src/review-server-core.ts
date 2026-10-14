@@ -1,8 +1,8 @@
 import type {
   ReviewServerHealth,
   ReviewServerHealthWithToken,
-} from "@blackboard/review-contracts";
-import type { ReviewDesktopVerbRelay } from "@blackboard/server/global-verb-relay";
+} from "@chalk/review-contracts";
+import type { ReviewDesktopVerbRelay } from "@chalk/server/global-verb-relay";
 import {
   type ReviewHonoEnv,
   applyCorsHeaders,
@@ -10,9 +10,9 @@ import {
   isAuthorizedRequest,
   jsonResponse,
   readBoundedRequestJson,
-} from "@blackboard/server/hono-http";
-import { HttpJsonError, ReviewServerError } from "@blackboard/server/http-json";
-import type { AuthoringCapabilities } from "@blackboard/server/review-api/http.js";
+} from "@chalk/server/hono-http";
+import { HttpJsonError, ReviewServerError } from "@chalk/server/http-json";
+import type { AuthoringCapabilities } from "@chalk/server/review-api/http.js";
 import { ReviewInputError } from "@review/documents/document.js";
 import {
   readBuildCommit,
@@ -197,7 +197,7 @@ function openControlEvents(
     // chunked framing beside a Content-Length.
     return serverJson(409, {
       ok: false,
-      error: "This server has no room for another Blackboard Desktop.",
+      error: "This server has no room for another Chalk Desktop.",
     });
   }
 

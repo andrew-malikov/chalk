@@ -1,9 +1,9 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) dev.fast. All rights reserved.
+ *  Copyright (c) chalk. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { type JsonValue, parseJsonText } from "@blackboard/json";
+import { type JsonValue, parseJsonText } from "@chalk/json";
 import { createParser } from "eventsource-parser";
 
 const DEFAULT_MAX_EVENT_CHARACTERS = 1024 * 1024;

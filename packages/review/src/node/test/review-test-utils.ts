@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import type { ReviewDesktopDiscovery } from "@blackboard/review-contracts";
+import type { ReviewDesktopDiscovery } from "@chalk/review-contracts";
 import {
   type ReviewInstanceSelection,
   isHealthyReviewDesktop,

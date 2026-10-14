@@ -79,7 +79,7 @@ export const STROKE_MS = 220;
 
 const MAX_STROKES = 16;
 
-/** The timeline one arrival plays, from the blackboard motion boards. */
+/** The timeline one arrival plays, from the chalk motion boards. */
 export function stepsFor(cursor: AuthoringCursor): DrawStep[] {
   if (cursor.source === "standing") return [];
 

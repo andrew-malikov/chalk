@@ -1,5 +1,5 @@
-import { type JsonValue, isJsonObject, isStringValue } from "@blackboard/json";
-import type { ReviewApiClient } from "@blackboard/review-contracts";
+import { type JsonValue, isJsonObject, isStringValue } from "@chalk/json";
+import type { ReviewApiClient } from "@chalk/review-contracts";
 
 import {
   type AuthoringTool,
@@ -11,7 +11,7 @@ function publicDescription(text: string): string {
   return text
     .replace(/\breview_(\w+)/g, "session_$1")
     .replace(/\breviewId\b/g, "sessionId")
-    .replace(/\bReview\b/g, "Blackboard")
+    .replace(/\bReview\b/g, "Chalk")
     .replace("The result carries review,", "The result carries session,");
 }
 

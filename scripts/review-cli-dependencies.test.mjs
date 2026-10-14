@@ -8,7 +8,7 @@ test("rejects browser tooling hidden behind a transitive dependency", () => {
     () =>
       checkProductionDependencies({
         dependencies: {
-          "@blackboard/review": {
+          "@chalk/review": {
             dependencies: {
               "innocent-library": {
                 dependencies: { "playwright-core": { version: "1.0.0" } },
@@ -17,7 +17,7 @@ test("rejects browser tooling hidden behind a transitive dependency", () => {
           },
         },
       }),
-    /@blackboard\/review -> innocent-library -> playwright-core/,
+    /@chalk\/review -> innocent-library -> playwright-core/,
   );
 });
 

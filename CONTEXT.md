@@ -11,7 +11,7 @@ Creating and editing a Review without installing or running the desktop applicat
 A Review of user-provided local source, without GitLab discussions.
 
 **GitLab MR review**:
-A Review of a GitLab merge request, including its discussions and source in a repository managed by Blackboard.
+A Review of a GitLab merge request, including its discussions and source in a repository managed by Chalk.
 
 **Review checkout**:
 A local checkout used to inspect the changes being reviewed, separate from the checkout where the user edits code.

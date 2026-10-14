@@ -1,8 +1,8 @@
+import { testReviewBridge } from "@canvas/test/review-session-test-utils";
 import type {
   ReviewSurfaceEvent,
   ReviewVerbRequest,
-} from "@blackboard/review-contracts";
-import { testReviewBridge } from "@canvas/test/review-session-test-utils";
+} from "@chalk/review-contracts";
 import { describe, expect, it, vi } from "vitest";
 
 import { createReviewSurface } from "./review-host";

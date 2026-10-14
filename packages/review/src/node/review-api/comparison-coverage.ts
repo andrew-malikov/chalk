@@ -6,7 +6,7 @@ import {
   type StructuralSource,
   type StructuralVisibility,
   structuralRows,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import type { Pins } from "@review/documents/document.js";
 import { textualRows } from "@review/documents/lens-alignment.js";
 import type { AlignmentRow } from "@review/documents/lens-selection.js";

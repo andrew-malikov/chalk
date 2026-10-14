@@ -28,7 +28,7 @@ Git fetch receives objects and updates configured refs; it ordinarily refuses to
 
 Product inference: ordinary MR pushes can advance an unchanged review checkout. A force-push does not by itself prove local deviation, but needs the same unchanged-state and isolation guarantees against the old agreed revision. Otherwise pause; do not silently merge/rebase the user's local work. Rewritten history can invalidate old discussion/draft positions, requiring the separate refresh decision. Recheck eligibility when advancing, since local edits or the MR can change during a fetch. Conflicts, unknown state, missing/inaccessible revision, stale workspace, an unfinished VCS operation, or files that would be overwritten are reasons to pause.
 
-## What existing Blackboard code establishes
+## What existing Chalk code establishes
 
 The `LocalVcs` interface primarily resolves revisions and reads/diffs source; it contains no review-checkout fetch/advance contract. Detection prefers jj. `currentHeadForKind` returns jj `@` or Git `HEAD`; jj revision reads use `--ignore-working-copy`. Existing read paths therefore provide neither empty-child normalization nor a fresh file-state eligibility guarantee. [VCS code](../../../packages/local-vcs/src/vcs.ts).
 

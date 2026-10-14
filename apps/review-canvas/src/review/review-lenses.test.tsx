@@ -1,7 +1,7 @@
-import { ReviewApiClient } from "@blackboard/review-contracts";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import { ReviewApiClient } from "@chalk/review-contracts";
 import type { Snapshot } from "@review/node/review-api/store";
 // @vitest-environment jsdom
 import { act } from "react";

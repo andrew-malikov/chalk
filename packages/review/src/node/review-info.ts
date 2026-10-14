@@ -1,7 +1,7 @@
 import {
   ReviewApiClient,
   type ReviewApiSummary,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 
 import { requireHealthyReviewDesktop } from "./desktop-discovery";
 import { resolveReviewRoot } from "./review-root";

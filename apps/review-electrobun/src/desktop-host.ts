@@ -3,7 +3,7 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
-import { createGlobalReviewServer } from "@blackboard/server/desktop-server";
+import { createGlobalReviewServer } from "@chalk/server/desktop-server";
 import { reviewInstanceIdentity } from "@review/node/desktop-discovery";
 import { findPackageRoot } from "@review/node/package-paths";
 import { openReviewProfile } from "@review/node/review-api/profile";
@@ -16,24 +16,24 @@ export async function runDesktopHost(
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<void> {
   // Port 0 lets the OS choose; the ready event below reports what was bound.
-  const port = requiredPort(env.DEV_FAST_REVIEW_SERVER_PORT);
+  const port = requiredPort(env.CHALK_REVIEW_SERVER_PORT);
 
   const appPid = requiredPositiveInteger(
-    env.DEV_FAST_REVIEW_APP_PID,
-    "DEV_FAST_REVIEW_APP_PID",
+    env.CHALK_REVIEW_APP_PID,
+    "CHALK_REVIEW_APP_PID",
   );
 
   const packageRoot = findPackageRoot(import.meta.url);
-  const toolingRoot = env.DEV_FAST_REVIEW_TOOLING_ROOT || packageRoot;
+  const toolingRoot = env.CHALK_REVIEW_TOOLING_ROOT || packageRoot;
 
   const serverInput = {
     appPid,
     packageRoot,
-    cliPackageRoot: env.DEV_FAST_REVIEW_CLI_ROOT,
+    cliPackageRoot: env.CHALK_REVIEW_CLI_ROOT,
     toolingRoot,
     port,
-    token: env.DEV_FAST_REVIEW_SERVER_TOKEN,
-    instanceId: env.DEV_FAST_REVIEW_INSTANCE_ID,
+    token: env.CHALK_REVIEW_SERVER_TOKEN,
+    instanceId: env.CHALK_REVIEW_INSTANCE_ID,
     identity: reviewInstanceIdentity(env),
   };
 
@@ -49,12 +49,12 @@ export async function runDesktopHost(
     ...serverInput,
     reviewStore: local.store,
     reviewData: local.data,
-    cliRuntimePath: env.DEV_FAST_REVIEW_CLI_RUNTIME,
+    cliRuntimePath: env.CHALK_REVIEW_CLI_RUNTIME,
     mountDesktopRoutes: (app, discovery) =>
       mountCliInstallRoutes(
         app,
         discovery,
-        env.DEV_FAST_REVIEW_CLI_ROOT ?? packageRoot,
+        env.CHALK_REVIEW_CLI_ROOT ?? packageRoot,
       ),
   });
 
@@ -99,7 +99,7 @@ function requiredPort(value: string | undefined): number {
 
   if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 65_535) {
     throw new Error(
-      "DEV_FAST_REVIEW_SERVER_PORT must be a port between 0 and 65535.",
+      "CHALK_REVIEW_SERVER_PORT must be a port between 0 and 65535.",
     );
   }
 
@@ -119,7 +119,7 @@ function requiredPositiveInteger(
   return parsed;
 }
 
-if (process.env.DEV_FAST_REVIEW_DESKTOP_HOST_AUTOSTART !== "0") {
+if (process.env.CHALK_REVIEW_DESKTOP_HOST_AUTOSTART !== "0") {
   void runDesktopHost().catch((error) => {
     process.stderr.write(
       `${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,

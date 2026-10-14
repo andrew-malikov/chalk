@@ -19,19 +19,19 @@ const repoRoot = path.resolve(findPackageRoot(import.meta.url), "..", "..");
 
 describe("agent plugin manifests", () => {
   it.skipIf(process.platform === "win32")(
-    "the Codex plugin's launcher runs blackboard mcp from the home shim",
+    "the Codex plugin's launcher runs chalk mcp from the home shim",
     async () => {
       const codex = path.join(repoRoot, "packages/agent-plugins/codex");
 
       const manifest = z
         .object({
           mcpServers: z.object({
-            blackboard: z.object({ command: z.string(), cwd: z.string() }),
+            chalk: z.object({ command: z.string(), cwd: z.string() }),
           }),
         })
         .parse(
           JSON.parse(await readFile(path.join(codex, ".mcp.json"), "utf8")),
-        ).mcpServers.blackboard;
+        ).mcpServers.chalk;
 
       // Windows resolves the extensionless command to its .cmd twin.
       await readFile(path.join(codex, `${manifest.command}.cmd`));
@@ -39,7 +39,7 @@ describe("agent plugin manifests", () => {
       const home = await mkdtemp(path.join(os.tmpdir(), "codex-launch-"));
 
       try {
-        const shim = path.join(home, ".local/bin/blackboard");
+        const shim = path.join(home, ".local/bin/chalk");
         await mkdir(path.dirname(shim), { recursive: true });
         await writeFile(shim, '#!/bin/sh\necho "$@"\n');
         await chmod(shim, 0o755);

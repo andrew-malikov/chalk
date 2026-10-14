@@ -136,7 +136,7 @@ export function AuthoringActivityBadge({
 }
 
 /**
- * The word "Blackboard" in the top bar's surface tabs. While an agent is writing,
+ * The word "Chalk" in the top bar's surface tabs. While an agent is writing,
  * marker ink sweeps through the word. The document is ready once it has
  * content and no authoring session is live, so ending (or losing) the lease is
  * what finishes it. When it becomes ready while the reader is on another
@@ -148,7 +148,7 @@ export function AuthoringActivityBadge({
 export function ReviewSurfaceLabel({
   hasContent,
   active,
-  label = "Blackboard",
+  label = "Chalk",
 }: {
   hasContent: boolean;
   active: boolean;

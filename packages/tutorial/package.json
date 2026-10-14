@@ -1,5 +1,5 @@
 {
-  "name": "@blackboard/tutorial",
+  "name": "@chalk/tutorial",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -23,9 +23,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@blackboard/review": "workspace:*",
-    "@blackboard/review-contracts": "workspace:*",
-    "@blackboard/server": "workspace:*",
+    "@chalk/review": "workspace:*",
+    "@chalk/review-contracts": "workspace:*",
+    "@chalk/server": "workspace:*",
     "@types/node": "24.12.2",
     "typescript": "6.0.3"
   },

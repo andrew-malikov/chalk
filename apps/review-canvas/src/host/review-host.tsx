@@ -7,7 +7,7 @@ import type {
   ReviewSourcePins,
   ReviewSurfaceEvent,
   ReviewVerbRequest,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 
 export interface ReviewSurface {
   openFileDiff(file: ReviewDiffFileWire): void;

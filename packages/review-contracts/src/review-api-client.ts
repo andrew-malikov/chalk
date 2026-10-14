@@ -1,4 +1,4 @@
-import type { JsonValue } from "@blackboard/json";
+import type { JsonValue } from "@chalk/json";
 
 import type { GitLabIdentity } from "./gitlab.js";
 

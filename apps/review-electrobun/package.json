@@ -1,5 +1,5 @@
 {
-  "name": "@blackboard/review-electrobun",
+  "name": "@chalk/review-electrobun",
   "version": "0.2.0",
   "private": true,
   "type": "module",
@@ -11,10 +11,10 @@
     "host:build": "bun scripts/build-host.mjs"
   },
   "dependencies": {
-    "@blackboard/review": "workspace:*",
-    "@blackboard/review-canvas": "workspace:*",
-    "@blackboard/review-contracts": "workspace:*",
-    "@blackboard/server": "workspace:*",
+    "@chalk/review": "workspace:*",
+    "@chalk/review-canvas": "workspace:*",
+    "@chalk/review-contracts": "workspace:*",
+    "@chalk/server": "workspace:*",
     "@mr_mint/elkjs-libavoid": "0.5.0",
     "@pierre/diffs": "1.5.1",
     "hono": "4.13.7",

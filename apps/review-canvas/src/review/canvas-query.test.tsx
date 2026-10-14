@@ -1,4 +1,4 @@
-import { ReviewApiClient } from "@blackboard/review-contracts";
+import { ReviewApiClient } from "@chalk/review-contracts";
 // @vitest-environment jsdom
 import {
   type QueryClient,

@@ -1,4 +1,4 @@
-import { REVIEW_CANVAS_RESUME_EVENT } from "@blackboard/review-contracts";
+import { REVIEW_CANVAS_RESUME_EVENT } from "@chalk/review-contracts";
 import {
   type ReactNode,
   type RefObject,

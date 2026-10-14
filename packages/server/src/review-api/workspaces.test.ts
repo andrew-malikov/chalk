@@ -74,7 +74,7 @@ afterEach(async () => {
 });
 
 it("keeps Desktop preparation owned while a headless connection edits and deletes the review", async () => {
-  git("config", "devfast.prepare", 'node -e "setTimeout(() => {}, 60000)"');
+  git("config", "chalk.prepare", 'node -e "setTimeout(() => {}, 60000)"');
   const preparing = await local.data.workspaces.source(reviewId, pins, "head");
   expect(preparing.state).toBe("preparing");
   const headless = openLocalReviewStore(database, { manageWorkspaces: false });
@@ -99,7 +99,7 @@ it("keeps Desktop preparation owned while a headless connection edits and delete
 });
 
 it("lets a second Desktop share the profile without preparing a review the first one owns", async () => {
-  git("config", "devfast.prepare", 'node -e "setTimeout(() => {}, 60000)"');
+  git("config", "chalk.prepare", 'node -e "setTimeout(() => {}, 60000)"');
   const preparing = await local.data.workspaces.source(reviewId, pins, "head");
   const second = openLocalReviewStore(database);
 
@@ -127,8 +127,8 @@ it("lets a second Desktop share the profile without preparing a review the first
 });
 
 it("prepares each side once in order, reuses on restart, and invalidates changed commands", async () => {
-  git("config", "devfast.prepare", "printf first > prepared");
-  git("config", "--add", "devfast.prepare", "printf second >> prepared");
+  git("config", "chalk.prepare", "printf first > prepared");
+  git("config", "--add", "chalk.prepare", "printf second >> prepared");
   writeFileSync(path.join(repository, "value.ts"), "dirty invoking checkout\n");
 
   const contexts = await Promise.all(
@@ -164,12 +164,7 @@ it("prepares each side once in order, reuses on restart, and invalidates changed
   expect(readFileSync(path.join(head.rootPath!, "prepared"), "utf8")).toBe(
     "firstsecond",
   );
-  git(
-    "config",
-    "--replace-all",
-    "devfast.prepare",
-    "printf changed > prepared",
-  );
+  git("config", "--replace-all", "chalk.prepare", "printf changed > prepared");
   expect(
     (await local.data.workspaces.source(reviewId, pins, "head")).state,
   ).toBe("preparing");
@@ -180,7 +175,7 @@ it("prepares each side once in order, reuses on restart, and invalidates changed
 });
 
 it("retains failure without retry loops, retries at the original side, and recreates missing checkouts", async () => {
-  git("config", "devfast.prepare", "echo failure; exit 7");
+  git("config", "chalk.prepare", "echo failure; exit 7");
   await local.data.workspaces.source(reviewId, pins, "base");
   await local.data.workspaces.idle();
   const failed = await local.data.workspaces.source(reviewId, pins, "base");
@@ -191,7 +186,7 @@ it("retains failure without retry loops, retries at the original side, and recre
   expect(
     (await local.data.workspaces.source(reviewId, pins, "base")).generation,
   ).toBe(failed.generation);
-  git("config", "devfast.prepare", "echo installed > dependency");
+  git("config", "chalk.prepare", "echo installed > dependency");
   await local.data.workspaces.retry(reviewId, failed.id);
   await local.data.workspaces.idle();
   const ready = await local.data.workspaces.source(reviewId, pins, "base");
@@ -224,7 +219,7 @@ it("keeps historical and equal-side environments until review deletion and leave
 });
 
 it("does not block source reads during preparation and interrupts commands on shutdown", async () => {
-  git("config", "devfast.prepare", "echo started; sleep 60");
+  git("config", "chalk.prepare", "echo started; sleep 60");
   const context = await local.data.workspaces.source(reviewId, pins, "head");
   expect(context.state).toBe("preparing");
   expect((await local.data.file(pins, "head", "value.ts")).text).toContain(

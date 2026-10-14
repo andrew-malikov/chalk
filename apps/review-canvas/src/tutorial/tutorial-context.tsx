@@ -1,4 +1,4 @@
-import type { ReviewCanvasTutorialBridge } from "@blackboard/review-contracts";
+import type { ReviewCanvasTutorialBridge } from "@chalk/review-contracts";
 import { type ReactNode, createContext, useContext } from "react";
 
 const TutorialContext = createContext<ReviewCanvasTutorialBridge | null>(null);

@@ -20,9 +20,9 @@ import {
   REVIEW_CLIENT_HEADER,
   REVIEW_CLIENT_REMOTE,
   parseReviewDesktopVerbFrame,
-} from "@blackboard/review-contracts";
-import { ReviewApiClient } from "@blackboard/review-contracts";
-import { createReviewApi } from "@blackboard/server/review-api/http.js";
+} from "@chalk/review-contracts";
+import { ReviewApiClient } from "@chalk/review-contracts";
+import { createReviewApi } from "@chalk/server/review-api/http.js";
 import { runReviewCli } from "@cli/cli-runner.js";
 import type { Pins } from "@review/documents/document.js";
 import { openReviewProfile } from "@review/node/review-api/profile.js";
@@ -488,7 +488,7 @@ it("authenticates clients, reports capabilities and readiness without exposing t
 
   await expect(
     server.client.post(`/${result.reviewId}/open`, {}),
-  ).rejects.toThrow(/No Blackboard Desktop is attached/);
+  ).rejects.toThrow(/No Chalk Desktop is attached/);
   await server.stop();
   const stopped = await cli(["server", "status", "--json"], server.env);
   expect(stopped.exitCode).toBe(1);

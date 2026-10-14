@@ -1,6 +1,7 @@
 import path from "node:path";
 
-/** dev.fast's private directory inside a repo's shared git dir. */
-export function devFastGitDir(gitCommonDir: string): string {
+/** chalk's private directory inside a repo's shared git dir. */
+export function chalkGitDir(gitCommonDir: string): string {
+  // Keep the existing directory so saved review checkouts remain reachable.
   return path.join(gitCommonDir, "dev-fast");
 }

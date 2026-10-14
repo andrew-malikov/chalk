@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "blackboard": {
+    "chalk": {
       "command": "sh",
-      "args": ["-c", "exec \"$HOME/.local/bin/blackboard\" mcp"]
+      "args": ["-c", "exec \"$HOME/.local/bin/chalk\" mcp"]
     }
   }
 }

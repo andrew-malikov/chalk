@@ -1,4 +1,4 @@
-import type { ReviewRuntimeConfig } from "@blackboard/review-contracts";
+import type { ReviewRuntimeConfig } from "@chalk/review-contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { jsonReviewApiUrl, reviewFetchUrl } from "./review-client";

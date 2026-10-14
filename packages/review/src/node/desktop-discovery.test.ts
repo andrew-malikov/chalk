@@ -5,7 +5,7 @@ import path from "node:path";
 import {
   REVIEW_DESKTOP_DISCOVERY_VERSION,
   type ReviewDesktopDiscovery,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -179,7 +179,7 @@ describe("Review instance selection", () => {
       "stable",
     ]);
     expect(reviewInstanceUnavailable(selection).message).toBe(
-      "Blackboard `preview` is not running. Start it with `blackboard app launch`, or pick another instance with `blackboard instances`. Running: stable.",
+      "Chalk `preview` is not running. Start it with `chalk app launch`, or pick another instance with `chalk instances`. Running: stable.",
     );
   });
 
@@ -190,19 +190,19 @@ describe("Review instance selection", () => {
     });
 
     expect(reviewInstanceUnavailable(await select()).message).toMatch(
-      /Several Blackboard instances are running and none is selected\. Running: .*`blackboard instances use <key>`/,
+      /Several Chalk instances are running and none is selected\. Running: .*`chalk instances use <key>`/,
     );
   });
 
   it("rejects a key that is not an instance name and says where it came from", async () => {
     const select = await home({});
     await expect(select({ DEV_REVIEW_INSTANCE: "../server" })).rejects.toThrow(
-      'Unknown Blackboard instance "../server" from DEV_REVIEW_INSTANCE',
+      'Unknown Chalk instance "../server" from DEV_REVIEW_INSTANCE',
     );
 
     const stored = await home({}, { defaultInstance: "../server" });
     await expect(stored()).rejects.toThrow(
-      /as the machine default \(`blackboard instances clear` removes it\)/,
+      /as the machine default \(`chalk instances clear` removes it\)/,
     );
   });
 
@@ -223,7 +223,7 @@ describe("Review instance selection", () => {
 
   it("reports any broken record when nothing is selected and nothing answers", async () => {
     // The one Desktop that ran may be the broken record; without a selected
-    // key that is the diagnosis, not "no Blackboard is running".
+    // key that is the diagnosis, not "no Chalk is running".
     const select = await home({ "dev-review-0123456789ab": "broken" });
     const selection = await select();
     expect(selection).toMatchObject({ key: "stable", source: "fallback" });

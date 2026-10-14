@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { SCRATCHPAD_REVIEW_ID } from "@blackboard/review-contracts";
-import { createGlobalReviewServer } from "@blackboard/server/desktop-server";
+import { SCRATCHPAD_REVIEW_ID } from "@chalk/review-contracts";
+import { createGlobalReviewServer } from "@chalk/server/desktop-server";
 import { openLocalReviewStore } from "@review/node/review-api/local-data";
 import { readReviewPreferences } from "@review/node/storage/review-preferences";
 import { afterEach, expect, it, vi } from "vitest";

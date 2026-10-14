@@ -1,5 +1,5 @@
 {
-  "name": "@blackboard/review",
+  "name": "@chalk/review",
   "version": "0.2.0",
   "private": true,
   "description": "Review document rules, authoring, persistence, and local integrations",
@@ -21,9 +21,9 @@
     "ensure:diffr": "diffr-fetch --into bin"
   },
   "dependencies": {
-    "@blackboard/json": "workspace:*",
-    "@blackboard/local-vcs": "^0.1.0",
-    "@blackboard/review-contracts": "workspace:*",
+    "@chalk/json": "workspace:*",
+    "@chalk/local-vcs": "^0.1.0",
+    "@chalk/review-contracts": "workspace:*",
     "@dev.fast/diffr": "0.1.10",
     "@img/sharp-wasm32": "0.35.4",
     "fuzzysort": "4.0.2",

@@ -8,8 +8,8 @@ import path from "node:path";
 const reviewRoot = path.resolve(import.meta.dirname, "../packages/review");
 
 const aliases = [
-  ["@blackboard/server", path.resolve(reviewRoot, "../server/src")],
-  ["@blackboard/mcp", path.resolve(reviewRoot, "../mcp/src")],
+  ["@chalk/server", path.resolve(reviewRoot, "../server/src")],
+  ["@chalk/mcp", path.resolve(reviewRoot, "../mcp/src")],
   ["@canvas", path.resolve(reviewRoot, "../../apps/review-canvas/src")],
   ["@review", path.join(reviewRoot, "src")],
 ];

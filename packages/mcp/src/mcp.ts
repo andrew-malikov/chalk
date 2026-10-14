@@ -1,8 +1,8 @@
 import type { Readable, Writable } from "node:stream";
 
-import type { JsonValue } from "@blackboard/json";
-import type { ReviewApiClient } from "@blackboard/review-contracts";
-import { ReviewApiError } from "@blackboard/review-contracts";
+import type { JsonValue } from "@chalk/json";
+import type { ReviewApiClient } from "@chalk/review-contracts";
+import { ReviewApiError } from "@chalk/review-contracts";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -22,19 +22,19 @@ import { RECOVERY } from "./recovery.js";
 
 // Some hosts ignore tools/list_changed, so the agent itself has to reload.
 const RELOAD_TOOLS =
-  "Blackboard is running now, but this session listed Blackboard's tools before it started, so you may see only session_get_instructions. Before authoring, reload the `blackboard` MCP server's tools (reconnect it in your agent, or start a new agent session). If you can already see tools such as session_create, carry on.";
+  "Chalk is running now, but this session listed Chalk's tools before it started, so you may see only session_get_instructions. Before authoring, reload the `chalk` MCP server's tools (reconnect it in your agent, or start a new agent session). If you can already see tools such as session_create, carry on.";
 
 function mcpAuthoringGuidance(context: {
   scratchpadAvailable: boolean;
 }): string {
   return [
-    "Blackboard explains code in documents the user reads in Blackboard Desktop. Call session_get_instructions before creating or editing a Blackboard and follow it. Read session_capabilities before authoring; session_create opens the new review in Desktop when it is available, so call session_open only for an existing review, and generate software maps only when softwareMapEnabled is true. When the user asks for a Blackboard or to use Blackboard (for example to review a branch, a change or a GitLab merge request, or to explain a system in Blackboard), author a Blackboard with the default topic.",
+    "Chalk explains code in documents the user reads in Chalk Desktop. Call session_get_instructions before creating or editing a Chalk and follow it. Read session_capabilities before authoring; session_create opens the new review in Desktop when it is available, so call session_open only for an existing review, and generate software maps only when softwareMapEnabled is true. When the user asks for a Chalk or to use Chalk (for example to review a branch, a change or a GitLab merge request, or to explain a system in Chalk), author a Chalk with the default topic.",
     ...(context.scratchpadAvailable
       ? [
-          'When the user asks in conversation to be shown how code works or wants a diagram, without asking for a Blackboard, call session_capabilities; if it reports scratchpadEnabled and desktopAvailable, draw on the Blackboard scratchpad rather than answering only in chat, starting with session_get_instructions({topic:"scratchpad"}).',
+          'When the user asks in conversation to be shown how code works or wants a diagram, without asking for a Chalk, call session_capabilities; if it reports scratchpadEnabled and desktopAvailable, draw on the Chalk scratchpad rather than answering only in chat, starting with session_get_instructions({topic:"scratchpad"}).',
         ]
       : []),
-    "Never read or write Blackboard files or SQL.",
+    "Never read or write Chalk files or SQL.",
   ].join(" ");
 }
 
@@ -44,7 +44,7 @@ export async function serveReviewMcp(
   stdin: Readable,
   stdout: Writable,
   stderr: Writable = process.stderr,
-  /** What blackboard_status reports when the Desktop cannot be reached, and why. */
+  /** What chalk_status reports when the Desktop cannot be reached, and why. */
   offlineStatus?: (problem: string) => Promise<JsonValue>,
 ) {
   const instructionsTool = {
@@ -55,7 +55,7 @@ export async function serveReviewMcp(
   };
 
   const server = new Server(
-    { name: "blackboard", version: "1.0.0" },
+    { name: "chalk", version: "1.0.0" },
     {
       capabilities: { tools: { listChanged: true } },
     },
@@ -97,7 +97,7 @@ export async function serveReviewMcp(
       announceCatalog = true;
       listedWhileDown = true;
       stderr.write(
-        `blackboard mcp: ${error instanceof Error ? error.message : String(error)}\n`,
+        `chalk mcp: ${error instanceof Error ? error.message : String(error)}\n`,
       );
     }
 
@@ -156,8 +156,7 @@ export async function serveReviewMcp(
 
       const tool = tools.find((tool) => tool.name === request.params.name);
 
-      if (!tool)
-        throw new Error(`Unknown Blackboard tool: ${request.params.name}`);
+      if (!tool) throw new Error(`Unknown Chalk tool: ${request.params.name}`);
 
       const result = await callPublicTool(
         client,

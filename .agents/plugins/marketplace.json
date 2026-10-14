@@ -1,8 +1,8 @@
 {
-  "name": "devfast",
+  "name": "chalk",
   "plugins": [
     {
-      "name": "blackboard",
+      "name": "chalk",
       "source": { "source": "local", "path": "./packages/agent-plugins/codex" },
       "policy": { "installation": "AVAILABLE" },
       "category": "Productivity"

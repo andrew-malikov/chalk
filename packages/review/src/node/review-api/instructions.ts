@@ -48,7 +48,7 @@ export async function renderInstructions(
   root = findPackageRoot(),
 ): Promise<string> {
   if (topic === "scratchpad" && !scratchpadAvailable(context)) {
-    return "The Blackboard scratchpad is turned off or Blackboard Desktop is not running. Answer in chat; the scratchpad can be turned on in Blackboard Desktop Settings.";
+    return "The Chalk scratchpad is turned off or Chalk Desktop is not running. Answer in chat; the scratchpad can be turned on in Chalk Desktop Settings.";
   }
 
   if (topic !== "authoring") return read(root, topic);

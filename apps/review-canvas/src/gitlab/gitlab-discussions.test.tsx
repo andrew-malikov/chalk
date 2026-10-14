@@ -1,6 +1,6 @@
-import type { GitLabState } from "@blackboard/review-contracts";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import type { GitLabState } from "@chalk/review-contracts";
 // @vitest-environment jsdom
 import { act } from "react";
 import { createRoot } from "react-dom/client";

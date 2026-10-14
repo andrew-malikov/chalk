@@ -1,7 +1,3 @@
-import {
-  type ReviewCommitSummary,
-  type ReviewDiffFileWire,
-} from "@blackboard/review-contracts";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { countLabel } from "@canvas/home/review-home-view";
 import { useReviewSession } from "@canvas/host/review-session";
@@ -16,6 +12,10 @@ import { IconButton } from "@canvas/ui/button";
 import { CopyButton } from "@canvas/ui/copy-text";
 import { CodeIcon, DisclosureChevron } from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
+import {
+  type ReviewCommitSummary,
+  type ReviewDiffFileWire,
+} from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { useQuery } from "@tanstack/react-query";
 import { CircleSmall } from "lucide-react";
@@ -32,7 +32,7 @@ export function ReviewCommitsView({
   onOpenDiff,
 }: {
   commits: readonly ReviewCommitSummary[];
-  range: import("@blackboard/review-contracts").ReviewCanvasRange;
+  range: import("@chalk/review-contracts").ReviewCanvasRange;
   onOpenDiff: OpenCommitDiff;
 }) {
   if (range.sourceUnavailable) return null;

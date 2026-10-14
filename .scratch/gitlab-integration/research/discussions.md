@@ -13,7 +13,7 @@ Researched 2026-10-07 from current official GitLab documentation and first-party
 | New inline thread | Same discussion-create endpoint, with `position` identifying the diff revision, file paths, side and line(s). HTTP 201 returns the created discussion. [Inline creation](https://docs.gitlab.com/api/discussions/#create-a-new-thread-in-the-merge-request-diff) |
 | Resolution | Imported notes expose `resolvable`, `resolved`, `resolved_by`, `resolved_at`. Dedicated PUT endpoint resolves/reopens; docs require Developer/Maintainer/Owner or author of the change. Resolved threads remain commentable. Reading resolution status does not require implementing resolution actions. [API](https://docs.gitlab.com/api/discussions/#resolve-a-merge-request-thread), [user documentation](https://docs.gitlab.com/user/discussions/#resolve-a-thread) |
 
-The discussion list includes system activity as well as user messages; deciding what the Blackboard surface displays is a product decision. Pagination defaults to 20, maximum requested page size 100; importing only the first response would silently omit conversations. Follow pagination links; GitLab.com may omit some total-count headers. [Discussions pagination](https://docs.gitlab.com/api/discussions/#discussions-pagination), [REST pagination](https://docs.gitlab.com/api/rest/#pagination).
+The discussion list includes system activity as well as user messages; deciding what the Chalk surface displays is a product decision. Pagination defaults to 20, maximum requested page size 100; importing only the first response would silently omit conversations. Follow pagination links; GitLab.com may omit some total-count headers. [Discussions pagination](https://docs.gitlab.com/api/discussions/#discussions-pagination), [REST pagination](https://docs.gitlab.com/api/rest/#pagination).
 
 ## Identity and inline anchors
 
@@ -37,7 +37,7 @@ The user's selected MVP persists drafts locally. Direct discussion/reply creatio
 
 The documented ordinary discussion/reply APIs are single-item writes. Their parameter lists do not provide a client operation ID, idempotency key or general multi-comment transaction. Neither these docs nor Draft Notes publication docs guarantee atomicity or duplicate-safe retry. This is an absence of a documented guarantee, not proof that every GitLab deployment lacks internal deduplication. First-party endpoint source also accepts position/body for creation and body for reply without an explicit idempotency parameter. [Discussions API](https://docs.gitlab.com/api/discussions/), [endpoint source](https://github.com/gitlabhq/gitlabhq/blob/master/lib/api/discussions.rb).
 
-A timeout after sending therefore leaves a factual ambiguity: the server may have created the comment even if Blackboard received no ID. Any “post all local drafts” behavior needs a product decision for partial success and uncertain outcomes. Retrying blindly cannot be advertised as safe; content matching cannot prove identity when repeated wording is legitimate. The report proposes no posting policy.
+A timeout after sending therefore leaves a factual ambiguity: the server may have created the comment even if Chalk received no ID. Any “post all local drafts” behavior needs a product decision for partial success and uncertain outcomes. Retrying blindly cannot be advertised as safe; content matching cannot prove identity when repeated wording is legitimate. The report proposes no posting policy.
 
 ## Availability and evidence limits
 

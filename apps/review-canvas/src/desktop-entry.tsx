@@ -1,11 +1,11 @@
+import { fontSize } from "@canvas/styles/scale.stylex";
+import { EmptyState } from "@canvas/ui/empty-state";
+import { textStyles } from "@canvas/ui/text";
 import type {
   ReviewCanvasContent,
   ReviewCanvasHandle,
   ReviewCanvasUi,
-} from "@blackboard/review-contracts";
-import { fontSize } from "@canvas/styles/scale.stylex";
-import { EmptyState } from "@canvas/ui/empty-state";
-import { textStyles } from "@canvas/ui/text";
+} from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { createRoot } from "react-dom/client";
 
@@ -139,9 +139,7 @@ function CanvasShell({
 }) {
   return (
     <main {...stylex.props(styles.shell)}>
-      <div {...stylex.props(textStyles.eyebrow, styles.brand)}>
-        /dev/fast Blackboard
-      </div>
+      <div {...stylex.props(textStyles.eyebrow, styles.brand)}>Chalk</div>
       <h1 {...stylex.props(styles.shellTitle)}>{title}</h1>
       {children}
     </main>

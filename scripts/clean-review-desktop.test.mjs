@@ -7,7 +7,7 @@ import test from "node:test";
 import { cleanReviewDesktop } from "./clean-review-desktop.mjs";
 
 test("cleans Electrobun outputs while preserving the SDK, source and user data", async () => {
-  const root = await mkdtemp(path.join(tmpdir(), "blackboard-clean-"));
+  const root = await mkdtemp(path.join(tmpdir(), "chalk-clean-"));
 
   const generated = [
     "dist",

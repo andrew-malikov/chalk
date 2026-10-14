@@ -1,4 +1,4 @@
-name: Blackboard CLI Release
+name: Chalk CLI Release
 
 on:
   workflow_dispatch:
@@ -55,9 +55,9 @@ jobs:
         if: steps.release.outputs.published != 'true'
         run: |
           bun test scripts/review-cli-release.test.mjs scripts/review-cli-dependencies.test.mjs
-          bun run --filter @blackboard/tutorial ensure:assets
-          bun run --filter @blackboard/server test -- --project shared-module-graph src/headless-host.test.ts
-          bun run --filter @blackboard/cli test
+          bun run --filter @chalk/tutorial ensure:assets
+          bun run --filter @chalk/server test -- --project shared-module-graph src/headless-host.test.ts
+          bun run --filter @chalk/cli test
       - name: Build release tarball
         if: steps.release.outputs.published != 'true'
         run: bun scripts/pack-review-cli.mjs release-artifacts
@@ -65,12 +65,12 @@ jobs:
         if: steps.release.outputs.published != 'true'
         env:
           VERSION: ${{ steps.release.outputs.version }}
-        run: bun scripts/smoke-review-cli.mjs "release-artifacts/blackboard-cli-${VERSION}.tgz" "$VERSION"
+        run: bun scripts/smoke-review-cli.mjs "release-artifacts/chalk-cli-${VERSION}.tgz" "$VERSION"
       - name: Validate npm publish command
         if: steps.release.outputs.published != 'true'
         env:
           VERSION: ${{ steps.release.outputs.version }}
-        run: bunx --bun npm@12.2.0 publish "./release-artifacts/blackboard-cli-${VERSION}.tgz" --dry-run --registry=https://registry.npmjs.org --access public --tag latest --ignore-scripts
+        run: bunx --bun npm@12.2.0 publish "./release-artifacts/chalk-cli-${VERSION}.tgz" --dry-run --registry=https://registry.npmjs.org --access public --tag latest --ignore-scripts
       - name: Retain tested package
         if: steps.release.outputs.published != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -94,7 +94,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.release.outputs.version }}
-        run: bunx --bun npm@12.2.0 publish "./release-artifacts/blackboard-cli-${VERSION}.tgz" --registry=https://registry.npmjs.org --access public --tag latest --provenance --ignore-scripts
+        run: bunx --bun npm@12.2.0 publish "./release-artifacts/chalk-cli-${VERSION}.tgz" --registry=https://registry.npmjs.org --access public --tag latest --provenance --ignore-scripts
       - name: Release summary
         env:
           VERSION: ${{ steps.release.outputs.version }}
@@ -104,13 +104,13 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           {
-            echo "### Blackboard CLI ${VERSION}"
+            echo "### Chalk CLI ${VERSION}"
             echo "Source: ${COMMIT}; tag: ${RELEASE_TAG}"
             if [ "$DRY_RUN" = true ]; then
               echo 'Dry run: no tag or npm publication was created. Download the tested tarball from this run.'
             elif [ "$PUBLISHED" = true ]; then
               echo 'This exact version and source commit were already published; no changes made.'
             else
-              echo "Install: bun add --global @blackboard/cli@${VERSION}"
+              echo "Install: bun add --global @chalk/cli@${VERSION}"
             fi
           } >> "$GITHUB_STEP_SUMMARY"

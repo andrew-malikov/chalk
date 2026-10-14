@@ -3,9 +3,9 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { parseReviewDesktopVerbFrame } from "@blackboard/review-contracts";
-import { createGlobalReviewServer } from "@blackboard/server/desktop-server.js";
-import { GlobalReviewDesktopVerbRelay } from "@blackboard/server/global-verb-relay.js";
+import { parseReviewDesktopVerbFrame } from "@chalk/review-contracts";
+import { createGlobalReviewServer } from "@chalk/server/desktop-server.js";
+import { GlobalReviewDesktopVerbRelay } from "@chalk/server/global-verb-relay.js";
 import { openLocalReviewStore } from "@review/node/review-api/local-data.js";
 import { expect, it } from "vitest";
 
@@ -79,7 +79,7 @@ it("discovers the live Desktop map preference without opening a review", async (
     expect(opened).toBe(false);
     await expect(
       connectReviewApi({ ...env, DEV_REVIEW_SERVER_DIR: home }),
-    ).rejects.toThrow(/blackboard server start/g);
+    ).rejects.toThrow(/chalk server start/g);
     relay.close();
     expect(await client.read("/capabilities")).toMatchObject({
       desktopAvailable: false,
@@ -90,7 +90,7 @@ it("discovers the live Desktop map preference without opening a review", async (
         ...env,
         DEV_REVIEW_SERVER_DIR: path.join(home, "missing"),
       }),
-    ).rejects.toThrow(/blackboard server start/g);
+    ).rejects.toThrow(/chalk server start/g);
   } finally {
     await server.close();
     await local.data.close();

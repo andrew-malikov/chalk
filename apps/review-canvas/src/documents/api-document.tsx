@@ -1,5 +1,3 @@
-import type { ReviewCommitSummary } from "@blackboard/review-contracts";
-import type { ReviewApiClient } from "@blackboard/review-contracts";
 import { AuthoringCursorContext, Courier } from "@canvas/drawing/courier";
 import { withErasedBlocks } from "@canvas/drawing/draw-queue";
 import {
@@ -13,6 +11,8 @@ import { scopeLive } from "@canvas/review/authoring-cursor";
 import { useReviewRoots } from "@canvas/review/review-root-context";
 import type { SoftwareMapResolvedDataPayload } from "@canvas/software-map/software-map-snapshot";
 import { documentNodeMarker, proseMarker } from "@canvas/styles/markers.stylex";
+import type { ReviewCommitSummary } from "@chalk/review-contracts";
+import type { ReviewApiClient } from "@chalk/review-contracts";
 import type { PeekableAnchorRef as DocumentPeekableAnchor } from "@review/documents/authoring";
 import {
   type Block,

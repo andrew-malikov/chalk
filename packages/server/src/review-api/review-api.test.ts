@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ReviewApiClient } from "@blackboard/review-contracts";
-import { createGlobalReviewServer } from "@blackboard/server/desktop-server.js";
-import { GlobalReviewDesktopVerbRelay } from "@blackboard/server/global-verb-relay.js";
+import { ReviewApiClient } from "@chalk/review-contracts";
+import { createGlobalReviewServer } from "@chalk/server/desktop-server.js";
+import { GlobalReviewDesktopVerbRelay } from "@chalk/server/global-verb-relay.js";
 import { ReviewInputError } from "@review/documents/document.js";
 import { selectSource } from "@review/documents/lens-selection.js";
 import { authoringTools } from "@review/node/review-api/authoring-tools.js";

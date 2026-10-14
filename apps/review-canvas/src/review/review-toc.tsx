@@ -1,4 +1,3 @@
-import type { ReviewDocumentWidthChoice } from "@blackboard/review-contracts";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import type { ReviewTocEntry } from "@canvas/documents/review-document-headings";
 import {
@@ -18,6 +17,7 @@ import { IconButton } from "@canvas/ui/button";
 import { ContentsIcon } from "@canvas/ui/icons";
 import { surfaceStyles } from "@canvas/ui/surface";
 import { textStyles } from "@canvas/ui/text";
+import type { ReviewDocumentWidthChoice } from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { type ReactElement, useEffect, useState } from "react";
 

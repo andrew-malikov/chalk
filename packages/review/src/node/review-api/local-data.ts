@@ -22,13 +22,13 @@ import {
   listTrackedFilesAtCommit,
   readFileAtCommit,
   splitGitPatchFiles,
-} from "@blackboard/local-vcs";
-import { structuralChangeCounts } from "@blackboard/review-contracts";
+} from "@chalk/local-vcs";
+import { structuralChangeCounts } from "@chalk/review-contracts";
 import type {
   ReviewLanguageEnvironment,
   ReviewSourceEntry,
   StructuralDiffEvent,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import { resourceReference } from "@review/documents/document.js";
 import {
   type Block,
@@ -343,7 +343,7 @@ export class LocalReviewData {
 
       if (stdout.trim())
         throw new ReviewInputError(
-          "The pinned checkout has local changes, possibly from devfast.prepare. Restore those files before browsing this pinned revision.",
+          "The pinned checkout has local changes, possibly from chalk.prepare. Restore those files before browsing this pinned revision.",
           409,
         );
     }

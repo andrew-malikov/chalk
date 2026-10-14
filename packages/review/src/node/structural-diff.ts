@@ -8,7 +8,7 @@ import {
   type StructuralDiffEvent,
   type StructuralProblem,
   decodeStructuralDiffEvent,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 
 import { installedFullDiffr } from "./diffr-languages.js";
 import { findPackageRoot } from "./package-paths";
@@ -44,7 +44,7 @@ export function diffrExecutable(packageRoot = findPackageRoot()): string {
 
 export function diffrMissingError(): Error {
   return new Error(
-    `Cannot find diffr at ${diffrExecutable()}. Blackboard Desktop bundles it at bin/diffr under its runtime; in a checkout, run \`bun run --filter @blackboard/review ensure:diffr\` or install diffr on PATH, or set REVIEW_DIFFR_BINARY to its executable.`,
+    `Cannot find diffr at ${diffrExecutable()}. Chalk Desktop bundles it at bin/diffr under its runtime; in a checkout, run \`bun run --filter @chalk/review ensure:diffr\` or install diffr on PATH, or set REVIEW_DIFFR_BINARY to its executable.`,
   );
 }
 

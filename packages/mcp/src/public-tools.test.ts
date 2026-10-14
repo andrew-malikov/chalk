@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
-import { ReviewApiClient } from "@blackboard/review-contracts";
-import { createReviewApi } from "@blackboard/server/review-api/http.js";
+import { ReviewApiClient } from "@chalk/review-contracts";
+import { createReviewApi } from "@chalk/server/review-api/http.js";
 import { ReviewStore } from "@review/node/review-api/store.js";
 import { afterEach, expect, test } from "vitest";
 

@@ -137,19 +137,19 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     );
 
   const program = configureOutput(new Command(), "review")
-    .name("blackboard")
+    .name("chalk")
     .enablePositionalOptions()
     .version(cliVersion)
-    .description("Create and open dev.fast reviews.")
+    .description("Create and open reviews in Chalk.")
     .addHelpText("after", reviewTopLevelHelp());
 
-  // Tolerate the leading form (`blackboard --json scaffold`) as well as the usual
+  // Tolerate the leading form (`chalk --json scaffold`) as well as the usual
   // trailing one. Never give this a .default(): optsWithGlobals merges globals
   // over locals, so a default would clobber a subcommand's own true.
   program.addOption(new Option("--json").hideHelp());
   program.option(
     "--state-dir <path>",
-    "select headless Blackboard state for server, api, and mcp",
+    "select headless Chalk state for server, api, and mcp",
   );
   program.exitOverride();
 
@@ -214,7 +214,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
 
     try {
       const { runHeadlessServer } =
-        await import("@blackboard/server/headless-host.js");
+        await import("@chalk/server/headless-host.js");
 
       await runHeadlessServer({
         stateDir,
@@ -225,7 +225,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
           input.stdout.write(
             options.json
               ? `${JSON.stringify({ event: "server.ready", url, serverPid, stateDir })}\n`
-              : `Blackboard server ready at ${url}\nSaved reviews: ${stateDir}\n`,
+              : `Chalk server ready at ${url}\nSaved reviews: ${stateDir}\n`,
           );
         },
       });
@@ -260,7 +260,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     input.stdout.write(
       options.json
         ? `${JSON.stringify({ event: "server.status", ready: true, url, serverPid, stateDir, version, serverId })}\n`
-        : `Blackboard server ready at ${url}\nSaved reviews: ${stateDir}\n`,
+        : `Chalk server ready at ${url}\nSaved reviews: ${stateDir}\n`,
     );
   });
 
@@ -298,12 +298,12 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
 
     if (problem)
       throw new Error(
-        `Cannot tell whether a Blackboard Desktop is using ${stateDir}: ${problem.message}`,
+        `Cannot tell whether a Chalk Desktop is using ${stateDir}: ${problem.message}`,
       );
 
     const inUse = () =>
       new Error(
-        `A Blackboard server is using ${stateDir}. Stop it first, then run blackboard server reset-id again.`,
+        `A Chalk server is using ${stateDir}. Stop it first, then run chalk server reset-id again.`,
       );
 
     if (
@@ -318,7 +318,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     const [{ openReviewProfile }, { withHeadlessServerLock }] =
       await Promise.all([
         import("@review/node/review-api/profile.js"),
-        import("@blackboard/server/headless-host.js"),
+        import("@chalk/server/headless-host.js"),
       ]);
 
     // The headless server's own lock (at the path it resolves): refused while
@@ -352,7 +352,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   configureJsonOutput(
     program
       .command("version")
-      .description("Print Blackboard package version")
+      .description("Print Chalk package version")
       .option("--verbose", "Show executing CLI paths and build identity"),
     "plain",
   ).action(async (options: { verbose?: boolean }, command: Command) => {
@@ -398,13 +398,13 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     } else if (event.action === "launch") {
       input.stdout.write(
         event.state === "running"
-          ? "Blackboard Desktop is already running.\n"
+          ? "Chalk Desktop is already running.\n"
           : options.focus
-            ? "Blackboard Desktop is ready.\n"
-            : "Blackboard Desktop is ready in the background. Pass --focus to bring it forward.\n",
+            ? "Chalk Desktop is ready.\n"
+            : "Chalk Desktop is ready in the background. Pass --focus to bring it forward.\n",
       );
     } else {
-      input.stdout.write(`Blackboard Desktop is showing "${event.title}".\n`);
+      input.stdout.write(`Chalk Desktop is showing "${event.title}".\n`);
     }
   };
 
@@ -452,8 +452,8 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   const app = configureJsonOutput(
     program
       .command("app")
-      .description("Start Blackboard Desktop in the background")
-      .option("--focus", "bring Blackboard Desktop to the foreground")
+      .description("Start Chalk Desktop in the background")
+      .option("--focus", "bring Chalk Desktop to the foreground")
       .option(
         "--no-sandbox",
         "disable the Chromium sandbox for a Linux container",
@@ -464,8 +464,8 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   configureJsonOutput(
     app
       .command("launch")
-      .description("Start Blackboard Desktop in the background")
-      .option("--focus", "bring Blackboard Desktop to the foreground")
+      .description("Start Chalk Desktop in the background")
+      .option("--focus", "bring Chalk Desktop to the foreground")
       .option(
         "--no-sandbox",
         "disable the Chromium sandbox for a Linux container",
@@ -477,7 +477,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
       .command("pick")
       .description("Select a review (interactive picker without --session)")
       .option("--session <uuid>", "review UUID")
-      .option("--focus", "bring Blackboard Desktop to the foreground"),
+      .option("--focus", "bring Chalk Desktop to the foreground"),
     "plain",
   ).action(pickReview);
 
@@ -541,9 +541,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   const connect = configureJsonOutput(
     program
       .command("connect")
-      .description(
-        "Print the prompt that connects a coding agent to Blackboard",
-      )
+      .description("Print the prompt that connects a coding agent to Chalk")
       .addArgument(
         new Argument("[target...]", "coding agent").choices([
           "claude",
@@ -731,17 +729,17 @@ function reviewCliRuntime(
 function reviewTopLevelHelp(): string {
   return [
     "",
-    "Use `blackboard info` to discover review documents for this checkout.",
-    "Reviews are authored through the JSON API: `blackboard api tools` lists the tools, and `blackboard mcp` serves the same catalog to an agent.",
-    "Use `blackboard app launch` to start Blackboard Desktop. Use `blackboard app pick --session <uuid>` to open one.",
-    "Use `blackboard server start` for headless authoring, and `blackboard server status --json` to check readiness.",
+    "Use `chalk info` to discover review documents for this checkout.",
+    "Reviews are authored through the JSON API: `chalk api tools` lists the tools, and `chalk mcp` serves the same catalog to an agent.",
+    "Use `chalk app launch` to start Chalk Desktop. Use `chalk app pick --session <uuid>` to open one.",
+    "Use `chalk server start` for headless authoring, and `chalk server status --json` to check readiness.",
     "",
     "Every command accepts --json. Stdout then carries only JSON events, one per line,",
     "human progress moves to stderr, and a failure prints a JSON error event too.",
     "",
     "Example agent prompt (for a repository that provides a CI/CD system):",
     "",
-    "  Can you use Blackboard to explain this repository's CI/CD system to me?",
+    "  Can you use Chalk to explain this repository's CI/CD system to me?",
     "",
     "  My current understanding:",
     "",

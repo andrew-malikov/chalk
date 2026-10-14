@@ -1,5 +1,5 @@
-import { isStringValue } from "@blackboard/review-contracts";
 import { reviewPersistence } from "@canvas/review/review-persistence";
+import { isStringValue } from "@chalk/review-contracts";
 import type { Dispatch, SetStateAction } from "react";
 import { z } from "zod";
 import { persist } from "zustand/middleware";

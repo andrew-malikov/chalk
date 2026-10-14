@@ -1,3 +1,5 @@
+import { useReviewSession } from "@canvas/host/review-session";
+import { useOptionalReviewPanelStore } from "@canvas/review/review-panel";
 import {
   type GitLabDiscussion,
   type GitLabDraft,
@@ -6,9 +8,7 @@ import {
   gitLabDraftSchema,
   gitLabSaveDraftSchema,
   gitLabStateSchema,
-} from "@blackboard/review-contracts";
-import { useReviewSession } from "@canvas/host/review-session";
-import { useOptionalReviewPanelStore } from "@canvas/review/review-panel";
+} from "@chalk/review-contracts";
 import {
   type ReactNode,
   createContext,

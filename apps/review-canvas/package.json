@@ -1,25 +1,25 @@
 {
-  "name": "@blackboard/review-canvas",
+  "name": "@chalk/review-canvas",
   "version": "0.0.1",
   "private": true,
   "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "BUN_JSC_useFTLJIT=0 bun --bun run vite build --config desktop.vite.config.ts",
-    "pretest": "bun run --filter @blackboard/tutorial ensure:assets",
+    "pretest": "bun run --filter @chalk/tutorial ensure:assets",
     "test": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts",
     "test:node": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts --project canvas-node",
     "test:browser": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts --project browser",
     "test:browser:watch": "BUN_JSC_useFTLJIT=0 bun --bun run vitest --config vitest.config.ts --project browser --browser.headless=false",
     "typecheck": "bun --bun run tsc --noEmit -p .",
-    "pretest:node": "bun run --filter @blackboard/tutorial ensure:assets",
-    "pretest:browser": "bun run --filter @blackboard/tutorial ensure:assets",
-    "pretypecheck": "bun run --filter @blackboard/tutorial ensure:assets"
+    "pretest:node": "bun run --filter @chalk/tutorial ensure:assets",
+    "pretest:browser": "bun run --filter @chalk/tutorial ensure:assets",
+    "pretypecheck": "bun run --filter @chalk/tutorial ensure:assets"
   },
   "dependencies": {
-    "@blackboard/review": "workspace:*",
-    "@blackboard/review-contracts": "workspace:*",
-    "@blackboard/tutorial": "workspace:*",
+    "@chalk/review": "workspace:*",
+    "@chalk/review-contracts": "workspace:*",
+    "@chalk/tutorial": "workspace:*",
     "@mr_mint/elkjs-libavoid": "0.5.0",
     "@pierre/diffs": "1.5.1",
     "@speed-highlight/core": "1.2.15",
@@ -41,7 +41,7 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
-    "@blackboard/server": "workspace:*",
+    "@chalk/server": "workspace:*",
     "@stylexjs/unplugin": "0.19.1",
     "@types/node": "24.12.2",
     "@types/react": "19.2.14",

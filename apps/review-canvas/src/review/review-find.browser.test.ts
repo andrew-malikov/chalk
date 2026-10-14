@@ -1,4 +1,4 @@
-import type { ReviewFindQuery } from "@blackboard/review-contracts";
+import type { ReviewFindQuery } from "@chalk/review-contracts";
 import { describe, expect, it } from "vitest";
 
 import {

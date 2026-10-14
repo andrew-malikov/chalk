@@ -10,7 +10,7 @@ export default defineConfig({
   dts: { tsconfig: "../../tsconfig.mcp-build.json" },
   deps: {
     alwaysBundle: [
-      /^@blackboard\//,
+      /^@chalk\//,
       /^@dev\.fast\/diffr$/,
       /^isomorphic-git$/,
       /^micromark-extension-math$/,

@@ -1,14 +1,14 @@
 import { createHash } from "node:crypto";
 
-import { type JsonObject, isJsonObject } from "@blackboard/json";
+import { type JsonObject, isJsonObject } from "@chalk/json";
 import {
   REVIEW_CLIENT_HEADER,
   REVIEW_CLIENT_REMOTE,
   type ReviewStructuralDiffEvent,
   gitLabSaveDraftSchema,
-} from "@blackboard/review-contracts";
-import { readBoundedRequestJson } from "@blackboard/server/hono-http.js";
-import { HttpJsonError } from "@blackboard/server/http-json.js";
+} from "@chalk/review-contracts";
+import { readBoundedRequestJson } from "@chalk/server/hono-http.js";
+import { HttpJsonError } from "@chalk/server/http-json.js";
 import {
   ReviewInputError,
   fileLineRangeSchema,
@@ -59,7 +59,7 @@ export interface AuthoringCapabilities {
 }
 
 const SCRATCHPAD_DISABLED =
-  "The scratchpad is off. Turn it on in Blackboard Desktop Settings.";
+  "The scratchpad is off. Turn it on in Chalk Desktop Settings.";
 
 /** A gateway forwarding from another machine; it gets no local paths. */
 const remoteCaller = (context: Context) =>
@@ -82,7 +82,7 @@ export function createReviewApi(
   // Synchronous because the catalog is read inside watch callbacks. The host
   // keeps it current from its preferences file.
   scratchpadEnabled: () => boolean = () => false,
-  /** Which server this is, for blackboard_status. */
+  /** Which server this is, for chalk_status. */
   status: () => JsonObject = () => ({}),
 ) {
   const app = new Hono();
@@ -110,7 +110,7 @@ export function createReviewApi(
 
     return context.json(
       {
-        error: `Blackboard operation failed (${failureKind(error)}). The server logged the cause; Blackboard Desktop writes it to main.log in its logs folder.`,
+        error: `Chalk operation failed (${failureKind(error)}). The server logged the cause; Chalk Desktop writes it to main.log in its logs folder.`,
       },
       500,
     );
@@ -1034,7 +1034,7 @@ export function createReviewApi(
     );
 
     return [
-      `Selected ${target.kind === "text" ? "text" : "code"} from Blackboard: ${snapshot.title}`,
+      `Selected ${target.kind === "text" ? "text" : "code"} from Chalk: ${snapshot.title}`,
       `Session ID: ${snapshot.reviewId}`,
       `Version: ${snapshot.version}`,
       ...(selection.apiSource?.commit

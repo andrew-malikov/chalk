@@ -2,8 +2,8 @@ import type { ElectrobunConfig } from "electrobun";
 
 export default {
   app: {
-    name: "Blackboard",
-    identifier: "dev.fast.review.electrobun",
+    name: "Chalk",
+    identifier: "chalk.review.electrobun",
     version: "0.2.0",
   },
   build: {

@@ -1,4 +1,4 @@
-import type { TutorialStepId } from "@blackboard/review-contracts";
+import type { TutorialStepId } from "@chalk/review-contracts";
 
 export type TutorialChapterId = "welcome" | "commits" | "diagrams" | "finish";
 

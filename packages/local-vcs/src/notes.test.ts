@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { gitCommonDir } from ".";
 import {
-  DEV_FAST_NOTES_FETCH_REFSPEC,
+  CHALK_NOTES_FETCH_REFSPEC,
   NotesLockTimeoutError,
   clearNotesConfigCacheForTests,
   copyNote,
@@ -186,7 +186,7 @@ describe("git notes primitives", () => {
     const head = commit(rootPath, "one");
     // Deliberately hostile to stripspace: consecutive blank lines, trailing
     // whitespace, leading blank line, no trailing newline.
-    const content = `\nimport { defineSoftwareMap } from "@blackboard/progressive-review/software-map-model";\n\n\nexport default defineSoftwareMap({\n  people: {},  \n\n\n  systems: {},\n});`;
+    const content = `\nimport { defineSoftwareMap } from "@chalk/progressive-review/software-map-model";\n\n\nexport default defineSoftwareMap({\n  people: {},  \n\n\n  systems: {},\n});`;
     await writeNote({ rootPath, ref: MAP_REF, commit: head, content });
     expect(await readNote({ rootPath, ref: MAP_REF, commit: head })).toBe(
       content,
@@ -594,16 +594,16 @@ describe("notes config and rewrite handling", () => {
       .split("\n")
       .filter((line) => line.includes("dev-fast"));
 
-    expect(fetchSpecs).toEqual([DEV_FAST_NOTES_FETCH_REFSPEC]);
+    expect(fetchSpecs).toEqual([CHALK_NOTES_FETCH_REFSPEC]);
   });
 
-  it("ensureNotesConfig skips the fetch refspec while devFast.fetchNotes=false and installs it once re-enabled", async () => {
+  it("ensureNotesConfig skips the fetch refspec while chalk.fetchNotes=false and installs it once re-enabled", async () => {
     const rootPath = await initGitRepo();
     commit(rootPath, "one");
     const bare = await mkdtemp(path.join(tmpdir(), "notes-origin-"));
     git(bare, ["init", "-q", "--bare"]);
     git(rootPath, ["remote", "add", "origin", bare]);
-    git(rootPath, ["config", "devFast.fetchNotes", "false"]);
+    git(rootPath, ["config", "chalk.fetchNotes", "false"]);
 
     await ensureNotesConfig({ rootPath });
 
@@ -621,7 +621,7 @@ describe("notes config and rewrite handling", () => {
 
     // Re-enabling must not be memo-poisoned: the SAME process installs the
     // refspec on the next ensure (no cache clear here on purpose).
-    git(rootPath, ["config", "--unset", "devFast.fetchNotes"]);
+    git(rootPath, ["config", "--unset", "chalk.fetchNotes"]);
     await ensureNotesConfig({ rootPath });
 
     const enabledSpecs = git(rootPath, [
@@ -632,7 +632,7 @@ describe("notes config and rewrite handling", () => {
       .split("\n")
       .filter((line) => line.includes("dev-fast"));
 
-    expect(enabledSpecs).toEqual([DEV_FAST_NOTES_FETCH_REFSPEC]);
+    expect(enabledSpecs).toEqual([CHALK_NOTES_FETCH_REFSPEC]);
   });
 
   it("installs the fetch refspec on the configured notes remote", async () => {
@@ -644,7 +644,7 @@ describe("notes config and rewrite handling", () => {
     git(fork, ["init", "-q", "--bare"]);
     git(rootPath, ["remote", "add", "origin", origin]);
     git(rootPath, ["remote", "add", "fork", fork]);
-    git(rootPath, ["config", "devFast.notesRemote", "fork"]);
+    git(rootPath, ["config", "chalk.notesRemote", "fork"]);
 
     await ensureNotesConfig({ rootPath });
 
@@ -652,7 +652,7 @@ describe("notes config and rewrite handling", () => {
       git(rootPath, ["config", "--get-all", "remote.fork.fetch"])
         .split("\n")
         .filter((line) => line.includes("dev-fast")),
-    ).toEqual([DEV_FAST_NOTES_FETCH_REFSPEC]);
+    ).toEqual([CHALK_NOTES_FETCH_REFSPEC]);
     expect(
       git(rootPath, ["config", "--get-all", "remote.origin.fetch"])
         .split("\n")
@@ -686,13 +686,13 @@ describe("notes config and rewrite handling", () => {
 });
 
 describe("notes sharing", () => {
-  it("uses devFast.notesRemote when no remote override is supplied", async () => {
+  it("uses chalk.notesRemote when no remote override is supplied", async () => {
     const publisher = await initGitRepo();
     const head = commit(publisher, "shared through fork");
     const fork = await mkdtemp(path.join(tmpdir(), "notes-fork-"));
     git(fork, ["init", "-q", "--bare"]);
     git(publisher, ["remote", "add", "fork", fork]);
-    git(publisher, ["config", "devFast.notesRemote", "fork"]);
+    git(publisher, ["config", "chalk.notesRemote", "fork"]);
     await writeNote({
       rootPath: publisher,
       ref: MAP_REF,
@@ -747,7 +747,7 @@ describe("notes sharing", () => {
     ).toBeNull();
   });
 
-  it("fetchNotes honors the devFast.fetchNotes=false kill-switch", async () => {
+  it("fetchNotes honors the chalk.fetchNotes=false kill-switch", async () => {
     const publisher = await initGitRepo();
     const head = commit(publisher, "shared");
     const bare = await mkdtemp(path.join(tmpdir(), "notes-origin-"));
@@ -765,7 +765,7 @@ describe("notes sharing", () => {
     const consumer = await mkdtemp(path.join(tmpdir(), "notes-consumer-"));
     git(consumer, ["clone", "-q", bare, "clone"]);
     const clonePath = path.join(consumer, "clone");
-    git(clonePath, ["config", "devFast.fetchNotes", "false"]);
+    git(clonePath, ["config", "chalk.fetchNotes", "false"]);
 
     const fetched = await fetchNotes({ rootPath: clonePath });
     expect(fetched).toEqual({ ok: true, skipped: true });
@@ -780,7 +780,7 @@ describe("notes sharing", () => {
     ).toBeNull();
 
     // Any other value (or unset) keeps fetching enabled.
-    git(clonePath, ["config", "devFast.fetchNotes", "please"]);
+    git(clonePath, ["config", "chalk.fetchNotes", "please"]);
     const refetched = await fetchNotes({ rootPath: clonePath });
     expect(refetched.ok).toBe(true);
     expect(refetched.skipped).toBeUndefined();

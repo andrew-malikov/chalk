@@ -80,9 +80,9 @@ export function authoringTools(scratchpadAvailable = false) {
     ),
     tool(
       "get_instructions",
-      'Read Blackboard\'s guidance before creating or editing a review. The default topic gives the authoring workflow; "file-lenses" covers Diff-view file lenses.' +
+      'Read Chalk\'s guidance before creating or editing a review. The default topic gives the authoring workflow; "file-lenses" covers Diff-view file lenses.' +
         (scratchpadAvailable
-          ? ' When the user asks in conversation to be shown how code works or wants a diagram, without asking for a review, draw it on the scratchpad rather than answering only in chat: call review_get_instructions({topic:"scratchpad"}) first. A request for a review or to use Blackboard means authoring a review with the default topic.'
+          ? ' When the user asks in conversation to be shown how code works or wants a diagram, without asking for a review, draw it on the scratchpad rather than answering only in chat: call review_get_instructions({topic:"scratchpad"}) first. A request for a review or to use Chalk means authoring a review with the default topic.'
           : ""),
       instructionsQuerySchema.partial(),
       "GET",
@@ -123,7 +123,7 @@ export function authoringTools(scratchpadAvailable = false) {
             .uuid()
             .optional()
             .describe(
-              "Idempotency key. Omit it; Blackboard assigns one. Pass one only when an error tells you to.",
+              "Idempotency key. Omit it; Chalk assigns one. Pass one only when an error tells you to.",
             ),
           ...(type !== "create" &&
             type !== "attention" && {

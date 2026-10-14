@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 import {
   type ReviewDesktopDiscovery,
   ReviewDesktopDiscoverySchema,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 
 export interface ServerOptions {
   runtimePath: string;
@@ -119,17 +119,17 @@ export async function startServer(
     env: {
       ...env,
       DEV_REVIEW_HOME: options.profile,
-      DEV_FAST_REVIEW_CHECKOUT: options.checkout,
-      DEV_FAST_REVIEW_INSTANCE_KEY: options.key,
-      DEV_FAST_REVIEW_SERVER_PORT: "0",
-      DEV_FAST_REVIEW_APP_PID: String(process.pid),
-      DEV_FAST_REVIEW_SERVER_TOKEN: token,
-      DEV_FAST_REVIEW_INSTANCE_ID: instanceId,
-      DEV_FAST_REVIEW_DESKTOP_HOST_AUTOSTART: "1",
-      DEV_FAST_REVIEW_CLI_RUNTIME: options.runtimePath,
-      DEV_FAST_REVIEW_CLI_ROOT: path.join(options.checkout, "packages/cli"),
-      DEV_FAST_REVIEW_RELEASE_CHANNEL: "dev",
-      DEV_FAST_REVIEW_APP_VERSION: "0.2.0",
+      CHALK_REVIEW_CHECKOUT: options.checkout,
+      CHALK_REVIEW_INSTANCE_KEY: options.key,
+      CHALK_REVIEW_SERVER_PORT: "0",
+      CHALK_REVIEW_APP_PID: String(process.pid),
+      CHALK_REVIEW_SERVER_TOKEN: token,
+      CHALK_REVIEW_INSTANCE_ID: instanceId,
+      CHALK_REVIEW_DESKTOP_HOST_AUTOSTART: "1",
+      CHALK_REVIEW_CLI_RUNTIME: options.runtimePath,
+      CHALK_REVIEW_CLI_ROOT: path.join(options.checkout, "packages/cli"),
+      CHALK_REVIEW_RELEASE_CHANNEL: "dev",
+      CHALK_REVIEW_APP_VERSION: "0.2.0",
     },
   });
 

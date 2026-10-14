@@ -1,7 +1,4 @@
-import type {
-  JsonValue,
-  ReviewCanvasBridge,
-} from "@blackboard/review-contracts";
+import type { JsonValue, ReviewCanvasBridge } from "@chalk/review-contracts";
 import type { ReviewProgress } from "@review/node/review-api/review-progress";
 import type { Snapshot } from "@review/node/review-api/store";
 import { act } from "react";

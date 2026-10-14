@@ -1,5 +1,5 @@
 {
-  "name": "@blackboard/local-vcs",
+  "name": "@chalk/local-vcs",
   "version": "0.1.0",
   "license": "MIT",
   "files": [

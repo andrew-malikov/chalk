@@ -1,5 +1,5 @@
-import type { ReviewDiffLens } from "@blackboard/review-contracts";
-import type { ReviewApiClient } from "@blackboard/review-contracts";
+import type { ReviewDiffLens } from "@chalk/review-contracts";
+import type { ReviewApiClient } from "@chalk/review-contracts";
 import {
   type Lens,
   UNCATEGORIZED_LENS_ID,

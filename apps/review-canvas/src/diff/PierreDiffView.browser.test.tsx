@@ -1,14 +1,14 @@
-import type {
-  GitLabState,
-  ReviewDiffFileWire,
-  ReviewDiffLens,
-} from "@blackboard/review-contracts";
 import { AgentSelectionProvider } from "@canvas/agent-context/agent-selection";
 import { GitLabProvider } from "@canvas/gitlab/gitlab-context";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDiffFilesProvider } from "@canvas/review/review-diff-files-context";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import type {
+  GitLabState,
+  ReviewDiffFileWire,
+  ReviewDiffLens,
+} from "@chalk/review-contracts";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";

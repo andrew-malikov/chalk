@@ -26,9 +26,9 @@ test(
         env: {
           ...process.env,
           DEV_REVIEW_HOME: home,
-          DEV_FAST_REVIEW_SERVER_PORT: "0",
-          DEV_FAST_REVIEW_APP_PID: String(process.pid),
-          DEV_FAST_REVIEW_CLI_ROOT: path.join(root, "packages/cli"),
+          CHALK_REVIEW_SERVER_PORT: "0",
+          CHALK_REVIEW_APP_PID: String(process.pid),
+          CHALK_REVIEW_CLI_ROOT: path.join(root, "packages/cli"),
         },
         stdio: ["ignore", "pipe", "pipe"],
       },

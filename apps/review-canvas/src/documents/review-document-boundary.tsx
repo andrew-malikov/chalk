@@ -58,11 +58,9 @@ export class ReviewDocumentBoundary extends Component<
             <>
               Your coding agent is writing the canvas now…
               <br />
-              Edit the review through the Blackboard MCP tools or{" "}
-              <code {...stylex.props(documentStyles.code)}>
-                blackboard api
-              </code>{" "}
-              to replace the failing block.
+              Edit the review through the Chalk MCP tools or{" "}
+              <code {...stylex.props(documentStyles.code)}>chalk api</code> to
+              replace the failing block.
             </>
           }
         />

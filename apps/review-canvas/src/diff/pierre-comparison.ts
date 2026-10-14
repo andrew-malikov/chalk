@@ -1,4 +1,4 @@
-import type { ReviewDiffFileWire } from "@blackboard/review-contracts";
+import type { ReviewDiffFileWire } from "@chalk/review-contracts";
 import {
   type FileDiffLoadedFiles,
   type FileDiffMetadata,

@@ -1,14 +1,14 @@
 import {
-  type ReviewSurfaceEvent,
-  type ReviewTheme,
-  isJsonObject,
-  parseJsonText,
-} from "@blackboard/review-contracts";
-import {
   type ReviewSession,
   ReviewSessionProvider,
 } from "@canvas/host/review-session";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import {
+  type ReviewSurfaceEvent,
+  type ReviewTheme,
+  isJsonObject,
+  parseJsonText,
+} from "@chalk/review-contracts";
 import { type ReactNode, act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";

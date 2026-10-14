@@ -1,7 +1,7 @@
 // CLI profiling instrumentation. Enabled when either variable is set:
 //
-//   DEV_FAST_REVIEW_TRACE=<file>     write this process's span tree to <file>
-//   DEV_FAST_REVIEW_TRACE_DIR=<dir>  write one file per process into <dir>
+//   CHALK_REVIEW_TRACE=<file>     write this process's span tree to <file>
+//   CHALK_REVIEW_TRACE_DIR=<dir>  write one file per process into <dir>
 //
 // Otherwise every helper is a zero-cost passthrough. Spans are wall-clock
 // intervals (ms since process start, i.e. performance.timeOrigin) with parent
@@ -17,7 +17,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 
-import { setLocalVcsCommandObserver } from "@blackboard/local-vcs";
+import { setLocalVcsCommandObserver } from "@chalk/local-vcs";
 import { errorMessage } from "@review/node/lib/error-message";
 
 interface TraceSpanRecord {
@@ -30,9 +30,9 @@ interface TraceSpanRecord {
   ok?: boolean;
 }
 
-const TRACE_FILE_ENV = "DEV_FAST_REVIEW_TRACE";
+const TRACE_FILE_ENV = "CHALK_REVIEW_TRACE";
 
-const TRACE_DIR_ENV = "DEV_FAST_REVIEW_TRACE_DIR";
+const TRACE_DIR_ENV = "CHALK_REVIEW_TRACE_DIR";
 
 const traceFile = resolveTraceFile(process.env);
 
@@ -161,7 +161,7 @@ function flushTrace(): void {
         ppid: process.ppid,
         argv: process.argv,
         cwd: process.cwd(),
-        delegated: Boolean(process.env.DEV_FAST_REVIEW_CLI_DELEGATED),
+        delegated: Boolean(process.env.CHALK_REVIEW_CLI_DELEGATED),
         attributes,
         durationMs: now,
         spans: spans.map((record) => ({
@@ -217,7 +217,7 @@ function resolveTraceFile(env: NodeJS.ProcessEnv): string | undefined {
 
 if (traceEnabled) {
   process.on("exit", flushTrace);
-  // Every git/jj spawn inside @blackboard/local-vcs becomes a `$ …` span under
+  // Every git/jj spawn inside @chalk/local-vcs becomes a `$ …` span under
   // whatever span is active in the caller's async context.
   setLocalVcsCommandObserver({
     start({ file, args, cwd }) {

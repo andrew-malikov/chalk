@@ -1,11 +1,11 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { mkdir, realpath, rm } from "node:fs/promises";
 
-import { createReviewApi } from "@blackboard/server/review-api/http.js";
+import { createReviewApi } from "@chalk/server/review-api/http.js";
 import {
   createReviewServerApp,
   relayReviewCallbacks,
-} from "@blackboard/server/review-server-core.js";
+} from "@chalk/server/review-server-core.js";
 import { writePrivateJsonAtomic } from "@review/node/lib/atomic-write";
 import { withFileLock } from "@review/node/lib/with-file-lock";
 import { openReviewProfile } from "@review/node/review-api/profile.js";
@@ -36,7 +36,7 @@ export async function runHeadlessServer(input: HeadlessServerInput) {
 
   if (!outcome.acquired)
     throw new Error(
-      `A Blackboard server already owns ${stateDir}. Stop it first, or choose another --state-dir.`,
+      `A Chalk server already owns ${stateDir}. Stop it first, or choose another --state-dir.`,
     );
 }
 

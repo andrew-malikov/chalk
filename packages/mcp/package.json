@@ -1,5 +1,5 @@
 {
-  "name": "@blackboard/mcp",
+  "name": "@chalk/mcp",
   "version": "0.2.0",
   "private": true,
   "license": "MIT",
@@ -16,14 +16,14 @@
     "typecheck": "bun --bun run tsc --noEmit -p ."
   },
   "dependencies": {
-    "@blackboard/json": "workspace:*",
-    "@blackboard/review": "workspace:*",
-    "@blackboard/review-contracts": "workspace:*",
+    "@chalk/json": "workspace:*",
+    "@chalk/review": "workspace:*",
+    "@chalk/review-contracts": "workspace:*",
     "@modelcontextprotocol/sdk": "1.30.0"
   },
   "devDependencies": {
-    "@blackboard/cli": "workspace:*",
-    "@blackboard/server": "workspace:*",
+    "@chalk/cli": "workspace:*",
+    "@chalk/server": "workspace:*",
     "@types/node": "24.12.2",
     "tsdown": "0.22.14",
     "typescript": "6.0.3",

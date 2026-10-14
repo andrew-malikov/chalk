@@ -1,4 +1,3 @@
-import { ReviewApiClient } from "@blackboard/review-contracts";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import type { ReviewRoots } from "@canvas/review/review-root-context";
 import { ReviewRootsProvider } from "@canvas/review/review-root-context";
@@ -8,6 +7,7 @@ import {
   testApiDocumentData,
   testReviewSession,
 } from "@canvas/test/review-session-test-utils";
+import { ReviewApiClient } from "@chalk/review-contracts";
 import type { Block } from "@review/documents/document";
 import * as stylex from "@stylexjs/stylex";
 import { act, createRef } from "react";

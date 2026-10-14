@@ -2,23 +2,23 @@
   <img
     src="docs/assets/review-logo.png"
     width="96"
-    alt="Blackboard logo"
+    alt="Chalk logo"
   />
-  <h1>Blackboard</h1>
+  <h1>Chalk</h1>
 </div>
 
-Blackboard is desktop code-review app. Connects into the tools you already use - e.g. Claude Code, Codex, etc. – and gives your agent an SDK to draw on an in-app canvas to describe its work.
+Chalk is desktop code-review app. Connects into the tools you already use - e.g. Claude Code, Codex, etc. – and gives your agent an SDK to draw on an in-app canvas to describe its work.
 
 ## Quickstart
 
-1. [Download Blackboard](https://hell.knows.where/install) and open the app.
+1. [Download Chalk](https://hell.knows.where/install) and open the app.
 2. Connect Claude Code, Codex, or another coding agent from the welcome screen.
 3. Ask your agent to review your current branch against up-to-date main and
-   open the result in Blackboard.
+   open the result in Chalk.
 
 ## Guidance
 
-Here are a few example prompts of how to use Blackboard effectively. We are working hard to make sure the right choices are baked in by default to the system prompt - part of why this system is open source! - but in the meantime:
+Here are a few example prompts of how to use Chalk effectively. We are working hard to make sure the right choices are baked in by default to the system prompt - part of why this system is open source! - but in the meantime:
 
 ### For a new API change
 
@@ -43,13 +43,13 @@ described in [SECURITY.md](SECURITY.md). Questions? Ask on
 
 ## Privacy
 
-Blackboard runs against local checkouts and does not collect or send product
+Chalk runs against local checkouts and does not collect or send product
 telemetry. Read the [privacy overview](docs/privacy.md) for local data and
 optional hosted agent traces, which require repository consent.
 
 ## License
 
-Blackboard is available under the [MIT License](LICENSE). Third-party notices
+Chalk is available under the [MIT License](LICENSE). Third-party notices
 for the shared runtime are in
 [`packages/review/THIRD_PARTY_NOTICES.md`](packages/review/THIRD_PARTY_NOTICES.md).
 

@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { reviewCodePeekRangeCounts } from "@blackboard/review-contracts";
+import { reviewCodePeekRangeCounts } from "@chalk/review-contracts";
 import { expect, it } from "vitest";
 
 it("matches high-context counts at every boundary using small and zero-context corpus patches", () => {

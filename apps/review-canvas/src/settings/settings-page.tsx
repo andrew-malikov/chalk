@@ -1,3 +1,9 @@
+import { Switch } from "@canvas/components/ui/switch";
+import { ConnectCard } from "@canvas/home/connect-card";
+import { homeStyles } from "@canvas/home/home-styles";
+import { withClass } from "@canvas/styles/stylex-props";
+import { Button } from "@canvas/ui/button";
+import { textStyles } from "@canvas/ui/text";
 import type {
   ReviewCanvasSettingsContent,
   ReviewCliInstallStatus,
@@ -6,13 +12,7 @@ import type {
   ReviewKeymapChoice,
   ReviewReadyNotificationChoice,
   ReviewThemeChoice,
-} from "@blackboard/review-contracts";
-import { Switch } from "@canvas/components/ui/switch";
-import { ConnectCard } from "@canvas/home/connect-card";
-import { homeStyles } from "@canvas/home/home-styles";
-import { withClass } from "@canvas/styles/stylex-props";
-import { Button } from "@canvas/ui/button";
-import { textStyles } from "@canvas/ui/text";
+} from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { type ReactNode, useEffect, useState } from "react";
 
@@ -124,7 +124,7 @@ export function SettingsPage({
             <h1 {...stylex.props(homeStyles.heading)}>Settings</h1>
           </div>
           <p {...stylex.props(styles.lede)}>
-            Settings apply to Blackboard on this machine.
+            Settings apply to Chalk on this machine.
           </p>
 
           {install ? (
@@ -136,11 +136,11 @@ export function SettingsPage({
           {install?.status.cli ? (
             <Section label="Command line">
               <Row
-                label="blackboard command"
+                label="chalk command"
                 description={
                   install.status.shim.installed
                     ? `Installed at ${install.status.shim.path}. Your agents run it.`
-                    : "Adds blackboard to your shell PATH. Your agents run it."
+                    : "Adds chalk to your shell PATH. Your agents run it."
                 }
               >
                 {install.status.shim.installer ? null : (
@@ -165,7 +165,7 @@ export function SettingsPage({
           ) : null}
 
           <Section label="Editor">
-            <Row label="Theme" description="How Blackboard looks.">
+            <Row label="Theme" description="How Chalk looks.">
               <Choice
                 label="Theme"
                 value={theme}
@@ -296,7 +296,7 @@ export function SettingsPage({
             </Row>
             <Row
               label="Scratchpad"
-              description="Show the experimental scratchpad on Home. Agents draw on it through Blackboard's MCP tools."
+              description="Show the experimental scratchpad on Home. Agents draw on it through Chalk's MCP tools."
             >
               <div {...stylex.props(styles.toggle)}>
                 <Switch

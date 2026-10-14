@@ -1,7 +1,7 @@
 {
-  "name": "@blackboard/pi-blackboard",
+  "name": "@chalk/pi-chalk",
   "version": "0.1.2",
-  "description": "Connect Pi before 0.99.0 to Blackboard",
+  "description": "Connect Pi before 0.99.0 to Chalk",
   "keywords": [
     "pi-package"
   ],

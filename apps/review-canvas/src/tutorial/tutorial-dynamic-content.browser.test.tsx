@@ -1,10 +1,10 @@
-import {
-  type JsonObject,
-  type ReviewCanvasTutorialBridge,
-} from "@blackboard/review-contracts";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewProvider } from "@canvas/review/review-context";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import {
+  type JsonObject,
+  type ReviewCanvasTutorialBridge,
+} from "@chalk/review-contracts";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";

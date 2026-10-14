@@ -17,14 +17,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { setLocalVcsCommandObserver } from "@blackboard/local-vcs";
+import { setLocalVcsCommandObserver } from "@chalk/local-vcs";
 import {
   type JsonValue,
   REVIEW_CLIENT_HEADER,
   REVIEW_CLIENT_REMOTE,
-} from "@blackboard/review-contracts";
-import { ReviewApiClient } from "@blackboard/review-contracts";
-import { createGlobalReviewServer } from "@blackboard/server/desktop-server.js";
+} from "@chalk/review-contracts";
+import { ReviewApiClient } from "@chalk/review-contracts";
+import { createGlobalReviewServer } from "@chalk/server/desktop-server.js";
 import type { Pins } from "@review/documents/document.js";
 import { selectSource } from "@review/documents/lens-selection";
 import { openLocalReviewStore } from "@review/node/review-api/local-data.js";
@@ -505,7 +505,7 @@ it("only reports acquisition issues to agents and clears them after recovery", a
   ).toBe(true);
 
   const available = path.join(directory, "dependency-available");
-  git("config", "devfast.prepare", `test -f '${available}'`);
+  git("config", "chalk.prepare", `test -f '${available}'`);
   expect(await open()).not.toHaveProperty("environmentIssues");
   expect(await check()).toEqual({ issues: [] });
   await local.data.workspaces.idle();
@@ -572,7 +572,7 @@ it("only reports acquisition issues to agents and clears them after recovery", a
     renameSync(`${repository}-missing`, repository);
   }
 
-  git("config", "--unset-all", "devfast.prepare");
+  git("config", "--unset-all", "chalk.prepare");
   const recovered = await retry();
   expect(recovered.state).toBe("unconfigured");
   expect(recovered.rootPath).toBeTruthy();
@@ -1128,7 +1128,7 @@ it("keeps a live navigator attached to the live checkout without preparing it", 
     }),
   );
 
-  git("config", "devfast.prepare", "echo unexpected > prepared");
+  git("config", "chalk.prepare", "echo unexpected > prepared");
   const before = git("worktree", "list", "--porcelain");
 
   const { rootPath: root } = await local.data.navigatorSource(
@@ -2208,7 +2208,7 @@ it("copies prose with the displayed version's title and immutable review identit
 
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({
-    text: `Selected text from Blackboard: Original title\nSession ID: ${reviewId}\nVersion: 0\nRepository ID: ${pins.repositoryId}\nSession base: ${pins.base}\nSession head: ${pins.head}\nRead this version with session_get({"sessionId":"${reviewId}","version":0,"full":true}).\n\n> First line\n> Second line\n\n`,
+    text: `Selected text from Chalk: Original title\nSession ID: ${reviewId}\nVersion: 0\nRepository ID: ${pins.repositoryId}\nSession base: ${pins.base}\nSession head: ${pins.head}\nRead this version with session_get({"sessionId":"${reviewId}","version":0,"full":true}).\n\n> First line\n> Second line\n\n`,
   });
 });
 
@@ -2242,7 +2242,7 @@ it("copies code from historical pins after a repin, never from working-tree cont
 
   expect(historical.status).toBe(200);
   expect(await historical.json()).toEqual({
-    text: `Selected code from Blackboard: Code\nSession ID: ${reviewId}\nVersion: 0\nRepository ID: ${pins.repositoryId}\nSession base: ${pins.base}\nSession head: ${pins.head}\nRead this version with session_get({"sessionId":"${reviewId}","version":0,"full":true}).\n\n## Value\n\nSelected source\n\n## head: example.ts:1-1 (${pins.head})\n    export const value = 2;\n\n`,
+    text: `Selected code from Chalk: Code\nSession ID: ${reviewId}\nVersion: 0\nRepository ID: ${pins.repositoryId}\nSession base: ${pins.base}\nSession head: ${pins.head}\nRead this version with session_get({"sessionId":"${reviewId}","version":0,"full":true}).\n\n## Value\n\nSelected source\n\n## head: example.ts:1-1 (${pins.head})\n    export const value = 2;\n\n`,
   });
 
   const latest = await app.request(`/${reviewId}/copy-context`, {
@@ -2957,7 +2957,7 @@ it("retargets a live review without losing authored content or component IDs", a
 });
 
 it("worktree language contexts never prepare or create checkouts, including historical/base requests", async () => {
-  git("config", "devfast.prepare", "echo unexpected > prepared");
+  git("config", "chalk.prepare", "echo unexpected > prepared");
 
   const created = await local.store.execute(
     command({

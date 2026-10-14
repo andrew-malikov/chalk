@@ -1,7 +1,3 @@
-import type {
-  ReviewCanvasUi,
-  ReviewDisposable,
-} from "@blackboard/review-contracts";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +15,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@canvas/components/ui/dropdown-menu";
+import type { ReviewCanvasUi, ReviewDisposable } from "@chalk/review-contracts";
 import type { ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";

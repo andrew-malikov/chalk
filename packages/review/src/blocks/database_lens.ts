@@ -1,4 +1,4 @@
-import { type JsonValue, jsonValueSchema } from "@blackboard/review-contracts";
+import { type JsonValue, jsonValueSchema } from "@chalk/review-contracts";
 import { ReviewInputError } from "@review/documents/input-error.js";
 import { lensSourceSchema } from "@review/documents/lens-selection.js";
 import { z } from "zod";

@@ -4,10 +4,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type { ReviewCanvasBridge } from "@blackboard/review-contracts";
-import { createReviewApi } from "@blackboard/server/review-api/http";
 import { mountReviewCanvas as mount } from "@canvas/desktop-entry";
 import { testReviewBridge } from "@canvas/test/review-session-test-utils";
+import type { ReviewCanvasBridge } from "@chalk/review-contracts";
+import { createReviewApi } from "@chalk/server/review-api/http";
 import { ReviewStore } from "@review/node/review-api/store";
 import { Hono } from "hono";
 import { act } from "react";
@@ -401,7 +401,7 @@ it("resumes a commit diff with its scope", async () => {
   expect(scopeBar()).toBeNull();
 
   // The reader moved on to the whole diff, so the earlier version opens it too.
-  await act(async () => tab(container, "Blackboard")!.click());
+  await act(async () => tab(container, "Chalk")!.click());
   await act(async () => tab(container, "Diff")!.click());
   await open(scopedVersion);
   expect(tab(container, "Diff")?.getAttribute("aria-pressed")).toBe("true");

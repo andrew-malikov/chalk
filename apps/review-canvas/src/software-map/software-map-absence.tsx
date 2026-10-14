@@ -46,8 +46,8 @@ export function SoftwareMapUnavailable({
           <>
             A software map adds a structural view of the systems, containers,
             and components in this repo. Author one with{" "}
-            <code {...stylex.props(styles.code)}>blackboard map</code>. The rest
-            of the document works without it.
+            <code {...stylex.props(styles.code)}>chalk map</code>. The rest of
+            the document works without it.
           </>
         }
       />

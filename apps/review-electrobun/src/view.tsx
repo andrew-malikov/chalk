@@ -34,7 +34,7 @@ function render(state: HostState) {
   const status = document.createElement("main");
   status.className = "review-shell-loading tw:p-8";
   status.setAttribute("role", state.status === "starting" ? "status" : "alert");
-  status.textContent = state.message ?? "Starting Blackboard…";
+  status.textContent = state.message ?? "Starting Chalk…";
   container.replaceChildren(status);
 }
 

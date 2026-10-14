@@ -1,5 +1,5 @@
 {
-  "name": "@blackboard/review-tutorial-order-service",
+  "name": "@chalk/review-tutorial-order-service",
   "version": "1.0.0",
   "private": true,
   "type": "module",

@@ -1,8 +1,8 @@
 {
-  "name": "@blackboard/review-workspace",
+  "name": "@chalk/review-workspace",
   "version": "0.0.0",
   "private": true,
-  "description": "Blackboard desktop and CLI monorepo",
+  "description": "Chalk desktop and CLI monorepo",
   "license": "MIT",
   "workspaces": {
     "packages": [
@@ -17,21 +17,21 @@
   "scripts": {
     "dev": "bun run desktop:dev",
     "clean": "bun scripts/clean-review-desktop.mjs",
-    "desktop:build": "bun run --filter @blackboard/review-electrobun app:build",
+    "desktop:build": "bun run --filter @chalk/review-electrobun app:build",
     "electrobun:dev": "bun run desktop:dev",
     "electrobun:build": "bun run desktop:build",
-    "review": "bun run --filter @blackboard/cli review",
-    "format": "oxfmt --write \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!apps/review-canvas/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
-    "format:check": "oxfmt --check \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!apps/review-canvas/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
+    "review": "bun run --filter @chalk/cli review",
+    "format": "oxfmt --write \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!apps/review-canvas/icons/chalk.icon/**\" \"*.json\" \".*.json\"",
+    "format:check": "oxfmt --check \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!apps/review-canvas/icons/chalk.icon/**\" \"*.json\" \".*.json\"",
     "lint": "oxlint --disable-nested-config .",
-    "ci": "bun run desktop:build && bun run --filter @blackboard/tutorial check && bun run lint && bun run format:check && bun run typecheck && bun run test",
-    "pretest": "bun run --filter @blackboard/tutorial ensure:assets",
-    "test": "bun test scripts && bun run --bun --filter '*' --filter '!@blackboard/review-workspace' --if-present test",
-    "pretypecheck": "bun run build:workspace-deps && bun run --filter @blackboard/tutorial ensure:assets",
-    "typecheck": "bun run --bun --filter '*' --filter '!@blackboard/review-workspace' --if-present typecheck",
+    "ci": "bun run desktop:build && bun run --filter @chalk/tutorial check && bun run lint && bun run format:check && bun run typecheck && bun run test",
+    "pretest": "bun run --filter @chalk/tutorial ensure:assets",
+    "test": "bun test scripts && bun run --bun --filter '*' --filter '!@chalk/review-workspace' --if-present test",
+    "pretypecheck": "bun run build:workspace-deps && bun run --filter @chalk/tutorial ensure:assets",
+    "typecheck": "bun run --bun --filter '*' --filter '!@chalk/review-workspace' --if-present typecheck",
     "build": "bun run desktop:build",
-    "desktop:dev": "bun run --filter @blackboard/review-electrobun app:dev",
-    "build:workspace-deps": "bun run --filter @blackboard/json --filter @blackboard/local-vcs build && bun run --filter @blackboard/review-contracts build"
+    "desktop:dev": "bun run --filter @chalk/review-electrobun app:dev",
+    "build:workspace-deps": "bun run --filter @chalk/json --filter @chalk/local-vcs build && bun run --filter @chalk/review-contracts build"
   },
   "devDependencies": {
     "@oxlint/plugins": "1.63.0",
@@ -44,7 +44,7 @@
     "zod": "catalog:"
   },
   "overrides": {
-    "@blackboard/local-vcs": "workspace:0.1.0",
+    "@chalk/local-vcs": "workspace:0.1.0",
     "esbuild": "0.28.1",
     "hono": "4.13.5",
     "postcss": "8.5.23",

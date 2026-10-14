@@ -7,8 +7,8 @@ import type {
   StructuralDiff,
   StructuralDiffEvent,
   StructuralRegion,
-} from "@blackboard/review-contracts";
-import { ReviewApiClient } from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
+import { ReviewApiClient } from "@chalk/review-contracts";
 import { UNCATEGORIZED_LENS_ID } from "@review/documents/diff-lenses.js";
 import {
   coverageProgress,

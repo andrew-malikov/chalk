@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { ReviewApiClient } from "@blackboard/review-contracts";
+import { ReviewApiClient } from "@chalk/review-contracts";
 import { selectSource } from "@review/documents/lens-selection.js";
 import { documentText } from "@review/node/review-api/document-text.js";
 import { LocalReviewData } from "@review/node/review-api/local-data.js";

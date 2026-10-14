@@ -1,14 +1,14 @@
-import {
-  type ReviewCliInstallStatus,
-  type ReviewDesktopVerbFrame,
-  parseJsonText,
-} from "@blackboard/review-contracts";
 // oxlint-enable no-restricted-imports
 import { mountReviewCanvas } from "@canvas/desktop-entry";
 import {
   fixtureReviewBridge,
   libavoidWasmUrl,
 } from "@canvas/test/fixture-review-bridge";
+import {
+  type ReviewCliInstallStatus,
+  type ReviewDesktopVerbFrame,
+  parseJsonText,
+} from "@chalk/review-contracts";
 import { defineSoftwareMap } from "@review/software-map/software-map-model";
 // oxlint-disable no-restricted-imports -- Integration test imports the native app adapter alongside the canvas.
 import { createCanvasUi } from "@shell/canvas-ui";
@@ -198,7 +198,7 @@ async function setup(
         stale: false,
         updateNeeded: false,
         shim: {
-          path: "/tmp/blackboard",
+          path: "/tmp/chalk",
           installed: commandInstalled,
           profileConfigured: commandInstalled,
           onPath: false,
@@ -206,7 +206,7 @@ async function setup(
         cli: { path: "/tmp/cli.js", version: "0.2.0" },
 
         connect: {
-          command: "blackboard",
+          command: "chalk",
           args: ["mcp"],
           prompts: {
             claude: "Connect Claude",
@@ -238,7 +238,7 @@ async function setup(
 
       if (installFailures-- > 0)
         return Response.json(
-          { output: "Cannot write the blackboard command." },
+          { output: "Cannot write the chalk command." },
           { status: 500 },
         );
       commandInstalled = true;
@@ -724,11 +724,11 @@ test("delete confirmation settles on cancel, approval and owner disposal", async
 test("empty Home installs the command and unlocks agent setup and the tutorial", async () => {
   await setup([], null, true);
   await vi.waitFor(() =>
-    expect(container.textContent).toContain("Install blackboard in PATH"),
+    expect(container.textContent).toContain("Install chalk in PATH"),
   );
 
   const button = [...container.querySelectorAll("button")].find(
-    (button) => button.textContent === "Install blackboard in PATH",
+    (button) => button.textContent === "Install chalk in PATH",
   );
 
   await act(async () => button!.click());
@@ -757,18 +757,16 @@ test("empty Home installs the command and unlocks agent setup and the tutorial",
 test("failed command installation stays on setup and can be retried", async () => {
   await setup([], null, true, 1);
   await vi.waitFor(() =>
-    expect(container.textContent).toContain("Install blackboard in PATH"),
+    expect(container.textContent).toContain("Install chalk in PATH"),
   );
 
   const button = [...container.querySelectorAll("button")].find(
-    (button) => button.textContent === "Install blackboard in PATH",
+    (button) => button.textContent === "Install chalk in PATH",
   );
 
   await act(async () => button!.click());
   await vi.waitFor(() =>
-    expect(container.textContent).toContain(
-      "Cannot write the blackboard command.",
-    ),
+    expect(container.textContent).toContain("Cannot write the chalk command."),
   );
   expect(
     container.querySelector<HTMLButtonElement>(
@@ -780,7 +778,7 @@ test("failed command installation stays on setup and can be retried", async () =
     expect(container.textContent).toContain("Connect Claude"),
   );
   expect(container.textContent).not.toContain(
-    "Cannot write the blackboard command.",
+    "Cannot write the chalk command.",
   );
 });
 

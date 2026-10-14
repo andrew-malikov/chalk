@@ -1,7 +1,7 @@
 import { PassThrough } from "node:stream";
 
-import { ReviewApiClient } from "@blackboard/review-contracts";
-import { createReviewApi } from "@blackboard/server/review-api/http.js";
+import { ReviewApiClient } from "@chalk/review-contracts";
+import { createReviewApi } from "@chalk/server/review-api/http.js";
 import { ReviewStore } from "@review/node/review-api/store.js";
 import { describe, expect, it } from "vitest";
 
@@ -57,7 +57,7 @@ const initialize = {
   clientInfo: { name: "test", version: "1" },
 };
 
-describe("blackboard mcp instructions", () => {
+describe("chalk mcp instructions", () => {
   it("lists and answers while down, then serves guidance through a restart", async () => {
     let up = false;
     let connections = 0;
@@ -81,7 +81,7 @@ describe("blackboard mcp instructions", () => {
     const mcp = await startMcp(async () => {
       connections++;
 
-      if (!up) throw new Error("No Blackboard Desktop server is ready.");
+      if (!up) throw new Error("No Chalk Desktop server is ready.");
 
       return client;
     });
@@ -94,7 +94,7 @@ describe("blackboard mcp instructions", () => {
       const list = await mcp.request(2, "tools/list", {});
       expect(
         list.result.tools.map((tool: { name: string }) => tool.name),
-      ).toEqual(["session_get_instructions", "blackboard_status"]);
+      ).toEqual(["session_get_instructions", "chalk_status"]);
       const guidance = list.result.tools[0].description;
       expect(guidance).toContain("session_get_instructions");
       expect(guidance).toContain('topic:"scratchpad"');
@@ -105,7 +105,7 @@ describe("blackboard mcp instructions", () => {
       });
 
       expect(down.result.isError).toBeFalsy();
-      expect(down.result.content[0].text).toMatch(/^Blackboard is not running/);
+      expect(down.result.content[0].text).toMatch(/^Chalk is not running/);
 
       up = true;
 
@@ -114,7 +114,7 @@ describe("blackboard mcp instructions", () => {
         arguments: {},
       });
 
-      expect(live.result.content[0].text).toContain("rfc-style blackboard");
+      expect(live.result.content[0].text).toContain("rfc-style chalk");
       const liveList = await mcp.request(5, "tools/list", {});
       expect(liveList.result.tools[0].name).toBe("session_get_instructions");
       const preamble = guidance.split("\n\n")[0];
@@ -136,7 +136,7 @@ describe("blackboard mcp instructions", () => {
       });
 
       expect(restartedDown.result.content[0].text).toMatch(
-        /^Blackboard is not running/,
+        /^Chalk is not running/,
       );
       up = true;
 
@@ -172,7 +172,7 @@ describe("blackboard mcp instructions", () => {
     );
 
     const mcp = await startMcp(async () => {
-      if (!up) throw new Error("No Blackboard Desktop server is ready.");
+      if (!up) throw new Error("No Chalk Desktop server is ready.");
 
       return client;
     });
@@ -192,13 +192,13 @@ describe("blackboard mcp instructions", () => {
       up = true;
 
       const stale = await instructions(3);
-      expect(stale).toMatch(/^Blackboard is running now/);
+      expect(stale).toMatch(/^Chalk is running now/);
       expect(stale).toContain("reload");
-      expect(stale).toContain("rfc-style blackboard");
+      expect(stale).toContain("rfc-style chalk");
 
       await mcp.request(4, "tools/list", {});
 
-      expect(await instructions(5)).not.toMatch(/^Blackboard is running now/);
+      expect(await instructions(5)).not.toMatch(/^Chalk is running now/);
     } finally {
       await mcp.close();
       store.close();
@@ -252,7 +252,7 @@ describe("blackboard mcp instructions", () => {
 
       expect(invalid.result.isError).toBe(true);
       expect(invalid.result.content[0].text).not.toMatch(
-        /^Blackboard is not running/,
+        /^Chalk is not running/,
       );
 
       failInstruction = true;

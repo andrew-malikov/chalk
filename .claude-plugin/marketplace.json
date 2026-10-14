@@ -1,11 +1,11 @@
 {
-  "name": "devfast",
-  "owner": { "name": "dev.fast" },
+  "name": "chalk",
+  "owner": { "name": "chalk" },
   "plugins": [
     {
-      "name": "blackboard",
+      "name": "chalk",
       "source": "./packages/agent-plugins/claude",
-      "description": "Connect your agent to dev.fast Blackboard"
+      "description": "Connect your agent to Chalk"
     }
   ]
 }

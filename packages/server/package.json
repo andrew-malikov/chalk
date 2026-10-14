@@ -1,5 +1,5 @@
 {
-  "name": "@blackboard/server",
+  "name": "@chalk/server",
   "version": "0.2.0",
   "private": true,
   "license": "MIT",
@@ -10,19 +10,19 @@
     "./*": "./src/*.ts"
   },
   "scripts": {
-    "prebuild": "bun run --cwd ../.. build:workspace-deps && bun run --filter @blackboard/tutorial ensure:assets",
+    "prebuild": "bun run --cwd ../.. build:workspace-deps && bun run --filter @chalk/tutorial ensure:assets",
     "build": "bun --bun run tsdown",
-    "ensure:diffr": "bun run --filter @blackboard/review ensure:diffr",
-    "pretest": "bun run --filter @blackboard/tutorial ensure:assets",
+    "ensure:diffr": "bun run --filter @chalk/review ensure:diffr",
+    "pretest": "bun run --filter @chalk/tutorial ensure:assets",
     "test": "bun --bun run vitest run --config vitest.config.ts",
-    "test:integration:diffr": "bun run --cwd ../.. build:workspace-deps && bun run --filter @blackboard/server ensure:diffr --required && bun --bun run vitest run --config vitest.integration.config.ts",
+    "test:integration:diffr": "bun run --cwd ../.. build:workspace-deps && bun run --filter @chalk/server ensure:diffr --required && bun --bun run vitest run --config vitest.integration.config.ts",
     "typecheck": "bun --bun run tsc --noEmit -p ."
   },
   "dependencies": {
-    "@blackboard/json": "workspace:*",
-    "@blackboard/review": "workspace:*",
-    "@blackboard/review-contracts": "workspace:*",
-    "@blackboard/tutorial": "workspace:*",
+    "@chalk/json": "workspace:*",
+    "@chalk/review": "workspace:*",
+    "@chalk/review-contracts": "workspace:*",
+    "@chalk/tutorial": "workspace:*",
     "@dev.fast/diffr": "0.1.10",
     "hono": "4.13.7",
     "pino": "10.3.1",

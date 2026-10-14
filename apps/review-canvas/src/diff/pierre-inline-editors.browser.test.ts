@@ -1,5 +1,5 @@
-import type { ReviewInlineEditorHandle } from "@blackboard/review-contracts";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import type { ReviewInlineEditorHandle } from "@chalk/review-contracts";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { createPierreInlineEditors } from "./pierre-inline-editors";

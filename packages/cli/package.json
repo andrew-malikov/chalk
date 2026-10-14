@@ -1,5 +1,5 @@
 {
-  "name": "@blackboard/cli",
+  "name": "@chalk/cli",
   "version": "0.2.0",
   "private": false,
   "license": "MIT",
@@ -9,7 +9,7 @@
     "directory": "packages/cli"
   },
   "bin": {
-    "blackboard": "./dist/cli.js",
+    "chalk": "./dist/cli.js",
     "review": "./dist/cli.js",
     "whiteboard": "./dist/cli.js"
   },
@@ -30,7 +30,7 @@
     "prepack": "bun run build",
     "start": "bun src/cli.ts",
     "review": "bun src/cli.ts",
-    "blackboard": "bun src/cli.ts",
+    "chalk": "bun src/cli.ts",
     "test": "bun --bun run vitest run --config vitest.config.ts",
     "typecheck": "bun --bun run tsc --noEmit -p ."
   },
@@ -51,12 +51,12 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@blackboard/json": "workspace:*",
-    "@blackboard/local-vcs": "^0.1.0",
-    "@blackboard/mcp": "workspace:*",
-    "@blackboard/review": "workspace:*",
-    "@blackboard/review-contracts": "workspace:*",
-    "@blackboard/server": "workspace:*",
+    "@chalk/json": "workspace:*",
+    "@chalk/local-vcs": "^0.1.0",
+    "@chalk/mcp": "workspace:*",
+    "@chalk/review": "workspace:*",
+    "@chalk/review-contracts": "workspace:*",
+    "@chalk/server": "workspace:*",
     "@dev.fast/diffr": "0.1.10",
     "@types/node": "24.12.2",
     "isomorphic-git": "1.38.10",

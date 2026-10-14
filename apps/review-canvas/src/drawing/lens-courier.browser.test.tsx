@@ -1,4 +1,3 @@
-import { ReviewApiClient } from "@blackboard/review-contracts";
 import { ReviewDiffView } from "@canvas/diff/DiffView";
 import { reviewPreferenceKey } from "@canvas/host/review-client";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
@@ -13,6 +12,7 @@ import {
 } from "@canvas/review/review-root-context";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import { ReviewApiClient } from "@chalk/review-contracts";
 import type { Lens } from "@review/documents/diff-lenses";
 import type { ActivitySnapshot } from "@review/node/review-api/activity";
 import type { Snapshot } from "@review/node/review-api/store";

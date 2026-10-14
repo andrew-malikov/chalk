@@ -1,6 +1,6 @@
 {
-  "name": "blackboard",
+  "name": "chalk",
   "version": "0.1.0",
-  "description": "Connect your agent to dev.fast Blackboard",
-  "author": { "name": "dev.fast" }
+  "description": "Connect your agent to Chalk",
+  "author": { "name": "chalk" }
 }

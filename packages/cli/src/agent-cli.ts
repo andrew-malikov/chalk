@@ -5,13 +5,10 @@ import {
   connectReviewApi,
   connectReviewInstance,
   toolResultText,
-} from "@blackboard/mcp/agent-client.js";
-import { callPublicTool, publicTool } from "@blackboard/mcp/public-tools.js";
-import { RECOVERY } from "@blackboard/mcp/recovery.js";
-import {
-  type ReviewApiClient,
-  ReviewApiError,
-} from "@blackboard/review-contracts";
+} from "@chalk/mcp/agent-client.js";
+import { callPublicTool, publicTool } from "@chalk/mcp/public-tools.js";
+import { RECOVERY } from "@chalk/mcp/recovery.js";
+import { type ReviewApiClient, ReviewApiError } from "@chalk/review-contracts";
 import {
   REVIEW_INSTANCE_ENV,
   selectReviewInstance,
@@ -27,7 +24,7 @@ interface AgentCliInput {
 }
 
 export const reviewAgentCliHelp =
-  "blackboard api tools\nblackboard api <tool-name> '<json>'\nblackboard api <tool-name> -  (read JSON from stdin)\nblackboard mcp  (stdio MCP adapter; Blackboard Desktop or blackboard server start must be running)\nSelect headless state with DEV_REVIEW_SERVER_DIR or blackboard --state-dir <path> api/mcp.\n";
+  "chalk api tools\nchalk api <tool-name> '<json>'\nchalk api <tool-name> -  (read JSON from stdin)\nchalk mcp  (stdio MCP adapter; Chalk Desktop or chalk server start must be running)\nSelect headless state with DEV_REVIEW_SERVER_DIR or chalk --state-dir <path> api/mcp.\n";
 
 export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
   const env = input.env ?? process.env;
@@ -51,10 +48,10 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
     }
 
     if (extra.length || (mode === "mcp" && name))
-      throw new Error("Unexpected arguments. Use blackboard api --help.");
+      throw new Error("Unexpected arguments. Use chalk api --help.");
 
     if (mode === "mcp") {
-      const { serveReviewMcp } = await import("@blackboard/mcp/mcp.js");
+      const { serveReviewMcp } = await import("@chalk/mcp/mcp.js");
       await serveReviewMcp(
         (key) =>
           connectReviewInstance(
@@ -106,7 +103,7 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
     }
 
     if (name === "tools") {
-      if (json) throw new Error("blackboard api tools takes no input.");
+      if (json) throw new Error("chalk api tools takes no input.");
       input.stdout.write(JSON.stringify(tools, null, 2) + "\n");
 
       return 0;
@@ -115,9 +112,7 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
     const tool = tools.find((tool) => tool.name === name);
 
     if (!tool)
-      throw new Error(
-        `Unknown review tool: ${name}. Use blackboard api tools.`,
-      );
+      throw new Error(`Unknown review tool: ${name}. Use chalk api tools.`);
     let source = json ?? "{}";
 
     if (source === "-") {
@@ -149,4 +144,4 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
   }
 }
 
-import { isJsonObject, parseJsonText } from "@blackboard/json";
+import { isJsonObject, parseJsonText } from "@chalk/json";

@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
-import { git, gitCommonDir } from "@blackboard/local-vcs";
+import { git, gitCommonDir } from "@chalk/local-vcs";
 import { type Pins, ReviewInputError } from "@review/documents/document.js";
 import { errorMessage } from "@review/node/lib/error-message";
 import { processIsAlive } from "@review/node/lib/with-file-lock";
@@ -453,7 +453,7 @@ export class ReviewWorkspaces {
 
       const result = await git(
         repository,
-        ["config", "--null", "--get-all", "devfast.prepare"],
+        ["config", "--null", "--get-all", "chalk.prepare"],
         { allowFailure: true },
       );
 
@@ -495,7 +495,7 @@ export class ReviewWorkspaces {
       if (!commands.length) {
         environment.state = "unconfigured";
         environment.log =
-          "Configure dependencies with git config devfast.prepare '<command>'.";
+          "Configure dependencies with git config chalk.prepare '<command>'.";
       } else if (
         await markerMatches(reviewPrepareMarkerPath(checkout), commandsHash)
       ) {

@@ -2,11 +2,11 @@ import { spawn } from "node:child_process";
 import crypto from "node:crypto";
 import { readFile, rm, writeFile } from "node:fs/promises";
 
-import { jsonObject, parseJsonText } from "@blackboard/review-contracts";
+import { jsonObject, parseJsonText } from "@chalk/review-contracts";
 import { withFileLock } from "@review/node/lib/with-file-lock";
 
 // Dependency preparation for pinned worktrees. The repo owner configures the
-// commands once per clone (`git config devfast.prepare '<command>'`, the key
+// commands once per clone (`git config chalk.prepare '<command>'`, the key
 // is multi-valued and ordered); Review runs them opaquely with the worktree as
 // the working directory. A marker beside the worktree records the command-list
 // hash, so a tree prepares once per commit and re-prepares when the
@@ -166,7 +166,7 @@ export async function prepareReviewPinnedCheckout(
 
   if (!outcome.acquired) {
     input.warning?.(
-      `devfast.prepare skipped for commit ${input.commit.slice(0, 12)}: another process holds the prepare lock. Language features use the unprepared pinned checkout.`,
+      `chalk.prepare skipped for commit ${input.commit.slice(0, 12)}: another process holds the prepare lock. Language features use the unprepared pinned checkout.`,
     );
 
     return { prepared: false };
@@ -196,7 +196,7 @@ function formatPrepareFailure(input: {
   output: string | undefined;
   logNote: string;
 }): string {
-  const base = `devfast.prepare failed for commit ${input.commit.slice(0, 12)} (${input.exit}): ${input.command}. Language features use the unprepared pinned checkout.`;
+  const base = `chalk.prepare failed for commit ${input.commit.slice(0, 12)} (${input.exit}): ${input.command}. Language features use the unprepared pinned checkout.`;
   const output = input.output?.trimEnd();
 
   if (!output) return base;

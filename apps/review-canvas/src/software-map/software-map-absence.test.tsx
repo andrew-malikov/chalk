@@ -9,7 +9,7 @@ describe("software map absence surfaces", () => {
     const html = renderToStaticMarkup(<SoftwareMap />);
 
     expect(html).toContain("No software map for this repo yet");
-    expect(html).toContain("blackboard map");
+    expect(html).toContain("chalk map");
     expect(html).toContain("The rest of the document works without it");
   });
 

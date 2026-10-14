@@ -6,13 +6,13 @@ import {
   type ReviewVerbResponse,
   parseReviewDesktopVerbResult,
   parseReviewVerbRequest,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 
 const DEFAULT_VERB_TIMEOUT_MS = 45_000;
 
 const DEFAULT_MAX_CLIENTS = 16;
 
-const NOT_ATTACHED = "No Blackboard Desktop is attached.";
+const NOT_ATTACHED = "No Chalk Desktop is attached.";
 
 interface PendingVerb {
   resolve(response: ReviewVerbResponse): void;
@@ -98,7 +98,7 @@ export class GlobalReviewDesktopVerbRelay implements ReviewDesktopVerbRelay {
               verb,
               verb.lastFailure ?? {
                 ok: false,
-                error: "Blackboard Desktop verb timed out.",
+                error: "Chalk Desktop verb timed out.",
               },
             ),
           this.timeoutMs,
@@ -145,7 +145,7 @@ export class GlobalReviewDesktopVerbRelay implements ReviewDesktopVerbRelay {
     for (const verb of new Set(this.pending.values())) {
       this.settle(verb, {
         ok: false,
-        error: "Blackboard Desktop relay closed.",
+        error: "Chalk Desktop relay closed.",
       });
     }
 

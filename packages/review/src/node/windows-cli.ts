@@ -18,7 +18,7 @@ export function windowsCliShim(
 ): string {
   const lines = [
     "@echo off",
-    "rem Managed by Blackboard Desktop. Do not edit.",
+    "rem Managed by Chalk Desktop. Do not edit.",
     "setlocal DisableDelayedExpansion",
   ];
 
@@ -43,13 +43,13 @@ export async function updateWindowsUserPath(
   const script = `
 $ErrorActionPreference = 'Stop'
 $key = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Environment')
-$state = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\\dev.fast\\Whiteboard\\CLI')
+$state = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\\chalk\\Whiteboard\\CLI')
 try {
   $old = [string]$key.GetValue('Path', '', [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
-  $dir = $env:BLACKBOARD_COMMAND_DIRECTORY
+  $dir = $env:CHALK_COMMAND_DIRECTORY
   $entries = @($old.Split(';'))
   $matches = @($entries | Where-Object { [Environment]::ExpandEnvironmentVariables($_).TrimEnd('\\') -ieq $dir.TrimEnd('\\') })
-  if ($env:BLACKBOARD_REMOVE_COMMAND_PATH -eq '1') {
+  if ($env:CHALK_REMOVE_COMMAND_PATH -eq '1') {
     if ([string]$state.GetValue('Path', '') -ine $dir) { return }
     $entries = @($entries | Where-Object { [Environment]::ExpandEnvironmentVariables($_).TrimEnd('\\') -ine $dir.TrimEnd('\\') })
     $key.SetValue('Path', ($entries -join ';'), [Microsoft.Win32.RegistryValueKind]::ExpandString)
@@ -61,9 +61,9 @@ try {
     $key.SetValue('Path', $value, [Microsoft.Win32.RegistryValueKind]::ExpandString)
   }
 } finally { $state.Dispose(); $key.Dispose() }
-Add-Type -Namespace Blackboard -Name EnvironmentChange -MemberDefinition '[System.Runtime.InteropServices.DllImport("user32.dll", CharSet=System.Runtime.InteropServices.CharSet.Unicode)] public static extern System.IntPtr SendMessageTimeout(System.IntPtr h, uint m, System.UIntPtr w, string l, uint f, uint t, out System.UIntPtr r);'
+Add-Type -Namespace Chalk -Name EnvironmentChange -MemberDefinition '[System.Runtime.InteropServices.DllImport("user32.dll", CharSet=System.Runtime.InteropServices.CharSet.Unicode)] public static extern System.IntPtr SendMessageTimeout(System.IntPtr h, uint m, System.UIntPtr w, string l, uint f, uint t, out System.UIntPtr r);'
 $result = [UIntPtr]::Zero
-[void][Blackboard.EnvironmentChange]::SendMessageTimeout([IntPtr]0xffff, 0x1a, [UIntPtr]::Zero, 'Environment', 2, 5000, [ref]$result)
+[void][Chalk.EnvironmentChange]::SendMessageTimeout([IntPtr]0xffff, 0x1a, [UIntPtr]::Zero, 'Environment', 2, 5000, [ref]$result)
 `;
 
   await execFileAsync(
@@ -80,8 +80,8 @@ $result = [UIntPtr]::Zero
       windowsHide: true,
       env: {
         ...process.env,
-        BLACKBOARD_COMMAND_DIRECTORY: directory,
-        BLACKBOARD_REMOVE_COMMAND_PATH: remove ? "1" : "0",
+        CHALK_COMMAND_DIRECTORY: directory,
+        CHALK_REMOVE_COMMAND_PATH: remove ? "1" : "0",
       },
     },
   );

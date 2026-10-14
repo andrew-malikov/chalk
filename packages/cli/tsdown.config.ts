@@ -35,7 +35,7 @@ export default defineConfig({
   dts: false,
   deps: {
     alwaysBundle: [
-      /^@blackboard\//,
+      /^@chalk\//,
       /^@dev\.fast\/diffr$/,
       /^isomorphic-git$/,
       /^micromark-extension-math$/,

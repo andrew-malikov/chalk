@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { cp, mkdir, readFile, rename, rm } from "node:fs/promises";
 import path from "node:path";
 
-import { resolveRevision } from "@blackboard/local-vcs";
+import { resolveRevision } from "@chalk/local-vcs";
 import { documentSchema, resourceReferences } from "@review/documents/document";
 import { writePrivateJsonAtomic } from "@review/node/lib/atomic-write";
 import type { LocalReviewData } from "@review/node/review-api/local-data";

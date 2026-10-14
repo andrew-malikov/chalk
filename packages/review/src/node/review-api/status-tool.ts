@@ -1,9 +1,9 @@
 /** Listed by the MCP adapter even while no Desktop is reachable. Its public
  * name is kept: it names the app instance, not a session. */
 export const REVIEW_STATUS_TOOL = {
-  name: "blackboard_status",
+  name: "chalk_status",
   description:
-    "Name the Blackboard instance this session talks to: key (stable, preview or dev-<checkout>), channel, checkout, appVersion, cliVersion, instanceId, url, home and desktopAvailable. Call it before changing anything when the user mentions Preview, a checkout or a dev build.",
+    "Name the Chalk instance this session talks to: key (stable, preview or dev-<checkout>), channel, checkout, appVersion, cliVersion, instanceId, url, home and desktopAvailable. Call it before changing anything when the user mentions Preview, a checkout or a dev build.",
   inputSchema: { type: "object" as const, properties: {} },
   method: "GET" as const,
   path: "/status",

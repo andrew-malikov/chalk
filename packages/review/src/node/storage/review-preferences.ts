@@ -5,7 +5,7 @@ import {
   type JsonValue,
   isJsonObject,
   parseJsonText,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import { writePrivateJsonAtomic } from "@review/node/lib/atomic-write";
 
 import { devReviewHome } from "./review-home-paths";

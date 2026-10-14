@@ -1,15 +1,15 @@
-import {
-  type JsonValue,
-  type ReviewCanvasTutorialBridge,
-  parseJsonText,
-} from "@blackboard/review-contracts";
-import tutorialDocument from "@blackboard/tutorial/assets/document.json";
-import tutorialModel from "@blackboard/tutorial/assets/software-map.json";
 import { mountReviewCanvas as mount } from "@canvas/desktop-entry";
 import {
   fixtureReviewBridge,
   settled,
 } from "@canvas/test/fixture-review-bridge";
+import {
+  type JsonValue,
+  type ReviewCanvasTutorialBridge,
+  parseJsonText,
+} from "@chalk/review-contracts";
+import tutorialDocument from "@chalk/tutorial/assets/document.json";
+import tutorialModel from "@chalk/tutorial/assets/software-map.json";
 import {
   assignFreshIds,
   documentSchema,

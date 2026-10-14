@@ -1,6 +1,6 @@
-# Contributing to Blackboard
+# Contributing to Chalk
 
-Thanks for contributing to Blackboard. We welcome bug reports, fixes, and new
+Thanks for contributing to Chalk. We welcome bug reports, fixes, and new
 features. By participating, you agree to follow our
 [Code of Conduct](CODE_OF_CONDUCT.md).
 
@@ -19,15 +19,17 @@ Report security vulnerabilities privately as described in
 
 ## Setup
 
-Blackboard uses Bun 1.4.2 or newer and Hutch 0.27.1. The native desktop
+Chalk uses Bun 1.4.2 or newer and Hutch 0.27.1. The native desktop
 build currently requires macOS on Apple Silicon. With [mise](https://mise.jdx.dev/)
 installed, run from the repository root:
 
 ```sh
 mise run install
-open ~/Applications/Blackboard-dev.app
+open ~/Applications/Chalk-dev.app
 ```
 
+Set `HUTCH_INSTALL_URL` to the Hutch installer URL if Hutch 0.27.1 is not
+already installed. CI uses the repository variable of the same name.
 Mise installs the pinned Bun version, Hutch, and workspace dependencies before
 building. The installed development app uses this checkout and mise's Bun;
 keep both in place and rerun `mise run install` after changing the code or moving
@@ -38,19 +40,19 @@ Use `mise run dev` to build and launch directly from the checkout, or
 Bun 1.4.2 or newer and Hutch, then run:
 
 ```sh
-curl -fsSL https://hutch.blackboard.sh/hutch/install.sh | bash -s -- --version 0.27.1
+curl -fsSL "${HUTCH_INSTALL_URL:?Set HUTCH_INSTALL_URL to the Hutch installer URL}" | bash -s -- --version 0.27.1
 bun install
 bun dev
 ```
 
 The desktop uses `~/.dev-fast/review-electrobun` by default. To use an existing
-profile, set `DEV_REVIEW_HOME` when starting it. Run `blackboard instances` to
-see running apps and `blackboard instances use <key>` to select one for the
+profile, set `DEV_REVIEW_HOME` when starting it. Run `chalk instances` to
+see running apps and `chalk instances use <key>` to select one for the
 CLI and your agent. Reconnect the MCP server after switching.
 
 ## Repository layout
 
-Blackboard is split into application hosts and shared packages.
+Chalk is split into application hosts and shared packages.
 
 | Location | Owns |
 | --- | --- |
@@ -96,13 +98,13 @@ browser once, then run the headless suite or watch mode:
 cd apps/review-canvas
 bun --bun run playwright install chromium
 cd ../..
-bun run --filter @blackboard/review-canvas test:browser
-bun run --filter @blackboard/review-canvas test:browser:watch
+bun run --filter @chalk/review-canvas test:browser
+bun run --filter @chalk/review-canvas test:browser:watch
 ```
 
-Document rule tests run through `bun run --filter @blackboard/review test`.
-Filesystem and server tests run through `bun run --filter @blackboard/server test`.
-Run `bun run --filter @blackboard/server test:integration:diffr` to check the
+Document rule tests run through `bun run --filter @chalk/review test`.
+Filesystem and server tests run through `bun run --filter @chalk/server test`.
+Run `bun run --filter @chalk/server test:integration:diffr` to check the
 bundled diffr binary and repository comparisons.
 
 Test behavior, not implementation. Do not add

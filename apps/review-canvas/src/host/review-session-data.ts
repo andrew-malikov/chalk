@@ -1,4 +1,4 @@
-import type { GitLabIdentity } from "@blackboard/review-contracts";
+import type { GitLabIdentity } from "@chalk/review-contracts";
 
 export interface ReviewSessionData {
   /** Absent for a review. The scratchpad hides review-only chrome. */

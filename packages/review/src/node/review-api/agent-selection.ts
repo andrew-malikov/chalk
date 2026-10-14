@@ -1,7 +1,7 @@
 import {
   ReviewApiSelectionSourceSchema,
   ReviewSelectedDiffSchema,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import { z } from "zod";
 
 /** A semantic selection, independent of comment/thread creation. */

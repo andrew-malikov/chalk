@@ -560,14 +560,14 @@ async function jjWorkingCopyCommitIds(rootPath: string): Promise<string[]> {
 // Sharing
 // ---------------------------------------------------------------------------
 
-export const DEV_FAST_NOTES_GLOB = "refs/notes/dev-fast/*";
+export const CHALK_NOTES_GLOB = "refs/notes/dev-fast/*";
 
-export const DEV_FAST_REMOTE_NOTES_PREFIX = "refs/notes/dev-fast/remote/";
+export const CHALK_REMOTE_NOTES_PREFIX = "refs/notes/dev-fast/remote/";
 
-export const DEV_FAST_NOTES_FETCH_REFSPEC =
+export const CHALK_NOTES_FETCH_REFSPEC =
   "+refs/notes/dev-fast/*:refs/notes/dev-fast/remote/*";
 
-export const DEV_FAST_NOTES_REMOTE_CONFIG = "devFast.notesRemote";
+export const CHALK_NOTES_REMOTE_CONFIG = "chalk.notesRemote";
 
 export async function notesRemote(
   rootPath: string,
@@ -579,7 +579,7 @@ export async function notesRemote(
 
   const configured = await git(
     rootPath,
-    ["config", "--get", DEV_FAST_NOTES_REMOTE_CONFIG],
+    ["config", "--get", CHALK_NOTES_REMOTE_CONFIG],
     { allowFailure: true },
   );
 
@@ -600,11 +600,7 @@ export function notesRemoteSync(
     return (
       execFileSyncObserved(
         "git",
-        gitArgsSync(rootPath, [
-          "config",
-          "--get",
-          DEV_FAST_NOTES_REMOTE_CONFIG,
-        ]),
+        gitArgsSync(rootPath, ["config", "--get", CHALK_NOTES_REMOTE_CONFIG]),
         { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
       ).trim() || "origin"
     );
@@ -615,7 +611,7 @@ export function notesRemoteSync(
 
 /** Local notes ref → the remote/* namespace it fetches into. */
 export function remoteNotesRef(localRef: string): string {
-  return localRef.replace("refs/notes/dev-fast/", DEV_FAST_REMOTE_NOTES_PREFIX);
+  return localRef.replace("refs/notes/dev-fast/", CHALK_REMOTE_NOTES_PREFIX);
 }
 
 /**
@@ -791,7 +787,7 @@ async function reconcileNotesRefWithRemote(input: {
 
 /**
  * Fetch teammates' dev-fast notes into the remote/* namespace. Honors the
- * `devFast.fetchNotes` git config kill-switch: when it parses to false the
+ * `chalk.fetchNotes` git config kill-switch: when it parses to false the
  * fetch is skipped without touching the network and the result reports
  * `skipped: true`. Unset (or unparseable) config fetches as usual.
  */
@@ -809,7 +805,7 @@ export async function fetchNotes(input: {
 
   const fetched = await git(
     input.rootPath,
-    ["fetch", remote, DEV_FAST_NOTES_FETCH_REFSPEC],
+    ["fetch", remote, CHALK_NOTES_FETCH_REFSPEC],
     { allowFailure: true, signal: input.signal },
   );
 
@@ -823,7 +819,7 @@ export async function notesFetchDisabled(rootPath: string): Promise<boolean> {
   // or unparseable value fails the lookup and keeps fetching enabled.
   const config = await git(
     rootPath,
-    ["config", "--type=bool", "--get", "devFast.fetchNotes"],
+    ["config", "--type=bool", "--get", "chalk.fetchNotes"],
     { allowFailure: true },
   );
 
@@ -839,7 +835,7 @@ export function notesFetchDisabledSync(rootPath: string): boolean {
           "config",
           "--type=bool",
           "--get",
-          "devFast.fetchNotes",
+          "chalk.fetchNotes",
         ]),
         { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
       ).trim() === "false"
@@ -879,10 +875,10 @@ export async function ensureNotesConfig(input: {
     { allowFailure: true },
   );
 
-  if (!rewriteRef.stdout.split("\n").includes(DEV_FAST_NOTES_GLOB)) {
+  if (!rewriteRef.stdout.split("\n").includes(CHALK_NOTES_GLOB)) {
     await git(
       input.rootPath,
-      ["config", "--add", "notes.rewriteRef", DEV_FAST_NOTES_GLOB],
+      ["config", "--add", "notes.rewriteRef", CHALK_NOTES_GLOB],
       { allowFailure: true },
     );
   }
@@ -891,7 +887,7 @@ export async function ensureNotesConfig(input: {
     allowFailure: true,
   });
 
-  // The devFast.fetchNotes kill-switch also gates *installing* the fetch
+  // The chalk.fetchNotes kill-switch also gates *installing* the fetch
   // refspec, or every ordinary `git fetch` would keep pulling notes despite
   // the switch. Don't memoize while disabled: flipping the switch back on
   // must let a later call install the refspec.
@@ -906,16 +902,11 @@ export async function ensureNotesConfig(input: {
 
   if (
     remoteFetch.ok &&
-    !remoteFetch.stdout.split("\n").includes(DEV_FAST_NOTES_FETCH_REFSPEC)
+    !remoteFetch.stdout.split("\n").includes(CHALK_NOTES_FETCH_REFSPEC)
   ) {
     await git(
       input.rootPath,
-      [
-        "config",
-        "--add",
-        `remote.${remote}.fetch`,
-        DEV_FAST_NOTES_FETCH_REFSPEC,
-      ],
+      ["config", "--add", `remote.${remote}.fetch`, CHALK_NOTES_FETCH_REFSPEC],
       { allowFailure: true },
     );
   }
@@ -948,9 +939,9 @@ export function ensureNotesConfigSync(input: { rootPath: string }): void {
   if (
     !config(["--get-all", "notes.rewriteRef"])
       .split("\n")
-      .includes(DEV_FAST_NOTES_GLOB)
+      .includes(CHALK_NOTES_GLOB)
   ) {
-    config(["--add", "notes.rewriteRef", DEV_FAST_NOTES_GLOB]);
+    config(["--add", "notes.rewriteRef", CHALK_NOTES_GLOB]);
   }
 
   config(["notes.rewriteMode", "overwrite"]);
@@ -963,9 +954,9 @@ export function ensureNotesConfigSync(input: { rootPath: string }): void {
 
   if (
     remoteFetch.trim() !== "" &&
-    !remoteFetch.split("\n").includes(DEV_FAST_NOTES_FETCH_REFSPEC)
+    !remoteFetch.split("\n").includes(CHALK_NOTES_FETCH_REFSPEC)
   ) {
-    config(["--add", `remote.${remote}.fetch`, DEV_FAST_NOTES_FETCH_REFSPEC]);
+    config(["--add", `remote.${remote}.fetch`, CHALK_NOTES_FETCH_REFSPEC]);
   }
 }
 

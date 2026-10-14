@@ -1,10 +1,3 @@
-import {
-  REVIEW_DISCORD_URL,
-  type ReviewCanvasInstallContent,
-  type ReviewCanvasOnboarding,
-  type ReviewCanvasSetupActions,
-  type ReviewCliInstallStatus,
-} from "@blackboard/review-contracts";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { newTabLinkProps } from "@canvas/documents/link-props";
 import { welcomeType } from "@canvas/home/welcome-page.stylex";
@@ -17,6 +10,13 @@ import { Button } from "@canvas/ui/button";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { CheckIcon, DisclosureChevron } from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
+import {
+  REVIEW_DISCORD_URL,
+  type ReviewCanvasInstallContent,
+  type ReviewCanvasOnboarding,
+  type ReviewCanvasSetupActions,
+  type ReviewCliInstallStatus,
+} from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { Check } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
@@ -26,8 +26,7 @@ import { homeStyles } from "./home-styles";
 import { PromptCard } from "./prompt-card";
 import { promptStyles } from "./prompt-styles";
 
-export const REVIEW_CONNECT_COPIED_STORAGE_KEY =
-  "dev.fast.review.connectCopied";
+export const REVIEW_CONNECT_COPIED_STORAGE_KEY = "chalk.review.connectCopied";
 
 /** Long enough for a finished step's check to draw before the next opens. */
 export const STEP_ADVANCE_DELAY_MS = 900;
@@ -101,7 +100,7 @@ export function WelcomePage({
 
     if (cliInstallReady(next.status))
       setFinishing({
-        from: "Install the blackboard command",
+        from: "Install the chalk command",
         to: "Connect your agents",
       });
     setCardStatus(undefined);
@@ -111,7 +110,7 @@ export function WelcomePage({
   const updating = status?.updateNeeded ?? false;
   const cliBuildMissing = status?.cli === null && !installed;
 
-  // Blackboard cannot see agent configs, so a copied prompt or command is the
+  // Chalk cannot see agent configs, so a copied prompt or command is the
   // closest signal that an agent got connected.
   const [connectCopied, setConnectCopied] = useState(readConnectCopied);
   const [updateFinished, setUpdateFinished] = useState(false);
@@ -135,34 +134,34 @@ export function WelcomePage({
   const tourChecked = onboarding?.tutorialChecked ?? 0;
   const tourTotal = onboarding?.tutorialTotal ?? 0;
 
-  const installDone = finishing?.from === "Install the blackboard command";
+  const installDone = finishing?.from === "Install the chalk command";
 
   const installOffered =
     setupActions !== undefined && !installed && !cliBuildMissing;
 
   const installStep: WelcomeStep = {
-    title: "Install the blackboard command",
+    title: "Install the chalk command",
     done: installed,
     body: (
       <>
         <p {...stylex.props(styles.hint)}>
           {installed ? (
-            `Installed at ${status?.shim.path ?? "~/.local/bin/blackboard"}.`
+            `Installed at ${status?.shim.path ?? "~/.local/bin/chalk"}.`
           ) : cliBuildMissing ? (
             <>
               CLI build missing. If you’re running from source, run{" "}
               <code {...stylex.props(styles.hintCode)}>
-                bun run --filter @blackboard/cli build
+                bun run --filter @chalk/cli build
               </code>{" "}
-              from the repository root, then restart Blackboard. Otherwise,
-              reinstall Blackboard.
+              from the repository root, then restart Chalk. Otherwise, reinstall
+              Chalk.
             </>
           ) : status?.shim.installed ? (
             pathHint(status.shim.path)
           ) : (
             <>
-              The <code {...stylex.props(styles.hintCode)}>blackboard</code> CLI
-              lets your agents talk to Blackboard
+              The <code {...stylex.props(styles.hintCode)}>chalk</code> CLI lets
+              your agents talk to Chalk
             </>
           )}
         </p>
@@ -180,7 +179,7 @@ export function WelcomePage({
               })
             }
           >
-            Install blackboard in PATH
+            Install chalk in PATH
           </Button>
         ) : null}
         {setupActions &&
@@ -309,7 +308,7 @@ export function WelcomePage({
           <div {...stylex.props(styles.columns)}>
             <div {...stylex.props(styles.intro)}>
               <span {...stylex.props(textStyles.eyebrow, styles.kicker)}>
-                Welcome to Blackboard
+                Welcome to Chalk
               </span>
               {updating ? (
                 <>
@@ -319,11 +318,11 @@ export function WelcomePage({
                       styles.headline,
                     )}
                   >
-                    Blackboard now connects to your agents over MCP
+                    Chalk now connects to your agents over MCP
                   </h1>
                   <p {...stylex.props(styles.sub)}>
-                    Install the Blackboard plugin or add its MCP server to each
-                    agent you use.
+                    Install the Chalk plugin or add its MCP server to each agent
+                    you use.
                   </p>
                 </>
               ) : (
@@ -426,13 +425,6 @@ export function WelcomePage({
               {...newTabLinkProps(REVIEW_DISCORD_URL)}
             >
               Discord
-            </a>{" "}
-            or ping us at{" "}
-            <a
-              {...stylex.props(styles.feedbackLink)}
-              href="mailto:founders@dev.fast"
-            >
-              founders@dev.fast
             </a>
             .
           </p>

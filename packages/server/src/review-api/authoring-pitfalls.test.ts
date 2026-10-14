@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { type JsonValue, parseJsonText } from "@blackboard/review-contracts";
+import { type JsonValue, parseJsonText } from "@chalk/review-contracts";
 import { type Pins, elements } from "@review/documents/document.js";
 import { selectSource } from "@review/documents/lens-selection.js";
 import {
@@ -40,7 +40,7 @@ interface Reply {
   body: { error?: string; targetId?: string; reviewId?: string };
 }
 
-/** Post a command the way `blackboard mcp` does and return status and body. */
+/** Post a command the way `chalk mcp` does and return status and body. */
 async function post(route: string, body: JsonValue): Promise<Reply> {
   const response = await app.request(route, {
     method: "POST",

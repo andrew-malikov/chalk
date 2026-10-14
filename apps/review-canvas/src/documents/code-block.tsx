@@ -296,7 +296,7 @@ const styles = stylex.create({
   },
 });
 
-// Syntax tokens (@speed-highlight/core). The Blackboard palette: ink at three
+// Syntax tokens (@speed-highlight/core). The Chalk palette: ink at three
 // strengths, the marker for keywords, two more blues for types and functions,
 // one warm pencil for strings and one plum for numbers. Comments are quiet and
 // italic. Diff green and red are reserved for the diff language. The editor

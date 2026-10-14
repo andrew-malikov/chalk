@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { ReviewApiClient } from "@blackboard/review-contracts";
+import { ReviewApiClient } from "@chalk/review-contracts";
 import { ReviewStore } from "@review/node/review-api/store";
 import { expect, it, vi } from "vitest";
 

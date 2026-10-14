@@ -1,6 +1,6 @@
 # Telemetry
 
-Blackboard does not collect or send product telemetry. Usage tracking,
+Chalk does not collect or send product telemetry. Usage tracking,
 automatic error reports, crash uploads, and the PostHog transport have been
 removed from the app and CLI. There is no telemetry setting or opt-out
 environment variable to configure.

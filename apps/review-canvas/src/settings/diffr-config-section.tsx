@@ -1,11 +1,4 @@
 import {
-  type JsonValue,
-  type ReviewDiffrConfig,
-  type ReviewDiffrConfigActions,
-  type ReviewDiffrSummarizerInput,
-  isJsonObject,
-} from "@blackboard/review-contracts";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -18,6 +11,13 @@ import { Switch } from "@canvas/components/ui/switch";
 import { Textarea } from "@canvas/components/ui/textarea";
 import { Button } from "@canvas/ui/button";
 import { TextField, fieldStyles } from "@canvas/ui/text-field";
+import {
+  type JsonValue,
+  type ReviewDiffrConfig,
+  type ReviewDiffrConfigActions,
+  type ReviewDiffrSummarizerInput,
+  isJsonObject,
+} from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 

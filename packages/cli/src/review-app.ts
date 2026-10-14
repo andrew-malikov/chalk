@@ -3,7 +3,7 @@ import type { Writable } from "node:stream";
 import {
   ReviewApiClient,
   type ReviewApiSummary,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import {
   type ReviewInstanceSelection,
   healthyReviewInstance,
@@ -29,7 +29,7 @@ interface ReviewAppRuntime {
 export interface RunReviewAppInput {
   cwd: string;
   reviewUuid?: string;
-  /** Bring Blackboard Desktop forward. */
+  /** Bring Chalk Desktop forward. */
   focus?: boolean;
   stdin: NodeJS.ReadStream;
   stdout: Writable;
@@ -58,7 +58,7 @@ export async function runReviewAppPick(
     ...overrides,
   };
 
-  // Only `blackboard app launch` may recover a stale or incompatible record; the
+  // Only `chalk app launch` may recover a stale or incompatible record; the
   // other verbs report the diagnosis rather than start a second Desktop. No
   // record at all means nothing is running, which launching does fix.
   let selection = await runtime.selectInstance();
@@ -90,7 +90,7 @@ export async function runReviewAppPick(
   } else {
     if (!input.stdin.isTTY)
       throw new Error(
-        "blackboard app pick needs a terminal without --session. Pass --session <uuid> or run it in a terminal.",
+        "chalk app pick needs a terminal without --session. Pass --session <uuid> or run it in a terminal.",
       );
     const root = await runtime.resolveReviewRoot(input.cwd);
 

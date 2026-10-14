@@ -1,6 +1,6 @@
-import type { ReviewView } from "@blackboard/review-contracts";
+import type { ReviewView } from "@chalk/review-contracts";
 
-export type { ReviewView } from "@blackboard/review-contracts";
+export type { ReviewView } from "@chalk/review-contracts";
 
 /** The views a canvas offers, in switcher order. */
 export function offeredReviewViews({
@@ -24,7 +24,7 @@ export function reviewViewLabel(view: ReviewView): string {
 
   if (view === "commits") return "Commits";
 
-  return "Blackboard";
+  return "Chalk";
 }
 
 export function shouldCloseSidePeekForReviewView(view: ReviewView): boolean {

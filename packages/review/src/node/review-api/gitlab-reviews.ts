@@ -9,7 +9,7 @@ import type {
   GitLabRefs,
   GitLabState,
   GitLabTarget,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import { type Pins, ReviewInputError } from "@review/documents/document.js";
 import { devReviewHome } from "@review/node/storage/review-home-paths.js";
 
@@ -38,7 +38,7 @@ export class GitLabReviews {
     this.run = options.run ?? runGitLabCommand;
     this.root = path.resolve(
       options.cloneRoot ??
-        process.env.BLACKBOARD_GITLAB_CLONES_DIR ??
+        process.env.CHALK_GITLAB_CLONES_DIR ??
         path.join(devReviewHome(), "gitlab-clones"),
     );
   }

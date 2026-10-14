@@ -10,7 +10,7 @@ import { describe, expect, it, vi } from "vitest";
 import { runReviewCli } from "./cli-runner";
 import { runReviewAppPick as runReviewAppActual } from "./review-app";
 
-describe("Blackboard CLI", () => {
+describe("Chalk CLI", () => {
   it.each(["cursor", "unknown"])(
     "rejects an unsupported connection target: %s",
     async (target) => {
@@ -129,7 +129,7 @@ describe("Blackboard CLI", () => {
           stderr: outputStream(),
         }),
       ).resolves.toBe(0);
-      expect(output).toContain("blackboard api tools");
+      expect(output).toContain("chalk api tools");
     },
   );
 
@@ -297,7 +297,7 @@ it("rejects retired trace commands through the ordinary command parser", async (
         argv,
         stdout,
         stderr,
-        env: { HOME: "/tmp/nonexistent-blackboard-test-home" },
+        env: { HOME: "/tmp/nonexistent-chalk-test-home" },
       }),
     ).toBe(1);
     expect(output).toMatch(/unknown command/);

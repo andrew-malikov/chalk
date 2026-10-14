@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { safeStorageSegment } from "@review/node/storage/review-home-paths";
 
-import { devFastGitDir } from "./repository-paths";
+import { chalkGitDir } from "./repository-paths";
 
 export type ReviewCheckoutRole = "head" | "base";
 
@@ -10,7 +10,7 @@ export type ReviewCheckoutRole = "head" | "base";
  * Root for Review-owned checkouts. A Review UUID identifies one subtree.
  */
 export function reviewManagedCheckoutsDir(gitCommonDir: string): string {
-  return path.join(devFastGitDir(gitCommonDir), "reviews");
+  return path.join(chalkGitDir(gitCommonDir), "reviews");
 }
 
 /** Return the checkout subtree owned by one Review UUID. */

@@ -47,7 +47,7 @@ try {
   console.log(
     `Production dependency audit passed (${dependencyCount} unique packages).`,
   );
-  const pkgRoot = path.join(prefix, "node_modules/@blackboard/cli");
+  const pkgRoot = path.join(prefix, "node_modules/@chalk/cli");
 
   const pkg = JSON.parse(
     await readFile(path.join(pkgRoot, "package.json"), "utf8"),
@@ -67,12 +67,12 @@ try {
     await access(path.join(pkgRoot, file));
   await assert.rejects(access(path.join(pkgRoot, "app")));
   await assert.rejects(access(path.join(pkgRoot, "skills")));
-  const cli = path.join(prefix, "node_modules/.bin/blackboard");
+  const cli = path.join(prefix, "node_modules/.bin/chalk");
 
   const env = {
     ...process.env,
     PATH: `${path.join(prefix, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`,
-    DEV_FAST_REVIEW_CLI_NO_DELEGATE: "1",
+    CHALK_REVIEW_CLI_NO_DELEGATE: "1",
     DEV_REVIEW_HOME: path.join(root, "profile"),
     DEV_REVIEW_SERVER_DIR: path.join(root, "server"),
     HOME: path.join(root, "home"),

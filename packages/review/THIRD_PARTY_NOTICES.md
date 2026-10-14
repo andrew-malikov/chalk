@@ -1,7 +1,7 @@
 # Third-Party Notices
 
 This file records third-party license considerations for
-`@blackboard/review`. Before publishing to npm, distributing as source, or
+`@chalk/review`. Before publishing to npm, distributing as source, or
 shipping as a built app, inspect the installed manifests and refresh this file from the current Bun lockfile:
 
 ```sh

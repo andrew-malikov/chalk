@@ -1,4 +1,3 @@
-import { type JsonValue, isStringValue } from "@blackboard/review-contracts";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { NativeSelect } from "@canvas/components/ui/native-select";
 import { drawStyles } from "@canvas/drawing/draw-styles";
@@ -22,6 +21,7 @@ import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Chip } from "@canvas/ui/chip";
 import { EmptyState } from "@canvas/ui/empty-state";
+import { type JsonValue, isStringValue } from "@chalk/review-contracts";
 import type { ReviewComponentProps } from "@review/documents/authoring";
 import type {
   DatabaseField,

@@ -1,8 +1,3 @@
-import {
-  type ReviewCanvasRange,
-  type ReviewCommitSummary,
-  type ReviewDocumentWidthChoice,
-} from "@blackboard/review-contracts";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import {
   Popover,
@@ -14,6 +9,11 @@ import { Choice } from "@canvas/settings/settings-choice";
 import { Button, IconButton } from "@canvas/ui/button";
 import { StatusBanner } from "@canvas/ui/status-banner";
 import { textStyles } from "@canvas/ui/text";
+import {
+  type ReviewCanvasRange,
+  type ReviewCommitSummary,
+  type ReviewDocumentWidthChoice,
+} from "@chalk/review-contracts";
 import {
   type SoftwareMapTopologyDiff,
   diffSoftwareMaps,
@@ -538,7 +538,7 @@ function ReviewLayoutContent({
                   >
                     {view === "review" ? (
                       <ReviewSurfaceLabel
-                        label={scratchpad ? "Scratchpad" : "Blackboard"}
+                        label={scratchpad ? "Scratchpad" : "Chalk"}
                         hasContent={document.empty === false}
                         active={activeView === "review"}
                       />

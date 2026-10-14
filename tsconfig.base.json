@@ -12,11 +12,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "paths": {
-      "@blackboard/tutorial/assets/*": ["./packages/tutorial/assets/*"],
-      "@blackboard/tutorial/*": ["./packages/tutorial/src/*"],
-      "@blackboard/server/*": ["./packages/server/src/*"],
-      "@blackboard/mcp/*": ["./packages/mcp/src/*"],
-      "@blackboard/*": ["./packages/*/src"],
+      "@chalk/tutorial/assets/*": ["./packages/tutorial/assets/*"],
+      "@chalk/tutorial/*": ["./packages/tutorial/src/*"],
+      "@chalk/server/*": ["./packages/server/src/*"],
+      "@chalk/mcp/*": ["./packages/mcp/src/*"],
+      "@chalk/*": ["./packages/*/src"],
       // Source aliases; Vite and Vitest mirror them in scripts/test-config.ts.
       "@review/*": ["./packages/review/src/*"],
       "@cli/*": ["./packages/cli/src/*"],

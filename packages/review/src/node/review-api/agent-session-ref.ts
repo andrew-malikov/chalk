@@ -7,7 +7,7 @@ export interface SessionRef {
 
 export type EnvironmentValues = Readonly<Record<string, string | undefined>>;
 
-export const AUTHORING_AGENT_SESSION_ENV = "DEV_FAST_AGENT_SESSION";
+export const AUTHORING_AGENT_SESSION_ENV = "CHALK_AGENT_SESSION";
 
 export function authoringSessionKey(ref: SessionRef): string {
   return `${ref.harness}:${ref.sessionId}`;

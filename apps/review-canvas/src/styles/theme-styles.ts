@@ -176,7 +176,7 @@ export const themeStyles = stylex.create({
     "--review-home-rule": "var(--rule)",
     "--review-home-rule-soft": "var(--rule-soft)",
     "--review-home-meta": "#525252",
-    // Code (Blackboard Light): petrol and navy for types and functions, sepia
+    // Code (Chalk Light): petrol and navy for types and functions, sepia
     // strings, plum numbers; inserted and deleted sit one step deeper than the
     // change colors so they hold AA as text on white.
     "--syntax-comment": "#6b7382",

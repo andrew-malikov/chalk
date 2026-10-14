@@ -1,7 +1,7 @@
 {
   "mcpServers": {
-    "blackboard": {
-      "command": "./bin/blackboard-mcp",
+    "chalk": {
+      "command": "./bin/chalk-mcp",
       "cwd": "."
     }
   }

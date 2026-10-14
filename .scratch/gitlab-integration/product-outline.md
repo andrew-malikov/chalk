@@ -6,13 +6,13 @@ Agreed product outline, 2026-10-07. [Decision map](map.md) and its tickets hold 
 
 Support both MR authors responding to feedback and reviewers starting discussions, on GitLab.com and self-hosted GitLab.
 
-A Local review keeps today's MCP-created review workflow and has no GitLab discussions. A GitLab MR review is created through MCP from an MR URL. Blackboard clones the repository into an independent managed location and owns source updates there. Repeated creation for the same MR reopens the existing review with its document and drafts.
+A Local review keeps today's MCP-created review workflow and has no GitLab discussions. A GitLab MR review is created through MCP from an MR URL. Chalk clones the repository into an independent managed location and owns source updates there. Repeated creation for the same MR reopens the existing review with its document and drafts.
 
 The clone location is configurable. Documents and drafts live in durable app state separately from the clone, so source-cache cleanup does not discard the review. The user's editing repositories are outside this workflow.
 
 ## Connection
 
-Use existing glab authentication for the MR's host and working Git credentials for private clone/fetch, through SSH or HTTPS. Blackboard shows the posting account. Authentication failures preserve local state and explain what needs reconnecting.
+Use existing glab authentication for the MR's host and working Git credentials for private clone/fetch, through SSH or HTTPS. Chalk shows the posting account. Authentication failures preserve local state and explain what needs reconnecting.
 
 ## Discussions
 
@@ -28,7 +28,7 @@ Provide Post on each draft and Post all to attempt every unsent draft in the rev
 
 ## Refresh
 
-Refresh on opening the review and explicit Refresh; background polling is not required. Blackboard fetches and advances its managed review repository when safe, preserving saved state if advancement cannot complete.
+Refresh on opening the review and explicit Refresh; background polling is not required. Chalk fetches and advances its managed review repository when safe, preserving saved state if advancement cannot complete.
 
 Keep draft text when the MR changes. Automatically remap inline draft locations where correspondence is clear; keep unmappable drafts saved and visibly flagged. Replies retain their discussion identity. Remapping does not publish drafts.
 

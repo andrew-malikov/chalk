@@ -2,8 +2,8 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { GlobalReviewDesktopVerbRelay } from "@blackboard/server/global-verb-relay";
-import { createReviewServerApp } from "@blackboard/server/review-server-core";
+import { GlobalReviewDesktopVerbRelay } from "@chalk/server/global-verb-relay";
+import { createReviewServerApp } from "@chalk/server/review-server-core";
 import { cliInstallStampPath } from "@review/node/cli-install";
 import { afterEach, expect, it, vi } from "vitest";
 

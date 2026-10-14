@@ -1,7 +1,3 @@
-import type {
-  ReviewFindQuery,
-  ReviewInlineEditorHandle,
-} from "@blackboard/review-contracts";
 import { documentStyles } from "@canvas/documents/document-styles";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import {
@@ -13,6 +9,10 @@ import {
 import { shellStyles } from "@canvas/styles/shell-styles";
 import { withClass } from "@canvas/styles/stylex-props";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import type {
+  ReviewFindQuery,
+  ReviewInlineEditorHandle,
+} from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { act, useLayoutEffect, useMemo, useRef } from "react";
 import { createRoot } from "react-dom/client";

@@ -3,7 +3,7 @@ import {
   isJsonObject,
   jsonProperty,
   jsonString,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 
 interface DesktopHostMessagePort {
   on(event: "message", listener: (event: { data: JsonValue }) => void): void;

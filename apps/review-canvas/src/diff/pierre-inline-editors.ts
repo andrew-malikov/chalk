@@ -1,3 +1,4 @@
+import type { ReviewSession } from "@canvas/host/review-session";
 import type {
   ReviewDiffFileWire,
   ReviewDiffProgress,
@@ -5,8 +6,7 @@ import type {
   ReviewInlineEditorFactory,
   ReviewInlineEditorSpec,
   ReviewInlineFindSpec,
-} from "@blackboard/review-contracts";
-import type { ReviewSession } from "@canvas/host/review-session";
+} from "@chalk/review-contracts";
 import { FileDiff, type FileDiffMetadata } from "@pierre/diffs";
 
 import {

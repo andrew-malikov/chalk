@@ -1,4 +1,3 @@
-import type { ReviewDiffLayout } from "@blackboard/review-contracts";
 import { useCanvasMenu } from "@canvas/host/canvas-ui";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useTooltip } from "@canvas/lib/use-tooltip";
@@ -6,6 +5,7 @@ import { controlStyles } from "@canvas/styles/controls-styles";
 import { shellStyles } from "@canvas/styles/shell-styles";
 import { IconButton } from "@canvas/ui/button";
 import { SlidersIcon } from "@canvas/ui/icons";
+import type { ReviewDiffLayout } from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import {
   type ReactElement,

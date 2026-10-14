@@ -155,8 +155,8 @@
         "no-restricted-imports": [
           "error",
           {
-            "paths": ["@blackboard/review"],
-            "patterns": ["@blackboard/review/*", "**/review/**"]
+            "paths": ["@chalk/review"],
+            "patterns": ["@chalk/review/*", "**/review/**"]
           }
         ]
       }
@@ -190,13 +190,13 @@
               },
               {
                 "group": [
-                  "@blackboard/server",
-                  "@blackboard/server/**",
-                  "@blackboard/cli",
+                  "@chalk/server",
+                  "@chalk/server/**",
+                  "@chalk/cli",
                   "@cli/**",
                   "@shell/**",
-                  "@blackboard/review-electrobun",
-                  "@blackboard/review-electrobun/**"
+                  "@chalk/review-electrobun",
+                  "@chalk/review-electrobun/**"
                 ],
                 "message": "Review logic must not depend on CLI, server, or desktop wrappers."
               }
@@ -225,11 +225,11 @@
               },
               {
                 "group": [
-                  "@blackboard/cli",
+                  "@chalk/cli",
                   "@cli/**",
                   "@shell/**",
-                  "@blackboard/review-electrobun",
-                  "@blackboard/review-electrobun/**"
+                  "@chalk/review-electrobun",
+                  "@chalk/review-electrobun/**"
                 ],
                 "message": "The server must not depend on CLI or desktop wrappers."
               }
@@ -265,7 +265,7 @@
               {
                 "group": [
                   "@review/node/**",
-                  "@blackboard/review/node/**",
+                  "@chalk/review/node/**",
                   "node:*",
                   "bun:*"
                 ],
@@ -274,13 +274,13 @@
               },
               {
                 "group": [
-                  "@blackboard/server",
-                  "@blackboard/server/**",
-                  "@blackboard/cli",
+                  "@chalk/server",
+                  "@chalk/server/**",
+                  "@chalk/cli",
                   "@cli/**",
                   "@shell/**",
-                  "@blackboard/review-electrobun",
-                  "@blackboard/review-electrobun/**"
+                  "@chalk/review-electrobun",
+                  "@chalk/review-electrobun/**"
                 ],
                 "message": "Review logic must not depend on CLI, server, or desktop wrappers."
               }
@@ -346,13 +346,13 @@
               },
               {
                 "group": [
-                  "@blackboard/server",
-                  "@blackboard/server/**",
-                  "@blackboard/cli",
+                  "@chalk/server",
+                  "@chalk/server/**",
+                  "@chalk/cli",
                   "@cli/**",
                   "@shell/**",
-                  "@blackboard/review-electrobun",
-                  "@blackboard/review-electrobun/**"
+                  "@chalk/review-electrobun",
+                  "@chalk/review-electrobun/**"
                 ],
                 "message": "Review logic must not depend on CLI, server, or desktop wrappers."
               }

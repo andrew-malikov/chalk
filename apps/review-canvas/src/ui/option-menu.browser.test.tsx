@@ -1,8 +1,8 @@
+import { CanvasUiContext } from "@canvas/host/canvas-ui";
 import type {
   ReviewCanvasUi,
   ReviewMenuRequest,
-} from "@blackboard/review-contracts";
-import { CanvasUiContext } from "@canvas/host/canvas-ui";
+} from "@chalk/review-contracts";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";

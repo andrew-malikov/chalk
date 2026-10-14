@@ -1,10 +1,10 @@
-import type { ReviewTooltipOptions } from "@blackboard/review-contracts";
 import { useOptionalReviewSession } from "@canvas/host/review-session";
+import type { ReviewTooltipOptions } from "@chalk/review-contracts";
 import { useCallback } from "react";
 
 /**
  * Attach the host's tooltip to an element, or a native `title` without a
- * Desktop host. `instant` asks for the Blackboard tooltip with no delay, for
+ * Desktop host. `instant` asks for the Chalk tooltip with no delay, for
  * small targets; `quick` for half the delay; `detail` is its fainter second
  * line.
  */

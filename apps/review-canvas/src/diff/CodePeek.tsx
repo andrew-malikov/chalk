@@ -1,8 +1,3 @@
-import type {
-  ReviewDiffSide,
-  ReviewInlineEditorHeightMode,
-  ReviewInlineEditorRange,
-} from "@blackboard/review-contracts";
 import { DocumentCodeView } from "@canvas/documents/DocumentCodeView";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { useReviewSession } from "@canvas/host/review-session";
@@ -16,6 +11,11 @@ import {
 } from "@canvas/styles/markers.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
+import type {
+  ReviewDiffSide,
+  ReviewInlineEditorHeightMode,
+  ReviewInlineEditorRange,
+} from "@chalk/review-contracts";
 import type { ReviewComponentProps } from "@review/documents/authoring";
 import {
   type DiffSelection,

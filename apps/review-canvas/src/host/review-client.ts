@@ -1,4 +1,4 @@
-import type { ReviewRuntimeConfig } from "@blackboard/review-contracts";
+import type { ReviewRuntimeConfig } from "@chalk/review-contracts";
 
 export type ReviewClientConfig = Partial<
   Pick<ReviewRuntimeConfig, "serverUrl" | "reviewId" | "token" | "wasmUrl">

@@ -101,7 +101,7 @@ describe("sequence diagram guided tour", () => {
           from: "code",
           to: "symbol",
           label: "allocates more horizontal room",
-          code: { language: "bash", text: "blackboard api review_edit" },
+          code: { language: "bash", text: "chalk api review_edit" },
         },
       ],
     });
@@ -114,7 +114,7 @@ describe("sequence diagram guided tour", () => {
         content: {
           kind: "inline-code",
           language: "bash",
-          text: "blackboard api review_edit",
+          text: "chalk api review_edit",
         },
       },
     ]);

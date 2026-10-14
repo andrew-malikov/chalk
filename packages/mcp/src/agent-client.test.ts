@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { PassThrough, Readable, Writable } from "node:stream";
 
-import type { JsonObject } from "@blackboard/json";
-import { ReviewApiClient } from "@blackboard/review-contracts";
-import { createReviewApi } from "@blackboard/server/review-api/http.js";
+import type { JsonObject } from "@chalk/json";
+import { ReviewApiClient } from "@chalk/review-contracts";
+import { createReviewApi } from "@chalk/server/review-api/http.js";
 import { runReviewAgentCli } from "@cli/agent-cli.js";
 import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { ReviewStore } from "@review/node/review-api/store.js";
@@ -305,7 +305,7 @@ it("serves MCP framing without stdout diagnostics and returns host errors as too
     });
 
     expect(unknown.result.isError).toBe(true);
-    expect(unknown.result.content[0].text).toContain("Unknown Blackboard tool");
+    expect(unknown.result.content[0].text).toContain("Unknown Chalk tool");
   } finally {
     await server.close();
   }
@@ -330,7 +330,7 @@ it("shows CLI help without requiring Desktop or touching review storage", async 
       env: { DEV_REVIEW_HOME: "/does-not-exist" },
     }),
   ).toBe(0);
-  expect(output).toContain("blackboard api <tool-name>");
+  expect(output).toContain("chalk api <tool-name>");
 });
 
 it("prints readable CLI output by default and raw objects with --json", async () => {

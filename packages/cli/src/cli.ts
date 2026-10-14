@@ -11,7 +11,7 @@ import {
   jsonObject,
   jsonString,
   parseJsonText,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 
 // A standalone build (npx/global install) defers to the CLI bundled with a
 // running Review Desktop so the CLI can never skew from the server it talks
@@ -28,8 +28,8 @@ process.exitCode = delegatedExitCode ?? (await runCli(ownCliPath));
 async function runCli(effectivePath: string): Promise<number> {
   if (!supportedBunRuntime()) {
     process.stderr.write(
-      `Blackboard needs Bun 1.4.2 or newer; found ${process.versions.bun ?? "a different runtime"}. ` +
-        "Install Bun, or use the blackboard command installed by Blackboard Desktop.\n",
+      `Chalk needs Bun 1.4.2 or newer; found ${process.versions.bun ?? "a different runtime"}. ` +
+        "Install Bun, or use the chalk command installed by Chalk Desktop.\n",
     );
 
     return 1;
@@ -61,7 +61,7 @@ async function maybeDelegateToDesktopCli(
 ): Promise<number | null> {
   const env = process.env;
 
-  if (env.DEV_FAST_REVIEW_CLI_NO_DELEGATE || env.DEV_FAST_REVIEW_CLI_DELEGATED)
+  if (env.CHALK_REVIEW_CLI_NO_DELEGATE || env.CHALK_REVIEW_CLI_DELEGATED)
     return null;
 
   // api and mcp are thin HTTP clients whose tool catalog comes from the
@@ -119,7 +119,7 @@ async function maybeDelegateToDesktopCli(
   // Prefer the app runtime so the CLI matches the selected server.
   const childEnv: NodeJS.ProcessEnv = {
     ...env,
-    DEV_FAST_REVIEW_CLI_DELEGATED: "1",
+    CHALK_REVIEW_CLI_DELEGATED: "1",
   };
 
   // Older desktops advertise Electron as their CLI runtime; Bun ignores this flag.

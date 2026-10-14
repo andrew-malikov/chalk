@@ -1,9 +1,9 @@
+import type { ReviewSession } from "@canvas/host/review-session";
 import {
   type ReviewCanvasDiagnostic,
   isJsonObject,
   jsonString,
-} from "@blackboard/review-contracts";
-import type { ReviewSession } from "@canvas/host/review-session";
+} from "@chalk/review-contracts";
 import type { ViteHotContext } from "vite/types/hot.d.ts";
 
 // Wire contract for shipping a review-document render failure from the browser

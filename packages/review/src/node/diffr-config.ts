@@ -10,14 +10,14 @@ import {
   isJsonObject,
   isStringValue,
   parseJsonText,
-} from "@blackboard/json";
+} from "@chalk/json";
 import {
   type ReviewDiffrConfig,
   type ReviewDiffrProvider,
   type ReviewDiffrSummarizerInput,
   decodeStructuralDiffEvent,
   reviewDiffrSummarizerInputSchema,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import { stringify } from "smol-toml";
 
 import { invalidateStructuralComparisons } from "./structural-comparisons.js";

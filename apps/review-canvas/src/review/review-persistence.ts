@@ -3,7 +3,7 @@ import {
   isJsonObject,
   jsonNumber,
   jsonValueSchema,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import type { PersistOptions, PersistStorage } from "zustand/middleware";
 
 import {

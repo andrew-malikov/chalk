@@ -2,12 +2,12 @@ import {
   type ReviewCliInstallApplyResponse,
   type ReviewDesktopDiscovery,
   parseReviewCliInstallApplyRequest,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import {
   type ReviewHonoEnv,
   readBoundedRequestJson,
-} from "@blackboard/server/hono-http";
-import { serverJson } from "@blackboard/server/review-server-core";
+} from "@chalk/server/hono-http";
+import { serverJson } from "@chalk/server/review-server-core";
 import {
   applyCliInstall,
   declineCliInstall,

@@ -1,9 +1,9 @@
+import { CanvasUiContext } from "@canvas/host/canvas-ui";
+import { testCanvasUi } from "@canvas/test/canvas-ui-test-utils";
 import type {
   ReviewCanvasInstallContent,
   ReviewCliInstallStatus,
-} from "@blackboard/review-contracts";
-import { CanvasUiContext } from "@canvas/host/canvas-ui";
-import { testCanvasUi } from "@canvas/test/canvas-ui-test-utils";
+} from "@chalk/review-contracts";
 import { type ReactNode, act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";

@@ -9,7 +9,7 @@ import {
   type ReviewCliInstallStamp,
   ReviewCliInstallStampSchema,
   type ReviewCliInstallStatus,
-} from "@blackboard/review-contracts";
+} from "@chalk/review-contracts";
 import {
   writeFileAtomicAsync,
   writePrivateJsonAtomic,
@@ -18,7 +18,6 @@ import { isDirectory, isFile } from "@review/node/lib/fs-utils";
 import { withFileLock } from "@review/node/lib/with-file-lock";
 import { devReviewHome } from "@review/node/storage/review-home-paths";
 import { reviewDesktopStateDir } from "@review/node/storage/review-home-paths";
-import { z } from "zod";
 
 import {
   CLAUDE_WINDOWS_MCP_ADD,
@@ -28,11 +27,6 @@ import {
   reviewMcpLaunch,
 } from "./connect-prompts";
 import { readPackageVersion } from "./package-paths";
-import { readRetiredFile } from "./retired-agent-hooks";
-import {
-  type RetirementResult,
-  retireManagedTraceHooks,
-} from "./retired-trace-hooks";
 import {
   WINDOWS_MACHINE_ENVIRONMENT_KEY,
   updateWindowsUserPath,
@@ -42,14 +36,10 @@ import {
 
 const installErrors = new Map<string, string>();
 
-const SHIM_MARKER = "Managed by Blackboard";
+const SHIM_MARKER = "Managed by Chalk";
 
 function hasManagedShimMarker(source: string): boolean {
-  return (
-    source.includes(SHIM_MARKER) ||
-    source.includes("Managed by Review Desktop") ||
-    source.includes("Managed by Whiteboard")
-  );
+  return source.includes(SHIM_MARKER);
 }
 
 const PROFILE_MARKER =
@@ -90,7 +80,7 @@ export function pathShimPath(homeDir = os.homedir()): string {
     homeDir,
     ".local",
     "bin",
-    process.platform === "win32" ? "blackboard.cmd" : "blackboard",
+    process.platform === "win32" ? "chalk.cmd" : "chalk",
   );
 }
 
@@ -159,7 +149,7 @@ export async function resolveCliInstallStatus(input: {
 
 /**
  * The Windows installer's "Add to PATH" task puts <install dir>\bin, which
- * holds a blackboard.cmd, on the user or machine PATH.
+ * holds a chalk.cmd, on the user or machine PATH.
  */
 export async function windowsInstallerCommand(
   packageRoot: string,
@@ -169,7 +159,7 @@ export async function windowsInstallerCommand(
 
   // packageRoot is <install dir>\resources\app\review-runtime.
   const bin = path.resolve(packageRoot, "..", "..", "..", "bin");
-  const command = path.join(bin, "blackboard.cmd");
+  const command = path.join(bin, "chalk.cmd");
 
   if (!(await isOwnedShim(command))) return undefined;
 
@@ -207,21 +197,12 @@ export async function applyCliInstall(
 
   try {
     const result = await withDesktopInstallLock(input.env, async () => {
-      const retired = await retireInstallationHooks(input);
+      if (!input.autoUpdate && input.shim !== true)
+        return { code: 0, output: "" };
 
-      const output = retired.warnings
-        .map((warning) => `[skip] ${warning}\n`)
-        .join("");
-
-      if (!retired.complete) return { code: 1, output };
-
-      if (!input.autoUpdate && input.shim !== true) return { code: 0, output };
-
-      const result = input.autoUpdate
+      return input.autoUpdate
         ? await resyncCliInstallUnlocked(input)
         : await applyCliInstallUnlocked(input);
-
-      return { ...result, output: output + result.output };
     });
 
     if (result.code === 0) installErrors.delete(homeDir);
@@ -247,9 +228,7 @@ async function withDesktopInstallLock<T>(
   );
 
   if (!outcome.acquired)
-    throw new Error(
-      "Another Blackboard setup operation is running. Retry shortly.",
-    );
+    throw new Error("Another Chalk setup operation is running. Retry shortly.");
 
   return outcome.result;
 }
@@ -393,24 +372,24 @@ function connectPlugins(
         : {
             label: "Install the Claude Code plugin",
             command:
-              "/plugin marketplace add devdotfast/whiteboard\n/plugin install blackboard@devfast",
+              "/plugin marketplace add devdotfast/whiteboard\n/plugin install chalk@chalk",
           },
     codex: {
       label: "Install the Codex plugin",
       command:
-        "codex plugin marketplace add devdotfast/whiteboard\ncodex plugin add blackboard@devfast",
+        "codex plugin marketplace add devdotfast/whiteboard\ncodex plugin add chalk@chalk",
     },
     opencode: {
       label: "Add the OpenCode MCP server (OpenCode 2+)",
-      command: `opencode mcp add --global blackboard -- ${launchCommand(reviewMcpLaunch(hasShim))}`,
+      command: `opencode mcp add --global chalk -- ${launchCommand(reviewMcpLaunch(hasShim))}`,
     },
     pi: {
       label: "Add the Pi MCP server (Pi 0.99+)",
-      command: `pi mcp add blackboard -- ${launchCommand(reviewMcpLaunch(hasShim))}`,
+      command: `pi mcp add chalk -- ${launchCommand(reviewMcpLaunch(hasShim))}`,
     },
     omp: {
       label: "Add the oh-my-pi MCP server",
-      command: `Add ${JSON.stringify({ blackboard: reviewMcpLaunch(hasShim) })}\nto "mcpServers" in ~/.omp/agent/mcp.json, then run /mcp reload.`,
+      command: `Add ${JSON.stringify({ chalk: reviewMcpLaunch(hasShim) })}\nto "mcpServers" in ~/.omp/agent/mcp.json, then run /mcp reload.`,
     },
     copilot:
       process.platform === "win32"
@@ -421,7 +400,7 @@ function connectPlugins(
         : {
             label: "Install the Copilot CLI plugin",
             command:
-              "copilot plugin marketplace add devdotfast/whiteboard\ncopilot plugin install blackboard@devfast",
+              "copilot plugin marketplace add devdotfast/whiteboard\ncopilot plugin install chalk@chalk",
           },
   };
 }
@@ -510,11 +489,6 @@ async function removeCliInstallUnlocked(
   const env = input.env ?? process.env;
   const chunks: string[] = [];
 
-  const retired = await retireInstallationHooks(input);
-  chunks.push(...retired.warnings.map((warning) => `[skip] ${warning}\n`));
-
-  if (!retired.complete) throw new Error(chunks.join(""));
-
   const previous = await readCliInstallStamp(cliInstallStampPath(env));
 
   if (input.shim) {
@@ -532,15 +506,15 @@ async function removeCliInstallUnlocked(
         if (await isOwnedShim(bashShim)) await rm(bashShim, { force: true });
       }
 
-      chunks.push(`[ok] removed blackboard command ${shimPath}\n`);
+      chunks.push(`[ok] removed chalk command ${shimPath}\n`);
     } else if (contents) {
       chunks.push(
-        `${shimPath} was not installed by Blackboard Desktop; left in place.\n`,
+        `${shimPath} was not installed by Chalk Desktop; left in place.\n`,
       );
     }
 
     for (const profilePath of await removeShellProfilePath(homeDir)) {
-      chunks.push(`[ok] removed Blackboard PATH entry from ${profilePath}\n`);
+      chunks.push(`[ok] removed Chalk PATH entry from ${profilePath}\n`);
     }
   }
 
@@ -599,7 +573,7 @@ export async function isOwnedShim(shimPath: string): Promise<boolean> {
 
 /**
  * The shim is POSIX sh, so running `review` needs no Node.js at all to start.
- * It prefers the CLI and runtime the running Blackboard Desktop advertises in its
+ * It prefers the CLI and runtime the running Chalk Desktop advertises in its
  * discovery file, falls back to the paths baked in by the app that wrote it,
  * and runs the CLI under the app's Bun runtime, matching the server.
  * A system Bun is the fallback when the app runtime is unavailable.
@@ -622,7 +596,7 @@ export async function writePathShim(
   }
 
   const source = `#!/bin/sh
-# Managed by Blackboard Desktop ("Blackboard: Install CLI in PATH"). Do not edit.
+# Managed by Chalk Desktop ("Chalk: Install CLI in PATH"). Do not edit.
 FALLBACK_CLI=${shSingleQuote(cliPath)}
 FALLBACK_RUNTIME=${shSingleQuote(runtimePath ?? "")}
 DEFAULT_HOME=${shSingleQuote(devHome)}
@@ -671,7 +645,7 @@ manage_instances=""
 for arg in "$@"; do
   if [ "$arg" = "instances" ]; then manage_instances=1; break; fi
 done
-if [ -z "$manage_instances" ] && [ -z "\${DEV_FAST_REVIEW_CLI_NO_DELEGATE:-}" ] && live "$DISCOVERY"; then
+if [ -z "$manage_instances" ] && [ -z "\${CHALK_REVIEW_CLI_NO_DELEGATE:-}" ] && live "$DISCOVERY"; then
   cli=$(sed -n 's/.*"cliPath"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$DISCOVERY" | head -n 1)
   delegated="1"
   runtime=$(sed -n 's/.*"cliRuntimePath"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$DISCOVERY" | head -n 1)
@@ -683,13 +657,13 @@ if [ -z "$cli" ] || [ ! -f "$cli" ] || { [ -n "$runtime" ] && [ ! -x "$runtime" 
 fi
 
 if [ ! -f "$cli" ]; then
-  echo "Blackboard CLI not found at $cli. Start Blackboard Desktop, or run npx @blackboard/cli instead." >&2
+  echo "Chalk CLI not found at $cli. Start Chalk Desktop, or run npx @chalk/cli instead." >&2
   exit 1
 fi
 
 # Prevent bootstrap from overriding this selection.
-export DEV_FAST_REVIEW_CLI_NO_DELEGATE=1
-export DEV_FAST_REVIEW_CLI_DELEGATED="$delegated"
+export CHALK_REVIEW_CLI_NO_DELEGATE=1
+export CHALK_REVIEW_CLI_DELEGATED="$delegated"
 
 # Use the selected app's runtime so the CLI and server stay in sync.
 if [ -n "$runtime" ] && [ -x "$runtime" ]; then
@@ -699,7 +673,7 @@ if [ -n "$runtime" ] && [ -x "$runtime" ]; then
 fi
 
 if ! command -v bun >/dev/null 2>&1; then
-  echo "Blackboard needs Bun 1.4.2 or newer. Install Bun, or install Blackboard Desktop." >&2
+  echo "Chalk needs Bun 1.4.2 or newer. Install Bun, or install Chalk Desktop." >&2
   exit 1
 fi
 exec bun "$cli" "$@"
@@ -719,12 +693,6 @@ export async function installReviewCommand(input: {
   homeDir?: string;
   env?: NodeJS.ProcessEnv;
 }): Promise<{ shimPath: string; output: string; userPath?: string }> {
-  const retired = await retireInstallationHooks({
-    ...input,
-    packageRoot: path.resolve(input.cliPath, "..", ".."),
-  });
-
-  if (!retired.complete) throw new Error(retired.warnings.join("\n"));
   const homeDir = input.homeDir ?? os.homedir();
   const env = input.env ?? process.env;
   const shimPath = pathShimPath(homeDir);
@@ -732,15 +700,11 @@ export async function installReviewCommand(input: {
   if ((await isFile(shimPath)) && !(await isOwnedShim(shimPath))) {
     return {
       shimPath,
-      output: `[skip] kept the existing blackboard command at ${shimPath}\n`,
+      output: `[skip] kept the existing chalk command at ${shimPath}\n`,
     };
   }
 
-  const shadowingCommand = await resolvePathCommand(
-    "blackboard",
-    shimPath,
-    env,
-  );
+  const shadowingCommand = await resolvePathCommand("chalk", shimPath, env);
 
   await writePathShim(
     shimPath,
@@ -749,16 +713,13 @@ export async function installReviewCommand(input: {
     devReviewHome(env, homeDir),
   );
 
-  const legacyShim = path.join(path.dirname(shimPath), "review");
-
-  if (await isOwnedShim(legacyShim)) await rm(legacyShim, { force: true });
   const profileOutput = await ensureShellProfilePath({ homeDir, env });
 
   const shadowingOutput = shadowingCommand
     ? `Warning: ${shadowingCommand} currently shadows ${shimPath}. Remove that PATH entry or put ${path.dirname(shimPath)} before it.\n`
     : "";
 
-  const output = `[ok] blackboard command -> ${shimPath}\n${profileOutput}${shadowingOutput}`;
+  const output = `[ok] chalk command -> ${shimPath}\n${profileOutput}${shadowingOutput}`;
 
   // ensureShellProfilePath throws when the Windows PATH write fails, so
   // reaching here means new terminals will find the command.
@@ -794,7 +755,7 @@ export async function ensureShellProfilePath(input: {
   }
 
   if (!profileName) {
-    return "Blackboard did not update PATH for this shell. Add ~/.local/bin to PATH. Fish users can run: fish_add_path ~/.local/bin\n";
+    return "Chalk did not update PATH for this shell. Add ~/.local/bin to PATH. Fish users can run: fish_add_path ~/.local/bin\n";
   }
 
   const profilePath = path.join(input.homeDir, profileName);
@@ -927,58 +888,4 @@ async function isExecutableFile(target: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-async function retireInstallationHooks(input: {
-  homeDir?: string;
-  env?: NodeJS.ProcessEnv;
-  packageRoot?: string;
-}): Promise<RetirementResult> {
-  const homeDir = input.homeDir ?? os.homedir();
-  const env = input.env ?? process.env;
-  const source = await readRetiredFile(cliInstallStampPath(env));
-
-  const stamp =
-    source === null
-      ? null
-      : z.object({ shimPath: z.string().optional() }).parse(JSON.parse(source));
-
-  const stamped = stamp?.shimPath;
-
-  const candidates = [
-    pathShimPath(homeDir),
-    path.join(homeDir, ".local/bin/blackboard.cmd"),
-    path.join(homeDir, ".local/bin/review"),
-    path.join(homeDir, ".local/bin/whiteboard"),
-    ...(stamped ? [stamped] : []),
-    ...(input.packageRoot
-      ? [
-          path.resolve(
-            input.packageRoot,
-            "..",
-            "..",
-            "..",
-            "bin/blackboard.cmd",
-          ),
-        ]
-      : []),
-  ];
-
-  const ownedCommands: string[] = [];
-
-  for (const file of candidates) {
-    if (!path.isAbsolute(file)) continue;
-    const content = await readRetiredFile(file);
-
-    if (content === null ? file === stamped : hasManagedShimMarker(content))
-      ownedCommands.push(file);
-
-    if (file.endsWith(".cmd")) {
-      const companion = file.slice(0, -4);
-
-      if (await isOwnedShim(companion)) ownedCommands.push(companion);
-    }
-  }
-
-  return retireManagedTraceHooks({ homeDir, env, ownedCommands });
 }

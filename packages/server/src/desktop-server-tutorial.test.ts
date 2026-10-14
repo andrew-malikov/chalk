@@ -3,8 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { type JsonObject, isJsonObject } from "@blackboard/review-contracts";
-import { tutorialAssetsRoot } from "@blackboard/tutorial/asset-paths";
+import { type JsonObject, isJsonObject } from "@chalk/review-contracts";
+import { tutorialAssetsRoot } from "@chalk/tutorial/asset-paths";
 import { elements } from "@review/documents/document";
 import { openLocalReviewStore } from "@review/node/review-api/local-data";
 import { createTutorialService } from "@review/node/tutorial-service";
