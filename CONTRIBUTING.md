@@ -12,7 +12,6 @@ write code. This avoids duplicate work and catches design constraints early.
 Small fixes, such as typos and obvious bugs, can go straight to a pull request.
 
 Check [open issues](https://github.com/andrewmalikov/chalk/issues) first.
-Questions are welcome on [Discord](https://discord.gg/wYvd2cpMQg).
 
 Report security vulnerabilities privately as described in
 [SECURITY.md](SECURITY.md), not in a public issue.

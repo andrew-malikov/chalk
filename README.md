@@ -38,8 +38,7 @@ Contributions and feedback are welcome.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup and the pull request workflow,
 and follow the [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities as
-described in [SECURITY.md](SECURITY.md). Questions? Ask on
-[Discord](https://discord.gg/wYvd2cpMQg).
+described in [SECURITY.md](SECURITY.md).
 
 ## Privacy
 

@@ -1107,8 +1107,6 @@ const revealArgsSchema = z
     }
   });
 
-export const REVIEW_DISCORD_URL = "https://discord.gg/wYvd2cpMQg";
-
 /** The one scratchpad's fixed review id. */
 export const SCRATCHPAD_REVIEW_ID = "scratchpad";
 
@@ -1119,7 +1117,6 @@ export const ReviewVerbRequestSchema = z.discriminatedUnion("name", [
     name: z.literal("authoringCapabilities"),
     args: z.strictObject({}),
   }),
-  z.strictObject({ name: z.literal("joinDiscord"), args: z.strictObject({}) }),
   z.strictObject({
     name: z.literal("showReviewView"),
     args: z.strictObject({ view: reviewViewSchema }),

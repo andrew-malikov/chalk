@@ -15,7 +15,6 @@ import {
 } from "@canvas/desktop-entry";
 import {
   REVIEW_CANVAS_RESUME_EVENT,
-  REVIEW_DISCORD_URL,
   ReviewApiClient,
   ReviewApiError,
   parseReviewCliInstallStatus,
@@ -533,9 +532,6 @@ function Shell(
           break;
         case "focusWindow":
           await options.rpc.request.focusWindow();
-          break;
-        case "joinDiscord":
-          await options.rpc.request.openExternal({ url: REVIEW_DISCORD_URL });
           break;
         case "showReviewView":
           if (!tab) throw new Error("Open a review first.");

@@ -1,5 +1,4 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
-import { newTabLinkProps } from "@canvas/documents/link-props";
 import { welcomeType } from "@canvas/home/welcome-page.stylex";
 import { cliInstallReady } from "@canvas/settings/cli-install-status";
 import { chevronMarker } from "@canvas/styles/markers.stylex";
@@ -11,7 +10,6 @@ import { EmptyState } from "@canvas/ui/empty-state";
 import { CheckIcon, DisclosureChevron } from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
 import {
-  REVIEW_DISCORD_URL,
   type ReviewCanvasInstallContent,
   type ReviewCanvasOnboarding,
   type ReviewCanvasSetupActions,
@@ -414,20 +412,6 @@ export function WelcomePage({
               })}
             </ol>
           </div>
-          <p {...stylex.props(styles.feedback)}>
-            {updating
-              ? "Thoughts on the rename or product direction?"
-              : "Questions about getting started? Suggestions for new features?"}{" "}
-            Ask us on{" "}
-            <a
-              {...stylex.props(styles.feedbackLink)}
-              href={REVIEW_DISCORD_URL}
-              {...newTabLinkProps(REVIEW_DISCORD_URL)}
-            >
-              Discord
-            </a>
-            .
-          </p>
         </div>
       </div>
     </main>
@@ -676,17 +660,5 @@ const styles = stylex.create({
     color: tokens.ink,
     backgroundColor: tokens.controlBg,
     fontFamily: tokens.fontMono,
-  },
-  feedback: {
-    margin: "auto 0 0",
-    paddingTop: "48px",
-    color: tokens.reviewHomeMeta,
-    fontSize: fontSize.body,
-    lineHeight: "20px",
-  },
-  feedbackLink: {
-    color: tokens.accent,
-    textDecoration: "underline",
-    textUnderlineOffset: "3px",
   },
 });
