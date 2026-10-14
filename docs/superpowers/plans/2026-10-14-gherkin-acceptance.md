@@ -163,13 +163,13 @@ Inspect the staged diff to ensure no generated tests or reports are included.
 - Reuse navigation step bindings by expression matching; register each expression
   once. Keep setup and assertions on the rendered canvas.
 
-- [ ] **Step 1: Copy the approved restoration scenarios and verify missing bindings.**
+- [x] **Step 1: Copy the approved restoration scenarios and verify missing bindings.**
 
 Copy `resuming.feature` verbatim from the spec.
 Run `mise exec -- bun run test:acceptance`.
 Expected: generation fails for the new unimplemented restoration steps.
 
-- [ ] **Step 2: Implement restoration step definitions.**
+- [x] **Step 2: Implement restoration step definitions.**
 
 Setup steps open version 3, select the requested view or lens through UI actions,
 or open the sample commit diff. A provided version 4 keeps the same review
@@ -182,7 +182,7 @@ pressed. An absent element alone cannot prove that the selection was cleared.
 Assert the Diff view remains displayed in both cases. For commit restoration,
 assert the scoped subject when present and the whole diff when absent.
 
-- [ ] **Step 3: Verify all scenarios and storage isolation.**
+- [x] **Step 3: Verify all scenarios and storage isolation.**
 
 Run `mise exec -- bun run test:acceptance`.
 Expected: twelve passing examples across the two features.
@@ -193,7 +193,7 @@ Temporarily introduce a duplicate binding and verify generation rejects it.
 Remove the duplicate and regenerate. Confirm the repeated run starts each review
 with fresh context state while reopen steps retain state inside their scenario.
 
-- [ ] **Step 4: Commit the restoration scenarios.**
+- [x] **Step 4: Commit the restoration scenarios.**
 
 Commit as `test: describe review restoration in Gherkin`.
 
