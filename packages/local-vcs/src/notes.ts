@@ -36,7 +36,7 @@ const NOTES_WRITE_RETRIES = 3;
 export class NotesLockTimeoutError extends Error {
   constructor(lockPath: string, waitedMs: number) {
     super(
-      `Timed out after ${waitedMs}ms waiting for the dev-fast notes lock at ${lockPath}. ` +
+      `Timed out after ${waitedMs}ms waiting for the Chalk notes lock at ${lockPath}. ` +
         "Another process is holding it; retry once that writer finishes.",
     );
     this.name = "NotesLockTimeoutError";
@@ -239,7 +239,7 @@ export async function writeNote(input: {
   await withNotesLock(input.rootPath, async () => {
     const tmp = path.join(
       os.tmpdir(),
-      `dev-fast-note-${process.pid}-${Math.random().toString(36).slice(2)}`,
+      `chalk-note-${process.pid}-${Math.random().toString(36).slice(2)}`,
     );
 
     fs.writeFileSync(tmp, input.content, "utf8");
@@ -293,7 +293,7 @@ export function writeNoteSync(input: {
   withNotesLockSync(input.rootPath, () => {
     const tmp = path.join(
       os.tmpdir(),
-      `dev-fast-note-${process.pid}-${Math.random().toString(36).slice(2)}`,
+      `chalk-note-${process.pid}-${Math.random().toString(36).slice(2)}`,
     );
 
     fs.writeFileSync(tmp, input.content, "utf8");
@@ -509,7 +509,7 @@ async function unreachableCommits(
     // Failing open (treating everything as reachable) is safe but must not
     // be silent: it disables pruning entirely.
     console.warn(
-      `dev-fast notes prune: git rev-list reachability check failed; skipping unreachability-based pruning. ${listed.stdout.trim()}`,
+      `Chalk notes prune: git rev-list reachability check failed; skipping unreachability-based pruning. ${listed.stdout.trim()}`,
     );
 
     return new Set();
@@ -615,7 +615,7 @@ export function remoteNotesRef(localRef: string): string {
 }
 
 /**
- * Push local dev-fast notes refs to the remote. Notes histories routinely
+ * Push local Chalk notes refs to the remote. Notes histories routinely
  * diverge (two teammates flush maps for different commits), so a plain
  * non-fast-forward push would wedge permanently. Instead, per ref:
  *
@@ -786,7 +786,7 @@ async function reconcileNotesRefWithRemote(input: {
 }
 
 /**
- * Fetch teammates' dev-fast notes into the remote/* namespace. Honors the
+ * Fetch teammates' Chalk notes into the remote/* namespace. Honors the
  * `chalk.fetchNotes` git config kill-switch: when it parses to false the
  * fetch is skipped without touching the network and the result reports
  * `skipped: true`. Unset (or unparseable) config fetches as usual.
@@ -852,7 +852,7 @@ export function notesFetchDisabledSync(rootPath: string): boolean {
 const notesConfigEnsured = new Set<string>();
 
 /**
- * Idempotently configure a repo for dev-fast notes:
+ * Idempotently configure a repo for Chalk notes:
  * - notes.rewriteRef / notes.rewriteMode so git-native rebases and amends
  *   carry notes forward,
  * - a fetch refspec on the selected notes remote so ordinary fetches receive

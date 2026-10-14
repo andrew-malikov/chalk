@@ -408,7 +408,7 @@ it("rejects unsupported import commands without creating a review", async () => 
       type: "create",
       title: "Unsupported import",
       pins,
-      pullRequestUrl: "https://github.com/devdotfast/review/pull/452",
+      pullRequestUrl: "https://github.com/example/project/pull/452",
     }),
   );
 

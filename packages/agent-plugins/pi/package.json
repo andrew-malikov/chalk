@@ -8,7 +8,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/devdotfast/review.git",
+    "url": "git+https://github.com/andrewmalikov/chalk.git",
     "directory": "packages/agent-plugins/pi"
   },
   "files": [

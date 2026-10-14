@@ -22,7 +22,7 @@ import { removeReviewPrepareArtifacts } from "./review-prepare.js";
 // A review renders the pinned code on the canvas, but file reads against the
 // user's working tree see whatever is checked out there — including edits
 // made after the pin. Materialize any pinned commit (the head, the base) as a
-// detached, reusable git worktree beside the other dev-fast state in the
+// detached, reusable git worktree beside the other Chalk state in the
 // shared git dir so review sessions and graph builds read immutable bytes,
 // even when the working copy currently sits at the pinned commit. Returns the
 // checkout path, or null when the ref cannot be resolved to a commit or the

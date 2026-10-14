@@ -11,7 +11,7 @@ your proposed approach, and wait for a maintainer to confirm it before you
 write code. This avoids duplicate work and catches design constraints early.
 Small fixes, such as typos and obvious bugs, can go straight to a pull request.
 
-Check [open issues](https://github.com/devdotfast/review/issues) first.
+Check [open issues](https://github.com/andrewmalikov/chalk/issues) first.
 Questions are welcome on [Discord](https://discord.gg/wYvd2cpMQg).
 
 Report security vulnerabilities privately as described in
@@ -25,7 +25,7 @@ installed, run from the repository root:
 
 ```sh
 mise run install
-open ~/Applications/Chalk-dev.app
+open ~/Applications/Chalk.app
 ```
 
 Set `HUTCH_INSTALL_URL` to the Hutch installer URL if Hutch 0.27.1 is not

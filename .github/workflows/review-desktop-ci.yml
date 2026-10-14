@@ -24,20 +24,6 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version-file: .bun-version
-      - name: Fetch legacy Review fixture commits
-        run: |
-          bun - <<'JS'
-          import { readdirSync, readFileSync } from 'node:fs';
-          import { execFileSync } from 'node:child_process';
-          const dir = 'packages/review/src/fixtures/legacy-reviews';
-          const commits = [...new Set(readdirSync(dir).filter(name => name.endsWith('.json')).flatMap(name => {
-            const fixture = JSON.parse(readFileSync(`${dir}/${name}`, 'utf8'));
-            return fixture.sourceRepository === 'devdotfast/review' ? [fixture.baseCommit, fixture.sourceCommit] : [];
-          }))];
-          if (!commits.length) throw new Error('Legacy fixture commits are missing');
-          execFileSync('git', ['fetch', '--no-tags', 'origin', ...commits], {stdio: 'inherit'});
-          for (const commit of commits) execFileSync('git', ['cat-file', '-e', `${commit}^{commit}`]);
-          JS
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Install Hutch

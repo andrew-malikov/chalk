@@ -80,7 +80,7 @@ it("lists linked worktrees under one repository without changing source pins", a
     "remote",
     "add",
     "origin",
-    "git@github.com:devdotfast/review.git",
+    "git@github.com:example/project.git",
   );
 
   // Reopening the catalog picks up the shared remote.
@@ -89,12 +89,12 @@ it("lists linked worktrees under one repository without changing source pins", a
 
   expect(store.list().map((review) => review.repositoryGroup)).toEqual([
     {
-      key: "remote:https://github.com/devdotfast/review.git",
-      label: "devdotfast/review",
+      key: "remote:https://github.com/example/project.git",
+      label: "example/project",
     },
     {
-      key: "remote:https://github.com/devdotfast/review.git",
-      label: "devdotfast/review",
+      key: "remote:https://github.com/example/project.git",
+      label: "example/project",
     },
   ]);
 });

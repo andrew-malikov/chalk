@@ -735,7 +735,7 @@ export interface ReviewCanvasHandle extends ReviewDisposable {
   showFind(seed?: string): boolean;
 }
 
-export const REVIEW_CANVAS_RESUME_EVENT = "dev-fast-review-canvas-resume";
+export const REVIEW_CANVAS_RESUME_EVENT = "chalk-review-canvas-resume";
 
 export interface ReviewMenuItem {
   id: string;

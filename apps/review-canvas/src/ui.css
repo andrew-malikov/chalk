@@ -3,7 +3,7 @@
 @import "tailwindcss/theme.css" layer(theme) prefix(tw);
 @import "tailwindcss/utilities.css" layer(utilities) prefix(tw) source(none);
 @source ".";
-@source "../../../../apps/review-electrobun/src";
+@source "../../review-electrobun/src";
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-review-theme="dark"], [data-review-theme="dark"] *));
 
 @theme {

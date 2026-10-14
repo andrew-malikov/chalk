@@ -33,17 +33,18 @@ depends = ["setup"]
 run = "bun run desktop:build"
 
 [tasks.install]
-description = "Build and install Chalk-dev.app into ~/Applications"
+description = "Build and install Chalk.app into ~/Applications"
 depends = ["build"]
 run = '''
 set -eu
-app="$HOME/Applications/Chalk-dev.app"
-runtime_tmp="$HOME/Library/Caches/Chalk-dev/cottontail"
+app="$HOME/Applications/Chalk.app"
+runtime_tmp="$HOME/Library/Caches/Chalk/cottontail"
 mkdir -p "$HOME/Applications" "$runtime_tmp"
 # Replace the bundle rather than retaining files created by earlier launches.
 rm -rf "$app"
 ditto apps/review-electrobun/build/dev-macos-arm64/Chalk-dev.app "$app"
 plist="$app/Contents/Info.plist"
+plutil -replace CFBundleName -string "Chalk" "$plist"
 plutil -insert LSEnvironment -json '{}' "$plist"
 plutil -insert LSEnvironment.CHALK_REVIEW_CHECKOUT -string "$PWD" "$plist"
 plutil -insert LSEnvironment.REVIEW_ELECTROBUN_BUN -string "$(command -v bun)" "$plist"

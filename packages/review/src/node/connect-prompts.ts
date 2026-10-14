@@ -76,11 +76,11 @@ function pluginSteps(
         ];
 
       return [
-        "Run:\n\n```sh\nclaude plugin marketplace add devdotfast/whiteboard\nclaude plugin install chalk@chalk --scope user\nclaude mcp remove -s user chalk # old manual registration, if any\n```",
+        "Run:\n\n```sh\nclaude plugin marketplace add andrewmalikov/chalk\nclaude plugin install chalk@chalk --scope user\nclaude mcp remove -s user chalk # old manual registration, if any\n```",
       ];
     case "codex":
       return [
-        "Run:\n\n```sh\ncodex plugin marketplace add devdotfast/whiteboard\ncodex plugin add chalk@chalk\ncodex mcp remove chalk # old manual registration, if any\n```",
+        "Run:\n\n```sh\ncodex plugin marketplace add andrewmalikov/chalk\ncodex plugin add chalk@chalk\ncodex mcp remove chalk # old manual registration, if any\n```",
       ];
     case "opencode": {
       const launch = reviewMcpLaunch(true, platform);
@@ -108,7 +108,7 @@ function pluginSteps(
         ];
 
       return [
-        "Run:\n\n```sh\ncopilot plugin marketplace add devdotfast/whiteboard\ncopilot plugin install chalk@chalk\ncopilot mcp remove chalk # old manual registration, if any\n```",
+        "Run:\n\n```sh\ncopilot plugin marketplace add andrewmalikov/chalk\ncopilot plugin install chalk@chalk\ncopilot mcp remove chalk # old manual registration, if any\n```",
       ];
     case "pi":
       return [
