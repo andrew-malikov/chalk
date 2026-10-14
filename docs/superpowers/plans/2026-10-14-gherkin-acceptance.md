@@ -210,7 +210,7 @@ Commit as `test: describe review restoration in Gherkin`.
 - Root `test` and `typecheck` retain existing workspace checks and append their
   acceptance commands. Root formatting includes authored `tests/acceptance` files.
 
-- [ ] **Step 1: Wire the existing checks and contributor instructions.**
+- [x] **Step 1: Wire the existing checks and contributor instructions.**
 
 Exclude generated tests and acceptance reports from lint and formatting discovery.
 Set Playwright `forbidOnly` when CI is true. Keep strict missing-step generation
@@ -219,7 +219,7 @@ the acceptance report and results to the existing upload step. Document the new
 command and the separation between Gherkin behavior and TypeScript steps in
 `CONTRIBUTING.md`; leave README.md untouched.
 
-- [ ] **Step 2: Verify repository integration.**
+- [x] **Step 2: Verify repository integration.**
 
 Run `mise exec -- bun run typecheck:acceptance`, `mise exec -- bun run lint`,
 `mise exec -- bun run format:check`, and `mise exec -- bun run test:acceptance`.
@@ -231,7 +231,7 @@ Run existing browser tests for callers of the fixture bridge, including
 `src/documents/markdown-tasks.browser.test.tsx`, through canvas `test:browser`.
 All commands must succeed; report any environmental blocker separately.
 
-- [ ] **Step 3: Review and commit the complete integration.**
+- [x] **Step 3: Review and commit the complete integration.**
 
 Review the diff for product changes, accidental test deletion, and generated
 artifacts. Commit as `test: include Gherkin acceptance coverage in CI`.

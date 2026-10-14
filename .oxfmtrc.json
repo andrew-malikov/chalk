@@ -18,6 +18,9 @@
     "partitionByNewline": false
   },
   "ignorePatterns": [
+    "tests/acceptance/.features-gen/**",
+    "tests/acceptance/test-results/**",
+    "tests/acceptance/playwright-report/**",
     ".vite/**",
     "dist/**",
     "**/dist/**",

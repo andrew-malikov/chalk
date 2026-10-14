@@ -102,6 +102,25 @@ bun run --filter @chalk/review-canvas test:browser
 bun run --filter @chalk/review-canvas test:browser:watch
 ```
 
+Executable behavior scenarios live in `features/`, grouped by product capability.
+Run them in headless Chromium with:
+
+```sh
+bun run test:acceptance
+```
+
+Write complete Gherkin scenarios with product language and visible outcomes.
+TypeScript bindings live in `tests/acceptance/steps/`; shared browser setup lives
+in `tests/acceptance/support/`. Playwright-BDD generates the runnable tests before
+each run and rejects missing or ambiguous step definitions. Generated tests and
+reports are ignored by Git. The suite mounts the real canvas with fixture-backed
+API data; native desktop and real backend behavior have separate tests.
+
+The root `test` and `typecheck` commands include acceptance coverage. Run
+`bun run typecheck:acceptance` to check just the acceptance TypeScript. Failure
+screenshots and traces are saved in `tests/acceptance/test-results/`; the HTML
+report is in `tests/acceptance/playwright-report/`.
+
 Document rule tests run through `bun run --filter @chalk/review test`.
 Filesystem and server tests run through `bun run --filter @chalk/server test`.
 Run `bun run --filter @chalk/server test:integration:diffr` to check the
