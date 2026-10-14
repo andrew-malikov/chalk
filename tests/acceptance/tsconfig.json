@@ -1,0 +1,5 @@
+{
+  "extends": "../../apps/review-canvas/tsconfig.json",
+  "include": ["**/*.ts", "../../apps/review-canvas/src/vite-env.d.ts"],
+  "exclude": [".features-gen", "test-results", "playwright-report"]
+}

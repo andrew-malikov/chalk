@@ -1,4 +1,8 @@
-import type { JsonValue, ReviewCanvasBridge } from "@chalk/review-contracts";
+import type {
+  JsonValue,
+  ReviewCanvasBridge,
+  ReviewCommitSummary,
+} from "@chalk/review-contracts";
 import type { ReviewProgress } from "@review/node/review-api/review-progress";
 import type { Snapshot } from "@review/node/review-api/store";
 import { act } from "react";
@@ -9,6 +13,7 @@ import { testReviewBridge } from "./review-session-test-utils";
 export interface FixtureReviewApi {
   snapshot: Snapshot;
   progress?: ReviewProgress;
+  commits?: readonly ReviewCommitSummary[];
   /** Resource id to its JSON body, or to bytes with a content type. */
   resources?: Record<string, JsonValue | FixtureBytes>;
   maps?: Record<string, JsonValue>;
@@ -31,8 +36,8 @@ const isBytes = (value: JsonValue | FixtureBytes): value is FixtureBytes =>
 
 /**
  * A bridge whose request handler answers from fixtures, so a browser test can
- * mount the JSON canvas without a store. Mount with the snapshot's version so
- * the canvas reads once instead of opening a watch stream.
+ * mount the JSON canvas without a store. Live activity streams are supplied by
+ * the host fixture when needed, including for a pinned snapshot.
  */
 export function fixtureReviewBridge(api: FixtureReviewApi): ReviewCanvasBridge {
   const request = async (url: string | URL): Promise<Response> => {
@@ -56,7 +61,7 @@ export function fixtureReviewBridge(api: FixtureReviewApi): ReviewCanvasBridge {
     if (route === `/${id}/diff`)
       return Response.json(searchParams.has("file") ? "" : []);
 
-    if (route === `/${id}/commits`) return Response.json([]);
+    if (route === `/${id}/commits`) return Response.json(api.commits ?? []);
 
     const map = /^\/[^/]+\/maps\/([^/]+)$/.exec(route);
 

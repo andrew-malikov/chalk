@@ -1,6 +1,6 @@
 # Gherkin Acceptance Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Let reviewers read and run review navigation and restoration behavior
 as complete Gherkin feature files.
@@ -67,7 +67,7 @@ existing Vite 8.0.16 and React 19.2.5.
   Start with version 3 and its sample commit. Reopening defaults to the current
   version. Reject opening a version that the scenario has not provided.
 
-- [ ] **Step 1: Add the runner dependencies and failing feature.**
+- [x] **Step 1: Add the runner dependencies and failing feature.**
 
 Add root dev dependencies `@playwright/test@1.62.1` and `playwright-bdd@9.2.1`
 using the pinned Bun. Copy the approved `navigation.feature` verbatim from the
@@ -79,12 +79,12 @@ Add `test:acceptance` to generate with
 `bun --bun run playwright test --config tests/acceptance/playwright.config.ts`.
 The generation command must succeed before execution can start.
 
-- [ ] **Step 2: Verify the unbound scenarios fail.**
+- [x] **Step 2: Verify the unbound scenarios fail.**
 
 Run `mise exec -- bun run test:acceptance` before defining steps.
 Expected: nonzero exit naming the missing navigation bindings.
 
-- [ ] **Step 3: Implement the browser harness and fixtures.**
+- [x] **Step 3: Implement the browser harness and fixtures.**
 
 Use the existing canvas config builder for Vite plugins, overriding the root to
 `tests/acceptance/harness`. Merge `workspaceTestAliases` from
@@ -126,7 +126,7 @@ Ignore these directories and `.features-gen` in Git.
 The acceptance tsconfig extends the canvas tsconfig, includes authored acceptance
 TypeScript, and excludes generated output. Preserve the existing source aliases.
 
-- [ ] **Step 4: Bind navigation steps to the rendered canvas.**
+- [x] **Step 4: Bind navigation steps to the rendered canvas.**
 
 Use accessible button names for Chalk, Diff, and Commits. Assert the selected
 button's `aria-pressed` and a visible view-specific marker: the markdown document,
@@ -134,7 +134,7 @@ the diff UI, or the commit list. Scope `Open commit diff` to the article contain
 `Add the API`. Verify the scoped diff displays that subject; the whole diff must
 have no commit scope. Use Playwright assertions to await rendering.
 
-- [ ] **Step 5: Verify navigation and failure propagation.**
+- [x] **Step 5: Verify navigation and failure propagation.**
 
 Run `mise exec -- bun run test:acceptance`.
 Expected: five passing examples from `navigation.feature`.
@@ -145,7 +145,7 @@ restore it. Temporarily issue an unhandled fixture request from the harness;
 expect teardown to fail, then restore it. Regenerate and rerun navigation cleanly.
 These are fault checks, not committed tests of runner internals.
 
-- [ ] **Step 6: Commit the working navigation suite.**
+- [x] **Step 6: Commit the working navigation suite.**
 
 Commit the listed authored files and lockfile as `test: run Gherkin navigation scenarios`.
 Inspect the staged diff to ensure no generated tests or reports are included.

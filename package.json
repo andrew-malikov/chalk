@@ -26,6 +26,7 @@
     "lint": "oxlint --disable-nested-config .",
     "ci": "bun run desktop:build && bun run --filter @chalk/tutorial check && bun run lint && bun run format:check && bun run typecheck && bun run test",
     "pretest": "bun run --filter @chalk/tutorial ensure:assets",
+    "test:acceptance": "BUN_JSC_useFTLJIT=0 bun --bun run bddgen --config tests/acceptance/playwright.config.ts && BUN_JSC_useFTLJIT=0 bun --bun run playwright test --config tests/acceptance/playwright.config.ts",
     "test": "bun test scripts && bun run --bun --filter '*' --filter '!@chalk/review-workspace' --if-present test",
     "pretypecheck": "bun run build:workspace-deps && bun run --filter @chalk/tutorial ensure:assets",
     "typecheck": "bun run --bun --filter '*' --filter '!@chalk/review-workspace' --if-present typecheck",
@@ -35,11 +36,13 @@
   },
   "devDependencies": {
     "@oxlint/plugins": "1.63.0",
+    "@playwright/test": "1.62.1",
     "@tailwindcss/vite": "4.3.3",
     "@types/bun": "1.3.10",
     "@types/node": "24.12.2",
     "oxfmt": "0.48.0",
     "oxlint": "1.63.0",
+    "playwright-bdd": "9.2.1",
     "typescript": "npm:typescript@7.0.2",
     "zod": "catalog:"
   },

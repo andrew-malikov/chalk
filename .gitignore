@@ -33,6 +33,9 @@ apps/ci/.wrangler-jaeger.jsonc
 *.log
 
 # Generated artifacts
+tests/acceptance/.features-gen/
+tests/acceptance/test-results/
+tests/acceptance/playwright-report/
 __pycache__/
 *.py[cod]
 packages/code-graph/canvas/public/snapshot*.json
