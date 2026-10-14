@@ -13,7 +13,7 @@ afterEach(() => vi.unstubAllEnvs());
 
 it("authenticates desktop setup routes before changing command setup", async () => {
   const home = await mkdtemp(path.join(tmpdir(), "desktop-command-setup-"));
-  vi.stubEnv("DEV_REVIEW_HOME", home);
+  vi.stubEnv("CHALK_REVIEW_HOME", home);
 
   const discovery = {
     version: 3 as const,

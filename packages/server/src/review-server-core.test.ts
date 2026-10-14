@@ -23,7 +23,7 @@ const stops: (() => Promise<void>)[] = [];
 
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), "review-server-core-"));
-  vi.stubEnv("DEV_REVIEW_HOME", root);
+  vi.stubEnv("CHALK_REVIEW_HOME", root);
 });
 
 afterEach(async () => {
@@ -280,7 +280,7 @@ describe.each(["desktop", "headless"] as const)("the %s server", (kind) => {
 const processes = {
   desktop: (home: string) =>
     spawnSource("../../apps/review-electrobun/src/desktop-host.ts", [], {
-      DEV_REVIEW_HOME: home,
+      CHALK_REVIEW_HOME: home,
       CHALK_REVIEW_SERVER_PORT: "0",
       CHALK_REVIEW_APP_PID: String(process.pid),
     }),
@@ -288,7 +288,7 @@ const processes = {
     spawnSource(
       "../cli/src/cli.ts",
       ["server", "start", "--json", "--state-dir", stateDir],
-      { DEV_REVIEW_HOME: home },
+      { CHALK_REVIEW_HOME: home },
     ),
 };
 
@@ -412,7 +412,7 @@ it("refuses to reset the id while a paused headless server holds the store", asy
   const reset = spawnSource(
     "../cli/src/cli.ts",
     ["--state-dir", stateDir, "server", "reset-id", "--json"],
-    { DEV_REVIEW_HOME: root },
+    { CHALK_REVIEW_HOME: root },
   );
 
   let output = "";

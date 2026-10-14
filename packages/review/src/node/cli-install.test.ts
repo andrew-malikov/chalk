@@ -422,7 +422,7 @@ async function isolatedEnvironment(): Promise<NodeJS.ProcessEnv> {
 
   temporaryDirectories.push(directory);
 
-  return { DEV_REVIEW_HOME: directory };
+  return { CHALK_REVIEW_HOME: directory };
 }
 
 async function temporaryHome(prefix: string): Promise<string> {
@@ -434,7 +434,7 @@ async function temporaryHome(prefix: string): Promise<string> {
 
 function profileEnvironment(homeDir: string, shell: string): NodeJS.ProcessEnv {
   return {
-    DEV_REVIEW_HOME: path.join(homeDir, ".dev"),
+    CHALK_REVIEW_HOME: path.join(homeDir, ".dev"),
     PATH: "/usr/bin:/bin",
     SHELL: shell,
   };
@@ -492,7 +492,7 @@ describe("installed launcher runtime selection", () => {
     await writeFile(oldCli, 'console.log("old-build")');
     await writeFile(
       cliPath,
-      'console.log(JSON.stringify({build:"current",home:process.env.DEV_REVIEW_HOME}))',
+      'console.log(JSON.stringify({build:"current",home:process.env.CHALK_REVIEW_HOME}))',
     );
     const shim = path.join(homeDir, ".local", "bin", "chalk");
     await writePathShim(
@@ -515,7 +515,7 @@ describe("installed launcher runtime selection", () => {
 
     expect(JSON.parse(stdout)).toEqual({
       build: "current",
-      home: env.DEV_REVIEW_HOME,
+      home: env.CHALK_REVIEW_HOME,
     });
   });
 
@@ -524,10 +524,10 @@ describe("installed launcher runtime selection", () => {
     const profile = path.join(home, "a profile");
     const cli = path.join(home, "cli.cjs");
     const shim = path.join(home, "review");
-    await writeFile(cli, "console.log(process.env.DEV_REVIEW_HOME)");
+    await writeFile(cli, "console.log(process.env.CHALK_REVIEW_HOME)");
     await writePathShim(shim, cli, process.execPath, profile);
     const env: NodeJS.ProcessEnv = { ...process.env, HOME: home };
-    delete env.DEV_REVIEW_HOME;
+    delete env.CHALK_REVIEW_HOME;
 
     const result = await promisify(execFile)(shim, ["trace", "status"], {
       env,
@@ -586,7 +586,7 @@ describe("installed launcher runtime selection", () => {
       const { stdout } = await promisify(execFile)(shim, args, {
         env: {
           ...process.env,
-          DEV_REVIEW_HOME: home,
+          CHALK_REVIEW_HOME: home,
           CHALK_REVIEW_CLI_NO_DELEGATE: noDelegate ? "1" : "",
           ELECTRON_RUN_AS_NODE: "",
         },
@@ -649,8 +649,8 @@ describe("installed launcher instance selection", () => {
       const { stdout } = await promisify(execFile)(shim, [], {
         env: {
           PATH: process.env.PATH,
-          DEV_REVIEW_HOME: home,
-          DEV_REVIEW_INSTANCE: "",
+          CHALK_REVIEW_HOME: home,
+          CHALK_REVIEW_INSTANCE: "",
           ...env,
         },
       });
@@ -661,10 +661,10 @@ describe("installed launcher instance selection", () => {
 
   it("follows the env override, then the machine default, then the only live Desktop, then stable", async () => {
     const both = await fixture({ stable: process.pid, preview: process.pid });
-    expect(await both({ DEV_REVIEW_INSTANCE: "preview" })).toBe("preview");
+    expect(await both({ CHALK_REVIEW_INSTANCE: "preview" })).toBe("preview");
     expect(await both()).toBe("stable");
     expect(await both({}, "preview")).toBe("preview");
-    expect(await both({ DEV_REVIEW_INSTANCE: "stable" }, "preview")).toBe(
+    expect(await both({ CHALK_REVIEW_INSTANCE: "stable" }, "preview")).toBe(
       "stable",
     );
 
@@ -674,18 +674,18 @@ describe("installed launcher instance selection", () => {
     });
 
     expect(await previewOnly()).toBe("preview");
-    expect(await previewOnly({ DEV_REVIEW_INSTANCE: "stable" })).toBe(
+    expect(await previewOnly({ CHALK_REVIEW_INSTANCE: "stable" })).toBe(
       "fallback",
     );
 
     // A pre-instance stable Desktop answers only for stable.
     const legacy = await fixture({ legacy: process.pid });
     expect(await legacy()).toBe("legacy");
-    expect(await legacy({ DEV_REVIEW_INSTANCE: "stable" })).toBe("legacy");
-    expect(await legacy({ DEV_REVIEW_INSTANCE: "preview" })).toBe("fallback");
+    expect(await legacy({ CHALK_REVIEW_INSTANCE: "stable" })).toBe("legacy");
+    expect(await legacy({ CHALK_REVIEW_INSTANCE: "preview" })).toBe("fallback");
 
     // A key is a file name; anything else is left for the CLI to reject.
-    expect(await both({ DEV_REVIEW_INSTANCE: "../server" })).toBe("fallback");
+    expect(await both({ CHALK_REVIEW_INSTANCE: "../server" })).toBe("fallback");
   });
 });
 

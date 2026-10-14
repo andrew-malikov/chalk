@@ -25,7 +25,7 @@ test(
       {
         env: {
           ...process.env,
-          DEV_REVIEW_HOME: home,
+          CHALK_REVIEW_HOME: home,
           CHALK_REVIEW_SERVER_PORT: "0",
           CHALK_REVIEW_APP_PID: String(process.pid),
           CHALK_REVIEW_CLI_ROOT: path.join(root, "packages/cli"),

@@ -5,10 +5,10 @@ This page describes local product data and the optional hosted trace store.
 
 ## What stays local
 
-Chalk stores authored chalks in `~/.dev/review-api.db` and desktop
-discovery under `~/.dev/review-desktop/`. The native desktop uses
-`~/.dev-fast/review-electrobun` as its default profile; `DEV_REVIEW_HOME`
-selects another profile. These names predate the Chalk rename.
+Chalk stores authored chalks in `~/.chalk/review-api.db` and desktop
+discovery under `~/.chalk/review-desktop/`. Development builds of the
+desktop use `~/.dev-fast/review-electrobun` instead; `CHALK_REVIEW_HOME`
+selects another profile.
 
 The canvas talks to Chalk's local server. Chalk does not collect or
 send product usage telemetry, automatic error reports, or crash dumps.

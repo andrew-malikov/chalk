@@ -19,8 +19,8 @@ const discoverySchema = z.object({
 export type ReviewServerDiscovery = z.infer<typeof discoverySchema>;
 
 export function reviewServerStateDir(env: NodeJS.ProcessEnv = process.env) {
-  return env.DEV_REVIEW_SERVER_DIR?.trim()
-    ? path.resolve(env.DEV_REVIEW_SERVER_DIR.trim())
+  return env.CHALK_REVIEW_SERVER_DIR?.trim()
+    ? path.resolve(env.CHALK_REVIEW_SERVER_DIR.trim())
     : devReviewHome(env);
 }
 

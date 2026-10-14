@@ -112,7 +112,7 @@ beforeEach(async () => {
   directory = mkdtempSync(path.join(tmpdir(), "review-local-data-"));
   repository = path.join(directory, "repository");
   database = path.join(directory, "reviews.db");
-  vi.stubEnv("DEV_REVIEW_HOME", directory);
+  vi.stubEnv("CHALK_REVIEW_HOME", directory);
   mkdirSync(repository);
   git("init", "-q", "-b", "main");
   git("config", "user.name", "Review Test");

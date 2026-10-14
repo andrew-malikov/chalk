@@ -336,7 +336,7 @@ describe("Review Desktop launcher", () => {
         "-a",
         "/tmp/Review.app",
         "--env",
-        "DEV_REVIEW_HOME=/tmp/home",
+        "CHALK_REVIEW_HOME=/tmp/home",
         "--env",
         "CHALK_REVIEW_DESKTOP_BACKGROUND=1",
       ],
@@ -349,7 +349,7 @@ describe("Review Desktop launcher", () => {
         "-a",
         "/tmp/Review.app",
         "--env",
-        "DEV_REVIEW_HOME=/tmp/home",
+        "CHALK_REVIEW_HOME=/tmp/home",
       ],
     ],
   ])(
@@ -367,7 +367,7 @@ describe("Review Desktop launcher", () => {
         execPath: "/tmp/Review.app/Contents/MacOS/Review",
         env: {
           ELECTRON_RUN_AS_NODE: "1",
-          DEV_REVIEW_HOME: "/tmp/home",
+          CHALK_REVIEW_HOME: "/tmp/home",
           CHALK_REVIEW_CHECKOUT: "/tmp/checkout",
           PATH: "/usr/bin",
         },

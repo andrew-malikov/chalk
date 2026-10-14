@@ -40,7 +40,7 @@ export async function connectReviewApi(env = process.env) {
 export async function connectReviewInstance(
   env = process.env,
 ): Promise<ConnectedReview> {
-  if (env.DEV_REVIEW_SERVER_DIR?.trim()) {
+  if (env.CHALK_REVIEW_SERVER_DIR?.trim()) {
     const stateDir = reviewServerStateDir(env);
     const server = await readReviewServerDiscovery(stateDir);
 
@@ -60,7 +60,7 @@ export async function connectReviewInstance(
 
   if (!discovery)
     throw new Error(
-      `${reviewInstanceUnavailable(selection).message} For headless authoring, select a running server with --state-dir or DEV_REVIEW_SERVER_DIR.`,
+      `${reviewInstanceUnavailable(selection).message} For headless authoring, select a running server with --state-dir or CHALK_REVIEW_SERVER_DIR.`,
     );
 
   return {

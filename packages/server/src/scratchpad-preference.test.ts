@@ -17,7 +17,7 @@ it("makes and lists the scratchpad only while its preference is on", async () =>
 
   const devHome = path.join(root, "review");
   const packageRoot = path.join(root, "package");
-  vi.stubEnv("DEV_REVIEW_HOME", devHome);
+  vi.stubEnv("CHALK_REVIEW_HOME", devHome);
   await mkdir(devHome, { recursive: true });
 
   const local = openLocalReviewStore(path.join(devHome, "review-api.db"));

@@ -26,10 +26,10 @@ const checkout = process.env.CHALK_REVIEW_CHECKOUT;
 // Keep the existing dev profile so the rename preserves reviews and
 // preferences; installed builds use the CLI's default home so it finds them.
 const profile = path.resolve(
-  process.env.DEV_REVIEW_HOME ??
+  process.env.CHALK_REVIEW_HOME ??
     (checkout
       ? path.join(homedir(), ".dev-fast/review-electrobun")
-      : path.join(homedir(), ".dev")),
+      : path.join(homedir(), ".chalk")),
 );
 
 const key = checkout
@@ -227,7 +227,7 @@ async function run() {
     return;
   }
 
-  console.log(`Review profile: ${profile}; DEV_REVIEW_INSTANCE=${key}`);
+  console.log(`Review profile: ${profile}; CHALK_REVIEW_INSTANCE=${key}`);
   server = startServer({
     profile,
     key,

@@ -64,7 +64,7 @@ describe("Chalk CLI", () => {
     const home = await mkdtemp(path.join(os.tmpdir(), "review-cli-home-"));
 
     const env = {
-      DEV_REVIEW_HOME: home,
+      CHALK_REVIEW_HOME: home,
       PROGRESSIVE_REVIEW_POSTHOG_KEY: "fake-key",
       PROGRESSIVE_REVIEW_POSTHOG_HOST: "http://127.0.0.1:1",
     };
@@ -270,7 +270,7 @@ async function runConnect(
       env: {
         HOME: homeDir,
         TRACE_HOME_DIR: homeDir,
-        DEV_REVIEW_HOME: path.join(homeDir, ".dev"),
+        CHALK_REVIEW_HOME: path.join(homeDir, ".dev"),
       },
       stdout,
       stderr,

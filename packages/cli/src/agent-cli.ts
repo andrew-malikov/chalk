@@ -24,7 +24,7 @@ interface AgentCliInput {
 }
 
 export const reviewAgentCliHelp =
-  "chalk api tools\nchalk api <tool-name> '<json>'\nchalk api <tool-name> -  (read JSON from stdin)\nchalk mcp  (stdio MCP adapter; Chalk Desktop or chalk server start must be running)\nSelect headless state with DEV_REVIEW_SERVER_DIR or chalk --state-dir <path> api/mcp.\n";
+  "chalk api tools\nchalk api <tool-name> '<json>'\nchalk api <tool-name> -  (read JSON from stdin)\nchalk mcp  (stdio MCP adapter; Chalk Desktop or chalk server start must be running)\nSelect headless state with CHALK_REVIEW_SERVER_DIR or chalk --state-dir <path> api/mcp.\n";
 
 export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
   const env = input.env ?? process.env;
@@ -60,7 +60,7 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
         input.stdin ?? process.stdin,
         input.stdout,
         input.stderr,
-        env.DEV_REVIEW_SERVER_DIR?.trim()
+        env.CHALK_REVIEW_SERVER_DIR?.trim()
           ? undefined
           : async (problem) => {
               const selection = await selectReviewInstance({ env });

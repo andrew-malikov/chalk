@@ -48,7 +48,7 @@ import {
   reviewServerStateDir,
   serverNotReady,
 } from "@review/node/server-discovery";
-import { DEV_REVIEW_HOME_ENV } from "@review/node/storage/review-home-paths";
+import { CHALK_REVIEW_HOME_ENV } from "@review/node/storage/review-home-paths";
 import { Argument, Command, CommanderError, Option } from "commander";
 
 import { reviewAgentCliHelp } from "./agent-cli";
@@ -157,7 +157,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     stateDir = program.opts<{ stateDir?: string }>().stateDir,
   ) =>
     stateDir
-      ? { ...env, DEV_REVIEW_SERVER_DIR: path.resolve(cwd, stateDir) }
+      ? { ...env, CHALK_REVIEW_SERVER_DIR: path.resolve(cwd, stateDir) }
       : env;
 
   const serverCommand = configureOutput(
@@ -291,7 +291,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     // Any live Desktop holds the store, attached window or not. Only a gone
     // process counts as stopped: a paused or busy one may not answer /health.
     const desktops = await readReviewInstances({
-      env: { ...env, [DEV_REVIEW_HOME_ENV]: stateDir },
+      env: { ...env, [CHALK_REVIEW_HOME_ENV]: stateDir },
     });
 
     const [problem] = desktops.broken.values();

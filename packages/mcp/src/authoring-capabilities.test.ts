@@ -16,8 +16,8 @@ it("discovers the live Desktop map preference without opening a review", async (
 
   const env = {
     ...process.env,
-    DEV_REVIEW_HOME: home,
-    DEV_REVIEW_SERVER_DIR: "",
+    CHALK_REVIEW_HOME: home,
+    CHALK_REVIEW_SERVER_DIR: "",
   };
 
   const local = openLocalReviewStore(path.join(home, "review-api.db"));
@@ -78,7 +78,7 @@ it("discovers the live Desktop map preference without opening a review", async (
     });
     expect(opened).toBe(false);
     await expect(
-      connectReviewApi({ ...env, DEV_REVIEW_SERVER_DIR: home }),
+      connectReviewApi({ ...env, CHALK_REVIEW_SERVER_DIR: home }),
     ).rejects.toThrow(/chalk server start/g);
     relay.close();
     expect(await client.read("/capabilities")).toMatchObject({
@@ -88,7 +88,7 @@ it("discovers the live Desktop map preference without opening a review", async (
     await expect(
       connectReviewApi({
         ...env,
-        DEV_REVIEW_SERVER_DIR: path.join(home, "missing"),
+        CHALK_REVIEW_SERVER_DIR: path.join(home, "missing"),
       }),
     ).rejects.toThrow(/chalk server start/g);
   } finally {

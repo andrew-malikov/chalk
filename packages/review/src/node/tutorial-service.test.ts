@@ -23,7 +23,7 @@ afterEach(async () => {
 
 async function setup() {
   const home = await mkdtemp(path.join(os.tmpdir(), "native-tutorial-"));
-  vi.stubEnv("DEV_REVIEW_HOME", home);
+  vi.stubEnv("CHALK_REVIEW_HOME", home);
   const assets = path.join(home, "package");
   await cp(tutorialAssetsRoot(), assets, {
     recursive: true,

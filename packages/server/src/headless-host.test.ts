@@ -47,7 +47,7 @@ const stops: (() => Promise<void>)[] = [];
 
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), "review-headless-"));
-  vi.stubEnv("DEV_REVIEW_HOME", root);
+  vi.stubEnv("CHALK_REVIEW_HOME", root);
 });
 
 afterEach(async () => {
@@ -84,7 +84,7 @@ async function start(
     }),
   ]);
 
-  const env = { ...process.env, DEV_REVIEW_SERVER_DIR: stateDir };
+  const env = { ...process.env, CHALK_REVIEW_SERVER_DIR: stateDir };
 
   const client = new ReviewApiClient({
     serverUrl: discovery.url,
@@ -879,7 +879,7 @@ it("resets the server id only while no server holds the store", async () => {
   // An unrelated instance selection must not get in the way.
   const done = await cli(reset, {
     ...process.env,
-    DEV_REVIEW_INSTANCE: "Not A Key!",
+    CHALK_REVIEW_INSTANCE: "Not A Key!",
   });
 
   expect(done).toMatchObject({ exitCode: 0, errors: "" });

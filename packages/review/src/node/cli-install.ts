@@ -600,8 +600,8 @@ export async function writePathShim(
 FALLBACK_CLI=${shSingleQuote(cliPath)}
 FALLBACK_RUNTIME=${shSingleQuote(runtimePath ?? "")}
 DEFAULT_HOME=${shSingleQuote(devHome)}
-export DEV_REVIEW_HOME="\${DEV_REVIEW_HOME:-$DEFAULT_HOME}"
-DESKTOP="$DEV_REVIEW_HOME/review-desktop"
+export CHALK_REVIEW_HOME="\${CHALK_REVIEW_HOME:-$DEFAULT_HOME}"
+DESKTOP="$CHALK_REVIEW_HOME/review-desktop"
 
 # A record counts only while its server process is alive.
 live() {
@@ -610,13 +610,13 @@ live() {
   [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
 }
 
-# Same order as the CLI: DEV_REVIEW_INSTANCE, the machine default, the only
+# Same order as the CLI: CHALK_REVIEW_INSTANCE, the machine default, the only
 # live Desktop, then stable. A stable Desktop that predates instances wrote
 # only server.json; it never stands in for any other key.
 LEGACY="$DESKTOP/server.json"
 STABLE="$DESKTOP/instances/stable.json"
 [ -f "$STABLE" ] || STABLE="$LEGACY"
-key="\${DEV_REVIEW_INSTANCE:-}"
+key="\${CHALK_REVIEW_INSTANCE:-}"
 if [ -z "$key" ] && [ -f "$DESKTOP/default-instance" ]; then
   key=$(head -n 1 "$DESKTOP/default-instance" | tr -d '[:space:]')
 fi

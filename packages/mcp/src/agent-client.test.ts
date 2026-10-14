@@ -327,7 +327,7 @@ it("shows CLI help without requiring Desktop or touching review storage", async 
       stdin: Readable.from([]),
       stdout: stream,
       stderr: stream,
-      env: { DEV_REVIEW_HOME: "/does-not-exist" },
+      env: { CHALK_REVIEW_HOME: "/does-not-exist" },
     }),
   ).toBe(0);
   expect(output).toContain("chalk api <tool-name>");

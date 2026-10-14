@@ -132,7 +132,7 @@ export async function requireHealthyReviewDesktop(
 }
 
 /** Shell-session override; agents inherit it through the bare shim. */
-export const REVIEW_INSTANCE_ENV = "DEV_REVIEW_INSTANCE";
+export const REVIEW_INSTANCE_ENV = "CHALK_REVIEW_INSTANCE";
 
 // Keys name files, so nothing else may select one.
 function checkedInstanceKey(key: string, origin = "") {
@@ -283,7 +283,7 @@ export interface ReviewInstanceSelection {
   problem?: Error;
 }
 
-/** DEV_REVIEW_INSTANCE, then the machine default, then the only running Desktop, then stable. */
+/** CHALK_REVIEW_INSTANCE, then the machine default, then the only running Desktop, then stable. */
 export async function selectReviewInstance(
   dependencies: ReviewInstanceDependencies = {},
 ): Promise<ReviewInstanceSelection> {

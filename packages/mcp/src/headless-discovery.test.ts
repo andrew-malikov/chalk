@@ -14,7 +14,7 @@ import { connectReviewApi } from "./agent-client.js";
 
 it("connects to the selected headless server and rejects stale discovery and stopped servers", async () => {
   const stateDir = await mkdtemp(path.join(tmpdir(), "mcp-headless-"));
-  const env = { ...process.env, DEV_REVIEW_SERVER_DIR: stateDir };
+  const env = { ...process.env, CHALK_REVIEW_SERVER_DIR: stateDir };
   const controller = new AbortController();
   const ready = Promise.withResolvers<ReviewServerDiscovery>();
 

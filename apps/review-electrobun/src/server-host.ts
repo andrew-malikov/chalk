@@ -120,7 +120,7 @@ export async function startServer(
     stdio: ["ignore", "pipe", "pipe"],
     env: {
       ...env,
-      DEV_REVIEW_HOME: options.profile,
+      CHALK_REVIEW_HOME: options.profile,
       ...(options.checkout && {
         CHALK_REVIEW_CHECKOUT: options.checkout,
         CHALK_REVIEW_INSTANCE_KEY: options.key,

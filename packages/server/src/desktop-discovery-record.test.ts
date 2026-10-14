@@ -23,7 +23,7 @@ it.each([
   async (key, records) => {
     const root = await mkdtemp(path.join(os.tmpdir(), "review-record-"));
     const devHome = path.join(root, "review");
-    vi.stubEnv("DEV_REVIEW_HOME", devHome);
+    vi.stubEnv("CHALK_REVIEW_HOME", devHome);
     await mkdir(devHome, { recursive: true });
     const local = openLocalReviewStore(path.join(devHome, "review-api.db"));
 
@@ -75,7 +75,7 @@ it("advertises and reports the CLI from its own package", async () => {
 
   const cliPath = path.join(cliPackageRoot, "dist/cli.js");
 
-  vi.stubEnv("DEV_REVIEW_HOME", root);
+  vi.stubEnv("CHALK_REVIEW_HOME", root);
   await mkdir(path.dirname(cliPath), { recursive: true });
   await mkdir(path.join(packageRoot, "dist"), { recursive: true });
   await writeFile(cliPath, "// CLI fixture\n");

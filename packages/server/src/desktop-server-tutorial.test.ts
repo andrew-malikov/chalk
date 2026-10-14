@@ -31,7 +31,7 @@ afterEach(() => vi.unstubAllEnvs());
 describe("Review Desktop tutorial preparation", () => {
   it("opens a prepared native tutorial into the JSON canvas with interactive content, pins and resources", async () => {
     const home = await mkdtemp(path.join(os.tmpdir(), "review-tutorial-json-"));
-    vi.stubEnv("DEV_REVIEW_HOME", home);
+    vi.stubEnv("CHALK_REVIEW_HOME", home);
 
     const local = openLocalReviewStore(path.join(home, "review-api.db"));
 

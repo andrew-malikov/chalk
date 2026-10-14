@@ -73,7 +73,7 @@ async function maybeDelegateToDesktopCli(
         ["api", "mcp", "server", "instances"].includes(argument) ||
         /^--state-dir(?:=|$)/.test(argument),
     ) ||
-    env.DEV_REVIEW_SERVER_DIR?.trim()
+    env.CHALK_REVIEW_SERVER_DIR?.trim()
   )
     return null;
   const ownPath = fileURLToPath(import.meta.url);
@@ -82,9 +82,9 @@ async function maybeDelegateToDesktopCli(
 
   // Keep bootstrap independent of the server module graph until runtime validation.
   // Keep this selection in step with devReviewHome().
-  const devHome = env.DEV_REVIEW_HOME?.trim()
-    ? path.resolve(env.DEV_REVIEW_HOME.trim())
-    : path.join(os.homedir(), ".dev");
+  const devHome = env.CHALK_REVIEW_HOME?.trim()
+    ? path.resolve(env.CHALK_REVIEW_HOME.trim())
+    : path.join(os.homedir(), ".chalk");
 
   let cliPath: string;
   let runtimePath: string | undefined;
@@ -150,13 +150,13 @@ async function maybeDelegateToDesktopCli(
 
 /**
  * The shim's selection, kept in step with it and with selectReviewInstance:
- * DEV_REVIEW_INSTANCE, the machine default, the only live Desktop, then
+ * CHALK_REVIEW_INSTANCE, the machine default, the only live Desktop, then
  * stable, then the pre-instance server.json.
  */
 function selectedDiscoveryFile(devHome: string, env: NodeJS.ProcessEnv) {
   const desktop = path.join(devHome, "review-desktop");
   const instances = path.join(desktop, "instances");
-  let key = env.DEV_REVIEW_INSTANCE?.trim();
+  let key = env.CHALK_REVIEW_INSTANCE?.trim();
 
   try {
     key ||= readFileSync(path.join(desktop, "default-instance"), "utf8").trim();

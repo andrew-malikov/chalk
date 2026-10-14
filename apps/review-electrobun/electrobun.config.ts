@@ -15,6 +15,7 @@ export default {
       runtime: "runtime",
     },
     mac: {
+      codesign: Boolean(process.env.ELECTROBUN_DEVELOPER_ID),
       bundleCEF: true,
       defaultRenderer: "cef",
       icons: "../review-canvas/icons/chalk.iconset",
