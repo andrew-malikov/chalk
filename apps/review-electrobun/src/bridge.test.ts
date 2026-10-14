@@ -3,10 +3,10 @@ import { createServer } from "node:http";
 import {
   REVIEW_DESKTOP_DISCOVERY_VERSION,
   ReviewApiClient,
-} from "@blackboard/review-protocol";
+} from "@blackboard/review-contracts";
+import { readQuerySchemas } from "@review/node/review-api/read-schemas";
 import { afterEach, expect, test, vi } from "vitest";
 
-import { readQuerySchemas } from "../../../packages/review/src/review-api/read-schemas";
 import {
   connectControl,
   createAuthenticatedRequest,

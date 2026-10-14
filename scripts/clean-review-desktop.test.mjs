@@ -8,7 +8,14 @@ import { cleanReviewDesktop } from "./clean-review-desktop.mjs";
 
 test("cleans Electrobun outputs while preserving the SDK, source and user data", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "blackboard-clean-"));
-  const generated = ["dist", "build", "artifacts", ".cottontail-tmp"];
+
+  const generated = [
+    "dist",
+    "runtime",
+    "build",
+    "artifacts",
+    ".cottontail-tmp",
+  ];
 
   const retained = [
     ".hutch/devkit/api.ts",

@@ -1,4 +1,4 @@
-import { isObjectValue, jsonValueSchema } from "@blackboard/review-protocol";
+import { isObjectValue, jsonValueSchema } from "@blackboard/review-contracts";
 import { z } from "zod";
 
 const softwareElementTypeSchema = z.enum([

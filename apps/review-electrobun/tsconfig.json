@@ -10,10 +10,14 @@
       "electrobun/main/*": ["./.hutch/devkit/api/sdks/main/entries/*.ts"],
       "electrobun/main": ["./.hutch/devkit/api/sdks/main/index.ts"],
       "electrobun/view": ["./.hutch/devkit/api/browser/index.ts"],
+      "@blackboard/server/*": ["../../packages/server/src/*"],
+      "@blackboard/tutorial/assets/*": ["../../packages/tutorial/assets/*"],
+      "@blackboard/tutorial/*": ["../../packages/tutorial/src/*"],
+      "@blackboard/mcp/*": ["../../packages/mcp/src/*"],
       "@blackboard/*": ["../../packages/*/src"],
       "@review/*": ["../../packages/review/src/*"],
       "@cli/*": ["../../packages/cli/src/*"],
-      "@canvas/*": ["../../packages/review/app/src/*"],
+      "@canvas/*": ["../../apps/review-canvas/src/*"],
       "@shell/*": ["./src/*"]
     }
   },

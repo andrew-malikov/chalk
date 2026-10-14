@@ -3,12 +3,12 @@ import os from "node:os";
 import path from "node:path";
 import { PassThrough, Readable } from "node:stream";
 
+import { runReviewAppLaunch as runReviewAppLaunchActual } from "@review/node/review-app-launcher";
+import { runReviewInfo as runReviewInfoActual } from "@review/node/review-info";
 import { describe, expect, it, vi } from "vitest";
 
 import { runReviewCli } from "./cli-runner";
 import { runReviewAppPick as runReviewAppActual } from "./review-app";
-import { runReviewAppLaunch as runReviewAppLaunchActual } from "./review-app-launcher";
-import { runReviewInfo as runReviewInfoActual } from "./review-info";
 
 describe("Blackboard CLI", () => {
   it.each(["cursor", "unknown"])(

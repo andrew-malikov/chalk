@@ -55,8 +55,8 @@ jobs:
         if: steps.release.outputs.published != 'true'
         run: |
           bun test scripts/review-cli-release.test.mjs scripts/review-cli-dependencies.test.mjs
-          bun run --filter @blackboard/review ensure:tutorial-assets
-          bun run --filter @blackboard/review test -- --project shared-module-graph src/server/headless-host.test.ts
+          bun run --filter @blackboard/tutorial ensure:assets
+          bun run --filter @blackboard/server test -- --project shared-module-graph src/headless-host.test.ts
           bun run --filter @blackboard/cli test
       - name: Build release tarball
         if: steps.release.outputs.published != 'true'

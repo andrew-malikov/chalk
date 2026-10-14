@@ -2,7 +2,7 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { type JsonValue, parseJsonText } from "@blackboard/review-protocol";
+import { type JsonValue, parseJsonText } from "@blackboard/review-contracts";
 
 export const BLOCK_FIXTURES_ROOT = path.dirname(fileURLToPath(import.meta.url));
 

@@ -7,15 +7,17 @@
     "app:dev": "bun scripts/dev.mjs dev",
     "app:build": "bun scripts/dev.mjs build",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.main.json",
-    "test": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run"
+    "test": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run",
+    "host:build": "bun scripts/build-host.mjs"
   },
   "dependencies": {
-    "@blackboard/cli": "workspace:*",
     "@blackboard/review": "workspace:*",
     "@blackboard/review-canvas": "workspace:*",
-    "@blackboard/review-protocol": "workspace:*",
+    "@blackboard/review-contracts": "workspace:*",
+    "@blackboard/server": "workspace:*",
     "@mr_mint/elkjs-libavoid": "0.5.0",
     "@pierre/diffs": "1.5.1",
+    "hono": "4.13.7",
     "lucide-react": "1.48.0",
     "react": "19.2.5",
     "react-dom": "19.2.5",
@@ -26,6 +28,7 @@
     "@types/node": "24.12.2",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "tsdown": "0.22.14",
     "typescript": "6.0.3",
     "vite": "8.0.16",
     "vitest": "4.1.11"

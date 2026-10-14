@@ -11,7 +11,7 @@ import {
   jsonObject,
   jsonString,
   parseJsonText,
-} from "@blackboard/review-protocol";
+} from "@blackboard/review-contracts";
 
 // A standalone build (npx/global install) defers to the CLI bundled with a
 // running Review Desktop so the CLI can never skew from the server it talks

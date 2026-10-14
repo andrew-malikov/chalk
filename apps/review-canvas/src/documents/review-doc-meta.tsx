@@ -1,0 +1,285 @@
+import {
+  type ReviewDiffStats,
+  summarizeReviewDiffFiles,
+} from "@blackboard/review-contracts";
+import { DiffCount } from "@canvas/diff/diff-count";
+import { drawStyles } from "@canvas/drawing/draw-styles";
+import { useReviewSession } from "@canvas/host/review-session";
+import { DisplayedReviewVersionContext } from "@canvas/review/displayed-review-version-context";
+import {
+  ReviewBranchRange,
+  WORKING_TREE,
+} from "@canvas/review/review-branch-range";
+import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
+import { fontSize, radius } from "@canvas/styles/scale.stylex";
+import { tokens } from "@canvas/styles/tokens.stylex";
+import * as stylex from "@stylexjs/stylex";
+import { GitBranch } from "lucide-react";
+import {
+  Fragment,
+  type ReactElement,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+
+/**
+ * Automatic document header: update time above the title,
+ * with one row of facts below it: saved branch, diff statistics and the
+ * commit range, separated by dots.
+ */
+export function ReviewDocumentMetaLine({
+  children,
+}: {
+  children?: ReactNode;
+}): ReactElement {
+  const session = useReviewSession();
+  const displayedVersion = useContext(DisplayedReviewVersionContext);
+  const diffFiles = useReviewDiffFiles();
+
+  const review = session.review!;
+
+  const [relativeTimeNowMs, setRelativeTimeNowMs] = useState<number | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setRelativeTimeNowMs(Date.now());
+  }, [displayedVersion]);
+
+  const diff =
+    diffFiles.status === "loaded" ? reviewDiffStats(diffFiles) : null;
+
+  const updatedLabel =
+    review.updatedAtMs != null && relativeTimeNowMs != null
+      ? relativeTimeLabel(review.updatedAtMs, relativeTimeNowMs)
+      : null;
+
+  const branch = review.headBranch?.trim() ? review.headBranch : null;
+
+  const facts: { key: string; node: ReactNode }[] = [];
+
+  if (branch) {
+    facts.push({
+      key: "branch",
+      node: (
+        <span {...stylex.props(styles.branch)} title={`Head branch: ${branch}`}>
+          <GitBranch
+            size={13}
+            aria-hidden="true"
+            {...stylex.props(styles.icon, styles.branchIcon)}
+          />
+          <span {...stylex.props(styles.branchName)}>{branch}</span>
+        </span>
+      ),
+    });
+  }
+
+  if (diff && review.pins) {
+    facts.push({
+      key: "files",
+      node: (
+        <span>
+          {diff.fileCount === 1 ? "1 file" : `${diff.fileCount} files`}
+        </span>
+      ),
+    });
+    facts.push({
+      key: "changes",
+      node: (
+        <span {...stylex.props(styles.row, styles.stats)}>
+          <DiffCount
+            additions={diff.additions}
+            deletions={diff.deletions}
+            large
+          />
+          {diff.additions + diff.deletions > 0 ? (
+            <span {...stylex.props(styles.changeBar)} aria-hidden="true">
+              {diff.additions > 0 ? (
+                <span
+                  {...stylex.props(styles.change)}
+                  style={{ flexGrow: diff.additions }}
+                />
+              ) : null}
+              {diff.deletions > 0 ? (
+                <span
+                  {...stylex.props(styles.change, styles.removed)}
+                  style={{ flexGrow: diff.deletions }}
+                />
+              ) : null}
+            </span>
+          ) : null}
+        </span>
+      ),
+    });
+  }
+
+  if (review.pins) {
+    facts.push({
+      key: "range",
+      node: (
+        <ReviewBranchRange
+          baseRef={review.pins.base}
+          headRef={
+            review.targetKind === "worktree" ? WORKING_TREE : review.pins.head
+          }
+        />
+      ),
+    });
+  }
+
+  return (
+    // The attribute is a marker for tests.
+    <header
+      {...stylex.props(styles.header, drawStyles.blockChild)}
+      data-review-document-header
+    >
+      <div {...stylex.props(styles.row, styles.top)} data-review-copy-ignore>
+        {updatedLabel && (
+          <span {...stylex.props(styles.updated)}>Updated {updatedLabel}</span>
+        )}
+      </div>
+      {children}
+      <div
+        {...stylex.props(styles.row, styles.details)}
+        data-review-copy-ignore
+      >
+        {withFactDots(facts)}
+      </div>
+    </header>
+  );
+}
+
+/** Lay out header facts with a small dot between each present pair. */
+function withFactDots(
+  facts: readonly { key: string; node: ReactNode }[],
+): ReactNode {
+  return facts.map(({ key, node }, index) => (
+    <Fragment key={key}>
+      {index > 0 ? (
+        <span {...stylex.props(styles.dot)} aria-hidden="true" />
+      ) : null}
+      {node}
+    </Fragment>
+  ));
+}
+
+function reviewDiffStats(diff: {
+  files?: { additions?: number; deletions?: number }[];
+}): ReviewDiffStats | null {
+  if (!diff.files?.length) return null;
+
+  return summarizeReviewDiffFiles(diff.files);
+}
+
+function relativeTimeLabel(timeMs: number, nowMs: number): string | null {
+  if (!Number.isFinite(timeMs)) return null;
+  const seconds = Math.max(0, Math.round((nowMs - timeMs) / 1000));
+
+  if (seconds < 60) return "just now";
+  const minutes = Math.round(seconds / 60);
+
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+
+  if (hours < 24) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+  const days = Math.round(hours / 24);
+
+  if (days < 7) return days === 1 ? "1 day ago" : `${days} days ago`;
+
+  return new Date(timeMs).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+// Paper's review header: identity, title, then source and diff metadata.
+const styles = stylex.create({
+  header: {
+    width: `min(100%, ${tokens.reviewProseMaxWidth})`,
+    margin: "28px auto 0",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    paddingBottom: "28px",
+    font: `${fontSize.ui}/18px ${tokens.fontSans}`,
+    color: tokens.inkFaint,
+  },
+  row: {
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+  top: {
+    justifyContent: "space-between",
+    gap: "10px 24px",
+  },
+  updated: {
+    marginLeft: "auto",
+  },
+  icon: {
+    flexShrink: 0,
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "1.8",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+  },
+  // Facts in the details row are divided by small ink-faint dots.
+  details: {
+    gap: "8px 10px",
+    paddingTop: "12px",
+  },
+  dot: {
+    flex: "0 0 3px",
+    width: "3px",
+    height: "3px",
+    borderRadius: radius.round,
+    backgroundColor: tokens.inkFaint,
+  },
+  branch: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "7px",
+    boxSizing: "border-box",
+    minWidth: 0,
+    minHeight: "26px",
+    maxWidth: "100%",
+    padding: "3px 10px",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: tokens.rule,
+    borderRadius: radius.control,
+    backgroundColor: tokens.well,
+    color: tokens.ink,
+    overflowWrap: "anywhere",
+  },
+  branchIcon: {
+    color: tokens.inkFaint,
+  },
+  branchName: {
+    minWidth: 0,
+    overflowWrap: "anywhere",
+  },
+  stats: {
+    gap: "10px",
+    flexWrap: "nowrap",
+    flexShrink: 0,
+  },
+  changeBar: {
+    display: "flex",
+    flex: "0 0 42px",
+    width: "42px",
+    gap: "2px",
+    height: "8px",
+  },
+  change: {
+    minWidth: "1px",
+    borderRadius: radius.hairline,
+    backgroundColor: tokens.changeAdded,
+  },
+  removed: {
+    backgroundColor: tokens.changeRemoved,
+  },
+});

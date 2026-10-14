@@ -1,7 +1,7 @@
 import path from "node:path";
 
-import { jsonString } from "@blackboard/review-protocol";
-import { readBuildInfo } from "@review/package-paths";
+import { jsonString } from "@blackboard/review-contracts";
+import { readBuildInfo } from "@review/node/package-paths";
 
 /** Build identity belongs to the executable, never the current checkout. */
 export function cliRuntimeInfo(

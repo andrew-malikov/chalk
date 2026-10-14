@@ -1,0 +1,35 @@
+{
+  "name": "@blackboard/mcp",
+  "version": "0.2.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*.js": "./src/*.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "prebuild": "bun run --cwd ../.. build:workspace-deps",
+    "build": "bun --bun run tsdown",
+    "test": "bun --bun run vitest run --config vitest.config.ts",
+    "typecheck": "bun --bun run tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@blackboard/json": "workspace:*",
+    "@blackboard/review": "workspace:*",
+    "@blackboard/review-contracts": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.30.0"
+  },
+  "devDependencies": {
+    "@blackboard/cli": "workspace:*",
+    "@blackboard/server": "workspace:*",
+    "@types/node": "24.12.2",
+    "tsdown": "0.22.14",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  },
+  "engines": {
+    "bun": ">=1.4.2"
+  }
+}

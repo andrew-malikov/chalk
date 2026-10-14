@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { createReviewCanvasConfig } from "../../packages/review/app/desktop.vite.config";
+import { createReviewCanvasConfig } from "../review-canvas/desktop.vite.config";
 import { electrobunViteAliases } from "./.hutch/devkit/api/config/electrobun-vite";
 
 export default createReviewCanvasConfig({

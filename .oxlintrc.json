@@ -122,7 +122,12 @@
       }
     },
     {
-      "files": ["packages/review/src/**", "packages/review/app/src/**"],
+      "files": [
+        "packages/review/src/**",
+        "apps/review-canvas/src/**",
+        "packages/server/src/**",
+        "packages/mcp/src/**"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -137,7 +142,7 @@
                   "!**/desktop-css-scope",
                   "!**/agent-plugins/**"
                 ],
-                "message": "Import through @review/* or @canvas/*; run scripts/rewrite-relative-imports.mjs."
+                "message": "Import through source aliases or workspace packages; run scripts/rewrite-relative-imports.mjs."
               }
             ]
           }
@@ -158,11 +163,202 @@
     },
     {
       "files": [
-        "packages/review/app/src/**/*.ts",
-        "packages/review/app/src/**/*.tsx"
+        "apps/review-canvas/src/**/*.ts",
+        "apps/review-canvas/src/**/*.tsx"
       ],
       "rules": {
         "canvas-styles/scale-literals": "error"
+      }
+    },
+    {
+      "files": ["packages/review/src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "../**",
+                  "!**/test/fixtures/**",
+                  "!**/test-config*",
+                  "!**/tutorial/*.json",
+                  "!**/desktop-css-scope",
+                  "!**/agent-plugins/**"
+                ],
+                "message": "Import through source aliases or workspace packages; run scripts/rewrite-relative-imports.mjs."
+              },
+              {
+                "group": [
+                  "@blackboard/server",
+                  "@blackboard/server/**",
+                  "@blackboard/cli",
+                  "@cli/**",
+                  "@shell/**",
+                  "@blackboard/review-electrobun",
+                  "@blackboard/review-electrobun/**"
+                ],
+                "message": "Review logic must not depend on CLI, server, or desktop wrappers."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/server/src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "../**",
+                  "!**/test/fixtures/**",
+                  "!**/test-config*",
+                  "!**/tutorial/*.json",
+                  "!**/desktop-css-scope",
+                  "!**/agent-plugins/**"
+                ],
+                "message": "Import through source aliases or workspace packages; run scripts/rewrite-relative-imports.mjs."
+              },
+              {
+                "group": [
+                  "@blackboard/cli",
+                  "@cli/**",
+                  "@shell/**",
+                  "@blackboard/review-electrobun",
+                  "@blackboard/review-electrobun/**"
+                ],
+                "message": "The server must not depend on CLI or desktop wrappers."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "packages/review/src/documents/**",
+        "packages/review/src/blocks/**",
+        "packages/review/src/lib/**",
+        "packages/review/src/software-map/**",
+        "apps/review-canvas/src/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "../**",
+                  "!**/test/fixtures/**",
+                  "!**/test-config*",
+                  "!**/tutorial/*.json",
+                  "!**/desktop-css-scope",
+                  "!**/agent-plugins/**"
+                ],
+                "message": "Import through source aliases or workspace packages; run scripts/rewrite-relative-imports.mjs."
+              },
+              {
+                "group": [
+                  "@review/node/**",
+                  "@blackboard/review/node/**",
+                  "node:*",
+                  "bun:*"
+                ],
+                "message": "Browser modules must not load review runtime modules or Node/Bun APIs; type-only imports are safe.",
+                "allowTypeImports": true
+              },
+              {
+                "group": [
+                  "@blackboard/server",
+                  "@blackboard/server/**",
+                  "@blackboard/cli",
+                  "@cli/**",
+                  "@shell/**",
+                  "@blackboard/review-electrobun",
+                  "@blackboard/review-electrobun/**"
+                ],
+                "message": "Review logic must not depend on CLI, server, or desktop wrappers."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "packages/server/src/**/*.test.ts",
+        "packages/server/src/**/*.test.tsx",
+        "apps/review-canvas/src/**/*.test.ts",
+        "apps/review-canvas/src/**/*.test.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "../**",
+                  "!**/test/fixtures/**",
+                  "!**/test-config*",
+                  "!**/tutorial/*.json",
+                  "!**/desktop-css-scope",
+                  "!**/agent-plugins/**"
+                ],
+                "message": "Import through source aliases or workspace packages; run scripts/rewrite-relative-imports.mjs."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "packages/review/src/documents/**/*.test.ts",
+        "packages/review/src/documents/**/*.test.tsx",
+        "packages/review/src/blocks/**/*.test.ts",
+        "packages/review/src/blocks/**/*.test.tsx",
+        "packages/review/src/lib/**/*.test.ts",
+        "packages/review/src/lib/**/*.test.tsx",
+        "packages/review/src/software-map/**/*.test.ts",
+        "packages/review/src/software-map/**/*.test.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "../**",
+                  "!**/test/fixtures/**",
+                  "!**/test-config*",
+                  "!**/tutorial/*.json",
+                  "!**/desktop-css-scope",
+                  "!**/agent-plugins/**"
+                ],
+                "message": "Import through source aliases or workspace packages; run scripts/rewrite-relative-imports.mjs."
+              },
+              {
+                "group": [
+                  "@blackboard/server",
+                  "@blackboard/server/**",
+                  "@blackboard/cli",
+                  "@cli/**",
+                  "@shell/**",
+                  "@blackboard/review-electrobun",
+                  "@blackboard/review-electrobun/**"
+                ],
+                "message": "Review logic must not depend on CLI, server, or desktop wrappers."
+              }
+            ]
+          }
+        ]
       }
     }
   ]

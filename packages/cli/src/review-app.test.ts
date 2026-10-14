@@ -1,5 +1,5 @@
-import { ReviewDesktopProtocolMismatchError } from "@review/server/desktop-discovery";
-import { selectingDesktop } from "@review/test/review-test-utils";
+import { ReviewDesktopProtocolMismatchError } from "@review/node/desktop-discovery";
+import { selectingDesktop } from "@review/node/test/review-test-utils";
 import { describe, expect, it, vi } from "vitest";
 
 import { runReviewAppPick } from "./review-app";

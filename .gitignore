@@ -1,8 +1,8 @@
 # Node
 node_modules/
 dist/
-packages/review/tutorial/.bundle/
-packages/review/tutorial/git-stub/
+packages/tutorial/assets/.bundle/
+packages/tutorial/assets/git-stub/
 *.tsbuildinfo
 
 # OS
@@ -55,9 +55,9 @@ packages/code-graph/fixtures/indexing/rust/target/
 packages/code-graph/fixtures/semantic-baseline/rust/target/
 packages/review/.playwright-cli/
 packages/review/.vitest-attachments/
-packages/review/app/.vitest-attachments/
-packages/review/**/__screenshots__/
-packages/review/**/__traces__/
+apps/review-canvas/.vitest-attachments/
+apps/review-canvas/**/__screenshots__/
+apps/review-canvas/**/__traces__/
 
 .playwright-mcp
 backups/
@@ -83,10 +83,12 @@ backend.hcl
 artifacts/devbox/
 scripts/acceptance/evidence/
 
-packages/review/tutorial/pins.json
+packages/tutorial/assets/pins.json
 packages/review/bin/
 packages/cli/instructions/
 packages/cli/THIRD_PARTY_NOTICES.md
+packages/server/assets/
+packages/server/bin/
 
 # Electrobun generated SDK and native bundles
 apps/review-electrobun/.hutch/
@@ -98,3 +100,9 @@ apps/review-electrobun/.cottontail-tmp/
 
 # Archify design schemas
 .archify
+
+/apps/review-electrobun/runtime/
+
+packages/server/instructions/
+
+packages/server/THIRD_PARTY_NOTICES.md

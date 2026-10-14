@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
-// Rewrites `../` import specifiers in packages/review and its canvas app to the
-// `@review/*` and `@canvas/*` aliases from tsconfig.base.json. Run it after
-// rebasing a branch that predates the aliases; it only touches specifiers that
+// Rewrites `../` import specifiers to source aliases and workspace packages.
+// Run it after rebasing a branch that predates the aliases; it only touches specifiers that
 // resolve into one of the aliased source roots.
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -9,7 +8,9 @@ import path from "node:path";
 const reviewRoot = path.resolve(import.meta.dirname, "../packages/review");
 
 const aliases = [
-  ["@canvas", path.join(reviewRoot, "app/src")],
+  ["@blackboard/server", path.resolve(reviewRoot, "../server/src")],
+  ["@blackboard/mcp", path.resolve(reviewRoot, "../mcp/src")],
+  ["@canvas", path.resolve(reviewRoot, "../../apps/review-canvas/src")],
   ["@review", path.join(reviewRoot, "src")],
 ];
 
@@ -52,13 +53,19 @@ async function* sourceFiles(dir) {
 if (import.meta.main) {
   let changed = 0;
 
-  for await (const file of sourceFiles(reviewRoot)) {
-    const source = await readFile(file, "utf8");
-    const next = rewriteImports(source, file);
+  for (const root of [
+    reviewRoot,
+    path.resolve(reviewRoot, "../../apps/review-canvas"),
+    ...aliases.slice(0, 2).map(([, root]) => root),
+  ]) {
+    for await (const file of sourceFiles(root)) {
+      const source = await readFile(file, "utf8");
+      const next = rewriteImports(source, file);
 
-    if (next !== source) {
-      await writeFile(file, next);
-      changed += 1;
+      if (next !== source) {
+        await writeFile(file, next);
+        changed += 1;
+      }
     }
   }
 

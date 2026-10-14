@@ -1,0 +1,5 @@
+{
+  "extends": "./packages/mcp/tsconfig.json",
+  "include": ["packages/mcp/src"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "node_modules", "dist"]
+}

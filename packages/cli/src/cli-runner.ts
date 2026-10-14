@@ -14,46 +14,46 @@ import {
 import {
   emitReviewEvent,
   serializeReviewError,
-} from "@review/diagnostics/review-logger";
-import { setTraceAttribute } from "@review/diagnostics/startup-trace";
-import { processIsAlive } from "@review/lib/with-file-lock";
+} from "@cli/diagnostics/review-logger";
+import { setTraceAttribute } from "@cli/diagnostics/startup-trace";
 import {
-  findReviewPackageRoot,
-  readReviewPackageVersion,
-} from "@review/package-paths";
-import { reviewAgentCliHelp } from "@review/review-api/agent-cli";
+  isOwnedShim,
+  pathShimPath,
+  windowsInstallerCommand,
+} from "@review/node/cli-install";
+import { connectPrompts } from "@review/node/connect-prompts";
 import {
   readReviewInstances,
   selectReviewInstance,
-} from "@review/server/desktop-discovery";
+} from "@review/node/desktop-discovery";
+import {
+  ALL_INSTALL_TARGETS,
+  type InstallTarget,
+  isInstallTarget,
+} from "@review/node/install";
+import { processIsAlive } from "@review/node/lib/with-file-lock";
+import {
+  findPackageRoot,
+  readPackageVersion,
+} from "@review/node/package-paths";
+import {
+  type ReviewAppLaunchEvent,
+  runReviewAppLaunch,
+} from "@review/node/review-app-launcher";
+import { runReviewInfo } from "@review/node/review-info";
 import {
   readReviewServerDiscovery,
   readReviewServerHealth,
   reviewServerIsHealthy,
   reviewServerStateDir,
   serverNotReady,
-} from "@review/server/server-discovery";
-import { DEV_REVIEW_HOME_ENV } from "@review/storage/review-home-paths";
+} from "@review/node/server-discovery";
+import { DEV_REVIEW_HOME_ENV } from "@review/node/storage/review-home-paths";
 import { Argument, Command, CommanderError, Option } from "commander";
 
-import {
-  isOwnedShim,
-  pathShimPath,
-  windowsInstallerCommand,
-} from "./cli-install";
+import { reviewAgentCliHelp } from "./agent-cli";
 import { cliRuntimeInfo, describeCliRuntime } from "./cli-runtime-info";
-import { connectPrompts } from "./connect-prompts";
-import {
-  ALL_INSTALL_TARGETS,
-  type InstallTarget,
-  isInstallTarget,
-} from "./install";
 import { type ReviewAppEvent, runReviewAppPick } from "./review-app";
-import {
-  type ReviewAppLaunchEvent,
-  runReviewAppLaunch,
-} from "./review-app-launcher";
-import { runReviewInfo } from "./review-info";
 import {
   clearReviewInstance,
   listReviewInstancesCommand,
@@ -96,8 +96,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   const env = input.env ?? process.env;
   const cwd = input.cwd ?? env.INIT_CWD ?? process.cwd();
 
-  const cliVersion =
-    input.cliVersion ?? readReviewPackageVersion(import.meta.url);
+  const cliVersion = input.cliVersion ?? readPackageVersion(import.meta.url);
 
   const runtime = reviewCliRuntime(input.runtime);
 
@@ -215,7 +214,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
 
     try {
       const { runHeadlessServer } =
-        await import("@review/server/headless-host.js");
+        await import("@blackboard/server/headless-host.js");
 
       await runHeadlessServer({
         stateDir,
@@ -318,8 +317,8 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
 
     const [{ openReviewProfile }, { withHeadlessServerLock }] =
       await Promise.all([
-        import("@review/review-api/profile.js"),
-        import("@review/server/headless-host.js"),
+        import("@review/node/review-api/profile.js"),
+        import("@blackboard/server/headless-host.js"),
       ]);
 
     // The headless server's own lock (at the path it resolves): refused while
@@ -569,7 +568,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
       hasShim:
         (await isOwnedShim(pathShimPath(homeDir))) ||
         (await windowsInstallerCommand(
-          findReviewPackageRoot(import.meta.url),
+          findPackageRoot(import.meta.url),
           env,
         )) !== undefined,
     });
@@ -600,7 +599,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     humanStream(output).write(`${sections.join("\n\n")}\n`);
   });
 
-  // The JSON authoring surface is owned by review-api/agent-cli.ts. Commander
+  // The JSON authoring surface is owned by agent-cli.ts. Commander
   // passes the tool name and JSON payload through untouched, so these commands
   // share the top-level help and the leading `--json` form without a separate
   // parser.
@@ -620,8 +619,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
         .addHelpText("after", `\n${reviewAgentCliHelp}`),
       "plain",
     ).action(async (args: string[]) => {
-      const { runReviewAgentCli } =
-        await import("@review/review-api/agent-cli.js");
+      const { runReviewAgentCli } = await import("./agent-cli.js");
 
       state.exitCode = await runReviewAgentCli({
         ...input,

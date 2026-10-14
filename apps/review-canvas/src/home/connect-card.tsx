@@ -1,0 +1,395 @@
+import {
+  type ReviewCanvasInstallContent,
+  type ReviewCliInstallTarget,
+  ReviewCliInstallTargetSchema,
+} from "@blackboard/review-contracts";
+import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import { AGENT_LOGOS } from "@canvas/home/agent-logos";
+import { cliInstallReady } from "@canvas/settings/cli-install-status";
+import { controlStyles } from "@canvas/styles/controls-styles";
+import { fontSize, radius } from "@canvas/styles/scale.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
+import { tokens } from "@canvas/styles/tokens.stylex";
+import { CopyIcon, copyText } from "@canvas/ui/copy-text";
+import { CheckIcon } from "@canvas/ui/icons";
+import { OptionMenu } from "@canvas/ui/option-menu";
+import * as stylex from "@stylexjs/stylex";
+import { useEffect, useRef, useState } from "react";
+
+import { promptStyles } from "./prompt-styles";
+
+export const TARGET_LABELS: Record<ReviewCliInstallTarget, string> = {
+  claude: "Claude Code",
+  codex: "Codex",
+  opencode: "OpenCode",
+  pi: "Pi",
+  omp: "oh-my-pi",
+  copilot: "Copilot CLI",
+};
+
+/** The rest share the Other menu. */
+const TAB_TARGETS = ["claude", "codex", "opencode"] as const;
+
+const OTHER_TARGETS = ReviewCliInstallTargetSchema.options.filter(
+  (target) => !TAB_TARGETS.some((tab) => tab === target),
+);
+
+export const REVIEW_CONNECT_TARGET_STORAGE_KEY =
+  "dev.fast.review.connectTarget";
+
+const COPIED_RESET_MS = 2000;
+
+/** Lines of a prompt shown before the reader expands it. */
+const COLLAPSED_LINES = 4;
+
+type Mode = "prompt" | "plugin";
+
+const MODES: ReadonlyArray<{ mode: Mode; label: string }> = [
+  { mode: "prompt", label: "Paste a prompt" },
+  { mode: "plugin", label: "Install the plugin" },
+];
+
+/**
+ * One agent at a time: a paste-in prompt that has the agent add Blackboard's MCP
+ * server, or an install command for the published plugin.
+ */
+export function ConnectCard({
+  install,
+  onCopied,
+}: {
+  install: ReviewCanvasInstallContent;
+  onCopied?: () => void;
+}) {
+  const { status } = install;
+
+  const [target, setTarget] =
+    useState<ReviewCliInstallTarget>(readStoredTarget);
+
+  const [mode, setMode] = useState<Mode>("prompt");
+  const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+
+  useEffect(() => () => clearTimeout(resetTimer.current), []);
+
+  const clearCopied = () => {
+    setCopied(false);
+    clearTimeout(resetTimer.current);
+  };
+
+  const selectTarget = (next: ReviewCliInstallTarget) => {
+    setTarget(next);
+    clearCopied();
+    setExpanded(false);
+
+    try {
+      globalThis.localStorage?.setItem(REVIEW_CONNECT_TARGET_STORAGE_KEY, next);
+    } catch {
+      // The desktop can disable DOM storage; the in-memory selection still works.
+    }
+  };
+
+  const selectMode = (next: Mode) => {
+    setMode(next);
+    clearCopied();
+    setExpanded(false);
+  };
+
+  const agent = TARGET_LABELS[target];
+
+  const plugin = status.connect.plugins[target];
+
+  const text =
+    mode === "prompt" ? status.connect.prompts[target] : plugin.command;
+
+  const copy = (value: string) => {
+    void copyText(value).then((ok) => {
+      if (!ok) {
+        return;
+      }
+
+      setCopied(true);
+      clearTimeout(resetTimer.current);
+      resetTimer.current = setTimeout(() => setCopied(false), COPIED_RESET_MS);
+      onCopied?.();
+    });
+  };
+
+  const noun = mode === "prompt" ? "prompt" : "install command";
+
+  // Prompts run to a dozen lines; show the opening and let the reader expand.
+  const collapsible = (text?.split("\n").length ?? 0) > COLLAPSED_LINES;
+
+  const collapsed = collapsible && !expanded;
+
+  if (!cliInstallReady(status)) {
+    return (
+      <section aria-label="Connect your agents">
+        <p {...stylex.props(styles.note)}>
+          Install the blackboard command in PATH first.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-label="Connect your agents">
+      <div
+        {...stylex.props(
+          controlStyles.segmented,
+          promptStyles.tabs,
+          styles.agentTabs,
+        )}
+        role="group"
+        aria-label="Agent"
+      >
+        {TAB_TARGETS.map((tab) => {
+          const Logo = AGENT_LOGOS[tab];
+
+          return (
+            <ButtonPrimitive
+              variant="ghost"
+              size="xs"
+              key={tab}
+              type="button"
+              {...withClass(
+                "tw:h-auto tw:whitespace-normal tw:font-normal",
+                controlStyles.segment,
+                controlStyles.segmentLarge,
+                target === tab && controlStyles.segmentActive,
+              )}
+              aria-pressed={target === tab}
+              onClick={() => selectTarget(tab)}
+            >
+              <Logo xstyle={styles.logo} />
+              {TARGET_LABELS[tab]}
+            </ButtonPrimitive>
+          );
+        })}
+        <OtherAgentMenu
+          selected={OTHER_TARGETS.includes(target) ? target : undefined}
+          onSelect={selectTarget}
+        />
+      </div>
+      <div
+        {...stylex.props(controlStyles.segmented, promptStyles.tabs)}
+        role="group"
+        aria-label="Setup method"
+      >
+        {MODES.map(({ mode: tab, label }) => (
+          <ButtonPrimitive
+            variant="ghost"
+            size="xs"
+            key={tab}
+            type="button"
+            {...withClass(
+              "tw:h-auto tw:whitespace-normal tw:font-normal",
+              controlStyles.segment,
+              mode === tab && controlStyles.segmentActive,
+            )}
+            aria-pressed={mode === tab}
+            onClick={() => selectMode(tab)}
+          >
+            {label}
+          </ButtonPrimitive>
+        ))}
+      </div>
+      {text ? (
+        <>
+          <div {...stylex.props(styles.bodyWrap)}>
+            <pre
+              {...stylex.props(
+                promptStyles.body,
+                collapsed && styles.collapsedBody,
+              )}
+              data-collapsed={collapsed}
+            >
+              {text.split(/(--[a-z][a-z-]*)/g).map((part, index) =>
+                part.startsWith("--") ? (
+                  <span {...stylex.props(styles.option)} key={index}>
+                    {part}
+                  </span>
+                ) : (
+                  part
+                ),
+              )}
+            </pre>
+            {collapsed ? (
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
+                type="button"
+                {...withClass(
+                  "tw:h-auto tw:whitespace-normal tw:font-normal",
+                  styles.expand,
+                )}
+                aria-expanded={false}
+                onClick={() => setExpanded(true)}
+              >
+                Show full {noun}
+              </ButtonPrimitive>
+            ) : null}
+          </div>
+          <div {...stylex.props(promptStyles.actions)}>
+            {collapsible && expanded ? (
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
+                type="button"
+                {...withClass(
+                  "tw:h-auto tw:whitespace-normal tw:font-normal",
+                  styles.collapse,
+                )}
+                aria-expanded={true}
+                onClick={() => setExpanded(false)}
+              >
+                Show less
+              </ButtonPrimitive>
+            ) : null}
+            <ButtonPrimitive
+              variant="ghost"
+              size="xs"
+              type="button"
+              {...withClass(
+                "tw:h-auto tw:whitespace-normal tw:font-normal",
+                promptStyles.copy,
+              )}
+              aria-live="polite"
+              aria-label={`${copied ? "Copied" : "Copy"} ${noun} for ${agent}`}
+              onClick={() => copy(text)}
+            >
+              {copied ? <CheckIcon /> : <CopyIcon />}
+              {copied
+                ? "Copied"
+                : `Copy ${mode === "prompt" ? "prompt" : "command"}`}
+            </ButtonPrimitive>
+          </div>
+        </>
+      ) : (
+        <p {...stylex.props(promptStyles.body)}>
+          {`${plugin.label}\nInstall the blackboard command first.`}
+        </p>
+      )}
+      {status.error ? (
+        <p {...stylex.props(promptStyles.error)}>{status.error}</p>
+      ) : null}
+    </section>
+  );
+}
+
+function OtherAgentMenu({
+  selected,
+  onSelect,
+}: {
+  selected: ReviewCliInstallTarget | undefined;
+  onSelect(target: ReviewCliInstallTarget): void;
+}) {
+  const Logo = selected ? AGENT_LOGOS[selected] : undefined;
+
+  return (
+    <OptionMenu
+      ariaLabel="Other agent"
+      value={selected}
+      options={OTHER_TARGETS.map((other) => {
+        const OptionLogo = AGENT_LOGOS[other];
+
+        return {
+          value: other,
+          label: TARGET_LABELS[other],
+          icon: <OptionLogo />,
+        };
+      })}
+      onChange={onSelect}
+      triggerStyle={[
+        controlStyles.segment,
+        controlStyles.segmentLarge,
+        styles.otherTrigger,
+        selected !== undefined && controlStyles.segmentActive,
+      ]}
+      triggerProps={{ "aria-pressed": selected !== undefined }}
+    >
+      {Logo ? <Logo xstyle={styles.logo} /> : null}
+      {selected ? TARGET_LABELS[selected] : "Other…"}
+    </OptionMenu>
+  );
+}
+
+function readStoredTarget(): ReviewCliInstallTarget {
+  try {
+    const stored = ReviewCliInstallTargetSchema.safeParse(
+      globalThis.localStorage?.getItem(REVIEW_CONNECT_TARGET_STORAGE_KEY),
+    );
+
+    if (stored.success) {
+      return stored.data;
+    }
+  } catch {
+    // Fall through to the default when DOM storage is unavailable.
+  }
+
+  return "claude";
+}
+
+const styles = stylex.create({
+  note: {
+    margin: "0 0 8px",
+    color: tokens.reviewHomeMeta,
+    fontSize: fontSize.body,
+  },
+  // The prompt card's tabs, one agent at a time.
+  agentTabs: {
+    flexWrap: "wrap",
+    marginBottom: "6px",
+  },
+  logo: {
+    width: "14px",
+    height: "14px",
+  },
+  otherTrigger: {
+    paddingRight: "6px",
+  },
+  bodyWrap: {
+    position: "relative",
+  },
+  collapsedBody: {
+    maxHeight: "calc(22px * 4)",
+    overflow: "hidden",
+    maskImage: "linear-gradient(to bottom, #000 35%, transparent)",
+  },
+  option: {
+    whiteSpace: "nowrap",
+  },
+  // Sits on the fade, centered, like a "show full prompt" pill.
+  expand: {
+    position: "absolute",
+    bottom: 0,
+    left: "50%",
+    transform: "translateX(-50%)",
+    padding: "3px 12px",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: {
+      default: tokens.reviewHomeRuleSoft,
+      ":hover": tokens.inkMuted,
+    },
+    borderRadius: radius.pill,
+    backgroundColor: tokens.raised,
+    color: tokens.ink,
+    font: `${fontSize.body}/18px ${tokens.fontSans}`,
+    cursor: "pointer",
+  },
+  collapse: {
+    marginRight: "auto",
+    padding: 0,
+    borderWidth: 0,
+    borderStyle: "none",
+    borderColor: "currentcolor",
+    backgroundColor: "transparent",
+    color: { default: tokens.inkMuted, ":hover": tokens.ink },
+    font: `${fontSize.body}/22px ${tokens.fontSans}`,
+    cursor: "pointer",
+  },
+});

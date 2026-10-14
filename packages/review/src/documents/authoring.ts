@@ -2,17 +2,16 @@ import {
   databaseLensSchema,
   frameSchema,
   sequenceSchema,
-} from "@review/review-api/document";
+} from "@review/documents/document";
+import { diffSelectionSchema } from "@review/documents/lens-selection";
+import { tutorialAuthoringConversationSchema } from "@review/documents/tutorial-conversation";
 import type { SoftwareDataStoreFieldSchema } from "@review/software-map/software-map-model";
-import { tutorialAuthoringConversationSchema } from "@review/tutorial/tutorial-conversation";
 import { z } from "zod";
-
-import { diffSelectionSchema } from "./lens-selection";
 
 export {
   tutorialAuthoringConversationSchema,
   type TutorialAuthoringConversation,
-} from "@review/tutorial/tutorial-conversation";
+} from "@review/documents/tutorial-conversation";
 
 const nonEmptyStringSchema = z
   .string()

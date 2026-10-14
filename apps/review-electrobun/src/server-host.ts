@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 import {
   type ReviewDesktopDiscovery,
   ReviewDesktopDiscoverySchema,
-} from "@blackboard/review-protocol";
+} from "@blackboard/review-contracts";
 
 export interface ServerOptions {
   runtimePath: string;

@@ -3,16 +3,19 @@ import type { Writable } from "node:stream";
 import {
   ReviewApiClient,
   type ReviewApiSummary,
-} from "@blackboard/review-protocol";
-import { resolveReviewRoot } from "@review/runtime";
+} from "@blackboard/review-contracts";
 import {
   type ReviewInstanceSelection,
   healthyReviewInstance,
   reviewInstanceUnavailable,
   selectReviewInstance,
-} from "@review/server/desktop-discovery";
+} from "@review/node/desktop-discovery";
+import {
+  focusReviewDesktop,
+  runReviewAppLaunch,
+} from "@review/node/review-app-launcher";
+import { resolveReviewRoot } from "@review/node/review-root";
 
-import { focusReviewDesktop, runReviewAppLaunch } from "./review-app-launcher";
 import { pickReview } from "./review-app-picker";
 
 interface ReviewAppRuntime {

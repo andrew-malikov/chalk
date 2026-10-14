@@ -1,4 +1,4 @@
-import { textualRows } from "@review/review-api/lens-alignment.js";
+import { textualRows } from "@review/documents/lens-alignment.js";
 import { expect, it } from "vitest";
 
 import {

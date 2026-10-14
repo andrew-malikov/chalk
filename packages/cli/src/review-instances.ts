@@ -6,7 +6,7 @@ import {
   readDefaultReviewInstance,
   selectReviewInstance,
   writeDefaultReviewInstance,
-} from "@review/server/desktop-discovery";
+} from "@review/node/desktop-discovery";
 
 interface ReviewInstancesInput {
   env: NodeJS.ProcessEnv;

@@ -16,17 +16,17 @@ export default {
     mac: {
       bundleCEF: true,
       defaultRenderer: "cef",
-      icons: "../../packages/review/app/icons/review.iconset",
+      icons: "../review-canvas/icons/review.iconset",
     },
     linux: {
       bundleCEF: true,
       defaultRenderer: "cef",
-      icon: "../../packages/review/app/icons/review-square-512.png",
+      icon: "../review-canvas/icons/review-square-512.png",
     },
     win: {
       bundleCEF: true,
       defaultRenderer: "cef",
-      icon: "../../packages/review/app/icons/review.ico",
+      icon: "../review-canvas/icons/review.ico",
     },
   },
   runtime: { exitOnLastWindowClosed: true },

@@ -24,7 +24,7 @@ const env = {
   DEV_FAST_REVIEW_CHECKOUT: checkout,
   DEV_FAST_REVIEW_SERVER_ENTRY: path.join(
     checkout,
-    "packages/review/dist/server/desktop-host.js",
+    "apps/review-electrobun/runtime/dist/desktop-host.js",
   ),
 };
 
@@ -43,7 +43,7 @@ function run(command, args, cwd = app, overrides = {}) {
 
 run(
   process.execPath,
-  ["run", "--filter", "@blackboard/review", "build"],
+  ["run", "--filter", "@blackboard/server", "build"],
   checkout,
 );
 
@@ -52,6 +52,8 @@ run(
   ["run", "--filter", "@blackboard/cli", "build"],
   checkout,
 );
+
+run(process.execPath, ["run", "host:build"]);
 
 run(hutch, ["electrobun", "prepare"]);
 

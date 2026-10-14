@@ -2,11 +2,11 @@ import type {
   ReviewDesktopDiscovery,
   ReviewDiffLayout,
   ReviewInlineEditorRange,
-} from "@blackboard/review-protocol";
+} from "@blackboard/review-contracts";
 import {
   REVIEW_KEYMAP_CHOICES,
   REVIEW_TUTORIAL_STEP_IDS,
-} from "@blackboard/review-protocol";
+} from "@blackboard/review-contracts";
 import { z } from "zod";
 
 export const preferencesSchema = z.strictObject({

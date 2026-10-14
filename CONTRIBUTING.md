@@ -50,19 +50,31 @@ CLI and your agent. Reconnect the MCP server after switching.
 
 ## Repository layout
 
-The product is named Blackboard, but package names and directories still use
-`review`.
+Blackboard is split into application hosts and shared packages.
 
-- `apps/review-electrobun/` contains the native Electrobun/Cottontail desktop
-  host. It launches the shared backend as a Bun sidecar.
-- `packages/review/` contains the `blackboard` command-line interface, embedded
-  server, and canvas.
-- `packages/review-protocol/` contains the shared process contracts.
-- `packages/trace-core/` and `packages/trace-protocol/` contain agent trace
-  capture and the hosted trace store contract.
-- `packages/agent-plugins/` contains the plugins and skills for supported
-  coding agents.
-- `packages/local-vcs/` contains local version-control helpers.
+| Location | Owns |
+| --- | --- |
+| `apps/review-electrobun/` | Native desktop shell and Bun sidecar lifecycle |
+| `apps/review-canvas/` | React canvas, rendering, interaction, and browser state |
+| `packages/review/` | Review logic: documents, authoring, persistence, managed checkouts, GitLab, and comparisons |
+| `packages/server/` | Authenticated HTTP endpoints and server lifecycle |
+| `packages/cli/` | Command parsing, terminal selection, and CLI output |
+| `packages/mcp/` | MCP transport and tools that call the server |
+| `packages/review-contracts/` | Process contracts, HTTP client, and event streams |
+| `packages/tutorial/` | Tutorial assets, their generation, and runtime asset paths |
+| `packages/local-vcs/` | Local version-control operations |
+| `packages/json/` | JSON decoding and value helpers |
+| `packages/agent-plugins/` | Integrations for supported coding agents |
+
+`review` owns review behavior. Its document and block modules run in the browser;
+`review/node/*` owns persistence, filesystem access, subprocesses, and local
+integrations. These runtime modules are imported only by server, CLI, and desktop
+code. The desktop owns command setup routes and its sidecar entry point. Review
+logic never imports these wrappers; lint enforces that direction and keeps runtime
+modules out of browser code.
+
+Workspace build steps and shared test configuration live in the root
+`package.json` and `scripts/`.
 
 The former Code OSS fork is available from this repository's Git history.
 Its upstream was [microsoft/vscode](https://github.com/microsoft/vscode/tree/8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8)
@@ -81,21 +93,17 @@ DOM-facing tests run in Chromium through Vitest Browser Mode. Install the
 browser once, then run the headless suite or watch mode:
 
 ```sh
-cd packages/review/app
+cd apps/review-canvas
 bun --bun run playwright install chromium
-cd ../../..
+cd ../..
 bun run --filter @blackboard/review-canvas test:browser
 bun run --filter @blackboard/review-canvas test:browser:watch
 ```
 
-Filesystem and server tests run through
-`bun run --filter @blackboard/review test:node`.
-
-`bun run --filter @blackboard/review test:legacy-corpus` replays a private corpus of
-legacy Reviews (from before the original product rename) through migration. Point
-`REVIEW_LEGACY_CORPUS` at a directory whose children are Review UUID folders;
-the script fails if the variable is unset. The corpus is copied before it is
-touched and the originals are re-verified afterwards.
+Document rule tests run through `bun run --filter @blackboard/review test`.
+Filesystem and server tests run through `bun run --filter @blackboard/server test`.
+Run `bun run --filter @blackboard/server test:integration:diffr` to check the
+bundled diffr binary and repository comparisons.
 
 Test behavior, not implementation. Do not add
 [change detector tests](https://testing.googleblog.com/2015/01/testing-on-toilet-change-detector-tests.html).

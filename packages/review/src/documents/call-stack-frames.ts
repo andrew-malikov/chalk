@@ -1,6 +1,5 @@
-import type { Frame } from "@review/review-api/document";
-
-import { selectionKey } from "./lens-selection";
+import type { Frame } from "@review/documents/document";
+import { selectionKey } from "@review/documents/lens-selection";
 
 /** Matching identity: an explicit key, else the source range. React and
  * selection identity stay on `id`. */

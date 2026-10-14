@@ -11,15 +11,11 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { findReviewPackageRoot } from "@review/package-paths";
+import { findPackageRoot } from "@review/node/package-paths";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-const repoRoot = path.resolve(
-  findReviewPackageRoot(import.meta.url),
-  "..",
-  "..",
-);
+const repoRoot = path.resolve(findPackageRoot(import.meta.url), "..", "..");
 
 describe("agent plugin manifests", () => {
   it.skipIf(process.platform === "win32")(

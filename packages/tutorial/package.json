@@ -1,0 +1,35 @@
+{
+  "name": "@blackboard/tutorial",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./assets/*": "./assets/*",
+    "./*.js": "./src/*.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "prebuild": "bun run --cwd ../.. build:workspace-deps",
+    "build": "bun run ensure:assets && bun --bun run tsc -p tsconfig.build.json",
+    "build:assets": "bun scripts/build-tutorial-assets.ts",
+    "ensure:assets": "bun scripts/ensure-tutorial-assets.ts",
+    "check": "bun scripts/check-tutorial.ts",
+    "test": "bun run check",
+    "typecheck": "bun --bun run tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@blackboard/review": "workspace:*",
+    "@blackboard/review-contracts": "workspace:*",
+    "@blackboard/server": "workspace:*",
+    "@types/node": "24.12.2",
+    "typescript": "6.0.3"
+  },
+  "engines": {
+    "bun": ">=1.4.2"
+  }
+}

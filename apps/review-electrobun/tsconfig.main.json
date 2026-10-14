@@ -10,6 +10,9 @@
     "src/preferences*.ts",
     "src/rpc.ts",
     "electrobun.config.ts",
-    "hutch.config.ts"
+    "hutch.config.ts",
+    "src/desktop-host*.ts",
+    "src/cli-install-routes*.ts",
+    "tsdown.host.config.ts"
   ]
 }

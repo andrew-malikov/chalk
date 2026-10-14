@@ -46,14 +46,14 @@ jobs:
           bash "$RUNNER_TEMP/install-hutch.sh" --version 0.27.1 --no-modify-path
           echo "$HOME/.hutch/bin" >> "$GITHUB_PATH"
       - name: Install Playwright Chromium
-        working-directory: packages/review/app
+        working-directory: apps/review-canvas
         run: bun --bun run playwright install chromium --only-shell
       - name: Build Blackboard
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: bun run desktop:build
       - name: Check tutorial assets
-        run: bun run --filter @blackboard/review check:tutorial
+        run: bun run --filter @blackboard/tutorial check
       - name: Lint
         run: bun run lint
       - name: Check formatting
@@ -63,17 +63,17 @@ jobs:
       - name: Test
         run: bun run test
       - name: Bundled diffr integration
-        working-directory: packages/review
+        working-directory: packages/server
         run: |
           bun run ensure:diffr --required
-          bun --bun run vitest run --config vitest.integration.config.ts
+          bun run --filter @blackboard/server test:integration:diffr
       - name: Upload browser test diagnostics
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: vitest-browser-diagnostics
           path: |
-            packages/review/app/.vitest-attachments
-            packages/review/**/__screenshots__
-            packages/review/**/__traces__
+            apps/review-canvas/.vitest-attachments
+            apps/review-canvas/**/__screenshots__
+            apps/review-canvas/**/__traces__
           if-no-files-found: ignore

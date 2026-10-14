@@ -8,8 +8,8 @@ const monorepoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export function cleanTargets({ root = monorepoRoot } = {}) {
   const app = resolve(root, "apps/review-electrobun");
 
-  return ["dist", "build", "artifacts", ".cottontail-tmp"].map((directory) =>
-    resolve(app, directory),
+  return ["dist", "runtime", "build", "artifacts", ".cottontail-tmp"].map(
+    (directory) => resolve(app, directory),
   );
 }
 

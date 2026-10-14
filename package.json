@@ -8,7 +8,6 @@
     "packages": [
       "packages/*",
       "packages/agent-plugins/pi",
-      "packages/review/app",
       "apps/*"
     ],
     "catalog": {
@@ -22,15 +21,17 @@
     "electrobun:dev": "bun run desktop:dev",
     "electrobun:build": "bun run desktop:build",
     "review": "bun run --filter @blackboard/cli review",
-    "format": "oxfmt --write \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!packages/review/app/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
-    "format:check": "oxfmt --check \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!packages/review/app/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
+    "format": "oxfmt --write \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!apps/review-canvas/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
+    "format:check": "oxfmt --check \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"!apps/review-canvas/icons/dev-fast.icon/**\" \"*.json\" \".*.json\"",
     "lint": "oxlint --disable-nested-config .",
-    "ci": "bun run desktop:build && bun run --filter @blackboard/review check:tutorial && bun run lint && bun run format:check && bun run typecheck && bun run test",
+    "ci": "bun run desktop:build && bun run --filter @blackboard/tutorial check && bun run lint && bun run format:check && bun run typecheck && bun run test",
+    "pretest": "bun run --filter @blackboard/tutorial ensure:assets",
     "test": "bun test scripts && bun run --bun --filter '*' --filter '!@blackboard/review-workspace' --if-present test",
-    "pretypecheck": "bun run --filter @blackboard/review build:workspace-deps",
+    "pretypecheck": "bun run build:workspace-deps && bun run --filter @blackboard/tutorial ensure:assets",
     "typecheck": "bun run --bun --filter '*' --filter '!@blackboard/review-workspace' --if-present typecheck",
     "build": "bun run desktop:build",
-    "desktop:dev": "bun run --filter @blackboard/review-electrobun app:dev"
+    "desktop:dev": "bun run --filter @blackboard/review-electrobun app:dev",
+    "build:workspace-deps": "bun run --filter @blackboard/json --filter @blackboard/local-vcs build && bun run --filter @blackboard/review-contracts build"
   },
   "devDependencies": {
     "@oxlint/plugins": "1.63.0",

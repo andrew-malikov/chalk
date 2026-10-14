@@ -6,7 +6,7 @@ import {
   parseReviewCliInstallStatus,
   reviewSourceAnchor,
   reviewSourceComparison,
-} from "@blackboard/review-protocol";
+} from "@blackboard/review-contracts";
 import type {
   ReviewApiSummary,
   ReviewCanvasContent,
@@ -18,7 +18,7 @@ import type {
   ReviewVerbRequest,
   ReviewVerbResponse,
   TutorialProgressV1,
-} from "@blackboard/review-protocol";
+} from "@blackboard/review-contracts";
 import { Button } from "@canvas/components/ui/button";
 import {
   Dialog,

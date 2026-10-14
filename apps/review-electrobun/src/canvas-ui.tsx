@@ -1,7 +1,7 @@
 import type {
   ReviewCanvasUi,
   ReviewDisposable,
-} from "@blackboard/review-protocol";
+} from "@blackboard/review-contracts";
 import {
   AlertDialog,
   AlertDialogAction,

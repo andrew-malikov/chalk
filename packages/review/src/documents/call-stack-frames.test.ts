@@ -1,6 +1,5 @@
+import { frameIdentity } from "@review/documents/call-stack-frames";
 import { describe, expect, it } from "vitest";
-
-import { frameIdentity } from "./call-stack-frames";
 
 describe("frame identity", () => {
   it("prefers the explicit key and falls back to the source range", () => {

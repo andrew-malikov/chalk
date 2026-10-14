@@ -7,7 +7,7 @@ import {
   consumeReviewEventStream,
   reviewSourceComparison,
   reviewSourceQuery,
-} from "@blackboard/review-protocol";
+} from "@blackboard/review-contracts";
 import type {
   ReviewApiSourceLocation,
   ReviewCanvasBridge,
@@ -19,7 +19,7 @@ import type {
   ReviewSurfaceEvent,
   ReviewTheme,
   ReviewVerbResponse,
-} from "@blackboard/review-protocol";
+} from "@blackboard/review-contracts";
 
 import type { HostState, NativeOpenRequest, ShellPreferences } from "./rpc";
 
