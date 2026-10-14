@@ -14,7 +14,7 @@ import type {
 } from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
 import { ChevronRightIcon, CornerDownRightIcon } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 import { useGitLab } from "./gitlab-context";
 
@@ -131,28 +131,27 @@ export function GitLabDiscussionContent() {
       {open.map((d) => (
         <Discussion key={d.id} discussion={d} />
       ))}
-      <details
-        open={resolved.some((d) => d.id === gitlab.selected) ? true : undefined}
+      <Collapsible
+        summary={`Resolved · ${resolved.length}`}
+        open={resolved.some((d) => d.id === gitlab.selected)}
       >
-        <summary>Resolved · {resolved.length}</summary>
         {resolved.map((d) => (
           <Discussion key={d.id} discussion={d} />
         ))}
-      </details>
+      </Collapsible>
       <h3 {...stylex.props(styles.heading)}>Local drafts · {unsent.length}</h3>
       {unsent.map((d) => (
         <DraftEditor key={d.id} draft={d} />
       ))}
       {sent.length > 0 && (
-        <details>
-          <summary>Sent · {sent.length}</summary>
+        <Collapsible summary={`Sent · ${sent.length}`}>
           {sent.map((d) => (
-            <div key={d.id} {...stylex.props(styles.card)}>
-              <strong>Sent · #{d.noteId}</strong>
+            <div key={d.id} {...stylex.props(styles.card, styles.inlineCard)}>
+              <span {...stylex.props(styles.meta)}>Sent · #{d.noteId}</span>
               <p {...stylex.props(styles.body)}>{d.text}</p>
             </div>
           ))}
-        </details>
+        </Collapsible>
       )}
     </div>
   );
@@ -217,27 +216,42 @@ export function GitLabInlineContent({
     >
       {gitlab.error && <p role="alert">{gitlab.error}</p>}
       {discussion?.resolved ? (
-        <details
-          {...stylex.props(styles.resolvedDetails, resolvedDiscussionMarker)}
-          open={
-            local.length > 0 || gitlab.selected === discussion.id
-              ? true
-              : undefined
-          }
+        <Collapsible
+          summary={`Resolved · @${discussion.comments[0]?.author.username}`}
+          open={local.length > 0 || gitlab.selected === discussion.id}
         >
-          <summary {...stylex.props(styles.resolvedSummary)}>
-            <ChevronRightIcon
-              {...stylex.props(styles.resolvedChevron)}
-              aria-hidden="true"
-            />
-            Resolved · @{discussion.comments[0]?.author.username}
-          </summary>
           {content}
-        </details>
+        </Collapsible>
       ) : (
         content
       )}
     </section>
+  );
+}
+
+function Collapsible({
+  summary,
+  open = false,
+  children,
+}: {
+  summary: string;
+  open?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details
+      {...stylex.props(styles.resolvedDetails, resolvedDiscussionMarker)}
+      open={open ? true : undefined}
+    >
+      <summary {...stylex.props(styles.resolvedSummary)}>
+        <ChevronRightIcon
+          {...stylex.props(styles.resolvedChevron)}
+          aria-hidden="true"
+        />
+        {summary}
+      </summary>
+      <div {...stylex.props(styles.list)}>{children}</div>
+    </details>
   );
 }
 
@@ -260,13 +274,17 @@ function Discussion({
       ref={ref}
       {...stylex.props(
         styles.card,
-        inline && styles.inlineCard,
+        styles.inlineCard,
         inline && styles.discussionCard,
         gitlab.selected === discussion.id && styles.selected,
       )}
     >
       {inline ? null : discussion.location ? (
-        <Button variant="ghost" onClick={() => gitlab.select(discussion)}>
+        <Button
+          variant="ghost"
+          xstyle={styles.location}
+          onClick={() => gitlab.select(discussion)}
+        >
           {discussion.location.file}:{discussion.location.from}
           {discussion.location.to !== discussion.location.from
             ? `–${discussion.location.to}`
@@ -274,7 +292,7 @@ function Discussion({
           · {discussion.location.side}
         </Button>
       ) : (
-        <span>
+        <span {...stylex.props(styles.meta)}>
           {discussion.position
             ? "Unmapped code discussion"
             : "General discussion"}
@@ -343,16 +361,14 @@ function Discussion({
             Resolve
           </Button>
         )}
-        {inline && (
-          <a
-            {...stylex.props(styles.sourceLink)}
-            href={gitlab.state?.identity.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            View on GitLab
-          </a>
-        )}
+        <a
+          {...stylex.props(styles.sourceLink)}
+          href={gitlab.state?.identity.url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          View on GitLab
+        </a>
       </div>
     </div>
   );
@@ -641,6 +657,15 @@ const styles = stylex.create({
     borderTopRightRadius: 0,
   },
   resolvedDetails: { maxWidth: 820 },
+  list: { display: "flex", flexDirection: "column", gap: 8 },
+  location: {
+    alignSelf: "flex-start",
+    paddingInline: 0,
+    height: "auto",
+    backgroundColor: "transparent",
+    color: { default: tokens.inkFaint, ":hover": tokens.ink },
+    fontSize: fontSize.small,
+  },
   resolvedSummary: {
     display: "flex",
     alignItems: "center",
