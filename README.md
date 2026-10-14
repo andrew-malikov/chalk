@@ -1,6 +1,6 @@
 <div align="center">
   <img
-    src="docs/assets/review-logo.png"
+    src="docs/assets/chalk-logo.png"
     width="96"
     alt="Chalk logo"
   />
@@ -9,12 +9,16 @@
 
 Chalk is desktop code-review app. Connects into the tools you already use - e.g. Claude Code, Codex, etc. – and gives your agent an SDK to draw on an in-app canvas to describe its work.
 
+Basically [whiteboard](https://github.com/devdotfast/whiteboard) rip-off without bundled code-oss and other nice features.
+
 ## Quickstart
 
 1. [Download Chalk](https://hell.knows.where/install) and open the app.
 2. Connect Claude Code, Codex, or another coding agent from the welcome screen.
 3. Ask your agent to review your current branch against up-to-date main and
    open the result in Chalk.
+
+F
 
 ## Guidance
 

@@ -10,6 +10,7 @@ import { surfaceStyles } from "@canvas/ui/surface";
 import { useToast } from "@canvas/ui/toast";
 import type { AgentSelection } from "@review/node/review-api/agent-selection";
 import * as stylex from "@stylexjs/stylex";
+import { PlusIcon } from "lucide-react";
 import {
   type ReactNode,
   createContext,
@@ -27,7 +28,7 @@ type Selection = Omit<AgentSelection, "revision"> & {
   anchor?: { x: number; y: number };
   anchorElement?: Element;
   anchorContainer?: HTMLElement;
-  /** The selected document text, copied for an external agent. */
+  /** The native text selection, retained while its actions are clicked. */
   range?: Range;
 };
 
@@ -103,13 +104,21 @@ export function AgentSelectionProvider({
           overlayHost;
 
         const rect = container?.getBoundingClientRect();
+        const beside = value.target.kind === "code" && value.range;
         value = {
           ...value,
           anchorContainer: container ?? undefined,
           anchor: {
-            x: Math.max(8, anchor.x - (rect?.left ?? 0)),
+            x: Math.max(
+              8,
+              anchor.x - (rect?.left ?? 0) + (container?.scrollLeft ?? 0),
+            ),
             // Above the selection: the toolbar's 34px and a 2px gap.
-            y: anchor.y - (rect?.top ?? 0) - 36,
+            y:
+              anchor.y -
+              (rect?.top ?? 0) +
+              (container?.scrollTop ?? 0) -
+              (beside ? 0 : 36),
           },
         };
       }
@@ -235,7 +244,13 @@ export function AgentSelectionProvider({
                 // The toolbar starts at the selection, after a lead that
                 // gives way so it never runs past the container's edge.
                 <div
-                  {...stylex.props(themeStyles.vars, styles.lane)}
+                  {...stylex.props(
+                    themeStyles.vars,
+                    styles.lane,
+                    selection.target.kind === "code" &&
+                      selection.range &&
+                      styles.beside,
+                  )}
                   style={{ top: selection.anchor?.y }}
                 >
                   <span
@@ -266,6 +281,8 @@ export function AgentSelectionProvider({
                           session.config.reviewId) && (
                         <Button
                           disabled={gitlab.busy}
+                          aria-label="GitLab comment"
+                          title="GitLab comment"
                           onClick={() => {
                             if (
                               selection.target.kind !== "code" ||
@@ -298,7 +315,11 @@ export function AgentSelectionProvider({
                             select(null);
                           }}
                         >
-                          GitLab comment
+                          {selection.range ? (
+                            <PlusIcon size={16} aria-hidden="true" />
+                          ) : (
+                            "GitLab comment"
+                          )}
                         </Button>
                       )}
                     <Button
@@ -337,6 +358,7 @@ const styles = stylex.create({
     display: "flex",
     pointerEvents: "none",
   },
+  beside: { transform: "translateY(-50%)" },
   lead: {
     flexGrow: 0,
     flexShrink: 1,

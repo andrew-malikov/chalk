@@ -100,6 +100,10 @@ const onLocate = vi.fn<(view: "review" | "diff") => void>();
 /** The lenses the host's progress route answers with: the version shown. */
 let served: Lens[] = [];
 
+let uncategorizedFileCount = 1;
+
+let uncategorizedPending = false;
+
 const session = testReviewSession(
   {},
   {
@@ -117,7 +121,8 @@ const session = testReviewSession(
             id: "automatic-uncategorized",
             title: "Uncategorized changes",
             sources: [],
-            fileCount: 0,
+            fileCount: uncategorizedFileCount,
+            pending: uncategorizedPending,
           },
         ],
         resolvedSelections: {},
@@ -138,11 +143,14 @@ beforeEach(() => {
   root = createRoot(app);
   manualClock = createManualClock();
   onLocate.mockClear();
+  uncategorizedFileCount = 1;
+  uncategorizedPending = false;
 });
 
 afterEach(async () => {
   await act(async () => root.unmount());
   app.remove();
+  window.localStorage.clear();
 });
 
 const render = async (state: {
@@ -222,6 +230,38 @@ const row = (id: string) =>
 
 const courier = () =>
   app.querySelector<HTMLElement>('.courier[data-scope="lenses"]');
+
+it.each([
+  { fileCount: 0, pending: false, visible: false },
+  { fileCount: 1, pending: false, visible: true },
+  { fileCount: 0, pending: true, visible: true },
+])(
+  "shows uncategorized changes only when nonempty or pending: %j",
+  async ({ fileCount, pending, visible }) => {
+    uncategorizedFileCount = fileCount;
+    uncategorizedPending = pending;
+    await render({ lenses: [api], version: 1, lensCursor: null });
+    await vi.waitFor(() =>
+      expect(
+        row(api.id)?.querySelector("button[aria-pressed]")?.textContent,
+      ).not.toContain("…"),
+    );
+    expect(!!row("automatic-uncategorized")).toBe(visible);
+
+    await act(async () =>
+      app
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Collapse diff sidebar"]',
+        )!
+        .click(),
+    );
+    expect(
+      !!app.querySelector(
+        'nav[aria-label="Lens rail"] button[aria-label="Uncategorized changes"]',
+      ),
+    ).toBe(visible);
+  },
+);
 
 it("lands a new lens row with the courier on it, without listing its files, and erases a removed one", async () => {
   await render({ lenses: [api], version: 1, lensCursor: null });

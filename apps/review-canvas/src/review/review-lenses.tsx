@@ -187,7 +187,10 @@ export function ReviewLensesProvider({
         ? String(read.error)
         : null;
 
-  const lenses: ReviewProgress["lenses"] = progress?.lenses ?? [
+  const lenses: ReviewProgress["lenses"] = progress?.lenses.filter(
+    (lens) =>
+      lens.id !== UNCATEGORIZED_LENS_ID || lens.pending || lens.fileCount !== 0,
+  ) ?? [
     ...(snapshot.lenses ?? []).map((lens) => ({
       id: lens.id,
       title: lens.title,

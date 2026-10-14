@@ -357,9 +357,6 @@ export function ReviewDiffView({
               Lenses
               <MagnifierIcon />
             </div>
-            <div {...stylex.props(styles.hint)}>
-              Click any lens to filter the diff
-            </div>
             {rows.items.map((item) => {
               const selected = lens?.id === item.id,
                 stats = lenses.stats(item.sources),
@@ -966,11 +963,6 @@ const styles = stylex.create({
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
-  },
-  hint: {
-    padding: "0 14px 6px 16px",
-    color: tokens.inkFaint,
-    font: `${fontSize.small}/16px ${tokens.fontSans}`,
   },
   nativeTree: {
     flex: 1,

@@ -61,6 +61,7 @@ import {
   loadPierreFile,
 } from "./pierre-comparison";
 import { selectedPierreDiff } from "./pierre-selection";
+import { selectedPierreText } from "./pierre-text-selection";
 import { ViewedButton } from "./viewed-button";
 
 interface Props {
@@ -257,6 +258,8 @@ function Comparison({
   const [selection, setSelection] = useState<CodeViewLineSelection | null>(
     null,
   );
+
+  const textSelection = useRef<CodeViewLineSelection | null>(null);
 
   const [wrap, setWrap] = useReviewUiState("diff-wrap", false);
 
@@ -610,6 +613,100 @@ function Comparison({
     [sourceRequests],
   );
 
+  const publishSelection = useCallback(
+    (
+      value:
+        | (CodeViewLineSelection & {
+            anchor?: { x: number; y: number };
+            textRange?: Range;
+          })
+        | null,
+    ) => {
+      if (!value) {
+        select(null);
+
+        return;
+      }
+
+      const entry = entries.find((entry) => entry.file.path === value.id);
+
+      if (!entry?.diff) return;
+      setSelectedPath(entry.file.path);
+      const side = value.range.side === "deletions" ? "base" : "head";
+
+      if (value.range.endSide && value.range.endSide !== value.range.side) {
+        select(null);
+
+        return;
+      }
+
+      const from = Math.min(value.range.start, value.range.end);
+      const to = Math.max(value.range.start, value.range.end);
+      const source = new URL(url);
+      const version = source.searchParams.get("version");
+      select({
+        title: `${entry.file.path}:${from}${to === from ? "" : `–${to}`}`,
+        target: {
+          kind: "code",
+          path:
+            side === "base"
+              ? (entry.file.previousPath ?? entry.file.path)
+              : entry.file.path,
+          side,
+          startLine: from,
+          endLine: to,
+        },
+        apiSource: version
+          ? {
+              reviewId: session.config.reviewId,
+              version: Number(version),
+              ...(scope && { commit: scope.commit }),
+            }
+          : undefined,
+        selectedDiff: selectedPierreDiff(
+          renderedDiffs.current.get(entry.diff)!,
+          side,
+          from,
+          to,
+          entry.file.status === "added"
+            ? ""
+            : (entry.file.previousPath ?? entry.file.path),
+          entry.file.status === "deleted" ? "" : entry.file.path,
+        ),
+        anchor: value.anchor,
+        range: value.textRange,
+        anchorContainer:
+          viewer.current?.getInstance()?.getContainerElement() ??
+          container.current ??
+          undefined,
+      });
+    },
+    [entries, url, session.config.reviewId, scope, select],
+  );
+
+  useEffect(() => {
+    if (hidden) return;
+    const document = container.current!.ownerDocument;
+
+    const update = () => {
+      const value = selectedPierreText(
+        viewer.current?.getInstance()?.getRenderedItems() ?? [],
+      );
+
+      if (value) {
+        textSelection.current = value;
+        publishSelection(value);
+      } else if (textSelection.current) {
+        textSelection.current = null;
+        select(null);
+      }
+    };
+
+    document.addEventListener("selectionchange", update);
+
+    return () => document.removeEventListener("selectionchange", update);
+  }, [hidden, publishSelection, select]);
+
   const options = useMemo(
     () => ({
       diffStyle: layout,
@@ -780,7 +877,7 @@ function Comparison({
                   size="xs"
                   type="button"
                   {...withClass(
-                    "tw:h-auto tw:whitespace-normal tw:font-normal",
+                    "tw:h-auto tw:justify-start tw:whitespace-normal tw:font-normal",
                     styles.fileButton,
                   )}
                   aria-current={
@@ -848,7 +945,13 @@ function Comparison({
         items={items}
         options={options}
         selectedLines={selection}
-        style={{ flex: 1, minHeight: 0, width: "100%", overflowY: "auto" }}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          width: "100%",
+          overflowY: "auto",
+          position: "relative",
+        }}
         renderAnnotation={(annotation) => (
           <GitLabInlineContent annotation={annotation.metadata} />
         )}
@@ -866,6 +969,7 @@ function Comparison({
                     "tw:h-auto tw:whitespace-normal tw:font-normal",
                     styles.addComment,
                   )}
+                  onMouseDown={(event) => event.preventDefault()}
                   onClick={(event) => {
                     event.stopPropagation();
                     const line = getHoveredLine();
@@ -878,12 +982,14 @@ function Comparison({
                     )
                       return;
 
+                    const selected = textSelection.current ?? selection;
+
                     const range =
-                      selection?.id === item.id &&
-                      selection.range.side === line.side &&
-                      (!selection.range.endSide ||
-                        selection.range.endSide === line.side)
-                        ? selection.range
+                      selected?.id === item.id &&
+                      selected.range.side === line.side &&
+                      (!selected.range.endSide ||
+                        selected.range.endSide === line.side)
+                        ? selected.range
                         : null;
 
                     gitlab.compose(
@@ -904,6 +1010,7 @@ function Comparison({
                       },
                       "inline",
                     );
+                    textSelection.current = null;
                     setSelection(null);
                     select(null);
                   }}
@@ -981,64 +1088,9 @@ function Comparison({
           save();
         }}
         onSelectedLinesChange={(value) => {
+          textSelection.current = null;
           setSelection(value);
-
-          if (!value) {
-            select(null);
-
-            return;
-          }
-
-          const entry = entries.find((entry) => entry.file.path === value.id);
-
-          if (!entry?.diff) return;
-          setSelectedPath(entry.file.path);
-          const side = value.range.side === "deletions" ? "base" : "head";
-
-          if (value.range.endSide && value.range.endSide !== value.range.side) {
-            select(null);
-
-            return;
-          }
-
-          const from = Math.min(value.range.start, value.range.end);
-          const to = Math.max(value.range.start, value.range.end);
-          const source = new URL(url);
-          const version = source.searchParams.get("version");
-          select({
-            title: `${entry.file.path}:${from}${to === from ? "" : `–${to}`}`,
-            target: {
-              kind: "code",
-              path:
-                side === "base"
-                  ? (entry.file.previousPath ?? entry.file.path)
-                  : entry.file.path,
-              side,
-              startLine: from,
-              endLine: to,
-            },
-            apiSource: version
-              ? {
-                  reviewId: session.config.reviewId,
-                  version: Number(version),
-                  ...(scope && { commit: scope.commit }),
-                }
-              : undefined,
-            selectedDiff: selectedPierreDiff(
-              renderedDiffs.current.get(entry.diff)!,
-              side,
-              from,
-              to,
-              entry.file.status === "added"
-                ? ""
-                : (entry.file.previousPath ?? entry.file.path),
-              entry.file.status === "deleted" ? "" : entry.file.path,
-            ),
-            anchorContainer:
-              viewer.current?.getInstance()?.getContainerElement() ??
-              container.current ??
-              undefined,
-          });
+          publishSelection(value);
         }}
       />
     </div>
