@@ -1,6 +1,6 @@
 # Gherkin acceptance tests
 
-Status: approved on 2026-10-14; implemented, final verification in progress.
+Status: implemented. Verification results are recorded in the implementation plan.
 
 ## Purpose
 
