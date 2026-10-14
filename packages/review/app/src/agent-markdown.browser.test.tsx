@@ -1,0 +1,134 @@
+import { act } from "react";
+import { type Root, createRoot } from "react-dom/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { MarkdownContent } from "./agent-markdown";
+
+let container: HTMLDivElement, root: Root;
+
+beforeEach(() => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+});
+
+afterEach(async () => {
+  await act(async () => root.unmount());
+  container.remove();
+});
+
+const PIXEL =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+const REMOTE = "https://img.example/a.png";
+
+const render = async (source: string) => {
+  await act(async () => root.render(<MarkdownContent source={source} />));
+};
+
+describe("MarkdownContent", () => {
+  it("renders header cells with column alignment", async () => {
+    await render("| Name | Qty |\n| --- | --: |\n| a | 2 |\n");
+
+    const headers = container.querySelectorAll("th");
+    expect(headers).toHaveLength(2);
+    expect(getComputedStyle(headers[1]!).textAlign).toBe("right");
+    expect(
+      getComputedStyle(container.querySelectorAll("td")[1]!).textAlign,
+    ).toBe("right");
+  });
+
+  it("renders a remote image where the document allows one", async () => {
+    // The image is phrasing content inside its paragraph, so a rendered image
+    // must stay phrasing-level: React reports invalid nesting on the console.
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await act(async () =>
+      root.render(
+        <MarkdownContent source={`![A shot](${REMOTE})\n`} allowRemoteImages />,
+      ),
+    );
+
+    const image = container.querySelector("p img");
+
+    expect(image?.getAttribute("alt")).toBe("A shot");
+    expect(image?.getAttribute("src")).toBe(REMOTE);
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+  });
+
+  it("renders an image as its alt text unless it is an allowed remote one", async () => {
+    await render(`![A shot](${REMOTE})\n`);
+
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector("em")?.textContent).toBe("A shot");
+
+    // A data URL carries the image itself, which the document never authored.
+    await act(async () =>
+      root.render(
+        <MarkdownContent source={`![A shot](${PIXEL})\n`} allowRemoteImages />,
+      ),
+    );
+
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector("em")?.textContent).toBe("A shot");
+  });
+
+  it("renders GFM footnotes with references and definitions", async () => {
+    await render("A note[^1].\n\n[^1]: Native pipeline footnote.\n");
+
+    const reference = container.querySelector("a[data-footnote-ref]");
+    expect(reference?.getAttribute("href")).toBe("#fn-1");
+    expect(
+      container.querySelector("section[data-footnotes] li#fn-1")?.textContent,
+    ).toContain("Native pipeline footnote.");
+  });
+
+  it("ticks tasks by rewriting their own markers, keeping unsaved ticks", async () => {
+    const onChange = vi.fn<(source: string) => void>();
+    const source = "Plan:\n\n1. [ ] One\n2. [x] Two\n   - [ ] Nested\n";
+
+    const show = (markdown: string) =>
+      act(async () =>
+        root.render(<MarkdownContent source={markdown} onChange={onChange} />),
+      );
+
+    await show(source);
+    const boxes = () => container.querySelectorAll("input");
+
+    // Clicked faster than the saved source comes back.
+    await act(async () => boxes()[0]!.click());
+    await act(async () => boxes()[1]!.click());
+    await act(async () => boxes()[2]!.click());
+
+    const one = source.replace("1. [ ]", "1. [x]");
+    const two = one.replace("2. [x]", "2. [ ]");
+    const nested = two.replace("- [ ]", "- [x]");
+    expect(onChange.mock.calls.map(([next]) => next)).toEqual([
+      one,
+      two,
+      nested,
+    ]);
+
+    // The first save comes back while the others are in flight.
+    await show(one);
+    await act(async () => boxes()[0]!.click());
+    expect(onChange).toHaveBeenLastCalledWith(
+      nested.replace("1. [x]", "1. [ ]"),
+    );
+
+    // A source written elsewhere starts afresh.
+    const agent = `${source}3. [ ] Three\n`;
+    await show(agent);
+    await act(async () => boxes()[3]!.click());
+    expect(onChange).toHaveBeenLastCalledWith(
+      agent.replace("3. [ ]", "3. [x]"),
+    );
+  });
+
+  it("leaves tasks disabled without a way to save them", async () => {
+    await render("- [ ] Task\n");
+
+    expect(container.querySelector("input")?.disabled).toBe(true);
+  });
+});

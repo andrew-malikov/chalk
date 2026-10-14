@@ -1,0 +1,130 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+const product = JSON.parse(
+  await readFile(new URL("../code-oss/product.json", import.meta.url), "utf8"),
+);
+
+const webviewPreloader = await readFile(
+  new URL(
+    "../code-oss/src/vs/workbench/contrib/webview/browser/pre/index.html",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
+test("keeps Review disconnected from Microsoft update and extension services", () => {
+  assert.equal(product.enableTelemetry, false);
+  assert.equal(product.extensionsGallery, null);
+  assert.deepEqual(product.builtInExtensions, []);
+  // Review must never fall back to Microsoft's update service; the sanctioned
+  // feed below is the only one it may contact.
+  assert.notEqual(product.updateUrl, "https://update.code.visualstudio.com");
+});
+
+test("publishes the release number the About panel shows", async () => {
+  // The About panel reads `reviewVersion`, because `version` is the Code OSS
+  // base version. Nothing else keeps the two files together, so a release that
+  // bumps only package.json must fail here rather than ship a stale number.
+  const appPackage = JSON.parse(
+    await readFile(new URL("../package.json", import.meta.url), "utf8"),
+  );
+
+  assert.equal(product.reviewVersion, appPackage.version);
+});
+
+test("owns every install identity rather than sharing Code OSS's", () => {
+  const appIds = [
+    product.win32x64AppId,
+    product.win32arm64AppId,
+    product.win32x64UserAppId,
+    product.win32arm64UserAppId,
+  ];
+
+  // Stock Code OSS product GUIDs; a Review installer sharing one would be
+  // mistaken for a Code OSS install by the Inno uninstall-key probe.
+  const codeOssAppIds = new Set([
+    "{{D77B7E06-80BA-4137-BCF4-654B95CCEBC5}",
+    "{{D1ACE434-89C5-48D1-88D3-E2991DF85475}",
+    "{{CC6B787D-37A0-49E8-AE24-8559A032BE0C}",
+    "{{3AEBF0C8-F733-4AD4-BADE-FDB816D53D7B}",
+  ]);
+
+  assert.equal(new Set(appIds).size, 4, "each install target needs its own id");
+
+  for (const appId of appIds) {
+    assert.ok(!codeOssAppIds.has(appId), `${appId} is a Code OSS product id`);
+    // Inno Setup escapes a literal "{" as "{{".
+    assert.match(
+      appId,
+      /^\{\{[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}\}$/,
+      `${appId} is not a brace-escaped GUID`,
+    );
+  }
+});
+
+test("keeps upstream identity out of the fields Review has claimed", () => {
+  // A re-vendor rewrites product.json wholesale, so guard these fields against
+  // silently reverting to anything Code OSS- or Microsoft-branded. At upstream
+  // values the mutex and shared-storage names collide with a real Code OSS or
+  // VS Code install on the same machine.
+  const claimedKeys = [
+    "nameShort",
+    "nameLong",
+    "applicationName",
+    "dataFolderName",
+    "sharedDataFolderName",
+    "darwinBundleIdentifier",
+    "urlProtocol",
+    "linuxIconName",
+    "win32MutexName",
+    "win32TunnelMutex",
+    "win32TunnelServiceMutex",
+    "win32AppUserModelId",
+    "win32DirName",
+    "win32NameVersion",
+    "win32RegValueName",
+    "win32ShellNameShort",
+  ];
+
+  for (const key of claimedKeys) {
+    const value = product[key];
+    assert.match(value, /\S/u, key);
+    assert.doesNotMatch(value, /vscode|Microsoft|code-oss|CodeOSS/i, key);
+  }
+});
+
+test("removes dormant Microsoft endpoint configuration that is safe to omit", () => {
+  for (const key of [
+    "agentsTelemetryAppName",
+    "reportIssueUrl",
+    "trustedExtensionAuthAccess",
+    "voiceWsUrl",
+    "webviewContentExternalBaseUrlTemplate",
+  ]) {
+    assert.equal(product[key], undefined, key);
+  }
+});
+
+test("allows the webview host script through its own hash-only CSP", () => {
+  // Any edit to the inline script must update this hash, or the host page never
+  // runs and every webview (Markdown preview, custom editors) stays blank.
+  const [, scriptSrc] = webviewPreloader.match(/script-src ([^;]*);/);
+
+  const scripts = [
+    ...webviewPreloader.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g),
+  ];
+
+  assert.doesNotMatch(scriptSrc, /unsafe-inline/);
+  assert.ok(scripts.length > 0);
+
+  for (const [, body] of scripts) {
+    const hash = createHash("sha256").update(body, "utf8").digest("base64");
+    assert.ok(
+      scriptSrc.includes(`'sha256-${hash}'`),
+      `script-src lacks 'sha256-${hash}'`,
+    );
+  }
+});
