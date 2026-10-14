@@ -140,8 +140,9 @@ async function run() {
   });
 
   if (process.platform === "darwin") {
-    // Center the 14px native controls in the shell's 56px header.
-    window.setWindowButtonPosition(window.getWindowButtonPosition().x, 21);
+    // Center the 14px native controls in the shell's 56px header, and inset them
+    // so the gap before them matches the gap to the sidebar icon in the 88px slot.
+    window.setWindowButtonPosition(22, 21);
   }
 
   window.webview.setNavigationRules(["^*", "views://mainview/*"]);

@@ -355,7 +355,6 @@ export function ReviewDiffView({
               )}
             >
               Lenses
-              <MagnifierIcon />
             </div>
             {rows.items.map((item) => {
               const selected = lens?.id === item.id,
@@ -954,9 +953,6 @@ const styles = stylex.create({
     padding: "10px 14px 6px 16px",
   },
   lensesHeading: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
     paddingBottom: "2px",
   },
   filesHeading: {
@@ -967,6 +963,7 @@ const styles = stylex.create({
   nativeTree: {
     flex: 1,
     minHeight: 0,
+    overflowY: "auto",
     position: "relative",
   },
   section: {

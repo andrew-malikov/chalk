@@ -496,20 +496,23 @@ function pathHint(shimPath: string): string {
 }
 
 // Below this the fixed intro column would squeeze the steps until the agent
-// rows overflow; stack the intro above them instead.
-const stacked = "@media (max-width: 960px)";
+// rows overflow; stack the intro above them instead. Measured on the page, not
+// the viewport, because the setup dialog hosts it narrower than the window.
+const stacked = "@container review-welcome (max-width: 880px)";
 
 // An intro column beside the step rail that owns the whole first-run flow.
 const styles = stylex.create({
   page: {
     minHeight: "100%",
+    containerName: "review-welcome",
+    containerType: "inline-size",
   },
   columns: {
     display: "flex",
     flexDirection: { default: null, [stacked]: "column" },
     gap: { default: "72px", [stacked]: "32px" },
     alignItems: "flex-start",
-    paddingTop: "48px",
+    paddingTop: { default: "48px", [stacked]: "8px" },
   },
   intro: {
     display: "flex",
@@ -524,7 +527,10 @@ const styles = stylex.create({
   headline: {
     margin: 0,
     color: tokens.ink,
-    font: `${fontWeight.medium} ${welcomeType.headline}/46px ${tokens.fontSans}`,
+    font: {
+      default: `${fontWeight.medium} ${welcomeType.headline}/46px ${tokens.fontSans}`,
+      [stacked]: `${fontWeight.medium} 28px/34px ${tokens.fontSans}`,
+    },
   },
   sub: {
     margin: 0,
@@ -620,15 +626,22 @@ const styles = stylex.create({
     strokeLinejoin: "round",
   },
   stepTitle: {
+    flexShrink: 0,
     color: tokens.ink,
     fontSize: fontSize.ui,
+    whiteSpace: "nowrap",
   },
   stepTitleDone: {
     color: tokens.reviewHomeMeta,
   },
+  // The note gives way first so the title stays on one line.
   stepNote: {
+    minWidth: 0,
+    overflow: "hidden",
     color: tokens.reviewHomeMeta,
     fontSize: fontSize.body,
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   stepBody: {
     display: "flex",
