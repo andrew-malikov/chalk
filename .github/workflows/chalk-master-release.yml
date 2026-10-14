@@ -1,14 +1,14 @@
-name: Chalk Main Release
+name: Chalk Master Release
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 permissions:
   contents: read
 
 concurrency:
-  group: chalk-main-release
+  group: chalk-master-release
   cancel-in-progress: false
 
 jobs:
@@ -105,7 +105,7 @@ jobs:
         run: |
           gh release create "v${VERSION}" release/* \
             --target "$GITHUB_SHA" --title "Chalk ${VERSION}" --notes "Built from ${GITHUB_SHA}."
-      - name: Keep the 5 newest main releases
+      - name: Keep the 5 newest master releases
         # Only calver tags (vYYYY.MM.*); v0.x releases are left alone.
         run: |
           gh release list --limit 100 --json tagName,createdAt \
