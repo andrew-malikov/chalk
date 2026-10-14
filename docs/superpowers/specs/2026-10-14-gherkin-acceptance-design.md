@@ -1,6 +1,6 @@
 # Gherkin acceptance tests
 
-Status: proposed for review before implementation.
+Status: approved on 2026-10-14; implementation pending plan review.
 
 ## Purpose
 
