@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const checkout = path.resolve(app, "../..");
+
+const release = process.argv[2] === "release";
 
 if (!process.versions.bun) {
   throw new Error("Chalk requires Bun 1.4.2 or newer. Run: bun dev");
@@ -55,6 +57,12 @@ run(
 
 run(process.execPath, ["run", "host:build"]);
 
+// Installed apps have no Bun of their own for the host sidecar.
+if (release) {
+  mkdirSync(path.join(app, "runtime/bin"), { recursive: true });
+  copyFileSync(process.execPath, path.join(app, "runtime/bin/bun"));
+}
+
 run(hutch, ["electrobun", "prepare"]);
 
 // Bun 1.4.2 FTL miscompiles StyleX media-query parsing; keep the baseline JIT.
@@ -62,6 +70,6 @@ run(process.execPath, ["--bun", "run", "vite", "build"], app, {
   BUN_JSC_useFTLJIT: "0",
 });
 
-run(hutch, ["electrobun", "build", "--env=dev"]);
+run(hutch, ["electrobun", "build", `--env=${release ? "stable" : "dev"}`]);
 
-if (process.argv[2] !== "build") run(hutch, ["electrobun", "run"]);
+if (process.argv[2] === "dev") run(hutch, ["electrobun", "run"]);

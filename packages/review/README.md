@@ -1,8 +1,7 @@
 # Chalk
 
 The `@chalk/review` package provides the `chalk` CLI for headless review
-authoring and agent trace capture. It requires Bun 1.4.2 or newer. An npm install
-also provides `review` and `whiteboard` as aliases for `chalk`.
+authoring and agent trace capture. It requires Bun 1.4.2 or newer.
 `chalk server` and `chalk trace` run without installing or starting Desktop.
 Chalk Desktop displays the review canvas; its server owns review
 discovery, session state, and presentation. Legacy reviews

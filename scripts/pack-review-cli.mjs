@@ -4,13 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { parseVersion } from "./review-cli-release.mjs";
 import { stageReviewDocs } from "./stage-review-assets.mjs";
 
 /** Pack from the workspace, then add the docs and version metadata shipped by Desktop. */
 export async function packReviewCli({ version, commit }, outputDirectory) {
-  parseVersion(version);
-
   const actualCommit = execFileSync("git", ["rev-parse", "HEAD"], {
     encoding: "utf8",
   }).trim();

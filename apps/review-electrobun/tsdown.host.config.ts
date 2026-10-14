@@ -14,6 +14,9 @@ export default defineConfig({
       /^@dev\.fast\/diffr$/,
       /^isomorphic-git$/,
       /^micromark-extension-math$/,
+      // Installed apps have no node_modules beside the host.
+      /^hono(\/|$)/,
+      /^zod$/,
     ],
     onlyBundle: false,
     neverBundle: ["typescript", /^bun:/],

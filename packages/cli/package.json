@@ -9,9 +9,7 @@
     "directory": "packages/cli"
   },
   "bin": {
-    "chalk": "./dist/cli.js",
-    "review": "./dist/cli.js",
-    "whiteboard": "./dist/cli.js"
+    "chalk": "./dist/cli.js"
   },
   "files": [
     "LICENSE",

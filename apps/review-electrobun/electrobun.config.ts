@@ -4,7 +4,7 @@ export default {
   app: {
     name: "Chalk",
     identifier: "chalk.review.electrobun",
-    version: "0.2.0",
+    version: process.env.CHALK_APP_VERSION || "0.2.0",
   },
   build: {
     mainProcess: "cottontail",
@@ -12,6 +12,7 @@ export default {
     copy: {
       "dist/index.html": "views/mainview/index.html",
       "dist/assets": "views/mainview/assets",
+      runtime: "runtime",
     },
     mac: {
       bundleCEF: true,

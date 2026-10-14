@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
@@ -6,6 +7,7 @@ import * as ApplicationMenu from "electrobun/main/app-menu";
 import { BrowserView } from "electrobun/main/browser-view";
 import { BrowserWindow } from "electrobun/main/browser-window";
 import events from "electrobun/main/events";
+import { RESOURCES_FOLDER } from "electrobun/main/paths";
 import * as Utils from "electrobun/main/utils";
 import { z } from "zod";
 
@@ -19,18 +21,40 @@ import { createPreferencesStore } from "./preferences";
 import type { AppRPC, HostState } from "./rpc";
 import { startServer } from "./server-host";
 
-// Keep the existing profile so the rename preserves reviews and preferences.
-const profile = path.resolve(
-  process.env.DEV_REVIEW_HOME ??
-    path.join(homedir(), ".dev-fast/review-electrobun"),
-);
-
 const checkout = process.env.CHALK_REVIEW_CHECKOUT;
 
-const key = `dev-electrobun-${createHash("sha256")
-  .update(checkout ?? "")
-  .digest("hex")
-  .slice(0, 12)}`;
+// Keep the existing dev profile so the rename preserves reviews and
+// preferences; installed builds use the CLI's default home so it finds them.
+const profile = path.resolve(
+  process.env.DEV_REVIEW_HOME ??
+    (checkout
+      ? path.join(homedir(), ".dev-fast/review-electrobun")
+      : path.join(homedir(), ".dev")),
+);
+
+const key = checkout
+  ? `dev-electrobun-${createHash("sha256")
+      .update(checkout)
+      .digest("hex")
+      .slice(0, 12)}`
+  : "stable";
+
+// Installed builds carry their own Bun and host, staged by scripts/dev.mjs.
+const runtime = path.join(RESOURCES_FOLDER, "app/runtime");
+
+const sidecar = checkout
+  ? {
+      runtimePath: process.env.REVIEW_ELECTROBUN_BUN,
+      entry: process.env.CHALK_REVIEW_SERVER_ENTRY,
+    }
+  : {
+      runtimePath: path.join(runtime, "bin/bun"),
+      entry: path.join(runtime, "dist/desktop-host.js"),
+    };
+
+const appVersion: string = JSON.parse(
+  readFileSync(path.join(RESOURCES_FOLDER, "version.json"), "utf8"),
+).version;
 
 const abort = new AbortController();
 
@@ -194,11 +218,7 @@ async function run() {
 
   if (state.status === "error") return;
 
-  if (
-    !checkout ||
-    !process.env.REVIEW_ELECTROBUN_BUN ||
-    !process.env.CHALK_REVIEW_SERVER_ENTRY
-  ) {
+  if (!sidecar.runtimePath || !sidecar.entry) {
     setState({
       status: "error",
       message: "Launch this development app with Bun: bun dev",
@@ -211,9 +231,10 @@ async function run() {
   server = startServer({
     profile,
     key,
-    checkout,
-    runtimePath: process.env.REVIEW_ELECTROBUN_BUN,
-    entry: process.env.CHALK_REVIEW_SERVER_ENTRY,
+    ...(checkout && { checkout }),
+    appVersion,
+    runtimePath: sidecar.runtimePath,
+    entry: sidecar.entry,
     signal: abort.signal,
     onState: setState,
   });

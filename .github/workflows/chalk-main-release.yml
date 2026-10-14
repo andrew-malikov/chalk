@@ -1,0 +1,113 @@
+name: Chalk Main Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chalk-main-release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Resolve version
+        id: version
+        # Commit time keeps reruns of the same commit on the same version.
+        run: |
+          ts=$(git show -s --format=%ct HEAD)
+          echo "version=$(date -u -d "@$ts" +%Y.%m).$(git rev-parse --short=7 HEAD)-$ts" >> "$GITHUB_OUTPUT"
+
+  cli:
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: .bun-version
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Check release and headless behavior
+        run: |
+          bun test scripts
+          bun run --filter @chalk/tutorial ensure:assets
+          bun run --filter @chalk/server test -- --project shared-module-graph src/headless-host.test.ts
+          bun run --filter @chalk/cli test
+      - name: Build tarball
+        run: |
+          printf '{"version":"%s","commit":"%s"}\n' "$VERSION" "$GITHUB_SHA" > release-plan.json
+          bun scripts/pack-review-cli.mjs release-artifacts
+      - name: Test installed tarball
+        run: bun scripts/smoke-review-cli.mjs "release-artifacts/chalk-cli-${VERSION}.tgz" "$VERSION"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cli
+          path: release-artifacts/chalk-cli-${{ env.VERSION }}.tgz
+          if-no-files-found: error
+
+  app:
+    needs: version
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      CHALK_APP_VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: .bun-version
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Install Hutch
+        env:
+          HUTCH_INSTALL_URL: ${{ vars.HUTCH_INSTALL_URL }}
+        run: |
+          curl -fsSL "${HUTCH_INSTALL_URL:?Set the HUTCH_INSTALL_URL repository variable}" -o "$RUNNER_TEMP/install-hutch.sh"
+          bash "$RUNNER_TEMP/install-hutch.sh" --version 0.27.1 --no-modify-path
+          echo "$HOME/.hutch/bin" >> "$GITHUB_PATH"
+      - name: Build and bundle app
+        run: |
+          bun run --filter @chalk/server ensure:diffr --required
+          bun run --filter @chalk/review-electrobun app:release
+          mv apps/review-electrobun/artifacts/macos-arm64-Chalk.dmg "Chalk-${CHALK_APP_VERSION}-macos-arm64.dmg"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: app
+          path: Chalk-${{ env.CHALK_APP_VERSION }}-macos-arm64.dmg
+          if-no-files-found: error
+
+  release:
+    needs: [version, cli, app]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: release
+          merge-multiple: true
+      - name: Publish GitHub release
+        run: |
+          gh release create "v${VERSION}" release/* \
+            --target "$GITHUB_SHA" --title "Chalk ${VERSION}" --notes "Built from ${GITHUB_SHA}."
+      - name: Keep the 5 newest main releases
+        # Only calver tags (vYYYY.MM.*); v0.x releases are left alone.
+        run: |
+          gh release list --limit 100 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | test("^v[0-9]{4}\\.[0-9]{2}\\."))] | sort_by(.createdAt) | reverse | .[5:] | .[].tagName' \
+            | xargs -r -n1 gh release delete --yes --cleanup-tag

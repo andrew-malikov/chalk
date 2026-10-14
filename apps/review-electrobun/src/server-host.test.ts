@@ -55,6 +55,7 @@ async function fixture(mode = "ready"): Promise<ServerOptions> {
     runtimePath: process.execPath,
     entry,
     checkout: root,
+    appVersion: "0.0.0-test",
     profile: root,
     key: "dev-electrobun-test",
     env: { ...process.env, SHELL: "/bin/sh", REVIEW_TEST_MODE: mode },

@@ -69,7 +69,7 @@ const { version } = JSON.parse(
 writeFileSync(
   path.join(runtime, "dist/build-info.json"),
   JSON.stringify({
-    version,
+    version: process.env.CHALK_APP_VERSION || version,
     commit,
     dirty,
     builtAt: new Date().toISOString(),

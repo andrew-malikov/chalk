@@ -6,6 +6,7 @@
   "scripts": {
     "app:dev": "bun scripts/dev.mjs dev",
     "app:build": "bun scripts/dev.mjs build",
+    "app:release": "bun scripts/dev.mjs release",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.main.json",
     "test": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run",
     "host:build": "bun scripts/build-host.mjs"
