@@ -1125,7 +1125,8 @@ export const ReviewVerbRequestSchema = z.discriminatedUnion("name", [
   }),
   z.strictObject({
     name: z.literal("openSourceTree"),
-    args: z.strictObject({}),
+    // Omitted means VS Code, the only editor that also opens files and diffs.
+    args: z.strictObject({ app: z.enum(["zed", "finder"]).optional() }),
   }),
   z.strictObject({
     name: z.literal("openDiff"),

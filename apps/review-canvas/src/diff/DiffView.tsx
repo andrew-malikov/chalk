@@ -50,7 +50,6 @@ import {
   File,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
-  Search,
   X,
 } from "lucide-react";
 import {
@@ -583,9 +582,6 @@ function DiffRail({
           <PanelLeftOpenIcon size={16} aria-hidden="true" />
         </RailButton>
       </div>
-      <RailButton label="Show lenses" onClick={onExpand}>
-        <MagnifierIcon />
-      </RailButton>
       {rows.items.map((item, index) => (
         <RailLens
           key={item.id}
@@ -687,10 +683,6 @@ function RailButton({
 
 function FileIcon() {
   return <File {...stylex.props(styles.icon)} size={14} aria-hidden="true" />;
-}
-
-function MagnifierIcon() {
-  return <Search {...stylex.props(styles.icon)} size={14} aria-hidden="true" />;
 }
 
 // The lens list draws like the document: a new row lands in a slot and wipes

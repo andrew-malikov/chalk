@@ -8,6 +8,7 @@ import {
   createQuitGate,
   externalURL,
   newWindowURL,
+  openSource,
   openVSCode,
   sourceArguments,
 } from "./native";
@@ -66,6 +67,45 @@ test("real CLI execution preserves literal Unicode and shell characters", async 
     ).toEqual([
       ["--new-window", "/tmp/work space"],
       ["--goto", '/tmp/π "quoted"; $(touch nope).ts:42:1'],
+    ]);
+  } finally {
+    process.env.PATH = oldPath;
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Zed and Finder open the source tree through LaunchServices", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "review-open-"));
+  const oldPath = process.env.PATH;
+  const log = path.join(root, "args.jsonl");
+
+  for (const command of ["open", "code"]) {
+    const file = path.join(root, command);
+    await writeFile(
+      file,
+      `#!${process.execPath}\nrequire('node:fs').appendFileSync(${JSON.stringify(log)},JSON.stringify([${JSON.stringify(command)},...process.argv.slice(2)])+'\\n');`,
+    );
+    await chmod(file, 0o700);
+  }
+  process.env.PATH = `${root}:${oldPath}`;
+
+  try {
+    await openSource({ kind: "directory", rootPath: "/tmp/w s", app: "zed" });
+    await openSource({
+      kind: "directory",
+      rootPath: "/tmp/w s",
+      app: "finder",
+    });
+    await openSource({ kind: "directory", rootPath: "/tmp/w s" });
+    expect(
+      (await readFile(log, "utf8"))
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line)),
+    ).toEqual([
+      ["open", "-a", "Zed", "/tmp/w s"],
+      ["open", "-a", "Finder", "/tmp/w s"],
+      ["code", "--new-window", "/tmp/w s"],
     ]);
   } finally {
     process.env.PATH = oldPath;

@@ -43,6 +43,7 @@ import type {
 import { fuzzyMatches } from "@review/lib/fuzzy-match";
 import {
   BookOpenIcon,
+  ChevronDownIcon,
   FileTextIcon,
   MoreHorizontalIcon,
   SearchIcon,
@@ -539,6 +540,7 @@ function Shell(
             api,
             options.rpc.request.openSource,
             tab.view,
+            value.args.app,
           );
           break;
         case "openDiff":
@@ -850,6 +852,24 @@ function Shell(
     });
   }
 
+  function openInMenu(anchor: HTMLElement) {
+    ui.showMenu({
+      anchor,
+      items: [
+        { id: "vscode", label: "VS Code" },
+        { id: "zed", label: "Zed" },
+        { id: "finder", label: "Finder" },
+      ],
+      onHide() {},
+      onSelect: async (app) => {
+        await dispatch({
+          name: "openSourceTree",
+          args: app === "zed" || app === "finder" ? { app } : {},
+        });
+      },
+    });
+  }
+
   const reviews = catalog.current.map((review) => ({
     id: review.reviewId,
     title:
@@ -912,26 +932,22 @@ function Shell(
       data-theme={resolvedTheme}
     >
       <header
-        className="review-shell-titlebar electrobun-webkit-app-region-drag tw:flex tw:h-14 tw:flex-none tw:items-center tw:gap-4 tw:border-b tw:border-border tw:bg-[var(--tray)] tw:px-4 tw:select-none tw:[-webkit-app-region:drag] tw:data-[native-titlebar]:pl-[88px] tw:[&_button]:[-webkit-app-region:no-drag] tw:max-[760px]:gap-2 tw:max-[760px]:pr-2"
+        className="review-shell-titlebar electrobun-webkit-app-region-drag tw:grid tw:h-14 tw:flex-none tw:grid-cols-[1fr_minmax(0,36rem)_1fr] tw:items-center tw:gap-4 tw:border-b tw:border-border tw:bg-[var(--tray)] tw:px-4 tw:select-none tw:[-webkit-app-region:drag] tw:data-[native-titlebar]:pl-[88px] tw:[&_button]:[-webkit-app-region:no-drag] tw:max-[760px]:gap-2 tw:max-[760px]:pr-2"
         data-native-titlebar={options.nativeTitlebar || undefined}
       >
         <Button
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="sm"
+          className="review-shell-context tw:col-start-2 tw:min-w-0 tw:justify-start tw:font-normal tw:text-muted-foreground"
           aria-label="Search reviews"
           title="Search reviews (⇧⇧)"
           onClick={() => setPalette(true)}
         >
           <SearchIcon aria-hidden="true" />
-        </Button>
-        <div
-          className="review-shell-context tw:flex tw:min-w-0 tw:flex-1 tw:items-center tw:gap-3 tw:border-l tw:border-border tw:pl-4 tw:leading-5 tw:max-[760px]:gap-2 tw:max-[760px]:pl-2"
-          aria-label="Current review"
-        >
           {currentTab && (
             <>
               <span
-                className="review-shell-repository tw:max-w-[180px] tw:truncate tw:text-muted-foreground tw:max-[760px]:max-w-24 tw:max-[480px]:hidden"
+                className="review-shell-repository tw:max-w-[180px] tw:truncate tw:max-[760px]:max-w-24 tw:max-[480px]:hidden"
                 title={currentReview?.repositoryName}
               >
                 {currentReview?.repositoryName || "Reviews"}
@@ -945,27 +961,40 @@ function Shell(
             </>
           )}
           <span
-            className="review-shell-current-title tw:truncate tw:font-medium"
+            className="review-shell-current-title tw:truncate tw:text-foreground"
             title={currentTab?.title || "Chalk"}
           >
             {currentTab?.title || "Chalk"}
           </span>
-        </div>
-        <div className="review-shell-actions tw:flex tw:flex-none tw:items-center tw:gap-1 tw:text-muted-foreground">
+        </Button>
+        <div className="review-shell-actions tw:flex tw:items-center tw:justify-self-end tw:gap-1 tw:text-muted-foreground">
           {currentTab && (
-            <Button
-              variant="outline"
-              className="review-shell-editor tw:mr-2 tw:border-border tw:text-xs tw:[&_span]:leading-5 tw:max-[760px]:mr-0 tw:max-[760px]:w-9 tw:max-[760px]:p-0 tw:max-[760px]:[&_span]:hidden"
-              aria-label="Open in VS Code"
-              title="Open review source in VS Code"
-              disabled={!connected}
-              onClick={() =>
-                void dispatch({ name: "openSourceTree", args: {} })
-              }
-            >
-              <SquareArrowOutUpRightIcon aria-hidden="true" />
-              <span>Open in VS Code</span>
-            </Button>
+            <div className="review-shell-editor tw:mr-2 tw:flex tw:max-[760px]:mr-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="tw:rounded-r-none tw:border-border tw:text-xs tw:[&_span]:leading-5 tw:max-[760px]:w-8 tw:max-[760px]:p-0 tw:max-[760px]:[&_span]:hidden"
+                aria-label="Open in VS Code"
+                title="Open review source in VS Code"
+                disabled={!connected}
+                onClick={() =>
+                  void dispatch({ name: "openSourceTree", args: {} })
+                }
+              >
+                <SquareArrowOutUpRightIcon aria-hidden="true" />
+                <span>Open</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="tw:w-7 tw:rounded-l-none tw:border-l-0 tw:border-border"
+                aria-label="Open in…"
+                disabled={!connected}
+                onClick={(event) => openInMenu(event.currentTarget)}
+              >
+                <ChevronDownIcon aria-hidden="true" />
+              </Button>
+            </div>
           )}
           {currentTab && (
             <Button
@@ -980,15 +1009,6 @@ function Shell(
               <MoreHorizontalIcon aria-hidden="true" />
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Settings"
-            title="Settings (⌘,)"
-            onClick={() => setSettings(true)}
-          >
-            <Settings2Icon aria-hidden="true" />
-          </Button>
         </div>
       </header>
       {!connected && (

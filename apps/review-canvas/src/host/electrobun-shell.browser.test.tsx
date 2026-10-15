@@ -495,12 +495,7 @@ test("appearance reaches Home and modal Escape restores trigger focus", async ()
   await setup();
   await expect.poll(() => container.textContent).toContain("Alpha");
 
-  const trigger = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Settings"]',
-  )!;
-
-  trigger.focus();
-  await act(async () => trigger.click());
+  await act(async () => mounted!.command("settings"));
   const dialog = container.querySelector('[role="dialog"]')!;
   const select = dialog.querySelector<HTMLSelectElement>("select")!;
   await act(async () => {
@@ -516,6 +511,16 @@ test("appearance reaches Home and modal Escape restores trigger focus", async ()
         ?.getAttribute("data-review-theme"),
     )
     .toBe("light");
+  await act(async () => userEvent.keyboard("{Escape}"));
+  expect(container.querySelector('[role="dialog"]')).toBeNull();
+
+  const trigger = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Search reviews"]',
+  )!;
+
+  trigger.focus();
+  await act(async () => trigger.click());
+  expect(container.querySelector('[role="dialog"]')).not.toBeNull();
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(container.querySelector('[role="dialog"]')).toBeNull();
   expect(document.activeElement).toBe(trigger);

@@ -505,9 +505,14 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
   const textRange = document.createRange();
   textRange.selectNodeContents(added.querySelector("[data-line]")!);
   await act(async () => {
+    document.dispatchEvent(new PointerEvent("pointerdown", { button: 0 }));
     document.getSelection()!.removeAllRanges();
     document.getSelection()!.addRange(textRange);
     document.dispatchEvent(new Event("selectionchange"));
+  });
+  expect(container.querySelector('[aria-label="Copy ref"]')).toBeNull();
+  await act(async () => {
+    document.dispatchEvent(new PointerEvent("pointerup", { button: 0 }));
   });
   await vi.waitFor(() =>
     expect(container.querySelector('[aria-label="Copy ref"]')).not.toBeNull(),

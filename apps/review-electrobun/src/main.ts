@@ -15,7 +15,7 @@ import {
   createQuitGate,
   externalURL,
   newWindowURL,
-  openVSCode,
+  openSource,
 } from "./native";
 import { createPreferencesStore } from "./preferences";
 import type { AppRPC, HostState } from "./rpc";
@@ -109,7 +109,7 @@ async function run() {
 
           return value;
         },
-        openSource: async (request) => openVSCode(request, await desktopEnv),
+        openSource: async (request) => openSource(request, await desktopEnv),
         openExternal: async (request) => {
           if (!Utils.openExternal(externalURL(request)))
             throw new Error("The system could not open this URL.");

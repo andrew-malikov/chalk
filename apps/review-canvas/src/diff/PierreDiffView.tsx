@@ -676,11 +676,15 @@ function Comparison({
   useEffect(() => {
     if (hidden) return;
     const document = container.current!.ownerDocument;
+    // The actions appear once a mouse drag ends, not while it is still extending.
+    let dragging = false;
 
     const update = () => {
-      const value = selectedPierreText(
-        viewer.current?.getInstance()?.getRenderedItems() ?? [],
-      );
+      const value = dragging
+        ? null
+        : selectedPierreText(
+            viewer.current?.getInstance()?.getRenderedItems() ?? [],
+          );
 
       if (value) {
         textSelection.current = value;
@@ -691,9 +695,25 @@ function Comparison({
       }
     };
 
-    document.addEventListener("selectionchange", update);
+    const down = (event: PointerEvent) => {
+      dragging = event.button === 0;
+    };
 
-    return () => document.removeEventListener("selectionchange", update);
+    const up = () => {
+      if (!dragging) return;
+      dragging = false;
+      update();
+    };
+
+    document.addEventListener("selectionchange", update);
+    document.addEventListener("pointerdown", down);
+    document.addEventListener("pointerup", up);
+
+    return () => {
+      document.removeEventListener("selectionchange", update);
+      document.removeEventListener("pointerdown", down);
+      document.removeEventListener("pointerup", up);
+    };
   }, [hidden, publishSelection, select]);
 
   const options = useMemo(

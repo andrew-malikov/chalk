@@ -19,7 +19,7 @@ import {
   diffSoftwareMaps,
 } from "@review/software-map/software-map-topology-diff";
 import * as stylex from "@stylexjs/stylex";
-import { Archive, ArrowLeft, ArrowUpRight } from "lucide-react";
+import { Archive, ArrowLeft } from "lucide-react";
 import {
   type CSSProperties,
   type ComponentType,
@@ -292,7 +292,6 @@ function ReviewLayoutContent({
   // The scratchpad is a document and nothing else: no source tree to browse,
   // nothing to dismiss.
   const scratchpad = session.review?.kind === "scratchpad";
-  const sourceTreeTooltip = useTooltip("Open full read-only source");
   const panelStore = useReviewPanelStore();
   useSuppressPanelMotionOnCanvasResume(appRef);
   const activePanel = useReviewPanel((state) => state.active);
@@ -581,25 +580,6 @@ function ReviewLayoutContent({
                   shellStyles.topbarContext,
                 )}
               >
-                {!scratchpad && (
-                  <Button
-                    variant="ghost"
-                    xstyle={shellStyles.openSourceTree}
-                    aria-label="Source tree ↗"
-                    ref={sourceTreeTooltip}
-                    onClick={() => {
-                      session.surface.post({
-                        name: "openSourceTree",
-                        args: {},
-                      });
-                    }}
-                  >
-                    <span {...stylex.props(shellStyles.openSourceTreeLabel)}>
-                      Source tree
-                    </span>
-                    <ArrowUpRight size={12} aria-hidden="true" />
-                  </Button>
-                )}
                 <AuthoringActivityBadge
                   onLocate={(view) => {
                     showView(view);

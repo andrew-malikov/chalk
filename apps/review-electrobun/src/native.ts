@@ -17,7 +17,11 @@ const range = z.strictObject({
 });
 
 const openSchema = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("directory"), rootPath: absolutePath }),
+  z.strictObject({
+    kind: z.literal("directory"),
+    rootPath: absolutePath,
+    app: z.enum(["zed", "finder"]).optional(),
+  }),
   z.strictObject({
     kind: z.literal("file"),
     rootPath: absolutePath,
@@ -77,6 +81,24 @@ export function externalURL(
 }
 
 const execute = promisify(execFile);
+
+export async function openSource(
+  input: NativeOpenRequest,
+  baseEnv: NodeJS.ProcessEnv = process.env,
+): Promise<void> {
+  const request = openSchema.parse(input);
+
+  if (request.kind !== "directory" || !request.app)
+    return openVSCode(request, baseEnv);
+  // LaunchServices finds the app, so neither needs a CLI on PATH.
+  const name = request.app === "zed" ? "Zed" : "Finder";
+
+  try {
+    await execute("open", ["-a", name, request.rootPath]);
+  } catch (error) {
+    throw new Error(`Cannot open ${name}. ${String(error)}`);
+  }
+}
 
 export async function openVSCode(
   request: NativeOpenRequest,

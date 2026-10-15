@@ -48,8 +48,11 @@ export type HostState =
     }
   | { status: "error" | "disconnected"; message: string };
 
+/** Apps besides VS Code that can open a review's source tree. */
+export type DirectoryApp = "zed" | "finder";
+
 export type NativeOpenRequest =
-  | { kind: "directory"; rootPath: string }
+  | { kind: "directory"; rootPath: string; app?: DirectoryApp }
   | {
       kind: "file";
       rootPath: string;

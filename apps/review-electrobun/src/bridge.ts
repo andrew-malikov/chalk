@@ -21,7 +21,12 @@ import type {
   ReviewVerbResponse,
 } from "@chalk/review-contracts";
 
-import type { HostState, NativeOpenRequest, ShellPreferences } from "./rpc";
+import type {
+  DirectoryApp,
+  HostState,
+  NativeOpenRequest,
+  ShellPreferences,
+} from "./rpc";
 
 export function createAuthenticatedRequest(
   discovery: ReviewDesktopDiscovery,
@@ -72,9 +77,10 @@ export async function openSourceDirectory(
   api: ReviewApiClient,
   open: (request: NativeOpenRequest) => Promise<void>,
   view: ReviewSourceView,
+  app?: DirectoryApp,
 ) {
   const destination = await navigator(api, view);
-  await open({ kind: "directory", rootPath: destination.rootPath });
+  await open({ kind: "directory", rootPath: destination.rootPath, app });
 }
 
 export async function openSourceFile(

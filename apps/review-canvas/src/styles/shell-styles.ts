@@ -9,8 +9,6 @@ const narrowCanvas = "@container review-canvas (max-width: 929px)";
 
 const narrowViewport = "@media (max-width: 720px)";
 
-const narrowContent = "@container review-content (max-width: 720px)";
-
 const peekOpen = () => stylex.when.ancestor("[data-peek-open]", appMarker);
 
 const inTopbarActions = () =>
@@ -257,17 +255,6 @@ export const shellStyles = stylex.create({
       margin: "0 14px 0 16px",
       backgroundColor: tokens.chromeBorder,
     },
-  },
-  // The top bar compacts against its own column (the shell container), not
-  // the viewport: an open side panel narrows the column without resizing
-  // the window. In a narrow column this ghost Button drops its label.
-  openSourceTree: {
-    justifyContent: { default: null, [narrowContent]: "center" },
-    width: { default: null, [narrowContent]: tokens.chromeControlHeight },
-    padding: { default: "0 10px", [narrowContent]: 0 },
-  },
-  openSourceTreeLabel: {
-    display: { default: null, [narrowContent]: "none" },
   },
   actionsDivider: {
     flexShrink: 0,
