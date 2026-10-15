@@ -1,13 +1,18 @@
 import { mountReviewCanvas } from "@canvas/desktop-entry";
 import { fixtureReviewBridge } from "@canvas/test/fixture-review-bridge";
+import { testReviewBridge } from "@canvas/test/review-session-test-utils";
 import {
+  ReviewApiClient,
+  type ReviewCanvasBridge,
   type ReviewCanvasHandle,
   parseJsonText,
 } from "@chalk/review-contracts";
+import type { Snapshot } from "@review/node/review-api/store";
 import { z } from "zod";
 
 export interface ReviewHarness {
   open(version: number, includeCommit: boolean): void;
+  openStored(snapshot: Snapshot): void;
   close(): void;
   errors: string[];
   activeStreams: number;
@@ -25,10 +30,6 @@ const base = "b".repeat(40);
 
 const head = "a".repeat(40);
 
-const subscriptionsSchema = z.array(
-  z.object({ reviewId: z.literal(reviewId) }),
-);
-
 let mounted: ReviewCanvasHandle | undefined;
 
 const harness: ReviewHarness = {
@@ -37,6 +38,17 @@ const harness: ReviewHarness = {
   close() {
     mounted?.dispose();
     mounted = undefined;
+  },
+  openStored(snapshot) {
+    const bridge = testReviewBridge(
+      { serverUrl: location.origin },
+      { request: (url, init) => fetch(url, init) },
+    );
+
+    const client = new ReviewApiClient(bridge.config, bridge.request);
+    bridge.diffView.files = () =>
+      client.read(`/${snapshot.reviewId}/diff?version=${snapshot.version}`);
+    show(snapshot, bridge, false);
   },
   open(version, includeCommit) {
     harness.close();
@@ -82,77 +94,94 @@ const harness: ReviewHarness = {
       },
     });
 
-    const request = bridge.request;
-    bridge.request = async (url, init) => {
-      try {
-        const parsed = new URL(String(url));
-
-        if (parsed.pathname === "/reviews-api/watch") {
-          const subscriptions = subscriptionsSchema.parse(
-            parseJsonText(parsed.searchParams.get("subscriptions") ?? "[]"),
-          );
-
-          init?.signal?.throwIfAborted();
-          let ended = false;
-          let controller: ReadableStreamDefaultController<Uint8Array>;
-
-          const end = () => {
-            if (ended) return;
-            ended = true;
-            harness.activeStreams--;
-            init?.signal?.removeEventListener("abort", abort);
-          };
-
-          const abort = () => {
-            controller.close();
-            end();
-          };
-
-          const stream = new ReadableStream<Uint8Array>({
-            start(next) {
-              controller = next;
-              harness.activeStreams++;
-              next.enqueue(
-                new TextEncoder().encode(
-                  JSON.stringify(
-                    subscriptions.map(() => ({
-                      value: { ...snapshot, activity: "unknown" },
-                    })),
-                  ) + "\n",
-                ),
-              );
-              init?.signal?.addEventListener("abort", abort, { once: true });
-            },
-            cancel: end,
-          });
-
-          return new Response(stream, {
-            headers: { "content-type": "application/x-ndjson" },
-          });
-        }
-
-        const response = await request(url, init);
-
-        if (!response.ok)
-          throw new Error(
-            `Unhandled fixture request: ${url} (${response.status})`,
-          );
-
-        return response;
-      } catch (error) {
-        if (!init?.signal?.aborted) harness.errors.push(String(error));
-        throw error;
-      }
-    };
-
-    mounted = mountReviewCanvas(document.getElementById("review")!, {
-      kind: "api",
-      reviewId,
-      version,
-      bridge,
-    });
+    show(snapshot, bridge, true);
   },
 };
+
+function show(
+  snapshot: Snapshot,
+  bridge: ReviewCanvasBridge,
+  fixture: boolean,
+) {
+  harness.close();
+
+  const subscriptionsSchema = z.array(
+    z.object({ reviewId: z.literal(snapshot.reviewId) }),
+  );
+
+  const request = bridge.request;
+  bridge.request = async (url, init) => {
+    try {
+      const parsed = new URL(String(url));
+
+      if (parsed.pathname === "/reviews-api/watch") {
+        const subscriptions = subscriptionsSchema.parse(
+          parseJsonText(parsed.searchParams.get("subscriptions") ?? "[]"),
+        );
+
+        init?.signal?.throwIfAborted();
+        let ended = false;
+        let controller: ReadableStreamDefaultController<Uint8Array>;
+
+        const end = () => {
+          if (ended) return;
+          ended = true;
+          harness.activeStreams--;
+          init?.signal?.removeEventListener("abort", abort);
+        };
+
+        const abort = () => {
+          controller.close();
+          end();
+        };
+
+        const stream = new ReadableStream<Uint8Array>({
+          start(next) {
+            controller = next;
+            harness.activeStreams++;
+            next.enqueue(
+              new TextEncoder().encode(
+                JSON.stringify(
+                  subscriptions.map(() => ({
+                    value: { ...snapshot, activity: "unknown" },
+                  })),
+                ) + "\n",
+              ),
+            );
+            init?.signal?.addEventListener("abort", abort, { once: true });
+          },
+          cancel: end,
+        });
+
+        return new Response(stream, {
+          headers: { "content-type": "application/x-ndjson" },
+        });
+      }
+
+      const response = await request(url, init);
+
+      if (
+        !response.ok &&
+        (fixture || response.status === 404 || response.status >= 500)
+      )
+        throw new Error(
+          `Unhandled fixture request: ${url} (${response.status})`,
+        );
+
+      return response;
+    } catch (error) {
+      if (!init?.signal?.aborted) harness.errors.push(String(error));
+      throw error;
+    }
+  };
+
+  mounted = mountReviewCanvas(document.getElementById("review")!, {
+    kind: "api",
+    reviewId: snapshot.reviewId,
+    version: snapshot.version,
+    bridge,
+  });
+}
 
 const css = document.createElement("link");
 

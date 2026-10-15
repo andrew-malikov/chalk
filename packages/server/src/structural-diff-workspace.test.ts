@@ -60,7 +60,16 @@ test.skipIf(!hasJj)(
     git(outer, ["init", "-b", "unrelated"]);
     run(source, "jj", ["git", "init", "--colocate"]);
     const workspace = path.join(outer, "workspace");
-    run(source, "jj", ["workspace", "add", workspace, "-r", head]);
+    // jj 0.46+ would otherwise give the workspace its own Git worktree.
+    run(source, "jj", [
+      "--config",
+      "git.colocate=false",
+      "workspace",
+      "add",
+      workspace,
+      "-r",
+      head,
+    ]);
     // A Git-only consumer discovers the enclosing repo from the jj workspace.
     expect(git(workspace, ["rev-parse", "--show-toplevel"])).toBe(
       await realpath(outer),

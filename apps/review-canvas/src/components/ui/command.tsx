@@ -42,12 +42,25 @@ function CommandDialog({
     description?: string;
     container?: HTMLElement | null;
   }) {
+  const previousFocus = React.useRef<Element | null>(null);
+
   return (
     <Dialog {...props}>
       <DialogContent
         container={container}
         className="tw:top-[20%] tw:translate-y-0 tw:gap-0 tw:overflow-hidden tw:p-0"
         showCloseButton={false}
+        // Without a DialogTrigger, Radix would drop focus to the body on close.
+        onOpenAutoFocus={() => {
+          previousFocus.current = document.activeElement;
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          const previous = previousFocus.current;
+
+          if (previous instanceof HTMLElement && previous.isConnected)
+            previous.focus();
+        }}
       >
         <DialogHeader className="tw:sr-only">
           <DialogTitle>{title}</DialogTitle>

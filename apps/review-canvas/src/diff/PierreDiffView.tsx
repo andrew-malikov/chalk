@@ -704,8 +704,11 @@ function Comparison({
     const document = container.current!.ownerDocument;
     // The actions appear once a mouse drag ends, not while it is still extending.
     let dragging = false;
+    let extended = false;
 
     const update = () => {
+      extended = dragging;
+
       const value = dragging
         ? null
         : selectedPierreText(
@@ -723,12 +726,15 @@ function Comparison({
 
     const down = (event: PointerEvent) => {
       dragging = event.button === 0;
+      extended = false;
     };
 
     const up = () => {
       if (!dragging) return;
       dragging = false;
-      update();
+
+      // Pressing the selection's own actions leaves it intact; republishing would swallow the click.
+      if (extended) update();
     };
 
     document.addEventListener("selectionchange", update);

@@ -233,11 +233,16 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
     thread().querySelector<HTMLElement>('[role="textbox"]')!.textContent,
   ).toBe("Follow-up draft");
   await click("Discard");
-  await vi.waitFor(() =>
-    expect(thread().querySelector("details")?.open).toBe(false),
-  );
-  await userEvent.click(thread().querySelector("summary")!);
-  expect(thread().querySelector("details")!.open).toBe(true);
+
+  const chip = () =>
+    container.querySelector<HTMLElement>(
+      '[aria-label^="Expand resolved discussion"]',
+    );
+
+  await vi.waitFor(() => expect(chip()).not.toBeNull());
+  expect(thread()).toBeNull();
+  await userEvent.click(chip()!);
+  await vi.waitFor(() => expect(thread()).not.toBeNull());
   await render("historic");
   await vi.waitFor(() => expect(thread()).toBeNull());
 });

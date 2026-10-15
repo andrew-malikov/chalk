@@ -155,6 +155,25 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
         node.textContent?.includes("after"),
     )!;
 
+    const comment = () =>
+      container.querySelector<HTMLButtonElement>(
+        '[aria-label="GitLab comment"]',
+      );
+
+    const selectLines = async (column: Element, from: number, to = from) => {
+      const line = (n: number) =>
+        column.querySelector(`[data-line="${n}"][data-line-type]`)!;
+
+      const range = document.createRange();
+      range.setStart(line(from), 0);
+      range.setEnd(line(to), line(to).childNodes.length);
+      await act(async () => {
+        document.getSelection()!.removeAllRanges();
+        document.getSelection()!.addRange(range);
+        document.dispatchEvent(new Event("selectionchange"));
+      });
+    };
+
     // A selected line must target the actual diff side, including deleted lines.
     for (const side of ["head", "base"] as const) {
       const column = code.find((node) =>
@@ -163,14 +182,9 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
         ),
       )!;
 
-      const number = () =>
-        column.querySelector<HTMLElement>(
-          '[data-gutter] [data-column-number="1"]',
-        )!;
-
-      await userEvent.click(number());
-      await vi.waitFor(() => expect(button("GitLab comment")).toBeDefined());
-      await userEvent.click(button("GitLab comment"));
+      await selectLines(column, 1);
+      await vi.waitFor(() => expect(comment()).not.toBeNull());
+      await userEvent.click(comment()!);
 
       const hovered = () =>
         container.querySelector<HTMLElement>(
@@ -193,24 +207,11 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
         ].find((b) => b.textContent === "Discard")!,
       );
       await vi.waitFor(() => expect(hovered()).toBeNull());
-      // Composing keeps the line selected; clicking it again clears it.
-      await userEvent.click(number());
     }
 
-    await userEvent.click(
-      added.querySelector<HTMLElement>(
-        '[data-gutter] [data-column-number="1"]',
-      )!,
-    );
-    await userEvent.keyboard("{Shift>}");
-    await userEvent.click(
-      added.querySelector<HTMLElement>(
-        '[data-gutter] [data-column-number="2"]',
-      )!,
-    );
-    await userEvent.keyboard("{/Shift}");
-    await vi.waitFor(() => expect(button("GitLab comment")).toBeDefined());
-    await userEvent.click(button("GitLab comment"));
+    await selectLines(added, 1, 2);
+    await vi.waitFor(() => expect(comment()).not.toBeNull());
+    await userEvent.click(comment()!);
     await vi.waitFor(() =>
       expect(
         container.querySelector(

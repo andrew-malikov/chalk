@@ -404,63 +404,58 @@ async function setup(
   return rpc;
 }
 
-test("opens singleton review tabs and closes to Home", async () => {
-  const rpc = await setup();
-  await expect.poll(() => container.textContent).toContain("Alpha");
-  await act(async () => {
-    Array.from(container.querySelectorAll("button"))
-      .find((el) => el.textContent?.includes("Alpha"))
-      ?.click();
-  });
-  await expect
-    .poll(
-      () =>
-        container.querySelectorAll('[role="tab"][aria-label="Alpha"]').length,
-    )
-    .toBe(1);
-  await act(async () =>
-    container
-      .querySelector<HTMLButtonElement>('[aria-label="Go Home"]')!
-      .click(),
+const activeReview = () =>
+  container
+    .querySelector(".review-shell-review-panel:not([hidden])")
+    ?.getAttribute("aria-label");
+
+const openReviews = () =>
+  [...container.querySelectorAll(".review-shell-review-panel")].map((section) =>
+    section.getAttribute("aria-label"),
   );
-  await act(async () => {
-    Array.from(container.querySelectorAll("button"))
-      .find((el) => el.textContent?.includes("Alpha"))
-      ?.click();
-  });
-  expect(
-    container.querySelectorAll('[role="tab"][aria-label="Alpha"]').length,
-  ).toBe(1);
+
+async function choose(label: string) {
+  await act(async () => mounted!.command("commandPalette"));
+
+  const item = [...container.querySelectorAll<HTMLElement>("[cmdk-item]")].find(
+    (item) => item.textContent?.includes(label),
+  )!;
+
+  await act(async () => item.click());
+}
+
+const button = (label: string) =>
+  [...container.querySelectorAll("button")].find(
+    (button) => button.textContent === label,
+  )!;
+
+test("opens a review once from the palette and closes to Home", async () => {
+  const rpc = await setup([b], b);
+  await expect.poll(activeReview).toBe("Beta");
+  await choose("Alpha");
+  await expect.poll(activeReview).toBe("Alpha");
+  await choose("Alpha");
+  expect(openReviews()).toEqual(["Beta", "Alpha"]);
   await act(async () => mounted?.command("closeTab"));
-  expect(
-    container
-      .querySelector('[aria-label="Go Home"]')
-      ?.getAttribute("aria-current"),
-  ).toBe("page");
+  expect(activeReview()).toBe("Beta");
+  await act(async () => mounted?.command("closeTab"));
+  expect(activeReview()).toBeUndefined();
+  expect(container.textContent).toContain("Select a review");
   expect(rpc.request.setPreferences).toHaveBeenCalled();
 });
 
-test("restores catalog tabs and drops missing review IDs", async () => {
+test("restores catalog reviews and drops missing review IDs", async () => {
   await setup([a, "missing", b], b);
-  await expect
-    .poll(() =>
-      container
-        .querySelector('[role="tab"][aria-label="Beta"]')
-        ?.getAttribute("aria-selected"),
-    )
-    .toBe("true");
-  expect(container.querySelectorAll('[role="tab"]').length).toBe(2);
+  await expect.poll(activeReview).toBe("Beta");
+  expect(openReviews()).toEqual(["Alpha", "Beta"]);
   expect(container.textContent).not.toContain("missing");
 });
 
 test("title bar opens the selected source directory and closing Settings preserves its review", async () => {
   const rpc = await setup([a, b], a);
   await expect.poll(() => container.textContent).toContain("Alpha document");
-  await act(async () =>
-    container
-      .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Beta"]')!
-      .click(),
-  );
+  await choose("Beta");
+  await expect.poll(activeReview).toBe("Beta");
   await act(async () =>
     container
       .querySelector<HTMLButtonElement>('[aria-label="Open in VS Code"]')!
@@ -475,11 +470,7 @@ test("title bar opens the selected source directory and closing Settings preserv
   await act(async () => mounted!.command("settings"));
   await act(async () => mounted!.command("closeTab"));
   expect(container.querySelector('[role="dialog"]')).toBeNull();
-  expect(
-    container
-      .querySelector('[role="tab"][aria-label="Beta"]')
-      ?.getAttribute("aria-selected"),
-  ).toBe("true");
+  expect(activeReview()).toBe("Beta");
 });
 
 test("disposing the shell cancels application and canvas streams", async () => {
@@ -491,7 +482,7 @@ test("disposing the shell cancels application and canvas streams", async () => {
   expect(container.childElementCount).toBe(0);
 });
 
-test("appearance reaches Home and modal Escape restores trigger focus", async () => {
+test("appearance reaches the shell and modal Escape restores trigger focus", async () => {
   await setup();
   await expect.poll(() => container.textContent).toContain("Alpha");
 
@@ -504,11 +495,7 @@ test("appearance reaches Home and modal Escape restores trigger focus", async ()
   });
   await expect
     .poll(() =>
-      container
-        .querySelector(
-          '[role="tabpanel"][aria-label="Home"] [data-review-theme]',
-        )
-        ?.getAttribute("data-review-theme"),
+      container.querySelector(".review-shell")?.getAttribute("data-theme"),
     )
     .toBe("light");
   await act(async () => userEvent.keyboard("{Escape}"));
@@ -523,34 +510,30 @@ test("appearance reaches Home and modal Escape restores trigger focus", async ()
   expect(container.querySelector('[role="dialog"]')).not.toBeNull();
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(container.querySelector('[role="dialog"]')).toBeNull();
-  expect(document.activeElement).toBe(trigger);
+  await expect.poll(() => document.activeElement).toBe(trigger);
 });
 
-test("canvas menu supports checked selection, arrows and Escape", async () => {
-  await setup();
-  await expect.poll(() => container.textContent).toContain("Alpha");
+test("Open in menu supports arrows, selection and Escape", async () => {
+  const rpc = await setup([a], a);
+  await expect.poll(() => container.textContent).toContain("Alpha document");
 
   const trigger = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Sort reviews"]',
+    '[aria-label="Open in…"]',
   )!;
 
-  expect(trigger.disabled).toBe(false);
+  await expect.poll(() => trigger.disabled).toBe(false);
   await act(async () => trigger.click());
-  const menu = container.querySelector('[role="menu"]')!;
-  await act(async () => {
-    menu.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
-    );
-    document.activeElement?.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
-    );
-  });
-  expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  await expect.poll(() => document.activeElement?.textContent).toBe("VS Code");
+  await act(async () => userEvent.keyboard("{ArrowDown}{Enter}"));
+  expect(container.querySelector('[role="menu"]')).toBeNull();
+  await vi.waitFor(() =>
+    expect(rpc.request.openSource).toHaveBeenCalledWith({
+      kind: "directory",
+      rootPath: `/tmp/${a}`,
+      app: "zed",
+    }),
+  );
   await act(async () => trigger.click());
-  expect(
-    container.querySelector('[role="menuitemradio"][aria-checked="true"]')
-      ?.textContent,
-  ).toContain("Oldest");
   await act(async () =>
     container
       .querySelector('[role="menu"]')
@@ -558,6 +541,7 @@ test("canvas menu supports checked selection, arrows and Escape", async () => {
         new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
       ),
   );
+  expect(container.querySelector('[role="menu"]')).toBeNull();
   expect(document.activeElement).toBe(trigger);
 });
 
@@ -574,14 +558,11 @@ test("keyboard close operates on the active review", async () => {
       }),
     ),
   );
-  expect(
-    container
-      .querySelector('[aria-label="Go Home"]')
-      ?.getAttribute("aria-current"),
-  ).toBe("page");
+  expect(activeReview()).toBeUndefined();
+  expect(openReviews()).toEqual([]);
 });
 
-test("arrow keys switch retained tabs and system appearance updates Home", async () => {
+test("system appearance updates the shell", async () => {
   const original = window.matchMedia;
 
   const query = Object.assign(new EventTarget(), {
@@ -595,43 +576,18 @@ test("arrow keys switch retained tabs and system appearance updates Home", async
   vi.stubGlobal("matchMedia", (value: string) =>
     value === query.media ? query : original(value),
   );
-  await setup([a, b], b);
-  await expect
-    .poll(() =>
-      container
-        .querySelector('[role="tab"][aria-label="Beta"]')
-        ?.getAttribute("aria-selected"),
-    )
-    .toBe("true");
+  await setup([a], a);
+  await expect.poll(activeReview).toBe("Alpha");
 
-  const tab = container.querySelector<HTMLButtonElement>(
-    '[role="tab"][aria-label="Alpha"]',
-  )!;
+  const theme = () =>
+    container.querySelector(".review-shell")?.getAttribute("data-theme");
 
-  tab.focus();
-  await act(async () =>
-    tab.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
-    ),
-  );
-  expect(
-    container
-      .querySelector('[role="tab"][aria-label="Beta"]')
-      ?.getAttribute("aria-selected"),
-  ).toBe("true");
+  expect(theme()).toBe("light");
   await act(async () => {
     query.matches = true;
     query.dispatchEvent(new Event("change"));
   });
-  await expect
-    .poll(() =>
-      container
-        .querySelector(
-          '[role="tabpanel"][aria-label="Home"] [data-review-theme]',
-        )
-        ?.getAttribute("data-review-theme"),
-    )
-    .toBe("dark");
+  await expect.poll(theme).toBe("dark");
 });
 
 test("non-review canvas disposes its explicit theme subscription", async () => {
@@ -713,17 +669,13 @@ test("delete confirmation settles on cancel, approval and owner disposal", async
   expect(container.querySelector('[role="alertdialog"]')).toBeNull();
 });
 
-test("empty Home installs the command and unlocks agent setup and the tutorial", async () => {
+test("command setup installs the command and unlocks agent setup and the tutorial", async () => {
   await setup([], null, true);
+  await choose("Command setup");
   await vi.waitFor(() =>
     expect(container.textContent).toContain("Install chalk in PATH"),
   );
-
-  const button = [...container.querySelectorAll("button")].find(
-    (button) => button.textContent === "Install chalk in PATH",
-  );
-
-  await act(async () => button!.click());
+  await act(async () => button("Install chalk in PATH").click());
   await vi.waitFor(() =>
     expect(container.textContent).toContain("Connect Claude"),
   );
@@ -735,28 +687,20 @@ test("empty Home installs the command and unlocks agent setup and the tutorial",
 
   expect(tour?.disabled).toBe(false);
   await act(async () => tour!.click());
-
-  const open = [...container.querySelectorAll("button")].find(
-    (button) => button.textContent === "Open the tutorial",
-  );
-
-  await act(async () => open!.click());
+  await act(async () => button("Open the tutorial").click());
   await vi.waitFor(() =>
     expect(container.textContent).toContain("Alpha document"),
   );
+  expect(container.querySelector('[role="dialog"]')).toBeNull();
 });
 
 test("failed command installation stays on setup and can be retried", async () => {
   await setup([], null, true, 1);
+  await choose("Command setup");
   await vi.waitFor(() =>
     expect(container.textContent).toContain("Install chalk in PATH"),
   );
-
-  const button = [...container.querySelectorAll("button")].find(
-    (button) => button.textContent === "Install chalk in PATH",
-  );
-
-  await act(async () => button!.click());
+  await act(async () => button("Install chalk in PATH").click());
   await vi.waitFor(() =>
     expect(container.textContent).toContain("Cannot write the chalk command."),
   );
@@ -765,7 +709,7 @@ test("failed command installation stays on setup and can be retried", async () =
       '[aria-label="Expand Connect your agents"]',
     )?.disabled,
   ).toBe(true);
-  await act(async () => button!.click());
+  await act(async () => button("Install chalk in PATH").click());
   await vi.waitFor(() =>
     expect(container.textContent).toContain("Connect Claude"),
   );
@@ -774,13 +718,9 @@ test("failed command installation stays on setup and can be retried", async () =
   );
 });
 
-test("the tutorial has a guide, finishes, and checks off Take the tour on Home", async () => {
+test("the tutorial has a guide, and finishes with its progress saved", async () => {
   const rpc = await setup([], null, true, 0, tutorial);
-  await act(async () =>
-    container
-      .querySelector<HTMLButtonElement>('[aria-label="Open tutorial"]')!
-      .click(),
-  );
+  await choose("Tutorial");
   await vi.waitFor(() =>
     expect(
       container.querySelector('[aria-label="Tutorial guide"]'),
@@ -821,15 +761,19 @@ test("the tutorial has a guide, finishes, and checks off Take the tour on Home",
   );
   expect(rpc.request.setPreferences).toHaveBeenCalledWith({ keymap: "vim" });
 
-  for (let step = 0; step < 9; step++) {
-    const guide = container.querySelector('[aria-label="Tutorial guide"]')!;
-    const before = guide.getAttribute("data-tutorial-step");
+  const guideButton = (label: string) =>
+    [
+      ...container.querySelectorAll<HTMLButtonElement>(
+        '[aria-label="Tutorial guide"] button',
+      ),
+    ].find((button) => button.textContent === label);
 
-    const next = [...guide.querySelectorAll("button")].find(
-      (button) => button.textContent === "Next",
-    );
+  while (guideButton("Next")) {
+    const before = container
+      .querySelector('[aria-label="Tutorial guide"]')!
+      .getAttribute("data-tutorial-step");
 
-    await act(async () => next!.click());
+    await act(async () => guideButton("Next")!.click());
     await vi.waitFor(() =>
       expect(
         container
@@ -839,23 +783,10 @@ test("the tutorial has a guide, finishes, and checks off Take the tour on Home",
     );
   }
 
-  const finish = [
-    ...container.querySelectorAll('[aria-label="Tutorial guide"] button'),
-  ].find((button) => button.textContent === "Finish tour") as HTMLButtonElement;
-
-  await act(async () => finish.click());
+  await act(async () => guideButton("Finish tour")!.click());
   await vi.waitFor(() =>
-    expect(
-      container.querySelector('[role="tab"][aria-label="Hidden tutorial"]'),
-    ).toBeNull(),
+    expect(openReviews()).not.toContain("Hidden tutorial"),
   );
-  expect(
-    container
-      .querySelector('[aria-label="Expand Take the tour"]')
-      ?.closest("li")
-      ?.getAttribute("data-state"),
-  ).toBe("done");
-  expect(container.textContent).toContain("11 of 11 checks");
   expect(rpc.request.setPreferences).toHaveBeenCalledWith(
     expect.objectContaining({
       tutorialProgress: expect.objectContaining({
@@ -865,23 +796,14 @@ test("the tutorial has a guide, finishes, and checks off Take the tour on Home",
   );
 });
 
-test("Home tutorial opens through the sidecar without CLI installation", async () => {
-  await setup();
-
-  const tutorial = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Open tutorial"]',
-  );
-
-  expect(tutorial).not.toBeNull();
-  await act(async () => tutorial!.click());
+test("the palette tutorial opens through the sidecar without CLI installation", async () => {
+  await setup([b], b);
+  await expect.poll(activeReview).toBe("Beta");
+  await choose("Tutorial");
   await vi.waitFor(() =>
     expect(container.textContent).toContain("Alpha document"),
   );
-  expect(
-    container
-      .querySelector('[role="tab"][aria-label="Alpha"]')
-      ?.getAttribute("aria-selected"),
-  ).toBe("true");
+  expect(activeReview()).toBe("Alpha");
 });
 
 test("agent open acknowledgment returns the server's desktop settings", async () => {
@@ -901,11 +823,7 @@ test("agent open acknowledgment returns the server's desktop settings", async ()
     response: { ok: true, result: { softwareMapEnabled: true } },
   });
   expect(rpc.request.focusWindow).toHaveBeenCalled();
-  expect(
-    container
-      .querySelector('[role="tab"][aria-label="Alpha"]')
-      ?.getAttribute("aria-selected"),
-  ).toBe("true");
+  expect(activeReview()).toBe("Alpha");
 });
 
 test("agent open resolves a full snapshot before the catalog contains the review", async () => {
@@ -936,9 +854,7 @@ test("ordinary external links reach the native opener while internal anchors sta
     expect(container.textContent).toContain("Alpha document"),
   );
 
-  const section = container.querySelector(
-    '[role="tabpanel"][aria-label="Alpha"]',
-  )!;
+  const section = container.querySelector('section[aria-label="Alpha"]')!;
 
   const external = document.createElement("a");
   external.href = "https://example.com/review";
@@ -967,20 +883,10 @@ test("restores a managed tutorial absent from the catalog and keeps it through r
   await vi.waitFor(() =>
     expect(container.textContent).toContain("Managed tutorial document"),
   );
-  expect(
-    container
-      .querySelector('[role="tab"][aria-label="Hidden tutorial"]')
-      ?.getAttribute("aria-selected"),
-  ).toBe("true");
+  expect(activeReview()).toBe("Hidden tutorial");
   await act(async () => catalogUpdates.forEach((push) => push()));
-  await vi.waitFor(() =>
-    expect(
-      container.querySelector('[role="tab"][aria-label="Hidden tutorial"]'),
-    ).not.toBeNull(),
-  );
-  expect(
-    container.querySelector('[role="tab"][aria-label="deleted-review"]'),
-  ).toBeNull();
+  await vi.waitFor(() => expect(openReviews()).toContain("Hidden tutorial"));
+  expect(openReviews()).not.toContain("deleted-review");
 });
 
 test("incoming tutorial survives the next catalog snapshot", async () => {
@@ -1009,15 +915,12 @@ test("transient health loss disables the shell and retries the live control conn
   healthFailures = 1;
   await act(async () => closeControl());
   await vi.waitFor(() =>
-    expect(
-      container.querySelector('[aria-label="Open tutorial"]'),
-    ).toHaveProperty("disabled", true),
+    expect(container.textContent).toContain("Reconnecting to review server"),
   );
+  expect(container.querySelector("main")!.inert).toBe(true);
   await vi.waitFor(() => expect(controlAttachments).toBe(2), { timeout: 4000 });
   await vi.waitFor(() =>
-    expect(
-      container.querySelector('[aria-label="Open tutorial"]'),
-    ).toHaveProperty("disabled", false),
+    expect(container.querySelector("main")!.inert).toBe(false),
   );
   await act(async () =>
     controlFrame({
@@ -1029,9 +932,5 @@ test("transient health loss disables the shell and retries the live control conn
   await vi.waitFor(() =>
     expect(controlResults[0]).toMatchObject({ response: { ok: true } }),
   );
-  expect(
-    container
-      .querySelector('[role="tab"][aria-label="Alpha"]')
-      ?.getAttribute("aria-selected"),
-  ).toBe("true");
+  expect(activeReview()).toBe("Alpha");
 });
