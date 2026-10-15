@@ -19,7 +19,7 @@ import {
 } from "./native";
 import { createPreferencesStore } from "./preferences";
 import type { AppRPC, HostState } from "./rpc";
-import { startServer } from "./server-host";
+import { desktopEnvironment, startServer } from "./server-host";
 
 const checkout = process.env.CHALK_REVIEW_CHECKOUT;
 
@@ -57,6 +57,8 @@ const appVersion: string = JSON.parse(
 ).version;
 
 const abort = new AbortController();
+// Finder-launched apps lack the shell PATH that holds VS Code's `code` command.
+const desktopEnv = desktopEnvironment(process.env);
 
 let state: HostState = { status: "starting", message: "Starting Chalk…" };
 
@@ -107,7 +109,8 @@ async function run() {
 
           return value;
         },
-        openSource: openVSCode,
+        openSource: async (request) =>
+          openVSCode(request, await desktopEnv),
         openExternal: async (request) => {
           if (!Utils.openExternal(externalURL(request)))
             throw new Error("The system could not open this URL.");

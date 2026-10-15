@@ -78,9 +78,12 @@ export function externalURL(
 
 const execute = promisify(execFile);
 
-export async function openVSCode(request: NativeOpenRequest): Promise<void> {
+export async function openVSCode(
+  request: NativeOpenRequest,
+  baseEnv: NodeJS.ProcessEnv = process.env,
+): Promise<void> {
   const args = sourceArguments(request);
-  const env = { ...process.env };
+  const env = { ...baseEnv };
   delete env.ELECTRON_RUN_AS_NODE;
   delete env.VSCODE_IPC_HOOK_CLI;
   delete env.VSCODE_PORTABLE;

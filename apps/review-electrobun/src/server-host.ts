@@ -27,7 +27,7 @@ export interface ServerOptions {
   }): void;
 }
 
-async function desktopEnvironment(env: NodeJS.ProcessEnv) {
+export async function desktopEnvironment(env: NodeJS.ProcessEnv) {
   if (process.platform !== "darwin") return env;
 
   // Finder launches without the user's shell PATH. Read only PATH so app

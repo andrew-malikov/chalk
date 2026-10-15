@@ -481,7 +481,7 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
     ).toBe(true),
   );
   expect(code().some((node) => node.textContent?.includes("b.ts"))).toBe(false);
-  expect(tree.textContent).toContain("b.ts");
+  await vi.waitFor(() => expect(treeRow(tree, "b.ts")).toBeTruthy());
   release();
   await vi.waitFor(() =>
     expect(
@@ -538,7 +538,7 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
   });
   expect(container.querySelector('[aria-label="Copy ref"]')).toBeNull();
 
-  const viewed = tree.querySelector<HTMLButtonElement>(
+  const viewed = container.querySelector<HTMLButtonElement>(
     '[aria-label="Mark viewed: b.ts"]',
   )!;
 
@@ -627,7 +627,7 @@ it("keeps renamed lens files visible in worktrees without expanding from live so
       container.querySelector("diffs-container")?.shadowRoot?.textContent,
     ).toContain("after"),
   );
-  expect(tree.textContent).toContain("new.ts");
+  await vi.waitFor(() => expect(treeRow(tree, "new.ts")).toBeTruthy());
   expect(container.textContent).toContain(
     "Showing full file diffs for this lens",
   );
@@ -966,3 +966,8 @@ it("uses the structural default, navigates functions, and offers text mode when 
   await vi.waitFor(() => expect(changes()).toContain("return 5"));
   expect(mode().value).toBe("text");
 });
+
+const treeRow = (tree: HTMLElement, path: string) =>
+  tree
+    .querySelector("file-tree-container")
+    ?.shadowRoot?.querySelector(`[data-item-path="${path}"]`);

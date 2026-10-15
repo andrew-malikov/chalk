@@ -1,5 +1,4 @@
 import { useAgentSelection } from "@canvas/agent-context/agent-selection";
-import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { NativeSelect } from "@canvas/components/ui/native-select";
 import { useGitLab } from "@canvas/gitlab/gitlab-context";
 import {
@@ -16,7 +15,6 @@ import {
 } from "@canvas/review/review-ui-state";
 import { loadingStyles } from "@canvas/styles/loading.stylex";
 import { fontSize, radius } from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button, IconButton } from "@canvas/ui/button";
 import type {
@@ -53,8 +51,7 @@ import {
 import { createPortal } from "react-dom";
 import { z } from "zod";
 
-import { DiffCount } from "./diff-count";
-import { fileTreeRows } from "./file-tree";
+import { ChangedFilesTree } from "./changed-files-tree";
 import {
   type PierreComparisonEntry,
   loadPierreComparison,
@@ -871,51 +868,12 @@ function Comparison({
       </div>
       {treeContainer &&
         createPortal(
-          <nav {...stylex.props(styles.tree)} aria-label="Changed files">
-            {fileTreeRows(visible).map(({ depth, name, entry }, index) =>
-              !entry ? (
-                <div
-                  key={index}
-                  {...stylex.props(styles.treeRow, styles.treeDirectory)}
-                  style={{ paddingInlineStart: 8 + depth * 12 }}
-                >
-                  {name}
-                </div>
-              ) : (
-                <div
-                  key={entry.file.path}
-                  {...stylex.props(styles.treeRow)}
-                  style={{ paddingInlineStart: 8 + depth * 12 }}
-                >
-                  <ButtonPrimitive
-                    variant="ghost"
-                    size="xs"
-                    type="button"
-                    {...withClass(
-                      "tw:h-auto tw:justify-start tw:whitespace-normal tw:font-normal",
-                      styles.fileButton,
-                    )}
-                    aria-current={
-                      entry.file.path === selectedPath ? "true" : undefined
-                    }
-                    onClick={() => navigate(entry.file.path)}
-                    title={
-                      entry.file.previousPath
-                        ? `${entry.file.previousPath} → ${entry.file.path}`
-                        : entry.file.path
-                    }
-                  >
-                    {name}
-                  </ButtonPrimitive>
-                  <DiffCount
-                    additions={entry.file.additions}
-                    deletions={entry.file.deletions}
-                  />
-                  {viewed(entry.file.path)}
-                </div>
-              ),
-            )}
-          </nav>,
+          <ChangedFilesTree
+            files={visible.map((entry) => entry.file)}
+            selectedPath={selectedPath}
+            theme={theme === "light" ? "light" : "dark"}
+            onSelect={navigate}
+          />,
           treeContainer,
         )}
       {comparison.error && (
@@ -1093,38 +1051,6 @@ const styles = stylex.create({
     fontSize: fontSize.body,
   },
   noticeActions: { display: "flex", flexWrap: "wrap", gap: 8 },
-  tree: { minWidth: 0, paddingBlock: 4 },
-  treeRow: {
-    display: "flex",
-    gap: 6,
-    alignItems: "center",
-    minHeight: 28,
-    paddingInline: 8,
-  },
-  treeDirectory: {
-    minHeight: 24,
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  fileButton: {
-    flex: 1,
-    minWidth: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    borderWidth: 0,
-    backgroundColor: "transparent",
-    color: tokens.ink,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.body,
-    textAlign: "left",
-    cursor: "pointer",
-    paddingBlock: 5,
-  },
   wrapButton: { height: 32 },
   wrapActive: {
     backgroundColor: tokens.accentWash,

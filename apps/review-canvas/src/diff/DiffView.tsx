@@ -372,7 +372,7 @@ export function ReviewDiffView({
                       variant="ghost"
                       size="xs"
                       {...withClass(
-                        "tw:h-auto tw:whitespace-normal tw:font-normal",
+                        "tw:h-auto tw:justify-start tw:whitespace-normal tw:font-normal",
                         lensToggleMarker,
                         styles.toggle,
                         empty && styles.toggleEmpty,
