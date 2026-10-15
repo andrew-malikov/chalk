@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/andrewmalikov/chalk.git",
+    "url": "https://github.com/andrew-malikov/chalk.git",
     "directory": "packages/review"
   },
   "type": "module",

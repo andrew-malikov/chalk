@@ -372,12 +372,12 @@ function connectPlugins(
         : {
             label: "Install the Claude Code plugin",
             command:
-              "/plugin marketplace add andrewmalikov/chalk\n/plugin install chalk@chalk",
+              "/plugin marketplace add andrew-malikov/chalk\n/plugin install chalk@chalk",
           },
     codex: {
       label: "Install the Codex plugin",
       command:
-        "codex plugin marketplace add andrewmalikov/chalk\ncodex plugin add chalk@chalk",
+        "codex plugin marketplace add andrew-malikov/chalk\ncodex plugin add chalk@chalk",
     },
     opencode: {
       label: "Add the OpenCode MCP server (OpenCode 2+)",
@@ -400,7 +400,7 @@ function connectPlugins(
         : {
             label: "Install the Copilot CLI plugin",
             command:
-              "copilot plugin marketplace add andrewmalikov/chalk\ncopilot plugin install chalk@chalk",
+              "copilot plugin marketplace add andrew-malikov/chalk\ncopilot plugin install chalk@chalk",
           },
   };
 }

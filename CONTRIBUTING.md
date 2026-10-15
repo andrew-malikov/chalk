@@ -11,7 +11,7 @@ your proposed approach, and wait for a maintainer to confirm it before you
 write code. This avoids duplicate work and catches design constraints early.
 Small fixes, such as typos and obvious bugs, can go straight to a pull request.
 
-Check [open issues](https://github.com/andrewmalikov/chalk/issues) first.
+Check [open issues](https://github.com/andrew-malikov/chalk/issues) first.
 
 Report security vulnerabilities privately as described in
 [SECURITY.md](SECURITY.md), not in a public issue.
