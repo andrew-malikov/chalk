@@ -11,7 +11,12 @@ import type {
   GitLabDraft,
   GitLabTarget,
 } from "@chalk/review-contracts";
-import { ChevronRightIcon, CornerDownRightIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  CornerDownRightIcon,
+  MessageSquareIcon,
+} from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 import { CommentEditor } from "./comment-editor";
@@ -53,15 +58,13 @@ export function useGitLabDrafts(): GitLabDraft[] {
     ...(state?.drafts ?? []),
     ...Object.entries(editors)
       .filter(([id]) => !state?.drafts.some((d) => d.id === id))
-      .map(
-        ([id, editor]): GitLabDraft => ({
-          id,
-          text: editor.text,
-          target: editor.target,
-          status: "saved",
-          version: 0,
-        }),
-      ),
+      .map(([id, editor]): GitLabDraft => ({
+        id,
+        text: editor.text,
+        target: editor.target,
+        status: "saved",
+        version: 0,
+      })),
   ];
 }
 
@@ -158,7 +161,25 @@ function targetLabel(target: GitLabTarget) {
 
 export type GitLabInlineAnnotation =
   | { kind: "discussion"; id: string }
-  | { kind: "draft"; id: string };
+  | { kind: "draft"; id: string }
+  | { kind: "collapsed"; ids: string[] };
+
+/** Threads with local drafts stay open so the draft is never hidden. */
+export function discussionCollapsed(
+  discussion: GitLabDiscussion,
+  collapsed: Record<string, boolean>,
+  drafts: GitLabDraft[],
+) {
+  return (
+    !drafts.some(
+      (d) =>
+        d.status !== "sent" &&
+        d.target.kind === "reply" &&
+        d.target.discussionId === discussion.id,
+    ) &&
+    (collapsed[discussion.id] ?? discussion.resolved)
+  );
+}
 
 export function GitLabInlineContent({
   annotation,
@@ -169,6 +190,9 @@ export function GitLabInlineContent({
   const drafts = useGitLabDrafts();
 
   if (!gitlab) return null;
+
+  if (annotation.kind === "collapsed")
+    return <DiscussionChips ids={annotation.ids} />;
 
   const discussion =
     annotation.kind === "discussion"
@@ -185,36 +209,78 @@ export function GitLabInlineContent({
 
   if (!discussion && local.length === 0) return null;
 
-  const content = (
-    <div className="tw:flex tw:flex-col">
-      {discussion && <Discussion discussion={discussion} inline />}
-      {local.map((draft) => (
-        <DraftEditor
-          key={draft.id}
-          draft={draft}
-          inline
-          attached={!!discussion}
-        />
-      ))}
-    </div>
-  );
-
   return (
     <section
       className="tw:m-0 tw:box-border tw:flex tw:w-full tw:min-w-0 tw:flex-col tw:gap-2 tw:whitespace-normal tw:bg-[var(--surface-raised)] tw:p-3 tw:font-[family-name:var(--chrome-font)] tw:text-[13px] tw:text-[var(--ink)]"
       aria-label={`GitLab ${annotation.kind} ${annotation.id}`}
     >
       {gitlab.error && <p role="alert">{gitlab.error}</p>}
-      {discussion?.resolved ? (
-        <Collapsible
-          summary={`Resolved · @${discussion.comments[0]?.author.username}`}
-          open={local.length > 0 || gitlab.selected === discussion.id}
-        >
-          {content}
-        </Collapsible>
-      ) : (
-        content
-      )}
+      <div className="tw:flex tw:flex-col">
+        {discussion && (
+          <Discussion
+            discussion={discussion}
+            inline
+            collapsible={local.length === 0}
+          />
+        )}
+        {local.map((draft) => (
+          <DraftEditor
+            key={draft.id}
+            draft={draft}
+            inline
+            attached={!!discussion}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Collapsed threads take no height; their chips overlay the right end of the commented line. */
+function DiscussionChips({ ids }: { ids: string[] }) {
+  const gitlab = useGitLab()!;
+
+  const discussions = ids.flatMap(
+    (id) => gitlab.state?.discussions.find((d) => d.id === id) ?? [],
+  );
+
+  // A lone thread has room for its author; a stack shows state colors only.
+  const single = discussions.length === 1;
+
+  return (
+    <section
+      className="tw:relative tw:h-0"
+      aria-label="Collapsed GitLab discussions"
+    >
+      <div className="tw:absolute tw:right-3 tw:bottom-px tw:flex tw:font-[family-name:var(--chrome-font)] tw:text-[11px]">
+        {discussions.map((discussion, index) => {
+          const author = discussion.comments[0]?.author.username;
+          const count = discussion.comments.length;
+          const Icon = discussion.resolved ? CheckIcon : MessageSquareIcon;
+
+          return (
+            <button
+              key={discussion.id}
+              type="button"
+              aria-expanded={false}
+              aria-label={`Expand ${discussion.resolved ? "resolved " : ""}discussion by @${author}`}
+              title={`@${author}: ${discussion.comments[0]?.body.slice(0, 200)}`}
+              onClick={() => gitlab.collapse(discussion.id, false)}
+              className={cn(
+                "tw:flex tw:h-[18px] tw:cursor-pointer tw:items-center tw:justify-center tw:gap-1 tw:rounded-full tw:border tw:bg-[var(--surface-raised)] tw:whitespace-nowrap tw:hover:z-[1] tw:hover:text-[var(--ink)]",
+                single ? "tw:px-2" : "tw:w-[18px]",
+                index > 0 && "tw:-ms-1",
+                discussion.resolved
+                  ? "tw:border-[var(--chrome-border)] tw:text-[var(--ink-muted)]"
+                  : "tw:border-[color-mix(in_srgb,var(--link)_40%,transparent)] tw:text-[var(--link)]",
+              )}
+            >
+              <Icon className="tw:size-3 tw:shrink-0" aria-hidden="true" />
+              {single && `@${author}${count > 1 ? ` · ${count}` : ""}`}
+            </button>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -248,9 +314,12 @@ function Collapsible({
 function Discussion({
   discussion,
   inline = false,
+  collapsible = false,
 }: {
   discussion: GitLabDiscussion;
   inline?: boolean;
+  /** Threads with local drafts stay open so the draft is never hidden. */
+  collapsible?: boolean;
 }) {
   const gitlab = useGitLab()!;
   const ref = useRef<HTMLDivElement>(null);
@@ -319,6 +388,15 @@ function Discussion({
               >
                 {relativeTime(note.createdAt)}
               </time>
+              {collapsible && index === 0 && (
+                <Button
+                  variant="ghost"
+                  className={cn(textAction, "tw:ms-auto tw:h-auto")}
+                  onClick={() => gitlab.collapse(discussion.id, true)}
+                >
+                  Collapse
+                </Button>
+              )}
             </div>
             <NoteBody source={note.body} />
           </div>
@@ -355,6 +433,7 @@ function Discussion({
             Resolve
           </Button>
         )}
+        {discussion.resolved && <span className={meta}>Resolved</span>}
         <a
           className="tw:ms-auto tw:text-[11px] tw:text-[var(--ink-faint)] tw:no-underline tw:hover:underline"
           href={gitlab.state?.identity.url}

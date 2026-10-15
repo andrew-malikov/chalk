@@ -49,6 +49,9 @@ interface GitLabContextValue {
   error: string | null;
   open: boolean;
   selected: string | null;
+  /** Inline threads the user collapsed or expanded; unset ones follow `resolved`. */
+  collapsed: Record<string, boolean>;
+  collapse(id: string, value: boolean): void;
   toggle(): void;
   edit(id: string, text: string): void;
   compose(target: GitLabTarget, placement?: "inline" | "panel"): void;
@@ -95,6 +98,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
   const busy = pending !== null;
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [reveal, setReveal] = useState<GitLabContextValue["reveal"]>(null);
   const [editors, setEditors] = useState<Record<string, Editor>>({});
   const editorRef = useRef(editors);
@@ -349,6 +353,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
 
   const select = (discussion: GitLabDiscussion) => {
     setSelected(discussion.id);
+    setCollapsed((current) => ({ ...current, [discussion.id]: false }));
     show();
 
     if (
@@ -371,6 +376,9 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
       error,
       open,
       selected,
+      collapsed,
+      collapse: (id, value) =>
+        setCollapsed((current) => ({ ...current, [id]: value })),
       reveal,
       toggle: () => {
         const panelState = panels?.getState();
@@ -392,6 +400,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
       error,
       open,
       selected,
+      collapsed,
       reveal,
       edit,
       compose,

@@ -4,6 +4,7 @@ import { useGitLab } from "@canvas/gitlab/gitlab-context";
 import {
   type GitLabInlineAnnotation,
   GitLabInlineContent,
+  discussionCollapsed,
   useGitLabDrafts,
 } from "@canvas/gitlab/gitlab-discussions";
 import { useReviewSession } from "@canvas/host/review-session";
@@ -316,15 +317,40 @@ function Comparison({
     session.review?.pins?.base === gitlab?.state?.refs.baseSha &&
     session.review?.pins?.head === gitlab?.state?.refs.headSha
   ) {
+    const chips = new Map<
+      string,
+      { annotation: (typeof annotations)[number]; ids: string[] }
+    >();
+
     for (const discussion of gitlab?.state?.discussions ?? []) {
       if (!discussion.location) continue;
-      annotations.push({
+
+      const annotation = {
         file: discussion.location.file,
         lineNumber: discussion.location.to,
         side: discussion.location.side === "head" ? "additions" : "deletions",
         metadata: { kind: "discussion", id: discussion.id },
-      });
+      } as const;
+
+      if (!discussionCollapsed(discussion, gitlab!.collapsed, drafts)) {
+        annotations.push(annotation);
+        continue;
+      }
+
+      const key = `${annotation.file}:${annotation.side}:${annotation.lineNumber}`;
+      const chip = chips.get(key);
+
+      if (chip) chip.ids.push(discussion.id);
+      else chips.set(key, { annotation, ids: [discussion.id] });
     }
+
+    // Pierre stacks a line's annotations in array order; chips go first so they sit on the line itself.
+    annotations.unshift(
+      ...[...chips.values()].map(({ annotation, ids }) => ({
+        ...annotation,
+        metadata: { kind: "collapsed" as const, ids },
+      })),
+    );
 
     for (const draft of drafts) {
       const target = draft.target;
