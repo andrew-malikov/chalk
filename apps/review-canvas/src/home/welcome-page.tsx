@@ -8,7 +8,6 @@ import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button } from "@canvas/ui/button";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { CheckIcon, DisclosureChevron } from "@canvas/ui/icons";
-import { textStyles } from "@canvas/ui/text";
 import {
   type ReviewCanvasInstallContent,
   type ReviewCanvasOnboarding,
@@ -304,58 +303,43 @@ export function WelcomePage({
       <div {...stylex.props(homeStyles.scroll)}>
         <div {...stylex.props(homeStyles.content, styles.page)}>
           <div {...stylex.props(styles.columns)}>
-            <div {...stylex.props(styles.intro)}>
-              <span {...stylex.props(textStyles.eyebrow, styles.kicker)}>
-                Welcome to Chalk
-              </span>
-              {updating ? (
-                <>
-                  <h1
-                    {...withClass(
-                      "review-onboarding-headline",
-                      styles.headline,
-                    )}
+            {updating || onClose ? (
+              <div {...stylex.props(styles.intro)}>
+                {updating ? (
+                  <>
+                    <h1
+                      {...withClass(
+                        "review-onboarding-headline",
+                        styles.headline,
+                      )}
+                    >
+                      Chalk now connects to your agents over MCP
+                    </h1>
+                    <p {...stylex.props(styles.sub)}>
+                      Install the Chalk plugin or add its MCP server to each
+                      agent you use.
+                    </p>
+                  </>
+                ) : null}
+                {updating && install ? (
+                  <Button
+                    xstyle={styles.dismiss}
+                    disabled={setupBusy || !canDismiss}
+                    onClick={dismissUpdate}
                   >
-                    Chalk now connects to your agents over MCP
-                  </h1>
-                  <p {...stylex.props(styles.sub)}>
-                    Install the Chalk plugin or add its MCP server to each agent
-                    you use.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h1
-                    {...withClass(
-                      "review-onboarding-headline",
-                      styles.headline,
-                    )}
+                    Dismiss
+                  </Button>
+                ) : onClose ? (
+                  <Button
+                    xstyle={styles.dismiss}
+                    disabled={setupBusy || !canDismiss}
+                    onClick={onClose}
                   >
-                    Your codebase, explained by your agent.
-                  </h1>
-                  <p {...stylex.props(styles.sub)}>
-                    Install the command then setup the MCP to get started.
-                  </p>
-                </>
-              )}
-              {updating && install ? (
-                <Button
-                  xstyle={styles.dismiss}
-                  disabled={setupBusy || !canDismiss}
-                  onClick={dismissUpdate}
-                >
-                  Dismiss
-                </Button>
-              ) : onClose ? (
-                <Button
-                  xstyle={styles.dismiss}
-                  disabled={setupBusy || !canDismiss}
-                  onClick={onClose}
-                >
-                  Close
-                </Button>
-              ) : null}
-            </div>
+                    Close
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
             <ol {...stylex.props(styles.steps)}>
               {steps.map((step, index) => {
                 const open = openStep === step.title && !step.disabled;
@@ -520,9 +504,6 @@ const styles = stylex.create({
     gap: "20px",
     width: { default: "380px", [stacked]: "auto" },
     flexShrink: 0,
-  },
-  kicker: {
-    color: tokens.reviewHomeMeta,
   },
   headline: {
     margin: 0,

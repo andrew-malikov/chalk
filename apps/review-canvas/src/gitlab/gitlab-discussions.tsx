@@ -75,7 +75,6 @@ export function GitLabDiscussionContent() {
   const open = state?.discussions.filter((d) => !d.resolved) ?? [];
   const resolved = state?.discussions.filter((d) => d.resolved) ?? [];
   const unsent = drafts.filter((d) => d.status !== "sent");
-  const sent = drafts.filter((d) => d.status === "sent");
 
   return (
     <div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-4 tw:p-4 tw:font-[family-name:var(--chrome-font)] tw:text-[13px] tw:text-[var(--ink)]">
@@ -136,19 +135,13 @@ export function GitLabDiscussionContent() {
           <Discussion key={d.id} discussion={d} />
         ))}
       </Collapsible>
-      <h3 className={heading}>Local drafts · {unsent.length}</h3>
-      {unsent.map((d) => (
-        <DraftEditor key={d.id} draft={d} />
-      ))}
-      {sent.length > 0 && (
-        <Collapsible summary={`Sent · ${sent.length}`}>
-          {sent.map((d) => (
-            <div key={d.id} className={cn(card, inlineCard)}>
-              <span className={meta}>Sent · #{d.noteId}</span>
-              <NoteBody source={d.text} />
-            </div>
+      {unsent.length > 0 && (
+        <>
+          <h3 className={heading}>Local drafts · {unsent.length}</h3>
+          {unsent.map((d) => (
+            <DraftEditor key={d.id} draft={d} />
           ))}
-        </Collapsible>
+        </>
       )}
     </div>
   );

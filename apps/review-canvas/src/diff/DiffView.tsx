@@ -33,7 +33,6 @@ import { shellStyles } from "@canvas/styles/shell-styles";
 import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { IconButton } from "@canvas/ui/button";
-import { ProgressRing } from "@canvas/ui/progress-ring";
 import { textStyles } from "@canvas/ui/text";
 import type {
   ReviewCommitScope,
@@ -272,17 +271,6 @@ export function ReviewDiffView({
       />
     );
   const global = lenses.stats();
-  const total = global.total.additions + global.total.deletions;
-  const remaining = global.remaining.additions + global.remaining.deletions;
-  const percent = total ? Math.round((100 * (total - remaining)) / total) : 0;
-
-  const viewed =
-    lenses.progress && lenses.progress.complete !== false
-      ? {
-          percent,
-          title: `${total - remaining} of ${total} changed lines viewed or folded`,
-        }
-      : undefined;
 
   // diff-workspace is a marker global.css keys on.
   return (
@@ -295,7 +283,6 @@ export function ReviewDiffView({
           rows={rows}
           lenses={lenses}
           activeId={lens?.id}
-          viewed={viewed}
           onExpand={sidebarResize.expand}
         />
       )}
@@ -329,7 +316,6 @@ export function ReviewDiffView({
             )}
           </span>
           <div {...stylex.props(styles.progressActions)}>
-            {viewed && <ViewedRing {...viewed} />}
             <IconButton
               aria-label="Collapse diff sidebar"
               title="Collapse diff sidebar"
@@ -444,7 +430,8 @@ export function ReviewDiffView({
                         >
                           0 files
                         </span>
-                      ) : (
+                      ) : stats.state === "viewed" ? null : (
+                        // The checkbox beside it already says viewed.
                         <DiffCounts
                           progress={stats}
                           xstyle={styles.toggleCounts}
@@ -574,31 +561,6 @@ function useLensRows<Item extends { id: string }>(items: Item[]) {
   return { items: shown, phases };
 }
 
-function ViewedRing({
-  percent,
-  title,
-  xstyle,
-}: {
-  percent: number;
-  title: string;
-  xstyle?: stylex.StyleXStyles;
-}) {
-  return (
-    <span
-      {...stylex.props(styles.ring, xstyle)}
-      role="progressbar"
-      aria-label="Changed lines viewed"
-      aria-valuenow={percent}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      title={title}
-    >
-      <ProgressRing percent={percent} size={18} />
-      {percent}%
-    </span>
-  );
-}
-
 type ReviewLenses = NonNullable<ReturnType<typeof useReviewLenses>>;
 
 type LensItem = ReviewLenses["lenses"][number];
@@ -607,13 +569,11 @@ function DiffRail({
   rows,
   lenses,
   activeId,
-  viewed,
   onExpand,
 }: {
   rows: { items: LensItem[]; phases: Map<string, MotionPhase> };
   lenses: ReviewLenses;
   activeId: string | undefined;
-  viewed: { percent: number; title: string } | undefined;
   onExpand: () => void;
 }) {
   return (
@@ -622,7 +582,6 @@ function DiffRail({
         <RailButton label="Expand diff sidebar" onClick={onExpand}>
           <PanelLeftOpenIcon size={16} aria-hidden="true" />
         </RailButton>
-        {viewed && <ViewedRing {...viewed} xstyle={styles.railRing} />}
       </div>
       <RailButton label="Show lenses" onClick={onExpand}>
         <MagnifierIcon />
@@ -836,11 +795,6 @@ const styles = stylex.create({
     borderBottomColor: tokens.rule,
     color: tokens.inkMuted,
   },
-  railRing: {
-    flexDirection: "column",
-    gap: "3px",
-    lineHeight: 1,
-  },
   railButton: {
     display: "flex",
     alignItems: "center",
@@ -921,12 +875,6 @@ const styles = stylex.create({
     display: "flex",
     alignItems: "center",
     gap: "8px",
-  },
-  ring: {
-    display: "flex",
-    alignItems: "center",
-    gap: "5px",
-    fontVariantNumeric: "tabular-nums",
   },
   cabinets: {
     display: "flex",

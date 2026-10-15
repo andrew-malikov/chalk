@@ -1060,7 +1060,7 @@ function Shell(
           <div className="review-shell-sidebar-search tw:mb-4 tw:flex tw:items-center tw:gap-2 tw:rounded-md tw:border tw:border-border tw:bg-background tw:p-2 tw:text-muted-foreground tw:[&_svg]:size-4 tw:[&_svg]:flex-none">
             <SearchIcon aria-hidden="true" />
             <Input
-              className="tw:h-auto tw:border-0 tw:bg-transparent tw:p-0 tw:text-xs tw:text-foreground tw:shadow-none tw:focus-visible:ring-0"
+              className="tw:h-auto tw:border-0 tw:bg-transparent tw:dark:bg-transparent tw:p-0 tw:text-xs tw:text-foreground tw:shadow-none tw:focus-visible:ring-0"
               ref={sidebarSearch}
               type="search"
               aria-label="Search reviews"

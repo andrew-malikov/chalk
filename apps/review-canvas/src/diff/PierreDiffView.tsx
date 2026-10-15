@@ -758,9 +758,22 @@ function Comparison({
           state: file.state,
           folded: { additions: 0, deletions: 0 },
         }}
-        onClick={() => onToggleViewed(path)}
+        onClick={() => {
+          if (file.state !== "viewed") setFileCollapsed(path, true);
+          onToggleViewed(path);
+        }}
       />
     );
+  }
+
+  function setFileCollapsed(path: string, value: boolean) {
+    const next = new Set(collapsed);
+
+    if (value) next.add(path);
+    else next.delete(path);
+    setCollapsed(next);
+    saved.current.collapsed = [...next];
+    save();
   }
 
   const chosen = visible.find((entry) => entry.file.path === selectedPath);
@@ -962,15 +975,7 @@ function Comparison({
           <IconButton
             aria-label={`${item.collapsed ? "Expand" : "Collapse"} ${item.id}`}
             aria-expanded={!item.collapsed}
-            onClick={() => {
-              const next = new Set(collapsed);
-
-              if (next.has(item.id)) next.delete(item.id);
-              else next.add(item.id);
-              setCollapsed(next);
-              saved.current.collapsed = [...next];
-              save();
-            }}
+            onClick={() => setFileCollapsed(item.id, !item.collapsed)}
           >
             {item.collapsed ? (
               <ChevronRightIcon size={14} aria-hidden="true" />
