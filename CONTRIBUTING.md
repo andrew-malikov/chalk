@@ -88,6 +88,9 @@ Run the full check suite before you open a pull request:
 bun run ci
 ```
 
+Builds, Vitest suites, linting, and formatting use the pinned Vite+ toolchain.
+The existing Bun commands also work without installing Vite+ globally.
+
 DOM-facing tests run in Chromium through Vitest Browser Mode. Install the
 browser once, then run the headless suite or watch mode:
 

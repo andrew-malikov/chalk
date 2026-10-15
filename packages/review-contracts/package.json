@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build": "bun --bun run tsc -p ../review-contracts/tsconfig.build.json",
-    "test": "bun --bun run vitest run --config vitest.config.ts",
+    "test": "bunx --bun --no-install vp test run --config vitest.config.ts",
     "typecheck": "bun --bun run tsc -p ../review-contracts/tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -26,7 +26,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "vitest": "4.1.11"
+    "vite-plus": "1.1.0",
+    "vitest": "5.0.3"
   },
   "engines": {
     "bun": ">=1.4.2"

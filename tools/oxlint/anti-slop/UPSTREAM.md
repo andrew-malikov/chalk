@@ -17,8 +17,7 @@ Registered the three new generic rules alongside the native
 `oxc/no-accumulating-spread` companion. They landed at warning severity and were
 promoted to `error` once their findings were cleared; see "Promotion to error"
 below. Existing rules, error severities, overrides, and Effect opt-in behavior
-are preserved. Dependencies remain pinned to `oxlint` and `@oxlint/plugins`
-1.63.0.
+are preserved. Vite+ now supplies Oxlint and the plugin authoring API.
 
 The previous installation is recoverable from Review commit
 `5037c504e` (PR #95); its exact upstream base revision is unknown.

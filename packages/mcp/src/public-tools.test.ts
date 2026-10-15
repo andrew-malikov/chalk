@@ -32,7 +32,11 @@ test("public session tools create, edit and retry against the unchanged review s
   );
 
   const call = (name: string, input: Parameters<typeof callPublicTool>[2]) =>
-    callPublicTool(client, tools.find((tool) => tool.name === name)!, input);
+    callPublicTool(
+      client,
+      tools.find((tool) => tool.name === name)!,
+      input,
+    );
 
   const create = await call("session_create", {
     commandId: randomUUID(),

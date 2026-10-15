@@ -66,7 +66,7 @@ if (release) {
 run(hutch, ["electrobun", "prepare"]);
 
 // Bun 1.4.2 FTL miscompiles StyleX media-query parsing; keep the baseline JIT.
-run(process.execPath, ["--bun", "run", "vite", "build"], app, {
+run(process.execPath, ["x", "--bun", "--no-install", "vp", "build"], app, {
   BUN_JSC_useFTLJIT: "0",
 });
 

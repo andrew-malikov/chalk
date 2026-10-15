@@ -29,7 +29,7 @@
     "start": "bun src/cli.ts",
     "review": "bun src/cli.ts",
     "chalk": "bun src/cli.ts",
-    "test": "bun --bun run vitest run --config vitest.config.ts",
+    "test": "bunx --bun --no-install vp test run --config vitest.config.ts",
     "typecheck": "bun --bun run tsc --noEmit -p ."
   },
   "dependencies": {
@@ -61,7 +61,8 @@
     "micromark-extension-math": "3.1.0",
     "tsdown": "0.22.14",
     "typescript": "6.0.3",
-    "vitest": "4.1.11"
+    "vite-plus": "1.1.0",
+    "vitest": "5.0.3"
   },
   "engines": {
     "bun": ">=1.4.2"

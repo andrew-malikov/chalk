@@ -33,6 +33,7 @@ apps/ci/.wrangler-jaeger.jsonc
 *.log
 
 # Generated artifacts
+.vitest/
 tests/acceptance/.features-gen/
 tests/acceptance/test-results/
 tests/acceptance/playwright-report/

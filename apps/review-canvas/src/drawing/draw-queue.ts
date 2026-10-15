@@ -173,7 +173,7 @@ const isUnitInsert = (entry: DrawEntry) =>
 function coalesce(pending: DrawEntry[]): DrawEntry[] {
   const out: DrawEntry[] = [];
 
-  for (let start = 0; start < pending.length; ) {
+  for (let start = 0; start < pending.length;) {
     const first = pending[start]!;
 
     if (!isUnitInsert(first)) {

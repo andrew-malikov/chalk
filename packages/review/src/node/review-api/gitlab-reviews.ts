@@ -499,7 +499,7 @@ export class GitLabReviews {
     let oldPath = selectedFile;
     let newPath = selectedFile;
 
-    for (let index = 0; index < names.length - 1; ) {
+    for (let index = 0; index < names.length - 1;) {
       const status = names[index++]!;
       const old = names[index++]!;
 

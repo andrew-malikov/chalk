@@ -4,7 +4,7 @@ import path from "node:path";
 import stylex from "@stylexjs/unplugin";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { type UserConfig, defineConfig, mergeConfig } from "vite";
+import { type UserConfig, defineConfig, mergeConfig } from "vite-plus";
 
 import { sourceAliases } from "../../scripts/test-config";
 import { scopeReviewCanvasCss } from "./desktop-css-scope";

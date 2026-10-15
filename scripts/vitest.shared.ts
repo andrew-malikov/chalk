@@ -1,12 +1,14 @@
 import os from "node:os";
 import path from "node:path";
 
-import { configDefaults, defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vite-plus";
 
 import { workspaceTestAliases } from "./test-config";
 
 export default defineConfig({
   test: {
+    clearMocks: false,
+    sharedViteServer: false,
     server: {
       deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
     },
@@ -22,8 +24,10 @@ export default defineConfig({
     maxWorkers: 1,
     projects: [
       {
+        extends: false,
         resolve: { alias: workspaceTestAliases },
         test: {
+          clearMocks: false,
           server: {
             deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
           },

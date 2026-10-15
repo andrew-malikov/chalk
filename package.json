@@ -21,9 +21,9 @@
     "electrobun:dev": "bun run desktop:dev",
     "electrobun:build": "bun run desktop:build",
     "review": "bun run --filter @chalk/cli review",
-    "format": "oxfmt --write \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"tests/acceptance/**/*.{ts,html,json}\" \"!apps/review-canvas/icons/chalk.icon/**\" \"*.json\" \".*.json\"",
-    "format:check": "oxfmt --check \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"tests/acceptance/**/*.{ts,html,json}\" \"!apps/review-canvas/icons/chalk.icon/**\" \"*.json\" \".*.json\"",
-    "lint": "oxlint --disable-nested-config .",
+    "format": "vp fmt --write \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"tests/acceptance/**/*.{ts,html,json}\" \"!apps/review-canvas/icons/chalk.icon/**\" \"*.json\" \".*.json\" vite.config.ts",
+    "format:check": "vp fmt --check \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\" \"tests/acceptance/**/*.{ts,html,json}\" \"!apps/review-canvas/icons/chalk.icon/**\" \"*.json\" \".*.json\" vite.config.ts",
+    "lint": "vp lint --disable-nested-config .",
     "ci": "bun run desktop:build && bun run --filter @chalk/tutorial check && bun run lint && bun run format:check && bun run typecheck && bun run test",
     "pretest": "bun run --filter @chalk/tutorial ensure:assets",
     "test:acceptance": "BUN_JSC_useFTLJIT=0 bun --bun run bddgen --config tests/acceptance/playwright.config.ts && BUN_JSC_useFTLJIT=0 bun --bun run playwright test --config tests/acceptance/playwright.config.ts",
@@ -36,15 +36,14 @@
     "build:workspace-deps": "bun run --filter @chalk/json --filter @chalk/local-vcs build && bun run --filter @chalk/review-contracts build"
   },
   "devDependencies": {
-    "@oxlint/plugins": "1.63.0",
     "@playwright/test": "1.62.1",
     "@tailwindcss/vite": "4.3.3",
     "@types/bun": "1.3.10",
     "@types/node": "24.12.2",
-    "oxfmt": "0.48.0",
-    "oxlint": "1.63.0",
     "playwright-bdd": "9.2.1",
     "typescript": "npm:typescript@7.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "vite-plus": "1.1.0",
     "zod": "catalog:"
   },
   "overrides": {
@@ -53,7 +52,8 @@
     "hono": "4.13.5",
     "postcss": "8.5.23",
     "undici": "7.29.0",
-    "vite": "8.0.16"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "vitest": "5.0.3"
   },
   "engines": {
     "bun": ">=1.4.2"

@@ -7,7 +7,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
 import type { Plugin } from "vite";
-import { configDefaults, defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vite-plus";
 
 import { workspaceTestAliases } from "../../scripts/test-config";
 import { stylexOptions } from "./stylex-options";
@@ -53,6 +53,8 @@ function stylexDevCss(): Plugin {
 
 export default defineConfig({
   test: {
+    clearMocks: false,
+    sharedViteServer: false,
     server: {
       deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
     },
@@ -66,6 +68,7 @@ export default defineConfig({
     maxWorkers: 1,
     projects: [
       {
+        extends: false,
         plugins: [stylex.rollup(stylexOptions)],
         resolve: {
           alias: {
@@ -74,6 +77,7 @@ export default defineConfig({
           },
         },
         test: {
+          clearMocks: false,
           server: {
             deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
           },
@@ -88,9 +92,11 @@ export default defineConfig({
         },
       },
       {
+        extends: false,
         plugins: [stylexDevCss(), react(), tailwindcss()],
         resolve: { alias, dedupe: ["react", "react-dom"] },
         test: {
+          clearMocks: false,
           server: {
             deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
           },
@@ -102,6 +108,7 @@ export default defineConfig({
           setupFiles: ["src/browser-test-setup.ts"],
           testTimeout: 15_000,
           browser: {
+            locators: { exact: false },
             enabled: true,
             headless: true,
             provider: playwright(),

@@ -500,7 +500,7 @@ export function drawOrder(element: Element): string[] {
 
     drawn.add(node.key);
 
-    for (let i = 0; i < waiting.length; ) {
+    for (let i = 0; i < waiting.length;) {
       const edge = waiting[i]!;
 
       if (drawn.has(edge.from) && drawn.has(edge.to)) {

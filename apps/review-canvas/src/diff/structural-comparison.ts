@@ -79,7 +79,7 @@ export function structuralMetadata(
   const blocks: string[] = [];
   let previousEnd = 0;
 
-  for (let i = 0; i < rows.length; ) {
+  for (let i = 0; i < rows.length;) {
     if (!isChanged(rows[i]!)) {
       i++;
       continue;
@@ -143,7 +143,7 @@ export function structuralMetadata(
       if (!text.endsWith("\n")) blocks.push("\\ No newline at end of file\n");
     };
 
-    for (let j = 0; j < segment.length; ) {
+    for (let j = 0; j < segment.length;) {
       const row = segment[j]!;
 
       if (!isChanged(row)) {

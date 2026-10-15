@@ -1,9 +1,11 @@
-import { configDefaults, defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vite-plus";
 
 const isolatedTests = ["src/index.cache.test.ts"];
 
 export default defineConfig({
   test: {
+    clearMocks: false,
+    sharedViteServer: false,
     server: {
       deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
     },

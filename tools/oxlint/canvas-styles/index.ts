@@ -1,6 +1,6 @@
-import { defineRule, eslintCompatPlugin } from "@oxlint/plugins";
+import { defineRule, eslintCompatPlugin } from "vite-plus/lint/plugins";
 
-import type { ESTree, Scope, SourceCode } from "@oxlint/plugins";
+import type { ESTree, Scope, SourceCode } from "vite-plus/lint/plugins";
 
 type ScaleCheck = {
   scale: string;

@@ -5,12 +5,12 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "BUN_JSC_useFTLJIT=0 bun --bun run vite build --config desktop.vite.config.ts",
+    "build": "BUN_JSC_useFTLJIT=0 bunx --bun --no-install vp build --config desktop.vite.config.ts",
     "pretest": "bun run --filter @chalk/tutorial ensure:assets",
-    "test": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts",
-    "test:node": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts --project canvas-node",
-    "test:browser": "BUN_JSC_useFTLJIT=0 bun --bun run vitest run --config vitest.config.ts --project browser",
-    "test:browser:watch": "BUN_JSC_useFTLJIT=0 bun --bun run vitest --config vitest.config.ts --project browser --browser.headless=false",
+    "test": "BUN_JSC_useFTLJIT=0 bunx --bun --no-install vp test run --config vitest.config.ts",
+    "test:node": "BUN_JSC_useFTLJIT=0 bunx --bun --no-install vp test run --config vitest.config.ts --project canvas-node",
+    "test:browser": "BUN_JSC_useFTLJIT=0 bunx --bun --no-install vp test run --config vitest.config.ts --project browser",
+    "test:browser:watch": "BUN_JSC_useFTLJIT=0 bunx --bun --no-install vp test watch --config vitest.config.ts --project browser --browser.headless=false",
     "typecheck": "bun --bun run tsc --noEmit -p .",
     "pretest:node": "bun run --filter @chalk/tutorial ensure:assets",
     "pretest:browser": "bun run --filter @chalk/tutorial ensure:assets",
@@ -52,14 +52,15 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.1",
-    "@vitest/browser-playwright": "4.1.11",
+    "@vitest/browser-playwright": "5.0.3",
     "hono": "4.13.7",
     "jsdom": "29.1.1",
     "playwright": "1.62.1",
     "typescript": "6.0.3",
     "unplugin": "2.3.11",
-    "vite": "8.0.16",
-    "vitest": "4.1.11"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "vite-plus": "1.1.0",
+    "vitest": "5.0.3"
   },
   "engines": {
     "bun": ">=1.4.2"

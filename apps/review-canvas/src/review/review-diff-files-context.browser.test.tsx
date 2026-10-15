@@ -121,8 +121,8 @@ describe("ReviewDiffFilesProvider", () => {
       ]),
     ];
 
-    const files = vi.fn<() => Promise<ReviewDiffFileWire[]>>(
-      async () => responses.shift()!,
+    const files = vi.fn<() => Promise<ReviewDiffFileWire[]>>(async () =>
+      responses.shift()!,
     );
 
     const session = testReviewSession(

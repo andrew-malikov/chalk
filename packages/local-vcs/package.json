@@ -18,7 +18,7 @@
   "scripts": {
     "build": "bun --bun run tsdown",
     "prepack": "bun run build",
-    "test": "bun --bun run vitest run --config vitest.config.ts",
+    "test": "bunx --bun --no-install vp test run --config vitest.config.ts",
     "typecheck": "bun --bun run tsc -p ../local-vcs/tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -30,7 +30,8 @@
     "@types/proper-lockfile": "4.1.4",
     "tsdown": "0.22.14",
     "typescript": "6.0.3",
-    "vitest": "4.1.11"
+    "vite-plus": "1.1.0",
+    "vitest": "5.0.3"
   },
   "engines": {
     "bun": ">=1.4.2"

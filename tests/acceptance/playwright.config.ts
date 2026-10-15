@@ -28,7 +28,8 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "bun --bun run vite --config tests/acceptance/vite.config.ts",
+    command:
+      "bunx --bun --no-install vp dev --config tests/acceptance/vite.config.ts",
     cwd: fileURLToPath(new URL("../../", import.meta.url)),
     url: "http://127.0.0.1:4175",
     reuseExistingServer: false,

@@ -239,7 +239,7 @@ test("rejects invalid context lines without writing", async () => {
   });
   await expect
     .element(page.getByRole("alert"))
-    .toHaveTextContent("nonnegative whole number");
+    .toMatchTextContent("nonnegative whole number");
   expect(actions.set).not.toHaveBeenCalled();
 });
 
@@ -263,7 +263,7 @@ test("tests draft settings without saving, then saves the custom prompt and clea
   });
   await expect
     .element(page.getByLabelText("Sample summary"))
-    .toHaveTextContent("count positive values");
+    .toMatchTextContent("count positive values");
   expect(actions.saveSummarizer).not.toHaveBeenCalled();
   expect(document.body.textContent).not.toContain("Reload the window");
   await act(async () => {

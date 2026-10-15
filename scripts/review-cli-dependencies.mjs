@@ -3,7 +3,7 @@ import path from "node:path";
 
 // Audit the installed tree, including transitive dependencies, before publishing.
 const developmentTool =
-  /^(?:@playwright\/|@vitest\/|@vitejs\/|@electron\/|playwright(?:-core)?$|vitest$|vite$|electron$|tsdown$|tsx$|typescript$|esbuild$|@esbuild\/|@rolldown\/|rolldown$)/;
+  /^(?:@playwright\/|@vitest\/|@vitejs\/|@electron\/|playwright(?:-core)?$|vitest$|vite$|vite-plus$|@voidzero-dev\/vite-plus(?:-|$)|electron$|tsdown$|tsx$|typescript$|esbuild$|@esbuild\/|@rolldown\/|rolldown$)/;
 
 export function checkProductionDependencies(tree) {
   const packages = new Set();
