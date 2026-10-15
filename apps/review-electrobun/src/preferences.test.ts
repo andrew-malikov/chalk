@@ -56,24 +56,20 @@ test("corrupt preferences recover with no active review and valid preferences re
   });
 });
 
-test("sidebar visibility defaults for older preferences and survives restart", async () => {
+test("preferences saved while the sidebar existed still load", async () => {
   const target = await file();
   await writeFile(
     target,
     JSON.stringify({
+      sidebarHidden: true,
       theme: "dark",
       diffLayout: "split",
       reviewIds: ["r"],
       activeReviewId: "r",
     }),
   );
-  const store = await createPreferencesStore(target);
-  expect(store.get().sidebarHidden).toBe(false);
-  await store.update({ sidebarHidden: true });
-  await store.update({ theme: "light" });
   expect((await createPreferencesStore(target)).get()).toMatchObject({
-    sidebarHidden: true,
-    theme: "light",
+    theme: "dark",
     activeReviewId: "r",
   });
 });

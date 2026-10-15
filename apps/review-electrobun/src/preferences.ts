@@ -18,7 +18,7 @@ export async function createPreferencesStore(file: string) {
 
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT"))
       console.warn(
-        "Review preferences were invalid; using system theme, split layout, and an open sidebar.",
+        "Review preferences were invalid; using system theme and split layout.",
       );
   }
 

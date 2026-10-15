@@ -5,7 +5,7 @@ import { expect, it, vi } from "vitest";
 
 import "./styles.css";
 
-it("keeps the desktop sidebar and review area inside the window", async () => {
+it("keeps the desktop review area inside the window", async () => {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>().mockRejectedValue(new Error("Offline")),
@@ -49,10 +49,8 @@ it("keeps the desktop sidebar and review area inside the window", async () => {
       });
     });
 
-    const sidebar = container.querySelector("aside")!;
     const content = container.querySelector("main")!;
-    expect(sidebar.getBoundingClientRect().width).toBe(272);
-    expect(content.getBoundingClientRect().width).toBeGreaterThan(800);
+    expect(content.getBoundingClientRect().width).toBe(1200);
     expect(content.getBoundingClientRect().height).toBeGreaterThan(400);
     expect(content.getBoundingClientRect().bottom).toBeLessThanOrEqual(
       container.getBoundingClientRect().bottom,

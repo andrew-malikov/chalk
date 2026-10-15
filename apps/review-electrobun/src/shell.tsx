@@ -1,5 +1,13 @@
 import { Button } from "@canvas/components/ui/button";
 import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@canvas/components/ui/command";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -7,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@canvas/components/ui/dialog";
-import { Input } from "@canvas/components/ui/input";
 import { NativeSelect } from "@canvas/components/ui/native-select";
 import {
   mountReviewCanvas,
@@ -33,11 +40,11 @@ import type {
   ReviewVerbResponse,
   TutorialProgressV1,
 } from "@chalk/review-contracts";
+import { fuzzyMatches } from "@review/lib/fuzzy-match";
 import {
   BookOpenIcon,
   FileTextIcon,
   MoreHorizontalIcon,
-  PanelLeftIcon,
   SearchIcon,
   Settings2Icon,
   SquareArrowOutUpRightIcon,
@@ -62,6 +69,7 @@ import {
   openSourceFile,
 } from "./bridge";
 import { createCanvasUi } from "./canvas-ui";
+import { createDoubleShift } from "./double-shift";
 import { mountExternalLinks } from "./external-links";
 import type {
   AppRPCClient,
@@ -167,9 +175,6 @@ function Shell(
   const tabs = useRef(new Map<string, Tab>());
   const catalog = useRef<ReviewApiSummary[]>([]);
   const active = useRef<string | null>(null);
-  const sidebarToggle = useRef<HTMLButtonElement>(null);
-  const sidebarSearch = useRef<HTMLInputElement>(null);
-  const setupButton = useRef<HTMLButtonElement>(null);
   const prefs = useRef(options.state.preferences);
   const tutorialProgress = useRef(options.state.preferences.tutorialProgress);
   const listeners = useRef(new Set<() => void>());
@@ -181,14 +186,7 @@ function Shell(
   const [error, setError] = useState<string>();
   const [settings, setSettings] = useState(false);
   const [setup, setSetup] = useState(false);
-
-  const [sidebarHidden, setSidebarHidden] = useState(
-    options.state.preferences.sidebarHidden,
-  );
-
-  const sidebarHiddenRef = useRef(sidebarHidden);
-  sidebarHiddenRef.current = sidebarHidden;
-  const [query, setQuery] = useState("");
+  const [palette, setPalette] = useState(false);
   const media = useRef(matchMedia("(prefers-color-scheme: dark)"));
 
   const resources = useRef<{
@@ -411,8 +409,6 @@ function Shell(
 
     if (active.current === id) {
       active.current = [...tabs.current.keys()].at(-1) ?? null;
-
-      if (!active.current) setSidebarHidden(false);
     }
 
     render();
@@ -599,14 +595,15 @@ function Shell(
       if (command === "closeTab") {
         setSettings(false);
         setSetup(false);
+        setPalette(false);
       }
 
       return;
     }
 
     switch (command) {
-      case "toggleSidebar":
-        toggleSidebar();
+      case "commandPalette":
+        setPalette(true);
         break;
       case "settings":
         setSettings(true);
@@ -617,15 +614,18 @@ function Shell(
       case "find":
         // In-review find is disabled until it works; ⌘F only searches reviews from Home.
         if (active.current) break;
-        setSidebarHidden(false);
-        requestAnimationFrame(() => sidebarSearch.current?.focus());
+        setPalette(true);
         break;
     }
   }
 
   options.register(invoke);
   useEffect(() => {
+    const doubleShift = createDoubleShift();
+
     const keyboard = (event: KeyboardEvent) => {
+      if (doubleShift(event)) invoke("commandPalette");
+
       if (event.defaultPrevented || !(event.metaKey || event.ctrlKey)) return;
       const key = event.key.toLowerCase();
 
@@ -636,9 +636,7 @@ function Shell(
             ? "settings"
             : key === "w"
               ? "closeTab"
-              : key === "b" && event.shiftKey
-                ? "toggleSidebar"
-                : undefined;
+              : undefined;
 
       if (action) {
         event.preventDefault();
@@ -819,14 +817,6 @@ function Shell(
     await open(result.reviewUuid, "Tutorial");
   }
 
-  function toggleSidebar() {
-    const next = !sidebarHiddenRef.current;
-    sidebarHiddenRef.current = next;
-    setSidebarHidden(next);
-    void save({ sidebarHidden: next }).catch(fail);
-    sidebarToggle.current?.focus();
-  }
-
   function reviewMenu(anchor: HTMLElement, id: string, title: string) {
     const review = catalog.current.find((item) => item.reviewId === id);
     ui.showMenu({
@@ -880,55 +870,28 @@ function Shell(
       });
   }
 
-  const needle = query.trim().toLowerCase();
-
-  const filtered = reviews.filter((review) =>
-    `${review.title} ${review.repository}`.toLowerCase().includes(needle),
-  );
-
-  const reviewRows = (dismissed: boolean) =>
-    filtered
+  const reviewItems = (dismissed: boolean) =>
+    reviews
       .filter((review) => review.dismissed === dismissed)
       .map((review) => (
-        <div
+        <CommandItem
           key={review.id}
-          className="review-shell-review tw:mb-1 tw:flex tw:items-center tw:rounded-md tw:data-[active=true]:bg-muted"
-          data-active={active.current === review.id}
+          value={review.id}
+          keywords={[review.title, review.repository]}
+          disabled={!connected}
+          onSelect={() => {
+            setPalette(false);
+            void open(review.id).catch(fail);
+          }}
         >
-          <Button
-            variant="ghost"
-            className="review-shell-review-link tw:h-auto tw:min-h-12 tw:min-w-0 tw:flex-1 tw:justify-start tw:p-2 tw:text-muted-foreground tw:aria-[current=page]:text-foreground"
-            aria-current={active.current === review.id ? "page" : undefined}
-            onClick={() => {
-              void open(review.id).catch(fail);
-
-              if (matchMedia("(max-width: 760px)").matches) {
-                setSidebarHidden(true);
-                sidebarToggle.current?.focus();
-              }
-            }}
-          >
-            <FileTextIcon aria-hidden="true" />
-            <span className="review-shell-review-label tw:flex tw:min-w-0 tw:flex-col tw:gap-1 tw:text-left tw:text-xs tw:[&_span]:truncate">
-              <span title={review.title}>{review.title}</span>
-              <span className="review-shell-review-repository tw:text-[11px] tw:text-[var(--ink-faint)]">
-                {review.repository}
-              </span>
+          <FileTextIcon aria-hidden="true" />
+          <span className="review-shell-review-label tw:flex tw:min-w-0 tw:flex-col tw:gap-1 tw:text-left tw:text-xs tw:[&_span]:truncate">
+            <span title={review.title}>{review.title}</span>
+            <span className="review-shell-review-repository tw:text-[11px] tw:text-[var(--ink-faint)]">
+              {review.repository}
             </span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="review-shell-review-menu tw:flex-none tw:text-muted-foreground"
-            aria-label={`Actions for ${review.title}`}
-            disabled={!connected}
-            onClick={(event) =>
-              reviewMenu(event.currentTarget, review.id, review.title)
-            }
-          >
-            <MoreHorizontalIcon aria-hidden="true" />
-          </Button>
-        </div>
+          </span>
+        </CommandItem>
       ));
 
   const resolvedTheme = theme();
@@ -953,16 +916,13 @@ function Shell(
         data-native-titlebar={options.nativeTitlebar || undefined}
       >
         <Button
-          ref={sidebarToggle}
           variant="ghost"
           size="icon"
-          aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
-          aria-expanded={!sidebarHidden}
-          aria-controls="review-shell-sidebar"
-          title="Toggle sidebar (⌘⇧B)"
-          onClick={toggleSidebar}
+          aria-label="Search reviews"
+          title="Search reviews (⇧⇧)"
+          onClick={() => setPalette(true)}
         >
-          <PanelLeftIcon aria-hidden="true" />
+          <SearchIcon aria-hidden="true" />
         </Button>
         <div
           className="review-shell-context tw:flex tw:min-w-0 tw:flex-1 tw:items-center tw:gap-3 tw:border-l tw:border-border tw:pl-4 tw:leading-5 tw:max-[760px]:gap-2 tw:max-[760px]:pl-2"
@@ -1007,17 +967,28 @@ function Shell(
               <span>Open in VS Code</span>
             </Button>
           )}
-          {sidebarHidden && (
+          {currentTab && (
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Settings"
-              title="Settings (⌘,)"
-              onClick={() => setSettings(true)}
+              aria-label={`Actions for ${currentTab.title}`}
+              disabled={!connected}
+              onClick={(event) =>
+                reviewMenu(event.currentTarget, currentTab.id, currentTab.title)
+              }
             >
-              <Settings2Icon aria-hidden="true" />
+              <MoreHorizontalIcon aria-hidden="true" />
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Settings"
+            title="Settings (⌘,)"
+            onClick={() => setSettings(true)}
+          >
+            <Settings2Icon aria-hidden="true" />
+          </Button>
         </div>
       </header>
       {!connected && (
@@ -1045,85 +1016,6 @@ function Shell(
         </div>
       )}
       <div className="review-shell-body tw:relative tw:flex tw:min-h-0 tw:flex-1">
-        <aside
-          id="review-shell-sidebar"
-          className="review-shell-sidebar tw:flex tw:w-[272px] tw:min-h-0 tw:flex-none tw:flex-col tw:border-r tw:border-border tw:bg-[var(--tray)] tw:px-3 tw:pt-4 tw:pb-3 tw:[&[hidden]]:hidden tw:max-[760px]:absolute tw:max-[760px]:inset-y-0 tw:max-[760px]:left-0 tw:max-[760px]:z-3 tw:max-[760px]:w-[min(272px,calc(100%-56px))] tw:max-[760px]:shadow-[8px_0_24px_var(--backdrop)]"
-          aria-label="Sidebar"
-          hidden={sidebarHidden}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              event.preventDefault();
-              toggleSidebar();
-            }
-          }}
-        >
-          <div className="review-shell-sidebar-search tw:mb-4 tw:flex tw:items-center tw:gap-2 tw:rounded-md tw:border tw:border-border tw:bg-background tw:p-2 tw:text-muted-foreground tw:[&_svg]:size-4 tw:[&_svg]:flex-none">
-            <SearchIcon aria-hidden="true" />
-            <Input
-              className="tw:h-auto tw:border-0 tw:bg-transparent tw:dark:bg-transparent tw:p-0 tw:text-xs tw:text-foreground tw:shadow-none tw:focus-visible:ring-0"
-              ref={sidebarSearch}
-              type="search"
-              aria-label="Search reviews"
-              placeholder="Search reviews…"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
-          <nav
-            className="review-shell-review-list tw:min-h-0 tw:flex-1 tw:overflow-y-auto tw:[scrollbar-width:thin]"
-            aria-label="Reviews"
-            inert={!connected}
-          >
-            <div className="review-shell-sidebar-label tw:p-2 tw:text-xs tw:font-medium tw:text-muted-foreground tw:[&:is(summary)]:mt-4 tw:[&:is(summary)]:cursor-pointer">
-              Reviews
-            </div>
-            {reviewRows(false)}
-            {filtered.length === 0 && (
-              <p className="review-shell-sidebar-empty tw:p-2 tw:text-xs tw:text-muted-foreground">
-                {!loaded
-                  ? "Loading reviews…"
-                  : needle
-                    ? "No matching reviews."
-                    : "No reviews yet."}
-              </p>
-            )}
-            {filtered.some((review) => review.dismissed) && (
-              <details open={needle ? true : undefined}>
-                <summary className="review-shell-sidebar-label tw:p-2 tw:text-xs tw:font-medium tw:text-muted-foreground tw:[&:is(summary)]:mt-4 tw:[&:is(summary)]:cursor-pointer">
-                  Dismissed
-                </summary>
-                {reviewRows(true)}
-              </details>
-            )}
-          </nav>
-          <div className="review-shell-sidebar-footer tw:flex tw:flex-none tw:flex-col tw:gap-1 tw:border-t tw:border-border tw:pt-3 tw:[&_button]:justify-start tw:[&_button]:text-xs tw:[&_button]:text-muted-foreground">
-            <Button
-              variant="ghost"
-              disabled={!connected}
-              onClick={() => void openTutorial().catch(fail)}
-            >
-              <BookOpenIcon aria-hidden="true" /> Tutorial
-            </Button>
-            <Button
-              ref={setupButton}
-              variant="ghost"
-              disabled={!connected}
-              onClick={() => setSetup(true)}
-            >
-              <TerminalIcon aria-hidden="true" /> Command setup
-            </Button>
-            <Button variant="ghost" onClick={() => setSettings(true)}>
-              <Settings2Icon aria-hidden="true" /> Settings
-            </Button>
-          </div>
-        </aside>
-        {!sidebarHidden && (
-          <button
-            className="review-shell-sidebar-backdrop tw:hidden tw:max-[760px]:absolute tw:max-[760px]:inset-0 tw:max-[760px]:z-2 tw:max-[760px]:block tw:max-[760px]:border-0 tw:max-[760px]:bg-[var(--backdrop)] tw:focus-visible:outline-2 tw:focus-visible:outline-ring"
-            aria-label="Close sidebar"
-            onClick={toggleSidebar}
-          />
-        )}
         <main
           className="review-shell-content tw:flex tw:min-h-0 tw:min-w-0 tw:flex-1 tw:flex-col tw:overflow-hidden"
           inert={!connected}
@@ -1144,16 +1036,10 @@ function Shell(
               </h1>
               <p>
                 {reviews.length
-                  ? "Choose a review from the sidebar to continue."
+                  ? "Press Shift twice to search your reviews."
                   : "Publish a review from your agent, or open the tutorial to get started."}
               </p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSidebarHidden(false);
-                  requestAnimationFrame(() => sidebarSearch.current?.focus());
-                }}
-              >
+              <Button variant="outline" onClick={() => setPalette(true)}>
                 Browse reviews
               </Button>
             </div>
@@ -1182,10 +1068,6 @@ function Shell(
           <DialogContent
             container={shellElement.current}
             className="review-shell-setup tw:flex tw:h-[min(720px,calc(100%-64px))] tw:w-[min(860px,calc(100%-32px))] tw:max-w-[860px] tw:flex-col tw:overflow-hidden"
-            onCloseAutoFocus={(event) => {
-              event.preventDefault();
-              setupButton.current?.focus();
-            }}
           >
             <DialogHeader>
               <DialogTitle>Command setup</DialogTitle>
@@ -1216,6 +1098,56 @@ function Shell(
           </DialogContent>
         </Dialog>
       )}
+      <CommandDialog
+        container={shellElement.current}
+        title="Command palette"
+        description="Search reviews and run Chalk commands."
+        open={palette}
+        onOpenChange={setPalette}
+        filter={(_value, search, keywords = []) =>
+          fuzzyMatches(search, ...keywords) ? 1 : 0
+        }
+      >
+        <CommandInput placeholder="Search reviews…" />
+        <CommandList>
+          <CommandEmpty>
+            {loaded ? "No matching reviews." : "Loading reviews…"}
+          </CommandEmpty>
+          <CommandGroup heading="Reviews">{reviewItems(false)}</CommandGroup>
+          <CommandGroup heading="Dismissed">{reviewItems(true)}</CommandGroup>
+          <CommandGroup heading="Chalk">
+            <CommandItem
+              keywords={["Tutorial"]}
+              disabled={!connected}
+              onSelect={() => {
+                setPalette(false);
+                void openTutorial().catch(fail);
+              }}
+            >
+              <BookOpenIcon aria-hidden="true" /> Tutorial
+            </CommandItem>
+            <CommandItem
+              keywords={["Command setup"]}
+              disabled={!connected}
+              onSelect={() => {
+                setPalette(false);
+                setSetup(true);
+              }}
+            >
+              <TerminalIcon aria-hidden="true" /> Command setup
+            </CommandItem>
+            <CommandItem
+              keywords={["Settings"]}
+              onSelect={() => {
+                setPalette(false);
+                setSettings(true);
+              }}
+            >
+              <Settings2Icon aria-hidden="true" /> Settings
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
       {settings && (
         <SettingsDialog
           container={shellElement.current}

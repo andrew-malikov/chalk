@@ -109,8 +109,7 @@ async function run() {
 
           return value;
         },
-        openSource: async (request) =>
-          openVSCode(request, await desktopEnv),
+        openSource: async (request) => openVSCode(request, await desktopEnv),
         openExternal: async (request) => {
           if (!Utils.openExternal(externalURL(request)))
             throw new Error("The system could not open this URL.");
@@ -144,7 +143,7 @@ async function run() {
 
   if (process.platform === "darwin") {
     // Center the 14px native controls in the shell's 56px header, and inset them
-    // so the gap before them matches the gap to the sidebar icon in the 88px slot.
+    // so the gap before them matches the gap to the search icon in the 88px slot.
     window.setWindowButtonPosition(22, 21);
   }
 
@@ -180,11 +179,7 @@ async function run() {
     {
       label: "File",
       submenu: [
-        {
-          label: "Toggle Sidebar",
-          action: "toggleSidebar",
-          accelerator: "CmdOrCtrl+Shift+B",
-        },
+        { label: "Command Palette (⇧⇧)", action: "commandPalette" },
         {
           label: "Close Review",
           action: "closeTab",
@@ -213,7 +208,7 @@ async function run() {
 
     if (
       action === "find" ||
-      action === "toggleSidebar" ||
+      action === "commandPalette" ||
       action === "settings" ||
       action === "closeTab"
     )

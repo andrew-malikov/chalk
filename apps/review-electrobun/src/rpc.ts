@@ -10,7 +10,8 @@ import {
 import { z } from "zod";
 
 export const preferencesSchema = z.strictObject({
-  sidebarHidden: z.boolean().default(false),
+  // Retired with the sidebar; still accepted so older preference files parse.
+  sidebarHidden: z.boolean().optional(),
   theme: z.enum(["system", "light", "dark"]),
   diffLayout: z.enum(["split", "unified"]),
   defaultDiffMode: z.enum(["text", "structural"]).default("text"),
@@ -29,7 +30,6 @@ export const preferencesSchema = z.strictObject({
 export type ShellPreferences = z.infer<typeof preferencesSchema>;
 
 export const defaultPreferences: ShellPreferences = {
-  sidebarHidden: false,
   theme: "system",
   diffLayout: "split",
   defaultDiffMode: "text",
@@ -63,7 +63,7 @@ export type NativeOpenRequest =
       modifiedPath: string;
     };
 
-export type ShellCommand = "find" | "toggleSidebar" | "settings" | "closeTab";
+export type ShellCommand = "find" | "commandPalette" | "settings" | "closeTab";
 
 export type AppRPC = {
   bun: {
