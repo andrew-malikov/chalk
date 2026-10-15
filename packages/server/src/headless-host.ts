@@ -6,6 +6,7 @@ import {
   createReviewServerApp,
   relayReviewCallbacks,
 } from "@chalk/server/review-server-core.js";
+import { migrateDiffrConfig } from "@review/node/diffr-config";
 import { writePrivateJsonAtomic } from "@review/node/lib/atomic-write";
 import { withFileLock } from "@review/node/lib/with-file-lock";
 import { openReviewProfile } from "@review/node/review-api/profile.js";
@@ -62,6 +63,8 @@ export function withHeadlessServerLock<T>(
 
 async function serve(input: HeadlessServerInput) {
   if (input.signal.aborted) return;
+
+  await migrateDiffrConfig(input.signal);
 
   const local = await openReviewProfile(input.stateDir, {
     manageWorkspaces: false,

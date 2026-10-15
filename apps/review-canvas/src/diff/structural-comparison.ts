@@ -41,15 +41,24 @@ export function structuralMetadata(
     head: [],
   };
 
+  // diffr also tags single statements as scopes; only those owning a body split hunks.
   const walk = (region: StructuralRegion, into: StructuralRegion[]) => {
     if (region.kind === "fold") {
-      if (region.tags?.includes("context:scope")) into.push(region);
+      if (
+        region.tags?.includes("context:scope") &&
+        region.children.some(
+          (child) =>
+            child.kind === "fold" && child.tags?.includes("context:body"),
+        )
+      )
+        into.push(region);
       region.children.forEach((child) => walk(child, into));
     }
   };
 
-  diff.lhs?.regions?.forEach((region) => walk(region, scopes.base));
-  diff.rhs?.regions?.forEach((region) => walk(region, scopes.head));
+  if (diff.lhs) walk(diff.lhs.root, scopes.base);
+
+  if (diff.rhs) walk(diff.rhs.root, scopes.head);
 
   const scopeFor = (index: number) => {
     const [a, b] = rows[index]!;

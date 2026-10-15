@@ -7,7 +7,28 @@ import { structuralMetadata } from "./structural-comparison";
 
 type TextDiff = Extract<StructuralDiff, { type: "text" }>;
 
-const text = (value: string) => ({ text: value });
+const at = (line: number) => ({ line, column: 0 });
+
+const fold = (
+  id: number,
+  tags: string[],
+  [from, to]: [number, number],
+  children: StructuralRegion[] = [],
+): StructuralRegion => ({
+  id,
+  fold_state_id: id,
+  kind: "fold",
+  tags,
+  indent: at(from),
+  start: at(from),
+  end: at(to),
+  children,
+});
+
+const root = (children: StructuralRegion[] = []) =>
+  fold(0, [], [0, 0], children);
+
+const text = (value: string) => ({ text: value, root: root() });
 
 const diff: TextDiff = {
   type: "text",
@@ -24,17 +45,14 @@ const diff: TextDiff = {
   structural_changes: { base: [[1, 2]], head: [[1, 2]] },
 };
 
-const scope: StructuralRegion = {
-  id: 1,
-  fold_state_id: 1,
-  kind: "fold",
-  tags: ["context:scope"],
-  start: { line: 0, column: 0 },
-  end: { line: 3, column: 0 },
-  children: [],
-};
+const scope = fold(
+  1,
+  ["context:scope"],
+  [0, 3],
+  [fold(10, ["context:body"], [1, 2])],
+);
 
-diff.rhs!.regions = [scope];
+diff.rhs!.root = root([scope]);
 
 it("renders the changed function and preserves original lines while suppressing formatting edits", () => {
   const metadata = structuralMetadata(diff, "renamed.ts", "before.ts")!;
@@ -195,7 +213,7 @@ it("separates adjacent changed functions and keeps selection coordinates in late
     rhs: {
       ...diff.rhs!,
       text: diff.rhs!.text.replace("return 5", "return 6"),
-      regions: [scope, secondScope],
+      root: root([scope, secondScope]),
     },
     structural_changes: {
       base: [
@@ -224,6 +242,43 @@ it("separates adjacent changed functions and keeps selection coordinates in late
       { kind: "added", text: "    return 6;" },
     ],
   });
+});
+
+it("keeps adjacent edits in one hunk when diffr scopes each statement", () => {
+  const before = "function f() {\n  a();\n  b();\n}\n";
+  const after = "function f() {\n  a(1);\n  b(1);\n}\n";
+
+  const metadata = structuralMetadata(
+    {
+      ...diff,
+      lhs: text(before),
+      rhs: {
+        text: after,
+        root: root([
+          fold(
+            1,
+            ["context:scope"],
+            [0, 4],
+            [
+              fold(
+                2,
+                ["context:body"],
+                [1, 3],
+                [
+                  fold(3, ["context:scope"], [1, 2]),
+                  fold(4, ["context:scope"], [2, 3]),
+                ],
+              ),
+            ],
+          ),
+        ]),
+      },
+      structural_changes: { base: [[1, 3]], head: [[1, 3]] },
+    },
+    "a.ts",
+  )!;
+
+  expect(metadata.hunks).toHaveLength(1);
 });
 
 it("cancels a pending structural stream when the comparison is superseded", async () => {

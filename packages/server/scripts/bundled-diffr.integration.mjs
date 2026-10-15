@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { diffrBinaryPath } from "@dev.fast/diffr";
 import { cleanupTempDirs, tempDir } from "@review/node/test/review-test-utils";
 import { afterAll, beforeAll, describe, test } from "vitest";
 
@@ -17,7 +18,7 @@ let structuralDiff,
   saveDiffrSummarizer,
   testDiffrSummarizer;
 
-const source = path.resolve(import.meta.dirname, "../../review/bin/diffr");
+const source = diffrBinaryPath();
 
 async function collect(repositoryPath, base, head, paths, kind = "trees") {
   return Array.fromAsync(
@@ -32,7 +33,7 @@ async function collect(repositoryPath, base, head, paths, kind = "trees") {
 
 function successfulFiles(events, count) {
   assert.equal(events[0].type, "start");
-  assert.equal(events[0].version, 4);
+  assert.equal(events[0].version, 3);
   assert.deepEqual(events.at(-1), {
     type: "complete",
     succeeded: count,
@@ -203,23 +204,29 @@ describe("Relocated runtime diffr integrates with Review streams and settings", 
 
   test("settings values and edits round-trip through the staged binary", async () => {
     const config = await readDiffrConfig(repository);
-    assert.ok(Number.isInteger(config.values.plugins.bundled.context.lines));
-    assert.equal(config.values.plugins.bundled.summarize.api_key, undefined);
+    assert.ok(
+      Number.isInteger(config.values.plugins.shape.bundled.context.lines),
+    );
+    assert.equal(
+      config.values.plugins.shape.bundled.summarize.api_key,
+      undefined,
+    );
     assert.ok(
       ["config", "environment", "missing"].includes(config.credentialSource),
     );
 
     const updated = await setDiffrConfigValue(
-      "plugins.bundled.context.lines",
+      "plugins.shape.bundled.context.lines",
       7,
       repository,
     );
 
-    assert.equal(updated.values.plugins.bundled.context.lines, 7);
+    assert.equal(updated.values.plugins.shape.bundled.context.lines, 7);
     assert.equal(updated.changed, true);
     assert.equal(updated.error, undefined);
     assert.equal(
-      (await readDiffrConfig(repository)).values.plugins.bundled.context.lines,
+      (await readDiffrConfig(repository)).values.plugins.shape.bundled.context
+        .lines,
       7,
     );
     assert.equal(existsSync(sentinel), false);
@@ -228,7 +235,7 @@ describe("Relocated runtime diffr integrates with Review streams and settings", 
   test("a provider switch saves through the binary, clears the old key and keeps the file sparse", async () => {
     delete process.env.ANTHROPIC_API_KEY;
     await setDiffrConfigValue(
-      "plugins.bundled.summarize.api_key",
+      "plugins.shape.bundled.summarize.api_key",
       "old-secret",
       repository,
     );
@@ -249,7 +256,10 @@ describe("Relocated runtime diffr integrates with Review streams and settings", 
     );
 
     assert.equal(saved.error, undefined);
-    assert.equal(saved.values.plugins.bundled.summarize.provider, "anthropic");
+    assert.equal(
+      saved.values.plugins.shape.bundled.summarize.provider,
+      "anthropic",
+    );
     assert.equal(saved.credentialSource, "missing");
 
     const file = await readFile(
@@ -274,19 +284,7 @@ describe("Relocated runtime diffr integrates with Review streams and settings", 
           body: JSON.parse(body),
         };
 
-        const id = Number(
-          /fold (\d+):/.exec(received.body.messages[1].content)[1],
-        );
-
-        const content = JSON.stringify({
-          summaries: [
-            {
-              id,
-              summary: "",
-              pseudocode: "count and average positive values",
-            },
-          ],
-        });
+        const content = "count and average positive values";
 
         response.setHeader("content-type", "application/json");
         response.end(JSON.stringify({ choices: [{ message: { content } }] }));
@@ -330,14 +328,11 @@ describe("Relocated runtime diffr integrates with Review streams and settings", 
     assert.equal(existsSync(sentinel), false);
   });
 
-  test("an unbundled installation falls back to PATH", async () => {
+  test("an unbundled installation uses the npm package before PATH", async () => {
     delete process.env.REVIEW_DIFFR_BINARY;
     await rm(path.join(runtime, "bin"), { recursive: true, force: true });
-    await assert.rejects(
-      collect(repository, base, head),
-      /diffr exited with 97/,
-    );
-    assert.equal(existsSync(sentinel), true);
+    successfulFiles(await collect(repository, base, head), 3);
+    assert.equal(existsSync(sentinel), false);
   });
 
   describe("a working host installation coexists with the Desktop bundle", () => {
@@ -380,16 +375,6 @@ process.exit(result.status ?? 1);
       await readDiffrConfig(repository);
       assert.equal(existsSync(called), true);
       await rm(called);
-    });
-
-    test("without a bundle the host binary runs real diffs and settings", async () => {
-      delete process.env.REVIEW_DIFFR_BINARY;
-      await rm(path.join(runtime, "bin"), { recursive: true, force: true });
-      successfulFiles(await collect(repository, base, head), 3);
-      assert.equal(existsSync(called), true);
-      await rm(called);
-      await readDiffrConfig(repository);
-      assert.equal(existsSync(called), true);
     });
   });
 });

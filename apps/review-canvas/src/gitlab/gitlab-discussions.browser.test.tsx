@@ -155,7 +155,7 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
         node.textContent?.includes("after"),
     )!;
 
-    // The hover utility must target the actual diff side, including deleted lines.
+    // A selected line must target the actual diff side, including deleted lines.
     for (const side of ["head", "base"] as const) {
       const column = code.find((node) =>
         node.hasAttribute(
@@ -163,12 +163,14 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
         ),
       )!;
 
-      await userEvent.hover(column.querySelector<HTMLElement>("[data-line]")!);
-      await userEvent.click(
-        container.querySelector<HTMLButtonElement>(
-          '[aria-label="Add comment in a.ts"]',
-        )!,
-      );
+      const number = () =>
+        column.querySelector<HTMLElement>(
+          '[data-gutter] [data-column-number="1"]',
+        )!;
+
+      await userEvent.click(number());
+      await vi.waitFor(() => expect(button("GitLab comment")).toBeDefined());
+      await userEvent.click(button("GitLab comment"));
 
       const hovered = () =>
         container.querySelector<HTMLTextAreaElement>(
@@ -189,6 +191,8 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
           .querySelectorAll("button")[1]!,
       );
       await vi.waitFor(() => expect(hovered()).toBeNull());
+      // Composing keeps the line selected; clicking it again clears it.
+      await userEvent.click(number());
     }
 
     await userEvent.click(

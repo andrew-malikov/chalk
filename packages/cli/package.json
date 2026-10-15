@@ -55,7 +55,7 @@
     "@chalk/review": "workspace:*",
     "@chalk/review-contracts": "workspace:*",
     "@chalk/server": "workspace:*",
-    "@dev.fast/diffr": "0.1.10",
+    "@dev.fast/diffr": "0.1.20",
     "@types/node": "24.12.2",
     "isomorphic-git": "1.38.10",
     "micromark-extension-math": "3.1.0",

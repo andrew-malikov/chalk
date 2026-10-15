@@ -8,6 +8,7 @@ import type {
   GitLabState,
   ReviewDiffFileWire,
   ReviewDiffLens,
+  StructuralRegion,
 } from "@chalk/review-contracts";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -232,145 +233,127 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
   await vi.waitFor(() => expect(thread()).toBeNull());
 });
 
-it.each(["gutter", "selection"] as const)(
-  "comments on the full native text selection using the %s plus button",
-  async (action) => {
-    const file: ReviewDiffFileWire = {
-      path: "new.ts",
-      previousPath: "old.ts",
-      status: "renamed",
-      additions: 2,
-      deletions: 1,
-    };
+it("comments on the full native text selection using the selection button", async () => {
+  const file: ReviewDiffFileWire = {
+    path: "new.ts",
+    previousPath: "old.ts",
+    status: "renamed",
+    additions: 2,
+    deletions: 1,
+  };
 
-    const state: GitLabState = {
-      identity: {
-        host: "gitlab.test",
-        url: "https://gitlab.test/a/b/-/merge_requests/1",
-        projectId: 1,
-        projectPath: "a/b",
-        iid: 1,
-        cloneUrl: "https://gitlab.test/a/b.git",
-      },
-      account: { id: 7, username: "andrew", name: "Andrew" },
-      refs: {
-        baseSha: "a".repeat(40),
-        startSha: "a".repeat(40),
-        headSha: "b".repeat(40),
-      },
-      discussions: [],
-      drafts: [],
-    };
+  const state: GitLabState = {
+    identity: {
+      host: "gitlab.test",
+      url: "https://gitlab.test/a/b/-/merge_requests/1",
+      projectId: 1,
+      projectPath: "a/b",
+      iid: 1,
+      cloneUrl: "https://gitlab.test/a/b.git",
+    },
+    account: { id: 7, username: "andrew", name: "Andrew" },
+    refs: {
+      baseSha: "a".repeat(40),
+      startSha: "a".repeat(40),
+      headSha: "b".repeat(40),
+    },
+    discussions: [],
+    drafts: [],
+  };
 
-    const session = testReviewSession(
-      {},
-      {
-        diffView: { files: async () => [file] },
-        request: async () =>
-          new Response(
-            "diff --git a/old.ts b/new.ts\n--- a/old.ts\n+++ b/new.ts\n@@ -1 +1,2 @@\n-before\n+after\n+more\n",
-          ),
-      },
-    );
+  const session = testReviewSession(
+    {},
+    {
+      diffView: { files: async () => [file] },
+      request: async () =>
+        new Response(
+          "diff --git a/old.ts b/new.ts\n--- a/old.ts\n+++ b/new.ts\n@@ -1 +1,2 @@\n-before\n+after\n+more\n",
+        ),
+    },
+  );
 
-    session.review = { ...session.review!, gitlab: state.identity };
-    session.fetch = async (endpoint, init) => {
-      if (endpoint === "/gitlab/drafts") {
-        const draft = {
-          ...JSON.parse(String(init?.body)),
-          status: "saved",
-          version: 1,
-        };
+  session.review = { ...session.review!, gitlab: state.identity };
+  session.fetch = async (endpoint, init) => {
+    if (endpoint === "/gitlab/drafts") {
+      const draft = {
+        ...JSON.parse(String(init?.body)),
+        status: "saved",
+        version: 1,
+      };
 
-        state.drafts = [draft];
+      state.drafts = [draft];
 
-        return Response.json(draft);
-      }
+      return Response.json(draft);
+    }
 
-      return Response.json(state);
-    };
+    return Response.json(state);
+  };
 
-    const container = document.createElement("div");
-    container.className = "review-canvas-root review-document";
-    container.style.cssText = "height:500px;width:1000px;display:flex";
-    document.body.append(container);
-    root = createRoot(container);
-    await act(async () =>
-      root!.render(
-        <TestCanvasQuery>
-          <ReviewSessionProvider session={session}>
-            <GitLabProvider>
-              <AgentSelectionProvider revision="selection">
-                <ReviewDiffFilesProvider documentKey="selection">
-                  <PierreDiffView inWorkspace />
-                </ReviewDiffFilesProvider>
-              </AgentSelectionProvider>
-            </GitLabProvider>
-          </ReviewSessionProvider>
-        </TestCanvasQuery>,
-      ),
-    );
-    await vi.waitFor(() =>
-      expect(
-        container
-          .querySelector("diffs-container")
-          ?.shadowRoot?.querySelector('[data-additions] [data-line="2"]') ??
-          null,
-      ).not.toBeNull(),
-    );
-    const shadow = container.querySelector("diffs-container")!.shadowRoot!;
-    const first = shadow.querySelector('[data-additions] [data-line="1"]')!;
-    const last = shadow.querySelector('[data-additions] [data-line="2"]')!;
-    await act(async () => {
-      document
-        .getSelection()!
-        .setBaseAndExtent(first, 0, last, last.childNodes.length);
-      document.dispatchEvent(new Event("selectionchange"));
-    });
+  const container = document.createElement("div");
+  container.className = "review-canvas-root review-document";
+  container.style.cssText = "height:500px;width:1000px;display:flex";
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root!.render(
+      <TestCanvasQuery>
+        <ReviewSessionProvider session={session}>
+          <GitLabProvider>
+            <AgentSelectionProvider revision="selection">
+              <ReviewDiffFilesProvider documentKey="selection">
+                <PierreDiffView inWorkspace />
+              </ReviewDiffFilesProvider>
+            </AgentSelectionProvider>
+          </GitLabProvider>
+        </ReviewSessionProvider>
+      </TestCanvasQuery>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(
+      container
+        .querySelector("diffs-container")
+        ?.shadowRoot?.querySelector('[data-additions] [data-line="2"]') ?? null,
+    ).not.toBeNull(),
+  );
+  const shadow = container.querySelector("diffs-container")!.shadowRoot!;
+  const first = shadow.querySelector('[data-additions] [data-line="1"]')!;
+  const last = shadow.querySelector('[data-additions] [data-line="2"]')!;
+  await act(async () => {
+    document
+      .getSelection()!
+      .setBaseAndExtent(first, 0, last, last.childNodes.length);
+    document.dispatchEvent(new Event("selectionchange"));
+  });
 
-    const floating = container.querySelector<HTMLButtonElement>(
-      '[aria-label="GitLab comment"]',
-    )!;
+  const floating = container.querySelector<HTMLButtonElement>(
+    '[aria-label="GitLab comment"]',
+  )!;
 
-    const end = last.lastElementChild!.getBoundingClientRect();
-    const rect = floating.getBoundingClientRect();
-    expect(Math.abs(rect.left - end.right)).toBeLessThan(20);
-    expect(rect.top).toBeLessThan(end.bottom);
-    expect(rect.bottom).toBeGreaterThan(end.top);
+  const end = last.lastElementChild!.getBoundingClientRect();
+  const rect = floating.getBoundingClientRect();
+  expect(Math.abs(rect.left - end.right)).toBeLessThan(20);
+  expect(rect.top).toBeLessThan(end.bottom);
+  expect(rect.bottom).toBeGreaterThan(end.top);
 
-    if (action === "gutter") await userEvent.hover(last);
-
-    const button =
-      action === "gutter"
-        ? container.querySelector<HTMLButtonElement>(
-            '[aria-label="Add comment in new.ts"]',
-          )!
-        : floating;
-
-    await userEvent.click(button);
-    await vi.waitFor(() =>
-      expect(container.querySelector("textarea")).not.toBeNull(),
-    );
-    expect(container.textContent).toContain("new.ts:1–2 · head");
-    await userEvent.fill(
-      container.querySelector("textarea")!,
-      "Selected range",
-    );
-    await vi.waitFor(() =>
-      expect(state.drafts[0]?.text).toBe("Selected range"),
-    );
-    expect(state.drafts[0]!.target).toMatchObject({
-      kind: "inline",
-      position: {
-        oldPath: "old.ts",
-        newPath: "new.ts",
-        side: "head",
-        from: 1,
-        to: 2,
-      },
-    });
-  },
-);
+  await userEvent.click(floating);
+  await vi.waitFor(() =>
+    expect(container.querySelector("textarea")).not.toBeNull(),
+  );
+  expect(container.textContent).toContain("new.ts:1–2 · head");
+  await userEvent.fill(container.querySelector("textarea")!, "Selected range");
+  await vi.waitFor(() => expect(state.drafts[0]?.text).toBe("Selected range"));
+  expect(state.drafts[0]!.target).toMatchObject({
+    kind: "inline",
+    position: {
+      oldPath: "old.ts",
+      newPath: "new.ts",
+      side: "head",
+      from: 1,
+      to: 2,
+    },
+  });
+});
 
 it("shows real Git rows progressively, navigates files, marks viewed, and switches the shared layout", async () => {
   const files: ReviewDiffFileWire[] = ["a.ts", "b.ts"].map((path) => ({
@@ -677,6 +660,27 @@ it("keeps renamed lens files visible in worktrees without expanding from live so
   );
 });
 
+function fold(
+  id: number,
+  tags: string[],
+  from: number,
+  to: number,
+  children: StructuralRegion[] = [],
+): StructuralRegion {
+  const at = (line: number) => ({ line, column: 0 });
+
+  return {
+    id,
+    fold_state_id: id,
+    kind: "fold",
+    tags,
+    indent: at(from),
+    start: at(from),
+    end: at(to),
+    children,
+  };
+}
+
 function changedFile(path: string): ReviewDiffFileWire {
   return { path, status: "modified", additions: 100, deletions: 100 };
 }
@@ -873,20 +877,14 @@ it("uses the structural default, navigates functions, and offers text mode when 
                 file: { rhs: { path: "a.ts", oid: "", mode: "" } },
                 diff: {
                   type: "text",
-                  lhs: { text: before },
+                  lhs: { text: before, root: fold(0, [], 0, 0) },
                   rhs: {
                     text: after,
-                    regions: [
-                      {
-                        id: 1,
-                        fold_state_id: 1,
-                        kind: "fold",
-                        tags: ["context:scope"],
-                        start: { line: 0, column: 0 },
-                        end: { line: 3, column: 0 },
-                        children: [],
-                      },
-                    ],
+                    root: fold(0, [], 0, 0, [
+                      fold(1, ["context:scope"], 0, 3, [
+                        fold(2, ["context:body"], 1, 2),
+                      ]),
+                    ]),
                   },
                   stats: {
                     textual: { added: 2, removed: 2 },

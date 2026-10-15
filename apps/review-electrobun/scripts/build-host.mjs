@@ -1,7 +1,9 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { cpSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { diffrBinaryPath } from "@dev.fast/diffr";
 
 import { stageDiffrBinary } from "../../../scripts/stage-review-assets.mjs";
 
@@ -45,11 +47,8 @@ cpSync(
 
 cpSync(path.join(app, "package.json"), path.join(runtime, "package.json"));
 
-const diffr = process.platform === "win32" ? "diffr.exe" : "diffr";
-
-if (existsSync(path.join(app, "../../packages/review/bin", diffr))) {
-  await stageDiffrBinary(runtime);
-}
+// npm installs no diffr on unsupported platforms, such as musl Linux.
+if (diffrBinaryPath()) await stageDiffrBinary(runtime);
 
 let commit = null;
 

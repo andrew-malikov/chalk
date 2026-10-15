@@ -3,10 +3,11 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type {
-  StructuralDiff,
-  StructuralDiffEvent,
-  StructuralRegion,
+import {
+  STRUCTURAL_DIFF_WIRE_VERSION,
+  type StructuralDiff,
+  type StructuralDiffEvent,
+  type StructuralRegion,
 } from "@chalk/review-contracts";
 import { ReviewApiClient } from "@chalk/review-contracts";
 import { UNCATEGORIZED_LENS_ID } from "@review/documents/diff-lenses.js";
@@ -24,6 +25,8 @@ import {
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { createReviewApi } from "./http.js";
+
+let nextRoot = 100;
 
 const pins = { repositoryId: "repo", base: "base-commit", head: "head-commit" };
 
@@ -53,6 +56,7 @@ const fold = (
   id,
   fold_state_id: id,
   kind: "fold",
+  indent: { line: from, column: 0 },
   start: { line: from, column: 0 },
   end: { line: to, column: 0 },
   visibility: { collapsed },
@@ -64,15 +68,15 @@ const text = (lines: number) =>
 
 /** One changed line in a function, and a test module diffr folds whose three
  * added lines pair with nothing. */
-const sourceDiff: StructuralDiff = {
+const sourceDiff: Extract<StructuralDiff, { type: "text" }> = {
   type: "text",
-  lhs: { text: text(2), regions: [leaf(1, 1, [0, 1], [0])] },
+  lhs: { text: text(2), root: root([leaf(1, 1, [0, 1], [0])]) },
   rhs: {
     text: text(6),
-    regions: [
+    root: root([
       leaf(2, 1, [0, 1], [0]),
       fold(3, [2, 5], true, [fold(4, [2, 5], false, [leaf(5, 5, [2, 5])])]),
-    ],
+    ]),
   },
   structural_changes: {
     base: [[0, 1]],
@@ -89,8 +93,8 @@ const sourceDiff: StructuralDiff = {
 
 const plainDiff = (lines: number): StructuralDiff => ({
   type: "text",
-  lhs: { text: text(lines), regions: [leaf(1, 1, [0, lines], [0])] },
-  rhs: { text: text(lines), regions: [leaf(2, 1, [0, lines], [0])] },
+  lhs: { text: text(lines), root: root([leaf(1, 1, [0, lines], [0])]) },
+  rhs: { text: text(lines), root: root([leaf(2, 1, [0, lines], [0])]) },
   structural_changes: { base: [[0, 1]], head: [[0, 1]] },
   stats: {
     textual: { added: 1, removed: 1 },
@@ -99,30 +103,30 @@ const plainDiff = (lines: number): StructuralDiff => ({
 });
 
 it("folds what diffr folds: hidden regions' changed lines, or a hidden file's", () => {
-  expect(foldedChanges(undefined, sourceDiff)).toEqual({
+  expect(foldedChanges(sourceDiff)).toEqual({
     base: [],
     head: [[2, 5]],
   });
   // What stays unfolded is exactly what diffr counts in stats.visible.
-  expect(
-    foldedChanges({ collapsed: true, label: "Test file" }, sourceDiff),
-  ).toEqual(sourceDiff.structural_changes);
-  expect(foldedChanges(undefined, plainDiff(3))).toEqual({
+  expect(foldedChanges(hideFile(sourceDiff))).toEqual(
+    sourceDiff.structural_changes,
+  );
+  expect(foldedChanges(plainDiff(3))).toEqual({
     base: [],
     head: [],
   });
 });
 
 it("a paired leaf folds only its changed lines, and a visible leaf wins a shared line", () => {
-  const diff: StructuralDiff = {
+  const diff: Extract<StructuralDiff, { type: "text" }> = {
     type: "text",
-    lhs: { text: text(4), regions: [leaf(1, 7, [0, 4], [1, 3])] },
+    lhs: { text: text(4), root: root([leaf(1, 7, [0, 4], [1, 3])]) },
     rhs: {
       text: text(4),
-      regions: [
+      root: root([
         fold(2, [0, 3], true, [leaf(3, 7, [0, 3], [0, 2])]),
         leaf(4, 8, [2, 4]),
-      ],
+      ]),
     },
     structural_changes: {
       base: [
@@ -140,7 +144,7 @@ it("a paired leaf folds only its changed lines, and a visible leaf wins a shared
     },
   };
 
-  expect(foldedChanges(undefined, diff)).toEqual({
+  expect(foldedChanges(diff)).toEqual({
     base: [],
     head: [[0, 1]],
   });
@@ -154,19 +158,19 @@ it("any region diffr collapses folds its changed lines, whatever its kind: a doc
     tags: ["summarize:docstring"],
   };
 
-  const diff: StructuralDiff = {
+  const diff: Extract<StructuralDiff, { type: "text" }> = {
     type: "text",
     lhs: {
       text: text(5),
-      regions: [
+      root: root([
         leaf(1, 1, [0, 1]),
         leaf(4, 3, [1, 4], [2]),
         leaf(5, 5, [4, 5], [4]),
-      ],
+      ]),
     },
     rhs: {
       text: text(5),
-      regions: [leaf(6, 1, [0, 1]), docstring, leaf(7, 5, [4, 5], [4])],
+      root: root([leaf(6, 1, [0, 1]), docstring, leaf(7, 5, [4, 5], [4])]),
     },
     structural_changes: {
       base: [
@@ -184,7 +188,7 @@ it("any region diffr collapses folds its changed lines, whatever its kind: a doc
     },
   };
 
-  const folded = foldedChanges(undefined, diff);
+  const folded = foldedChanges(diff);
   expect(folded).toEqual({ base: [], head: [[2, 3]] });
   expect(
     coverageProgress([
@@ -240,17 +244,12 @@ const ref = (path: string) => ({
 const records: {
   path: string;
   diff: StructuralDiff;
-  visibility?: { collapsed: boolean; label: string };
 }[] = [
   { path: "src/api.rs", diff: sourceDiff },
   { path: "src/main.rs", diff: plainDiff(2) },
   {
     path: "Cargo.lock",
-    diff: plainDiff(2),
-    visibility: {
-      collapsed: true,
-      label: "Generated file · hidden by default",
-    },
+    diff: hideFile(plainDiff(2)),
   },
   { path: "docs/readme.md", diff: plainDiff(2) },
 ];
@@ -278,7 +277,7 @@ async function progressApi() {
   vi.spyOn(data, "structuralChanges").mockImplementation(async function* () {
     yield {
       type: "start",
-      version: 4,
+      version: STRUCTURAL_DIFF_WIRE_VERSION,
       lhs: { type: "revision", rev: "base" },
       rhs: { type: "revision", rev: "head" },
       files: records.map(({ path }) => ({
@@ -287,8 +286,8 @@ async function progressApi() {
       })),
     } satisfies StructuralDiffEvent;
 
-    for (const { path, diff, visibility } of records)
-      yield { type: "file", file: ref(path), diff, visibility };
+    for (const { path, diff } of records)
+      yield { type: "file", file: ref(path), diff };
     yield { type: "complete", succeeded: records.length, failed: 0 };
   });
 
@@ -357,3 +356,28 @@ it("progress counts folded changes as done, overall, per lens and uncategorized"
     ).state,
   ).toBe("viewed");
 });
+
+function root(children: StructuralRegion[]): StructuralRegion {
+  const id = nextRoot++;
+
+  return {
+    kind: "fold",
+    id,
+    fold_state_id: id,
+    start: children[0].start,
+    end: children.at(-1)!.end,
+    indent: children[0].start,
+    children,
+  };
+}
+
+function hideFile(diff: StructuralDiff): StructuralDiff {
+  const hidden = structuredClone(diff);
+
+  if (hidden.type === "text")
+    for (const source of [hidden.lhs, hidden.rhs])
+      if (source)
+        source.root.visibility = { collapsed: true, label: "Test file" };
+
+  return hidden;
+}

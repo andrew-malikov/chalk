@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@chalk/json": "workspace:*",
-    "@dev.fast/diffr": "0.1.10",
+    "@dev.fast/diffr": "0.1.20",
     "eventsource-parser": "3.1.1",
     "zod": "catalog:"
   },

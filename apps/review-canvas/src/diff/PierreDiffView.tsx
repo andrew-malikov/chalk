@@ -39,7 +39,6 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   ExternalLinkIcon,
-  PlusIcon,
   WrapTextIcon,
 } from "lucide-react";
 import {
@@ -596,14 +595,6 @@ function Comparison({
     session.review?.targetKind !== "worktree" ||
     session.review?.historicalRevision !== null;
 
-  const canComment = !!(
-    gitlab?.editable &&
-    !scope &&
-    session.review?.historicalRevision === null &&
-    session.review?.pins?.base === gitlab.state?.refs.baseSha &&
-    session.review?.pins?.head === gitlab.state?.refs.headSha
-  );
-
   const sourceRequests = useMemo(() => new Set<AbortController>(), [url]);
   useEffect(
     () => () => {
@@ -716,7 +707,6 @@ function Comparison({
       themeType: theme === "light" ? ("light" as const) : ("dark" as const),
       preferredHighlighter: "shiki-js" as const,
       enableLineSelection: true,
-      enableGutterUtility: canComment,
       overflow: wrap ? ("wrap" as const) : ("scroll" as const),
       stickyHeaders: true,
       unsafeCSS:
@@ -747,7 +737,6 @@ function Comparison({
       sourceRequests,
       restore,
       structural,
-      canComment,
     ],
   );
 
@@ -955,71 +944,6 @@ function Comparison({
         renderAnnotation={(annotation) => (
           <GitLabInlineContent annotation={annotation.metadata} />
         )}
-        renderGutterUtility={
-          canComment
-            ? (getHoveredLine, item) => (
-                <ButtonPrimitive
-                  variant="ghost"
-                  size="xs"
-                  type="button"
-                  aria-label={`Add comment in ${item.id}`}
-                  title="Add comment"
-                  disabled={gitlab?.busy}
-                  {...withClass(
-                    "tw:h-auto tw:whitespace-normal tw:font-normal",
-                    styles.addComment,
-                  )}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    const line = getHoveredLine();
-
-                    if (
-                      !line ||
-                      !("side" in line) ||
-                      item.type !== "diff" ||
-                      !gitlab?.state
-                    )
-                      return;
-
-                    const selected = textSelection.current ?? selection;
-
-                    const range =
-                      selected?.id === item.id &&
-                      selected.range.side === line.side &&
-                      (!selected.range.endSide ||
-                        selected.range.endSide === line.side)
-                        ? selected.range
-                        : null;
-
-                    gitlab.compose(
-                      {
-                        kind: "inline",
-                        position: {
-                          ...gitlab.state.refs,
-                          oldPath: item.fileDiff.prevName || item.fileDiff.name,
-                          newPath: item.fileDiff.name,
-                          side: line.side === "deletions" ? "base" : "head",
-                          from: range
-                            ? Math.min(range.start, range.end)
-                            : line.lineNumber,
-                          to: range
-                            ? Math.max(range.start, range.end)
-                            : line.lineNumber,
-                        },
-                      },
-                      "inline",
-                    );
-                    textSelection.current = null;
-                    setSelection(null);
-                    select(null);
-                  }}
-                >
-                  <PlusIcon size={16} aria-hidden="true" />
-                </ButtonPrimitive>
-              )
-            : undefined
-        }
         renderHeaderPrefix={(item) => (
           <IconButton
             aria-label={`${item.collapsed ? "Expand" : "Collapse"} ${item.id}`}
@@ -1143,23 +1067,6 @@ const styles = stylex.create({
     position: "relative",
   },
   workspace: { minHeight: 0, flex: 1 },
-  addComment: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-    width: 20,
-    height: 20,
-    padding: 0,
-    marginInlineEnd: -12,
-    borderWidth: 0,
-    borderRadius: radius.small,
-    backgroundColor: tokens.link,
-    color: tokens.onAccent,
-    cursor: { default: "pointer", ":disabled": "wait" },
-    opacity: { default: 1, ":disabled": 0.5 },
-    outlineOffset: 2,
-  },
   notice: {
     padding: 16,
     color: tokens.inkMuted,

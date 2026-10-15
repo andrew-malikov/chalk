@@ -22,12 +22,12 @@ import {
 import { tutorialAssetsRoot } from "@chalk/tutorial/asset-paths";
 import { type ReviewInstanceIdentity } from "@review/node/desktop-discovery";
 import {
+  migrateDiffrConfig,
   readDiffrConfig,
   saveDiffrSummarizer,
   setDiffrConfigValue,
   testDiffrSummarizer,
 } from "@review/node/diffr-config";
-import { installFullDiffr } from "@review/node/diffr-languages.js";
 import { writePrivateJsonAtomic } from "@review/node/lib/atomic-write";
 import { readPackageVersion } from "@review/node/package-paths";
 import type { LocalReviewData } from "@review/node/review-api/local-data.js";
@@ -41,7 +41,6 @@ import {
   readScratchpadEnabled,
   writeScratchpadEnabled,
 } from "@review/node/storage/review-preferences";
-import { invalidateStructuralComparisons } from "@review/node/structural-comparisons.js";
 import { createTutorialService } from "@review/node/tutorial-service";
 import type { Hono } from "hono";
 import { z } from "zod";
@@ -232,19 +231,6 @@ export function createGlobalReviewServer(
 
     return serverJson(200, { ok: true });
   });
-  app.post("/diffr-languages/install", async () => {
-    try {
-      await installFullDiffr();
-      invalidateStructuralComparisons();
-
-      return serverJson(200, { installed: true });
-    } catch (error) {
-      return serverJson(503, {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  });
-
   app.get("/diffr-config", async () =>
     serverJson(200, await readDiffrConfig()),
   );
@@ -339,6 +325,7 @@ export function createGlobalReviewServer(
       return urlForBoundPort();
     },
     listen: async () => {
+      await migrateDiffrConfig();
       scratchpadEnabled = await readScratchpadEnabled();
       httpServer = Bun.serve({
         hostname: "127.0.0.1",

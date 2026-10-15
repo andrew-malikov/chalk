@@ -12,10 +12,9 @@
   "scripts": {
     "prebuild": "bun run --cwd ../.. build:workspace-deps && bun run --filter @chalk/tutorial ensure:assets",
     "build": "bun --bun run tsdown",
-    "ensure:diffr": "bun run --filter @chalk/review ensure:diffr",
     "pretest": "bun run --filter @chalk/tutorial ensure:assets",
     "test": "bun --bun run vitest run --config vitest.config.ts",
-    "test:integration:diffr": "bun run --cwd ../.. build:workspace-deps && bun run --filter @chalk/server ensure:diffr --required && bun --bun run vitest run --config vitest.integration.config.ts",
+    "test:integration:diffr": "bun run --cwd ../.. build:workspace-deps && bun --bun run vitest run --config vitest.integration.config.ts",
     "typecheck": "bun --bun run tsc --noEmit -p ."
   },
   "dependencies": {
@@ -23,7 +22,7 @@
     "@chalk/review": "workspace:*",
     "@chalk/review-contracts": "workspace:*",
     "@chalk/tutorial": "workspace:*",
-    "@dev.fast/diffr": "0.1.10",
+    "@dev.fast/diffr": "0.1.20",
     "hono": "4.13.7",
     "pino": "10.3.1",
     "zod": "catalog:"

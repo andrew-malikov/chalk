@@ -9,8 +9,8 @@ import {
   type StructuralProblem,
   decodeStructuralDiffEvent,
 } from "@chalk/review-contracts";
+import { diffrBinaryPath } from "@dev.fast/diffr";
 
-import { installedFullDiffr } from "./diffr-languages.js";
 import { findPackageRoot } from "./package-paths";
 
 export type DiffComparison =
@@ -29,22 +29,22 @@ export interface StructuralDiffRequest {
 export function diffrExecutable(packageRoot = findPackageRoot()): string {
   if (process.env.REVIEW_DIFFR_BINARY) return process.env.REVIEW_DIFFR_BINARY;
 
-  const full = installedFullDiffr(packageRoot);
-
-  if (full) return full;
-
+  // Chalk Desktop stages diffr beside its runtime. Without node_modules,
+  // Bun would resolve the package from its global cache instead.
   const bundled = path.join(
     packageRoot,
     "bin",
     process.platform === "win32" ? "diffr.exe" : "diffr",
   );
 
-  return existsSync(bundled) ? bundled : "diffr";
+  if (existsSync(bundled)) return bundled;
+
+  return diffrBinaryPath() ?? "diffr";
 }
 
 export function diffrMissingError(): Error {
   return new Error(
-    `Cannot find diffr at ${diffrExecutable()}. Chalk Desktop bundles it at bin/diffr under its runtime; in a checkout, run \`bun run --filter @chalk/review ensure:diffr\` or install diffr on PATH, or set REVIEW_DIFFR_BINARY to its executable.`,
+    `Cannot find diffr at ${diffrExecutable()}. Chalk Desktop bundles it at bin/diffr under its runtime; in a checkout, run \`bun install\` or install diffr on PATH, or set REVIEW_DIFFR_BINARY to its executable.`,
   );
 }
 
@@ -59,13 +59,7 @@ export async function* structuralDiff(
   input.signal.throwIfAborted();
   const comparison = input.comparison;
 
-  const args = [
-    "--repo",
-    input.repositoryPath,
-    "--format",
-    "ndjson",
-    "--stream-annotations",
-  ];
+  const args = ["--repo", input.repositoryPath, "--format", "ndjson"];
 
   switch (comparison.kind) {
     case "worktree":
@@ -118,7 +112,6 @@ export async function* structuralDiff(
   let completed = false;
   let aborted: StructuralProblem | undefined;
   let failed = 0;
-  let annotationFailed = false;
   const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
   // Bun does not end stdout when spawning a missing executable.
   void exited.catch(() => lines.close());
@@ -152,8 +145,6 @@ export async function* structuralDiff(
 
         failed = event.failed;
         aborted = event.aborted;
-      } else if (event.type === "annotations") {
-        annotationFailed ||= event.error !== undefined;
       } else if (event.type !== "file") {
         throw new Error(`Unexpected diffr event: ${event.type}`);
       }
@@ -168,13 +159,10 @@ export async function* structuralDiff(
       throw new Error("diffr stream ended before completion.");
     }
 
-    // diffr exits 2 for file or enrichment failures already reported by the stream.
+    // diffr exits 2 for file failures already reported by the stream.
     const code = await exited;
 
-    if (
-      code !== 0 &&
-      !(code === 2 && (failed > 0 || annotationFailed || aborted !== undefined))
-    )
+    if (code !== 0 && !(code === 2 && (failed > 0 || aborted !== undefined)))
       throw exitError(code);
   } finally {
     clearTimeout(idle);

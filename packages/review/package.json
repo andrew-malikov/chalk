@@ -17,14 +17,13 @@
   "scripts": {
     "test": "bun --bun run vitest run --config vitest.config.ts",
     "test:node": "bun --bun run vitest run --config vitest.config.ts --project shared-module-graph",
-    "typecheck": "bun --bun run tsc --noEmit -p .",
-    "ensure:diffr": "diffr-fetch --into bin"
+    "typecheck": "bun --bun run tsc --noEmit -p ."
   },
   "dependencies": {
     "@chalk/json": "workspace:*",
     "@chalk/local-vcs": "^0.1.0",
     "@chalk/review-contracts": "workspace:*",
-    "@dev.fast/diffr": "0.1.10",
+    "@dev.fast/diffr": "0.1.20",
     "@img/sharp-wasm32": "0.35.4",
     "fuzzysort": "4.0.2",
     "isomorphic-git": "1.38.10",
