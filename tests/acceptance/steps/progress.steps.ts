@@ -203,3 +203,18 @@ Then("the progress save error is cleared", async ({ page }) => {
     page.getByRole("alert").filter({ hasText: "Progress save unavailable" }),
   ).toHaveCount(0);
 });
+
+When(
+  "the file changes without reloading the canvas",
+  async ({ storedReview }) => {
+    await storedReview.repin("changed head contents", false);
+  },
+);
+
+Then("the server reports that the displayed file changed", async ({ page }) => {
+  await expect(page.getByRole("alert")).toContainText("This file changed");
+});
+
+When("I reload the changed review", async ({ storedReview }) => {
+  await storedReview.open();
+});

@@ -200,8 +200,8 @@ export class StoredReview {
     await this.open();
   }
 
-  async repin(change: string) {
-    await this.page.evaluate(() => window.reviewHarness.close());
+  async repin(change: string, reopen = true) {
+    if (reopen) await this.page.evaluate(() => window.reviewHarness.close());
     let base = this.base;
 
     if (change === "changed head contents") {
@@ -233,7 +233,8 @@ export class StoredReview {
       reviewId: this.reviewId,
       pins: { ...snapshot.pins!, base, head },
     });
-    await this.open();
+
+    if (reopen) await this.open();
   }
 
   async dispose() {

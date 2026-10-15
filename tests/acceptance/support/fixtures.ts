@@ -2,6 +2,7 @@ import { expect } from "@playwright/test";
 import { test as base, createBdd } from "playwright-bdd";
 
 import type { ReviewHarness } from "../harness/review";
+import { GitLabReview } from "./gitlab-review";
 import { StoredReview } from "./stored-review";
 
 interface AcceptanceReview {
@@ -13,7 +14,20 @@ interface AcceptanceReview {
 export const test = base.extend<{
   review: AcceptanceReview;
   storedReview: StoredReview;
+  gitlabReview: GitLabReview;
 }>({
+  gitlabReview: async ({ page }, use) => {
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    const review = new GitLabReview(page);
+
+    try {
+      await use(review);
+    } finally {
+      await review.dispose();
+      expect(errors).toEqual([]);
+    }
+  },
   storedReview: async ({ page }, use) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));

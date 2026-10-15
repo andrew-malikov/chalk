@@ -619,15 +619,16 @@ export class GitLabReviews {
     return this.locked(state.identity, async () => {
       const client = this.client(state.identity.host);
       const account = await client.account();
-      this.store.gitlab.update(id, (s) => {
-        s.account = account;
-      });
 
       if (state.account && state.account.id !== account.id)
         throw new ReviewInputError(
           "GitLab posting account changed. Refresh to review the account before posting again.",
           409,
         );
+
+      this.store.gitlab.update(id, (s) => {
+        s.account = account;
+      });
 
       const ids = draftId
         ? [draftId]

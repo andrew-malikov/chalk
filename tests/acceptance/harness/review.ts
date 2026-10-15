@@ -12,7 +12,7 @@ import { z } from "zod";
 
 export interface ReviewHarness {
   open(version: number, includeCommit: boolean): void;
-  openStored(snapshot: Snapshot): void;
+  openStored(snapshot: Snapshot, current?: boolean): void;
   close(): void;
   errors: string[];
   activeStreams: number;
@@ -39,16 +39,16 @@ const harness: ReviewHarness = {
     mounted?.dispose();
     mounted = undefined;
   },
-  openStored(snapshot) {
+  openStored(snapshot, current = false) {
     const bridge = testReviewBridge(
-      { serverUrl: location.origin },
+      { serverUrl: location.origin, reviewId: snapshot.reviewId },
       { request: (url, init) => fetch(url, init) },
     );
 
     const client = new ReviewApiClient(bridge.config, bridge.request);
     bridge.diffView.files = () =>
       client.read(`/${snapshot.reviewId}/diff?version=${snapshot.version}`);
-    show(snapshot, bridge, false);
+    show(snapshot, bridge, false, !current);
   },
   open(version, includeCommit) {
     harness.close();
@@ -102,6 +102,7 @@ function show(
   snapshot: Snapshot,
   bridge: ReviewCanvasBridge,
   fixture: boolean,
+  pinned = true,
 ) {
   harness.close();
 
@@ -178,7 +179,7 @@ function show(
   mounted = mountReviewCanvas(document.getElementById("review")!, {
     kind: "api",
     reviewId: snapshot.reviewId,
-    version: snapshot.version,
+    version: pinned ? snapshot.version : undefined,
     bridge,
   });
 }

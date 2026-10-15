@@ -48,3 +48,13 @@ Feature: Track viewed changes
     Then the "API" lens is viewed
     And the progress save error is cleared
     And "api.ts" is fully viewed
+
+  Scenario: Reject a viewed mark after the file changes behind the displayed review
+    When the file changes without reloading the canvas
+    And I mark the "API" lens as viewed
+    Then the server reports that the displayed file changed
+    And the "API" lens is unviewed
+    And "api.ts" is unviewed
+    When I reload the changed review
+    And I mark the "API" lens as viewed
+    Then the "API" lens is viewed
