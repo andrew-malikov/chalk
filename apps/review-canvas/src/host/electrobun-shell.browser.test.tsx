@@ -556,22 +556,9 @@ test("canvas menu supports checked selection, arrows and Escape", async () => {
   expect(document.activeElement).toBe(trigger);
 });
 
-test("keyboard find and close operate on the active review", async () => {
+test("keyboard close operates on the active review", async () => {
   await setup([a], a);
   await expect.poll(() => container.textContent).toContain("Alpha document");
-  await act(async () =>
-    document.dispatchEvent(
-      new KeyboardEvent("keydown", {
-        key: "f",
-        ctrlKey: true,
-        bubbles: true,
-        cancelable: true,
-      }),
-    ),
-  );
-  await expect
-    .poll(() => container.querySelector('[aria-label="Find"]'))
-    .not.toBeNull();
   await act(async () =>
     document.dispatchEvent(
       new KeyboardEvent("keydown", {

@@ -332,7 +332,7 @@ it("comments on the full native text selection using the selection button", asyn
 
   const end = last.lastElementChild!.getBoundingClientRect();
   const rect = floating.getBoundingClientRect();
-  expect(Math.abs(rect.left - end.right)).toBeLessThan(20);
+  expect(Math.abs(rect.left - end.right)).toBeLessThan(32);
   expect(rect.top).toBeLessThan(end.bottom);
   expect(rect.bottom).toBeGreaterThan(end.top);
 
@@ -488,14 +488,17 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
       node.textContent?.includes("after a.ts"),
   )!;
 
-  const gutter = added.querySelector<HTMLElement>(
-    '[data-gutter] [data-column-number="1"]',
-  )!;
-
-  await userEvent.click(gutter);
+  const textRange = document.createRange();
+  textRange.selectNodeContents(added.querySelector("[data-line]")!);
+  await act(async () => {
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(textRange);
+    document.dispatchEvent(new Event("selectionchange"));
+  });
   await vi.waitFor(() =>
     expect(container.querySelector('[aria-label="Copy ref"]')).not.toBeNull(),
   );
+  expect(document.getSelection()!.toString()).toContain("after a.ts");
   expect(context).not.toHaveBeenCalled();
   await userEvent.click(
     container.querySelector<HTMLButtonElement>('[aria-label="Copy ref"]')!,
@@ -515,28 +518,6 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
     { kind: "added", text: "after a.ts" },
   ]);
   expect(selection.apiSource.commit).toBe("commit-a");
-
-  await act(async () =>
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
-  );
-  const textRange = document.createRange();
-  textRange.selectNodeContents(added.querySelector("[data-line]")!);
-  await act(async () => {
-    document.getSelection()!.removeAllRanges();
-    document.getSelection()!.addRange(textRange);
-    document.dispatchEvent(new Event("selectionchange"));
-  });
-  await vi.waitFor(() =>
-    expect(container.querySelector('[aria-label="Copy ref"]')).not.toBeNull(),
-  );
-  expect(document.getSelection()!.toString()).toContain("after a.ts");
-  await userEvent.click(
-    container.querySelector<HTMLButtonElement>('[aria-label="Copy ref"]')!,
-  );
-  await vi.waitFor(() => expect(context).toHaveBeenCalledTimes(2));
-  const textSelection = JSON.parse(context.mock.calls[1]![1]!.body as string);
-  expect(textSelection.target).toEqual(selection.target);
-  expect(textSelection.selectedDiff).toEqual(selection.selectedDiff);
   await act(async () => {
     document.getSelection()!.removeAllRanges();
     document.dispatchEvent(new Event("selectionchange"));

@@ -615,13 +615,10 @@ function Shell(
         if (active.current) close(active.current);
         break;
       case "find":
-        if (active.current)
-          tabs.current.get(active.current)?.handle?.showFind();
-        else {
-          setSidebarHidden(false);
-          requestAnimationFrame(() => sidebarSearch.current?.focus());
-        }
-
+        // In-review find is disabled until it works; ⌘F only searches reviews from Home.
+        if (active.current) break;
+        setSidebarHidden(false);
+        requestAnimationFrame(() => sidebarSearch.current?.focus());
         break;
     }
   }
@@ -1010,16 +1007,6 @@ function Shell(
               <span>Open in VS Code</span>
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Find"
-            title="Find (⌘F)"
-            disabled={!loaded || !connected}
-            onClick={() => invoke("find")}
-          >
-            <SearchIcon aria-hidden="true" />
-          </Button>
           {sidebarHidden && (
             <Button
               variant="ghost"

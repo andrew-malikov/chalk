@@ -824,6 +824,9 @@ export class ReviewStore {
         )
           summary.pins = live.pins;
 
+        // Managed GitLab clones live in hashed directories, so name them by project.
+        const gitlab = summary.origin?.gitlab;
+
         const listed: ReviewApiSummary = {
           ...summary,
           firstCreatedAt: row.first_created_at
@@ -832,12 +835,19 @@ export class ReviewStore {
           repositoryPath: row.repository_path
             ? String(row.repository_path)
             : undefined,
-          repositoryGroup: row.repository_path
-            ? this.repositoryGroup(String(row.repository_path))
-            : undefined,
-          repositoryName: row.repository_name
-            ? String(row.repository_name)
-            : (summary.pins?.repositoryId ?? ""),
+          repositoryGroup: gitlab
+            ? {
+                key: `remote:https://${gitlab.host}/${gitlab.projectPath.toLowerCase()}.git`,
+                label: gitlab.projectPath,
+              }
+            : row.repository_path
+              ? this.repositoryGroup(String(row.repository_path))
+              : undefined,
+          repositoryName:
+            gitlab?.projectPath ??
+            (row.repository_name
+              ? String(row.repository_name)
+              : (summary.pins?.repositoryId ?? "")),
           viewedAt: row.viewed_at ? String(row.viewed_at) : null,
           dismissedAt: row.dismissed_at ? String(row.dismissed_at) : null,
           working: this.activity.isWorking(summary.reviewId),

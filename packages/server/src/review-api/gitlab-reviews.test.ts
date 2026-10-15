@@ -127,6 +127,9 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
     const snapshot = local.store.read(first.reviewId);
     const checkout = local.store.repositoryPath(snapshot.pins!.repositoryId);
     expect(checkout).not.toBe(origin);
+    expect(local.store.summary(first.reviewId)?.repositoryName).toBe(
+      "team/repo",
+    );
 
     const drafts = ["okay", "fail"].map((text) =>
       local.store.gitlab.save(first.reviewId, {

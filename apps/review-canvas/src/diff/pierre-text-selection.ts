@@ -96,7 +96,8 @@ export function selectedPierreText(
       side: side(first),
     },
     anchor: {
-      x: (backward ? rect.left : rect.right) + 4,
+      // Clear of the pointer that just finished the drag.
+      x: (backward ? rect.left : rect.right) + 16,
       y: rect.top + rect.height / 2,
     },
     textRange: range,

@@ -63,7 +63,7 @@ it.each(["split", "unified"] as const)(
       });
       const forward = selectedPierreText(items)!;
       const end = after.lastElementChild!.getBoundingClientRect();
-      expect(Math.abs(forward.anchor.x - end.right)).toBeLessThan(8);
+      expect(Math.abs(forward.anchor.x - end.right)).toBeLessThan(24);
       expect(forward.anchor.y).toBeGreaterThanOrEqual(end.top);
       expect(forward.anchor.y).toBeLessThanOrEqual(end.bottom);
       selection.removeAllRanges();
@@ -85,7 +85,7 @@ it.each(["split", "unified"] as const)(
       });
       const backward = selectedPierreText(items)!;
       const start = added.firstElementChild!.getBoundingClientRect();
-      expect(Math.abs(backward.anchor.x - start.left)).toBeLessThan(8);
+      expect(Math.abs(backward.anchor.x - start.left)).toBeLessThan(24);
       expect(backward.anchor.y).toBeGreaterThanOrEqual(start.top);
       expect(backward.anchor.y).toBeLessThanOrEqual(start.bottom);
       select(added, 0, after, 0);

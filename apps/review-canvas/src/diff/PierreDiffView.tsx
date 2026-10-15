@@ -54,6 +54,7 @@ import { createPortal } from "react-dom";
 import { z } from "zod";
 
 import { DiffCount } from "./diff-count";
+import { fileTreeRows } from "./file-tree";
 import {
   type PierreComparisonEntry,
   loadPierreComparison,
@@ -706,7 +707,6 @@ function Comparison({
       theme: theme === "light" ? "pierre-light" : "pierre-dark",
       themeType: theme === "light" ? ("light" as const) : ("dark" as const),
       preferredHighlighter: "shiki-js" as const,
-      enableLineSelection: true,
       overflow: wrap ? ("wrap" as const) : ("scroll" as const),
       stickyHeaders: true,
       unsafeCSS:
@@ -859,35 +859,49 @@ function Comparison({
       {treeContainer &&
         createPortal(
           <nav {...stylex.props(styles.tree)} aria-label="Changed files">
-            {visible.map((entry) => (
-              <div key={entry.file.path} {...stylex.props(styles.treeRow)}>
-                <ButtonPrimitive
-                  variant="ghost"
-                  size="xs"
-                  type="button"
-                  {...withClass(
-                    "tw:h-auto tw:justify-start tw:whitespace-normal tw:font-normal",
-                    styles.fileButton,
-                  )}
-                  aria-current={
-                    entry.file.path === selectedPath ? "true" : undefined
-                  }
-                  onClick={() => navigate(entry.file.path)}
-                  title={
-                    entry.file.previousPath
-                      ? `${entry.file.previousPath} → ${entry.file.path}`
-                      : entry.file.path
-                  }
+            {fileTreeRows(visible).map(({ depth, name, entry }, index) =>
+              !entry ? (
+                <div
+                  key={index}
+                  {...stylex.props(styles.treeRow, styles.treeDirectory)}
+                  style={{ paddingInlineStart: 8 + depth * 12 }}
                 >
-                  {entry.file.path}
-                </ButtonPrimitive>
-                <DiffCount
-                  additions={entry.file.additions}
-                  deletions={entry.file.deletions}
-                />
-                {viewed(entry.file.path)}
-              </div>
-            ))}
+                  {name}
+                </div>
+              ) : (
+                <div
+                  key={entry.file.path}
+                  {...stylex.props(styles.treeRow)}
+                  style={{ paddingInlineStart: 8 + depth * 12 }}
+                >
+                  <ButtonPrimitive
+                    variant="ghost"
+                    size="xs"
+                    type="button"
+                    {...withClass(
+                      "tw:h-auto tw:justify-start tw:whitespace-normal tw:font-normal",
+                      styles.fileButton,
+                    )}
+                    aria-current={
+                      entry.file.path === selectedPath ? "true" : undefined
+                    }
+                    onClick={() => navigate(entry.file.path)}
+                    title={
+                      entry.file.previousPath
+                        ? `${entry.file.previousPath} → ${entry.file.path}`
+                        : entry.file.path
+                    }
+                  >
+                    {name}
+                  </ButtonPrimitive>
+                  <DiffCount
+                    additions={entry.file.additions}
+                    deletions={entry.file.deletions}
+                  />
+                  {viewed(entry.file.path)}
+                </div>
+              ),
+            )}
           </nav>,
           treeContainer,
         )}
@@ -1081,6 +1095,15 @@ const styles = stylex.create({
     alignItems: "center",
     minHeight: 28,
     paddingInline: 8,
+  },
+  treeDirectory: {
+    minHeight: 24,
+    color: tokens.inkMuted,
+    fontFamily: tokens.fontSans,
+    fontSize: fontSize.small,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   fileButton: {
     flex: 1,
