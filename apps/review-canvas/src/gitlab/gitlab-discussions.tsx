@@ -1,21 +1,20 @@
 import { Checkbox } from "@canvas/components/ui/checkbox";
 import { Input } from "@canvas/components/ui/input";
-import { Textarea } from "@canvas/components/ui/textarea";
+import { MarkdownContent } from "@canvas/documents/agent-markdown";
+import { cn } from "@canvas/lib/utils";
 import { ReviewPanelFrame } from "@canvas/review/review-components";
 import { loadingStyles } from "@canvas/styles/loading.stylex";
-import { resolvedDiscussionMarker } from "@canvas/styles/markers.stylex";
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { withClass } from "@canvas/styles/stylex-props";
 import { Button } from "@canvas/ui/button";
 import type {
   GitLabDiscussion,
   GitLabDraft,
   GitLabTarget,
 } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { ChevronRightIcon, CornerDownRightIcon } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
+import { CommentEditor } from "./comment-editor";
 import { useGitLab } from "./gitlab-context";
 
 export function GitLabDiscussionPanel() {
@@ -79,9 +78,9 @@ export function GitLabDiscussionContent() {
   const sent = drafts.filter((d) => d.status === "sent");
 
   return (
-    <div {...stylex.props(styles.content)}>
+    <div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-4 tw:p-4 tw:font-[family-name:var(--chrome-font)] tw:text-[13px] tw:text-[var(--ink)]">
       {state ? (
-        <div {...stylex.props(styles.identity)}>
+        <div className="tw:flex tw:flex-col tw:gap-1.5 tw:text-[12px] tw:wrap-anywhere tw:text-[var(--ink-faint)]">
           <a href={state.identity.url} target="_blank" rel="noreferrer">
             {state.identity.projectPath} !{state.identity.iid}
           </a>
@@ -93,7 +92,7 @@ export function GitLabDiscussionContent() {
           </span>
         </div>
       ) : (
-        <p role="status" {...stylex.props(loadingStyles.text)}>
+        <p role="status" {...withClass(undefined, loadingStyles.text)}>
           Loading GitLab discussions…
         </p>
       )}
@@ -103,7 +102,7 @@ export function GitLabDiscussionContent() {
       {gitlab.error && <p role="alert">{gitlab.error}</p>}
       {state?.connectionError && <p role="alert">{state.connectionError}</p>}
       {state?.sourceError && <p role="alert">{state.sourceError}</p>}
-      <div {...stylex.props(styles.actions)}>
+      <div className={actions}>
         <Button
           disabled={!gitlab.editable || gitlab.busy || !state}
           onClick={() => gitlab.compose({ kind: "general" })}
@@ -124,9 +123,7 @@ export function GitLabDiscussionContent() {
           Post all
         </Button>
       </div>
-      <h3 {...stylex.props(styles.heading)}>
-        Open discussions · {open.length}
-      </h3>
+      <h3 className={heading}>Open discussions · {open.length}</h3>
       {open.length === 0 && state && <p>No open discussions.</p>}
       {open.map((d) => (
         <Discussion key={d.id} discussion={d} />
@@ -139,16 +136,16 @@ export function GitLabDiscussionContent() {
           <Discussion key={d.id} discussion={d} />
         ))}
       </Collapsible>
-      <h3 {...stylex.props(styles.heading)}>Local drafts · {unsent.length}</h3>
+      <h3 className={heading}>Local drafts · {unsent.length}</h3>
       {unsent.map((d) => (
         <DraftEditor key={d.id} draft={d} />
       ))}
       {sent.length > 0 && (
         <Collapsible summary={`Sent · ${sent.length}`}>
           {sent.map((d) => (
-            <div key={d.id} {...stylex.props(styles.card, styles.inlineCard)}>
-              <span {...stylex.props(styles.meta)}>Sent · #{d.noteId}</span>
-              <p {...stylex.props(styles.body)}>{d.text}</p>
+            <div key={d.id} className={cn(card, inlineCard)}>
+              <span className={meta}>Sent · #{d.noteId}</span>
+              <NoteBody source={d.text} />
             </div>
           ))}
         </Collapsible>
@@ -196,7 +193,7 @@ export function GitLabInlineContent({
   if (!discussion && local.length === 0) return null;
 
   const content = (
-    <div {...stylex.props(styles.thread)}>
+    <div className="tw:flex tw:flex-col">
       {discussion && <Discussion discussion={discussion} inline />}
       {local.map((draft) => (
         <DraftEditor
@@ -211,7 +208,7 @@ export function GitLabInlineContent({
 
   return (
     <section
-      {...stylex.props(styles.inline)}
+      className="tw:m-0 tw:box-border tw:flex tw:w-full tw:min-w-0 tw:flex-col tw:gap-2 tw:whitespace-normal tw:bg-[var(--surface-raised)] tw:p-3 tw:font-[family-name:var(--chrome-font)] tw:text-[13px] tw:text-[var(--ink)]"
       aria-label={`GitLab ${annotation.kind} ${annotation.id}`}
     >
       {gitlab.error && <p role="alert">{gitlab.error}</p>}
@@ -240,17 +237,17 @@ function Collapsible({
 }) {
   return (
     <details
-      {...stylex.props(styles.resolvedDetails, resolvedDiscussionMarker)}
+      className="tw:group tw:max-w-[820px]"
       open={open ? true : undefined}
     >
-      <summary {...stylex.props(styles.resolvedSummary)}>
+      <summary className="tw:flex tw:cursor-pointer tw:list-none tw:items-center tw:gap-2 tw:px-1 tw:py-2 tw:text-[var(--ink-muted)] tw:hover:text-[var(--ink)] tw:[&::-webkit-details-marker]:hidden">
         <ChevronRightIcon
-          {...stylex.props(styles.resolvedChevron)}
+          className="tw:size-3.5 tw:shrink-0 tw:group-open:rotate-90"
           aria-hidden="true"
         />
         {summary}
       </summary>
-      <div {...stylex.props(styles.list)}>{children}</div>
+      <div className="tw:flex tw:flex-col tw:gap-2">{children}</div>
     </details>
   );
 }
@@ -272,17 +269,17 @@ function Discussion({
   return (
     <div
       ref={ref}
-      {...stylex.props(
-        styles.card,
-        styles.inlineCard,
-        inline && styles.discussionCard,
-        gitlab.selected === discussion.id && styles.selected,
+      className={cn(
+        card,
+        inlineCard,
+        inline && "tw:relative tw:z-[1]",
+        gitlab.selected === discussion.id && "tw:border-[var(--ink-faint)]",
       )}
     >
       {inline ? null : discussion.location ? (
         <Button
           variant="ghost"
-          xstyle={styles.location}
+          className="tw:h-auto tw:self-start tw:bg-transparent tw:px-0 tw:has-[>svg]:px-0 tw:text-[11px] tw:text-[color:var(--ink-faint)] tw:hover:text-[color:var(--ink)]"
           onClick={() => gitlab.select(discussion)}
         >
           {discussion.location.file}:{discussion.location.from}
@@ -292,7 +289,7 @@ function Discussion({
           · {discussion.location.side}
         </Button>
       ) : (
-        <span {...stylex.props(styles.meta)}>
+        <span className={meta}>
           {discussion.position
             ? "Unmapped code discussion"
             : "General discussion"}
@@ -301,39 +298,43 @@ function Discussion({
       {discussion.comments.map((note, index) => (
         <div
           key={note.id}
-          {...stylex.props(styles.comment, index > 0 && styles.reply)}
+          className={cn(
+            "tw:flex tw:min-w-0 tw:items-start tw:gap-3",
+            index > 0 && "tw:ms-11",
+          )}
         >
-          <span {...stylex.props(styles.avatar)} aria-hidden="true">
+          <span
+            className="tw:flex tw:size-8 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-full tw:bg-[color-mix(in_srgb,var(--link)_12%,transparent)] tw:text-[11px] tw:font-semibold tw:text-[var(--link)]"
+            aria-hidden="true"
+          >
             {(note.author.name || note.author.username)
               .slice(0, 2)
               .toUpperCase()}
           </span>
-          <div {...stylex.props(styles.commentContent)}>
-            <div {...stylex.props(styles.byline)}>
+          <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-1">
+            <div className="tw:flex tw:flex-wrap tw:items-baseline tw:gap-2">
               <strong title={`@${note.author.username}`}>
                 {note.author.id === gitlab.state?.account?.id
                   ? "You"
                   : note.author.name || note.author.username}
               </strong>
-              {note.author.bot && (
-                <span {...stylex.props(styles.meta)}>bot</span>
-              )}
+              {note.author.bot && <span className={meta}>bot</span>}
               <time
-                {...stylex.props(styles.meta)}
+                className={meta}
                 dateTime={note.createdAt}
                 title={new Date(note.createdAt).toLocaleString()}
               >
                 {relativeTime(note.createdAt)}
               </time>
             </div>
-            <p {...stylex.props(styles.body)}>{note.body}</p>
+            <NoteBody source={note.body} />
           </div>
         </div>
       ))}
-      <div {...stylex.props(styles.actions, styles.threadActions)}>
+      <div className={cn(actions, "tw:ms-11 tw:items-center")}>
         <Button
           variant="ghost"
-          xstyle={styles.textAction}
+          className={textAction}
           disabled={!gitlab.editable || gitlab.busy}
           onClick={() =>
             gitlab.compose(
@@ -348,7 +349,7 @@ function Discussion({
         {discussion.resolvable && !discussion.resolved && (
           <Button
             variant="ghost"
-            xstyle={styles.textAction}
+            className={textAction}
             loading={
               gitlab.pending?.action === "resolve" &&
               gitlab.pending.input.discussionId === discussion.id
@@ -362,7 +363,7 @@ function Discussion({
           </Button>
         )}
         <a
-          {...stylex.props(styles.sourceLink)}
+          className="tw:ms-auto tw:text-[11px] tw:text-[var(--ink-faint)] tw:no-underline tw:hover:underline"
           href={gitlab.state?.identity.url}
           target="_blank"
           rel="noreferrer"
@@ -385,15 +386,17 @@ function DraftEditor({
 }) {
   const gitlab = useGitLab()!;
   const editor = gitlab.editors[draft.id];
-  const input = useRef<HTMLTextAreaElement>(null);
-  const inputId = useId();
+  const labelId = useId();
   const [verified, setVerified] = useState(false);
   const [noteId, setNoteId] = useState("");
-  useEffect(() => {
-    if (gitlab.selected === draft.id) input.current?.focus();
-  }, [gitlab.selected, draft.id]);
   const locked = !["saved", "failed"].includes(draft.status);
   const target = editor?.target ?? draft.target;
+
+  const canPost =
+    gitlab.editable &&
+    !gitlab.busy &&
+    !!(editor?.text ?? draft.text).trim() &&
+    !(draft.target.kind === "inline" && draft.target.unmapped);
 
   const thread =
     target.kind === "reply"
@@ -402,9 +405,8 @@ function DraftEditor({
 
   const saveStatus = (
     <span
-      {...stylex.props(
-        styles.meta,
-        styles.saveStatus,
+      {...withClass(
+        cn(meta, "tw:ms-auto"),
         editor?.dirty && !editor.error && loadingStyles.text,
       )}
       role="status"
@@ -425,18 +427,17 @@ function DraftEditor({
 
   return (
     <div
-      {...stylex.props(
-        styles.card,
-        inline && styles.inlineCard,
-        attached && styles.attachedDraft,
+      className={cn(
+        card,
+        inline && inlineCard,
+        attached &&
+          "tw:-mt-2 tw:rounded-t-none tw:bg-[var(--surface-raised)] tw:pt-5",
       )}
     >
-      <div {...stylex.props(styles.draftHeader)}>
-        <label htmlFor={inputId}>
-          {targetLabel(editor?.target ?? draft.target)}
-        </label>
+      <div className="tw:flex tw:flex-wrap tw:items-baseline tw:justify-between tw:gap-2 tw:wrap-anywhere">
+        <span id={labelId}>{targetLabel(editor?.target ?? draft.target)}</span>
         {inline && (
-          <span {...stylex.props(styles.meta)}>
+          <span className={meta}>
             {gitlab.state?.account
               ? `Posting as @${gitlab.state.account.username}`
               : "Posting account unavailable"}{" "}
@@ -458,32 +459,30 @@ function DraftEditor({
           code to write a replacement comment.
         </p>
       )}
-      <Textarea
-        ref={input}
-        id={inputId}
-        {...stylex.props(styles.editor, inline && styles.inlineEditor)}
+      <CommentEditor
         value={editor?.text ?? draft.text}
-        onChange={(event) => gitlab.edit(draft.id, event.target.value)}
+        onChange={(text) => gitlab.edit(draft.id, text)}
+        onSubmit={() => {
+          if (canPost) void gitlab.run("post", { id: draft.id });
+        }}
         disabled={!gitlab.editable || gitlab.busy || locked}
+        focused={gitlab.selected === draft.id}
         placeholder="Write your comment…"
+        labelledBy={labelId}
+        inline={inline}
       />
       {(editor?.error || draft.error) && (
         <p role="alert">{editor?.error ?? draft.error}</p>
       )}
       {!locked ? (
-        <div {...stylex.props(styles.actions, styles.draftActions)}>
+        <div className={cn(actions, "tw:items-center")}>
           <Button
             variant="primary"
             loading={
               gitlab.pending?.action === "post" &&
               gitlab.pending.input.id === draft.id
             }
-            disabled={
-              !gitlab.editable ||
-              gitlab.busy ||
-              !(editor?.text ?? draft.text).trim() ||
-              (draft.target.kind === "inline" && draft.target.unmapped)
-            }
+            disabled={!canPost}
             onClick={() => void gitlab.run("post", { id: draft.id })}
           >
             Post
@@ -509,7 +508,7 @@ function DraftEditor({
           {saveStatus}
         </div>
       ) : (
-        <div {...stylex.props(styles.recovery)}>
+        <div className="tw:flex tw:flex-col tw:gap-2">
           {saveStatus}
           <label>
             <Checkbox
@@ -591,173 +590,25 @@ function relativeTime(date: string) {
   return new Date(date).toLocaleDateString();
 }
 
-const styles = stylex.create({
-  inline: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-    padding: 12,
-    margin: 0,
-    color: tokens.ink,
-    backgroundColor: tokens.surfaceRaised,
-    fontFamily: tokens.chromeFont,
-    fontSize: fontSize.ui,
-    whiteSpace: "normal",
-    minWidth: 0,
-    width: "100%",
-    boxSizing: "border-box",
-  },
-  thread: { display: "flex", flexDirection: "column", gap: 0 },
-  content: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 16,
-    padding: 16,
-    color: tokens.ink,
-    fontFamily: tokens.chromeFont,
-    fontSize: fontSize.ui,
-    minWidth: 0,
-  },
-  identity: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-    overflowWrap: "anywhere",
-    fontSize: fontSize.body,
-    color: tokens.inkFaint,
-  },
-  heading: {
-    fontSize: fontSize.ui,
-    fontWeight: fontWeight.semibold,
-    margin: 0,
-  },
-  card: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderStyle: "solid",
-    borderColor: tokens.chromeBorder,
-    borderRadius: radius.surface,
-    minWidth: 0,
-  },
-  selected: { borderColor: tokens.inkFaint },
-  inlineCard: {
-    backgroundColor: tokens.surface,
-    maxWidth: 820,
-    gap: 12,
-  },
-  discussionCard: { position: "relative", zIndex: 1 },
-  attachedDraft: {
-    marginTop: -8,
-    paddingTop: 20,
-    backgroundColor: tokens.surfaceRaised,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-  },
-  resolvedDetails: { maxWidth: 820 },
-  list: { display: "flex", flexDirection: "column", gap: 8 },
-  location: {
-    alignSelf: "flex-start",
-    paddingInline: 0,
-    height: "auto",
-    backgroundColor: "transparent",
-    color: { default: tokens.inkFaint, ":hover": tokens.ink },
-    fontSize: fontSize.small,
-  },
-  resolvedSummary: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    paddingBlock: 8,
-    paddingInline: 4,
-    listStyle: "none",
-    color: { default: tokens.inkMuted, ":hover": tokens.ink },
-    cursor: "pointer",
-    "::marker": { content: "''" },
-    "::-webkit-details-marker": { display: "none" },
-  },
-  resolvedChevron: {
-    width: 14,
-    height: 14,
-    flexShrink: 0,
-    transform: {
-      default: "rotate(0deg)",
-      [stylex.when.ancestor("[open]", resolvedDiscussionMarker)]:
-        "rotate(90deg)",
-    },
-  },
-  draftHeader: {
-    display: "flex",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    flexWrap: "wrap",
-    gap: 8,
-    overflowWrap: "anywhere",
-  },
-  comment: { display: "flex", alignItems: "flex-start", gap: 12, minWidth: 0 },
-  reply: { marginInlineStart: 44 },
-  avatar: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 32,
-    height: 32,
-    flexShrink: 0,
-    borderRadius: radius.round,
-    backgroundColor: `color-mix(in srgb, ${tokens.link} 12%, transparent)`,
-    color: tokens.link,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.semibold,
-  },
-  commentContent: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 4,
-    minWidth: 0,
-    flex: 1,
-  },
-  byline: { display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: 8 },
-  threadActions: { marginInlineStart: 44, alignItems: "center" },
-  textAction: {
-    color: tokens.link,
-    paddingInline: 0,
-    backgroundColor: "transparent",
-    fontSize: fontSize.ui,
-  },
-  sourceLink: {
-    color: tokens.inkFaint,
-    fontSize: fontSize.small,
-    marginInlineStart: "auto",
-    textDecorationLine: { default: "none", ":hover": "underline" },
-  },
-  actions: { display: "flex", flexWrap: "wrap", gap: 8 },
-  draftActions: { alignItems: "center" },
-  saveStatus: { marginInlineStart: "auto" },
-  body: {
-    whiteSpace: "pre-wrap",
-    overflowWrap: "anywhere",
-    margin: 0,
-    lineHeight: 1.6,
-  },
-  meta: { fontSize: fontSize.small, color: tokens.inkFaint },
-  editor: {
-    width: "100%",
-    boxSizing: "border-box",
-    minHeight: 90,
-    resize: "vertical",
-    backgroundColor: tokens.bg,
-    color: tokens.ink,
-    borderWidth: 1,
-    borderStyle: "solid",
-    borderColor: tokens.chromeBorder,
-    borderRadius: radius.small,
-    padding: 8,
-    fontFamily: tokens.chromeFont,
-    fontSize: fontSize.ui,
-    outlineOffset: 2,
-  },
-  inlineEditor: { minHeight: 72 },
-  recovery: { display: "flex", flexDirection: "column", gap: 8 },
-});
+/** GitLab Markdown, rendered as the editor's Preview renders it. */
+function NoteBody({ source }: { source: string }) {
+  return (
+    <div className="tw:min-w-0 tw:leading-[1.6] tw:wrap-anywhere">
+      <MarkdownContent source={source} />
+    </div>
+  );
+}
+
+const card =
+  "tw:flex tw:min-w-0 tw:flex-col tw:gap-2.5 tw:rounded-[8px] tw:border tw:border-[var(--chrome-border)] tw:p-3";
+
+const inlineCard = "tw:max-w-[820px] tw:gap-3 tw:bg-[var(--surface)]";
+
+const actions = "tw:flex tw:flex-wrap tw:gap-2";
+
+const heading = "tw:m-0 tw:text-[13px] tw:font-semibold";
+
+const meta = "tw:text-[11px] tw:text-[var(--ink-faint)]";
+
+const textAction =
+  "tw:bg-transparent tw:px-0 tw:has-[>svg]:px-0 tw:text-[13px] tw:text-[color:var(--link)]";

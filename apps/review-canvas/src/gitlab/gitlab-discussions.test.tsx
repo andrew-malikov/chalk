@@ -11,6 +11,10 @@ import { GitLabDiscussionContent } from "./gitlab-discussions";
 
 it("keeps unsaved text after an autosave failure and flushes the latest edit before explicit posting", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  // jsdom has no layout; the comment editor scrolls its selection into view.
+  Range.prototype.getClientRects = () =>
+    document.createElement("span").getClientRects();
+  Range.prototype.getBoundingClientRect = () => new DOMRect();
 
   const state: GitLabState = {
     identity: {
@@ -87,17 +91,14 @@ it("keeps unsaved text after an autosave failure and flushes the latest edit bef
     );
     expect(container.textContent).toContain("@andrew");
     await act(async () => button("New comment").click());
-    const textarea = container.querySelector("textarea")!;
+    const textbox = container.querySelector('[role="textbox"]')!;
+    // The editor picks up typing from DOM mutations.
     await act(async () => {
-      Object.getOwnPropertyDescriptor(
-        HTMLTextAreaElement.prototype,
-        "value",
-      )!.set!.call(textarea, "Latest reply");
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      textbox.firstElementChild!.prepend("Latest reply");
     });
     await act(async () => button("Post").click());
     expect(calls).not.toContain("/gitlab/post");
-    expect(textarea.value).toBe("Latest reply");
+    expect(textbox.textContent).toBe("Latest reply");
     expect(container.textContent).toContain("Disk unavailable");
     rejectSave = false;
     await act(async () => button("Post").click());

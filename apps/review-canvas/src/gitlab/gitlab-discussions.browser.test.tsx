@@ -173,8 +173,8 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
       await userEvent.click(button("GitLab comment"));
 
       const hovered = () =>
-        container.querySelector<HTMLTextAreaElement>(
-          '[aria-label^="GitLab draft"] textarea',
+        container.querySelector<HTMLElement>(
+          '[aria-label^="GitLab draft"] [role="textbox"]',
         );
 
       await vi.waitFor(() => expect(hovered()).not.toBeNull());
@@ -186,9 +186,11 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
         }),
       );
       await userEvent.click(
-        container
-          .querySelector<HTMLElement>('[aria-label^="GitLab draft"]')!
-          .querySelectorAll("button")[1]!,
+        [
+          ...container
+            .querySelector<HTMLElement>('[aria-label^="GitLab draft"]')!
+            .querySelectorAll("button"),
+        ].find((b) => b.textContent === "Discard")!,
       );
       await vi.waitFor(() => expect(hovered()).toBeNull());
       // Composing keeps the line selected; clicking it again clears it.
@@ -211,19 +213,21 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
     await userEvent.click(button("GitLab comment"));
     await vi.waitFor(() =>
       expect(
-        container.querySelector('[aria-label^="GitLab draft"] textarea'),
+        container.querySelector(
+          '[aria-label^="GitLab draft"] [role="textbox"]',
+        ),
       ).not.toBeNull(),
     );
 
-    const inline = container.querySelector<HTMLTextAreaElement>(
-      '[aria-label^="GitLab draft"] textarea',
+    const inline = container.querySelector<HTMLElement>(
+      '[aria-label^="GitLab draft"] [role="textbox"]',
     )!;
 
     expect(document.activeElement).toBe(inline);
     await userEvent.fill(inline, "Inline text");
     await vi.waitFor(() => expect(state.drafts[0]?.text).toBe("Inline text"));
     expect(
-      container.querySelector('[aria-label^="GitLab draft"] textarea'),
+      container.querySelector('[aria-label^="GitLab draft"] [role="textbox"]'),
     ).toBe(inline);
     expect(document.activeElement).toBe(inline);
     expect(state.drafts[0]?.target).toMatchObject({
@@ -243,7 +247,7 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
       )!;
 
     await userEvent.click(threadButton("Reply"));
-    const reply = thread().querySelector("textarea")!;
+    const reply = thread().querySelector<HTMLElement>('[role="textbox"]')!;
     await userEvent.fill(reply, "Keep this reply");
     const resolveButton = threadButton("Resolve");
     const resolveWidth = resolveButton.getBoundingClientRect().width;
@@ -254,7 +258,7 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
     expect(resolveButton.disabled).toBe(true);
     expect(resolveButton.getBoundingClientRect().width).toBe(resolveWidth);
     expect(threadButton("Reply").hasAttribute("aria-busy")).toBe(false);
-    expect(reply.value).toBe("Keep this reply");
+    expect(reply.textContent).toBe("Keep this reply");
     expect(resolveCalls).toBe(1);
     resolveRequest.resolve();
     await vi.waitFor(() =>
@@ -262,7 +266,7 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
         "Resolved",
       ),
     );
-    expect(reply.value).toBe("Keep this reply");
+    expect(reply.textContent).toBe("Keep this reply");
     expect(state.drafts.find((d) => d.target.kind === "reply")?.text).toBe(
       "Keep this reply",
     );

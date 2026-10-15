@@ -194,10 +194,12 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
 
   await click("Reply");
   await vi.waitFor(() =>
-    expect(thread().querySelector("textarea")).not.toBeNull(),
+    expect(
+      thread().querySelector<HTMLElement>('[role="textbox"]'),
+    ).not.toBeNull(),
   );
   await userEvent.fill(
-    thread().querySelector("textarea")!,
+    thread().querySelector<HTMLElement>('[role="textbox"]')!,
     "Preserved with a regression check",
   );
   await click("Post");
@@ -205,24 +207,31 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
     expect(thread().textContent).toContain("Disk unavailable"),
   );
   expect(posts).toEqual([]);
-  expect(thread().querySelector("textarea")!.value).toBe(
-    "Preserved with a regression check",
-  );
+  expect(
+    thread().querySelector<HTMLElement>('[role="textbox"]')!.textContent,
+  ).toBe("Preserved with a regression check");
   failSave = false;
   await click("Post");
   await vi.waitFor(() =>
     expect(thread().textContent).toContain("Preserved with a regression check"),
   );
   expect(posts).toEqual(["Preserved with a regression check"]);
-  await vi.waitFor(() => expect(thread().querySelector("textarea")).toBeNull());
+  await vi.waitFor(() =>
+    expect(thread().querySelector<HTMLElement>('[role="textbox"]')).toBeNull(),
+  );
   await click("Reply");
-  await userEvent.fill(thread().querySelector("textarea")!, "Follow-up draft");
+  await userEvent.fill(
+    thread().querySelector<HTMLElement>('[role="textbox"]')!,
+    "Follow-up draft",
+  );
   await click("Resolve");
   await vi.waitFor(() => expect(state.discussions[0]!.resolved).toBe(true));
   expect(state.drafts.find((d) => d.status === "saved")?.text).toBe(
     "Follow-up draft",
   );
-  expect(thread().querySelector("textarea")!.value).toBe("Follow-up draft");
+  expect(
+    thread().querySelector<HTMLElement>('[role="textbox"]')!.textContent,
+  ).toBe("Follow-up draft");
   await click("Discard");
   await vi.waitFor(() =>
     expect(thread().querySelector("details")?.open).toBe(false),
@@ -338,10 +347,15 @@ it("comments on the full native text selection using the selection button", asyn
 
   await userEvent.click(floating);
   await vi.waitFor(() =>
-    expect(container.querySelector("textarea")).not.toBeNull(),
+    expect(
+      container.querySelector<HTMLElement>('[role="textbox"]'),
+    ).not.toBeNull(),
   );
   expect(container.textContent).toContain("new.ts:1–2 · head");
-  await userEvent.fill(container.querySelector("textarea")!, "Selected range");
+  await userEvent.fill(
+    container.querySelector<HTMLElement>('[role="textbox"]')!,
+    "Selected range",
+  );
   await vi.waitFor(() => expect(state.drafts[0]?.text).toBe("Selected range"));
   expect(state.drafts[0]!.target).toMatchObject({
     kind: "inline",
