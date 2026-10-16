@@ -7,6 +7,7 @@ import {
 import { Switch } from "@canvas/components/ui/switch";
 import { Choice } from "@canvas/settings/settings-choice";
 import { Button, IconButton } from "@canvas/ui/button";
+import { ChatIcon } from "@canvas/ui/icons";
 import { StatusBanner } from "@canvas/ui/status-banner";
 import { textStyles } from "@canvas/ui/text";
 import {
@@ -37,7 +38,7 @@ import {
   useAgentSelection,
 } from "./agent-context/agent-selection";
 import { observeAgentTextSelection } from "./agent-context/agent-text-selection";
-import { DiffLayoutControl } from "./diff/diff-layout-control";
+import { DiffSettingsControl } from "./diff/diff-settings";
 import { ReviewDiffView } from "./diff/DiffView";
 import { ReviewCommitsView } from "./diff/ReviewCommitsView";
 import { useDocumentEmbedScroll } from "./documents/document-embed-scroll";
@@ -590,16 +591,12 @@ function ReviewLayoutContent({
                 />
               </div>
               <ReviewBatonChip outcome={review.submissionOutcome} />
-              <DiffLayoutControl />
+              <DiffSettingsControl />
               {gitlab && (
-                <Button
-                  variant="ghost"
-                  xstyle={shellStyles.topbarItem}
-                  aria-expanded={gitlabShown}
+                <DiscussionsButton
+                  expanded={gitlabShown}
                   onClick={gitlab.toggle}
-                >
-                  Discussions
-                </Button>
+                />
               )}
               {!scratchpad &&
                 !review.historicalRevision &&
@@ -842,12 +839,34 @@ const scopeBarStyles = stylex.create({
  * the review is simply waiting: the corner action already says what to do, and
  * a standing "awaiting your review" chip was noise on every review.
  */
+function DiscussionsButton({
+  expanded,
+  onClick,
+}: {
+  expanded: boolean;
+  onClick(): void;
+}): ReactElement {
+  const tooltip = useTooltip("Discussions");
+
+  return (
+    <IconButton
+      ref={tooltip}
+      xstyle={shellStyles.topbarItem}
+      aria-label="Discussions"
+      aria-expanded={expanded}
+      onClick={onClick}
+    >
+      <ChatIcon xstyle={controlStyles.chromeIcon} />
+    </IconButton>
+  );
+}
+
 function ReviewBatonChip({
   outcome,
 }: {
   outcome: ReviewSubmissionOutcome | null;
 }): ReactElement | null {
-  const tooltip = useTooltip<HTMLSpanElement>("Dismissed");
+  const tooltip = useTooltip<HTMLSpanElement>("Settled");
 
   if (!outcome) return null;
 
@@ -861,7 +880,7 @@ function ReviewBatonChip({
         size={12}
         aria-hidden="true"
       />
-      <span>dismissed</span>
+      <span>settled</span>
     </span>
   );
 }

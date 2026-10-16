@@ -664,6 +664,7 @@ function Shell(
     let restored = false;
 
     const accept = async (summaries: ReviewApiSummary[]) => {
+      const previous = catalog.current;
       catalog.current = summaries;
 
       if (!restored) {
@@ -711,12 +712,26 @@ function Shell(
         setLoaded(true);
         void persistTabs();
       } else {
-        for (const [id] of tabs.current)
-          if (
-            !summaries.some((item) => item.reviewId === id) &&
-            !tutorialIds.current.has(id)
-          )
+        let settledActive = false;
+
+        for (const [id] of tabs.current) {
+          const summary = summaries.find((item) => item.reviewId === id);
+
+          if (!summary && !tutorialIds.current.has(id)) close(id);
+          // Settling puts a review away; the palette's Settled group restores it.
+          else if (
+            summary?.dismissedAt &&
+            !previous.find((item) => item.reviewId === id)?.dismissedAt
+          ) {
+            settledActive ||= active.current === id;
             close(id);
+          }
+        }
+
+        const next = summaries.find((review) => !review.dismissedAt);
+
+        if (settledActive && !active.current && next)
+          void open(next.reviewId).catch(fail);
         render();
       }
     };
@@ -824,29 +839,14 @@ function Shell(
     ui.showMenu({
       anchor,
       items: [
-        ...(tabs.current.has(id)
-          ? [{ id: "close", label: "Close review" }]
-          : []),
         ...(review && review.kind !== "scratchpad"
-          ? [
-              {
-                id: "attention",
-                label: review.dismissedAt ? "Restore review" : "Dismiss review",
-              },
-              { id: "delete", label: "Delete review…" },
-            ]
+          ? // Settling lives on the review's topbar; the palette restores.
+            [{ id: "delete", label: "Delete review…" }]
           : []),
       ],
       onHide() {},
       onSelect: async (action) => {
-        if (action === "close") close(id);
-        else if (action === "attention")
-          await command({
-            type: "attention",
-            reviewId: id,
-            action: review?.dismissedAt ? "restore" : "dismiss",
-          });
-        else if (action === "delete" && (await ui.confirmDelete?.(title)))
+        if (action === "delete" && (await ui.confirmDelete?.(title)))
           await command({ type: "delete", reviewId: id });
       },
     });
@@ -901,7 +901,15 @@ function Shell(
           disabled={!connected}
           onSelect={() => {
             setPalette(false);
-            void open(review.id).catch(fail);
+            void (async () => {
+              if (review.dismissed)
+                await command({
+                  type: "attention",
+                  reviewId: review.id,
+                  action: "restore",
+                });
+              await open(review.id);
+            })().catch(fail);
           }}
         >
           <FileTextIcon aria-hidden="true" />
@@ -996,19 +1004,26 @@ function Shell(
               </Button>
             </div>
           )}
-          {currentTab && (
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Actions for ${currentTab.title}`}
-              disabled={!connected}
-              onClick={(event) =>
-                reviewMenu(event.currentTarget, currentTab.id, currentTab.title)
-              }
-            >
-              <MoreHorizontalIcon aria-hidden="true" />
-            </Button>
-          )}
+          {currentTab &&
+            currentReview &&
+            currentReview.kind !== "scratchpad" && (
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="tw:border-border"
+                aria-label={`Actions for ${currentTab.title}`}
+                disabled={!connected}
+                onClick={(event) =>
+                  reviewMenu(
+                    event.currentTarget,
+                    currentTab.id,
+                    currentTab.title,
+                  )
+                }
+              >
+                <MoreHorizontalIcon aria-hidden="true" />
+              </Button>
+            )}
         </div>
       </header>
       {!connected && (
@@ -1134,7 +1149,7 @@ function Shell(
             {loaded ? "No matching reviews." : "Loading reviews…"}
           </CommandEmpty>
           <CommandGroup heading="Reviews">{reviewItems(false)}</CommandGroup>
-          <CommandGroup heading="Dismissed">{reviewItems(true)}</CommandGroup>
+          <CommandGroup heading="Settled">{reviewItems(true)}</CommandGroup>
           <CommandGroup heading="Chalk">
             <CommandItem
               keywords={["Tutorial"]}
@@ -1254,17 +1269,16 @@ function SettingsDialog({
               <option value="unified">Unified</option>
             </NativeSelect>
           </label>
-          <label htmlFor="shell-default-diff-mode">
-            <span>Default diff mode</span>
+          <label htmlFor="shell-diff-mode">
+            <span>Diff mode</span>
             <NativeSelect
-              id="shell-default-diff-mode"
-              aria-label="Default diff mode"
-              value={preferences.defaultDiffMode}
+              id="shell-diff-mode"
+              aria-label="Diff mode"
+              value={preferences.diffMode}
               onChange={(event) => {
                 // SAFETY: the options below contain only supported modes.
                 save({
-                  defaultDiffMode: event.target
-                    .value as ShellPreferences["defaultDiffMode"],
+                  diffMode: event.target.value as ShellPreferences["diffMode"],
                 });
               }}
             >

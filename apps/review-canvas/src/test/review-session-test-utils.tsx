@@ -8,6 +8,7 @@ import {
 } from "@canvas/host/review-session";
 import type {
   ReviewCanvasBridge,
+  ReviewDiffPreferences,
   ReviewRuntimeConfig,
 } from "@chalk/review-contracts";
 import type { Block } from "@review/documents/document";
@@ -22,6 +23,39 @@ export const TEST_REVIEW_CONFIG = {
   theme: "dark",
   host: "desktop",
 } satisfies ReviewRuntimeConfig;
+
+// Writes apply at once and report back through the change event, like the
+// desktop does.
+export function testDiffPreferences(
+  initial: Partial<ReviewDiffPreferences> = {},
+): Pick<
+  ReviewCanvasBridge,
+  "diffPreference" | "setDiffPreference" | "onDidChangeDiffPreference"
+> {
+  const values: ReviewDiffPreferences = {
+    layout: "split",
+    mode: "text",
+    wrap: false,
+    ...initial,
+  };
+
+  const listeners = new Set<() => void>();
+
+  return {
+    diffPreference: (key) => values[key],
+    async setDiffPreference(key, value) {
+      values[key] = value;
+
+      for (const listener of listeners) listener();
+    },
+    onDidChangeDiffPreference: (key, listener) => {
+      const notify = () => listener(values[key]);
+      listeners.add(notify);
+
+      return { dispose: () => listeners.delete(notify) };
+    },
+  };
+}
 
 export function testReviewBridge(
   config: Partial<ReviewRuntimeConfig> = {},
@@ -45,9 +79,7 @@ export function testReviewBridge(
     subscribe: () => ({ dispose() {} }),
     currentTheme: () => "dark",
     onDidChangeTheme: () => ({ dispose() {} }),
-    currentDiffLayout: () => "split",
-    async setDiffLayout() {},
-    onDidChangeDiffLayout: () => ({ dispose() {} }),
+    ...testDiffPreferences(),
     ready() {},
     ...overrides,
   };

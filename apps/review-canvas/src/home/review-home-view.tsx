@@ -268,7 +268,7 @@ export function ReviewHome({
             <EmptyState
               message={
                 dismissed.length > 0
-                  ? `No active reviews match “${needle}”. Look in Dismissed below.`
+                  ? `No active reviews match “${needle}”. Look in Settled below.`
                   : `No reviews match “${needle}”.`
               }
             />
@@ -399,7 +399,7 @@ function DismissedSection({
   return (
     <section
       {...stylex.props(styles.dismissed)}
-      aria-label="Dismissed sessions"
+      aria-label="Settled sessions"
     >
       <ButtonPrimitive
         variant="ghost"
@@ -413,7 +413,7 @@ function DismissedSection({
         aria-expanded={expanded}
         onClick={onToggle}
       >
-        <span>Dismissed</span>
+        <span>Settled</span>
         <span {...stylex.props(styles.dismissedCount)}>{reviews.length}</span>
       </ButtonPrimitive>
       {expanded ? (
@@ -812,8 +812,8 @@ function DismissReviewButton({ review }: { review: ReviewApiSummary }) {
     <IconButton
       size="small"
       xstyle={styles.dismiss}
-      aria-label={`Dismiss ${title}`}
-      title="Dismiss session"
+      aria-label={`Settle ${title}`}
+      title="Settle session"
       loading={busy}
       disabled={busy}
       onKeyDown={(event) => event.stopPropagation()}

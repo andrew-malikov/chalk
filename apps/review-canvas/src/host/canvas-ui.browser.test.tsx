@@ -94,6 +94,24 @@ test("host menu dismisses on Escape without selecting an action", async () => {
   expect(document.activeElement).toBe(trigger);
 });
 
+test("pressing the anchor of an open host menu closes it", async () => {
+  const { trigger } = setup();
+  const hide = vi.fn<ReviewMenuRequest["onHide"]>();
+  trigger.addEventListener("click", () =>
+    ui!.showMenu({
+      anchor: trigger,
+      items: [{ id: "delete", label: "Delete" }],
+      onSelect: () => {},
+      onHide: hide,
+    }),
+  );
+  await act(async () => userEvent.click(trigger));
+  await expect.element(page.getByRole("menu")).toBeVisible();
+  await act(async () => userEvent.click(trigger));
+  await expect.element(page.getByRole("menu")).not.toBeInTheDocument();
+  expect(hide).toHaveBeenCalledOnce();
+});
+
 test("delete confirmation settles on cancellation, approval and owner disposal", async () => {
   const { trigger } = setup();
   let pending!: Promise<boolean>;

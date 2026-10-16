@@ -77,7 +77,7 @@ export function ReviewPanelFrame({
   tray = false,
   children,
 }: {
-  label: string;
+  label?: string;
   title?: string;
   onClose: () => void;
   closeLabel: string;
@@ -140,15 +140,17 @@ export function ReviewPanelFrame({
       />
       <header {...stylex.props(panelStyles.header, tray && panelStyles.tray)}>
         <div {...stylex.props(panelStyles.title)}>
-          <span
-            {...stylex.props(
-              textStyles.eyebrow,
-              panelStyles.kicker,
-              tray && panelStyles.trayKicker,
-            )}
-          >
-            {label}
-          </span>
+          {label && (
+            <span
+              {...stylex.props(
+                textStyles.eyebrow,
+                panelStyles.kicker,
+                tray && panelStyles.trayKicker,
+              )}
+            >
+              {label}
+            </span>
+          )}
           {title && <h2 {...stylex.props(panelStyles.heading)}>{title}</h2>}
           {titleAccessory}
         </div>

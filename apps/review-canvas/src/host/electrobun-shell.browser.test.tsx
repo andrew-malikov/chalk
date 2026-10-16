@@ -134,6 +134,14 @@ let controlResults: unknown[] = [];
 
 let installRequests: Array<{ token: string | null; body: unknown }> = [];
 
+let catalogValues: Array<
+  Omit<(typeof summaries)[number], "dismissedAt"> & {
+    dismissedAt: string | null;
+  }
+> = [];
+
+let commands: unknown[] = [];
+
 afterEach(async () => {
   await act(async () => mounted?.dispose());
   container?.remove();
@@ -153,7 +161,8 @@ async function setup(
   catalogUpdates = [];
   healthFailures = 0;
   controlAttachments = 0;
-  let catalogValues = emptyCatalog ? [] : [...summaries];
+  catalogValues = emptyCatalog ? [] : [...summaries];
+  commands = [];
   let commandInstalled = false;
   let preferences = { ...defaultPreferences, reviewIds, activeReviewId };
 
@@ -372,8 +381,11 @@ async function setup(
     if (url.pathname === "/tutorial/prepare")
       return Response.json({ ok: true, reviewUuid: tutorialReviewId });
 
-    if (url.pathname === "/reviews-api/commands")
+    if (url.pathname === "/reviews-api/commands") {
+      commands.push(JSON.parse(String(init?.body)).operation);
+
       return Response.json({ ok: true });
+    }
 
     if (url.pathname === "/reviews-api" || url.pathname === "/reviews-api/")
       return Response.json(catalogValues);
@@ -442,6 +454,26 @@ test("opens a review once from the palette and closes to Home", async () => {
   expect(activeReview()).toBeUndefined();
   expect(container.textContent).toContain("Select a review");
   expect(rpc.request.setPreferences).toHaveBeenCalled();
+});
+
+test("settling the shown review moves on to the next and the palette restores it", async () => {
+  await setup([a], a);
+  await expect.poll(activeReview).toBe("Alpha");
+  catalogValues = catalogValues.map((item) =>
+    item.reviewId === a
+      ? { ...item, dismissedAt: "2026-10-16T00:00:00.000Z" }
+      : item,
+  );
+  await act(async () => catalogUpdates.forEach((push) => push()));
+  await expect.poll(activeReview).toBe("Beta refreshed");
+  expect(openReviews()).toEqual(["Beta refreshed"]);
+  await choose("Alpha");
+  expect(commands).toContainEqual({
+    type: "attention",
+    reviewId: a,
+    action: "restore",
+  });
+  await expect.poll(activeReview).toBe("Alpha");
 });
 
 test("restores catalog reviews and drops missing review IDs", async () => {

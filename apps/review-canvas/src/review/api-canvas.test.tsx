@@ -370,7 +370,7 @@ it("dismisses immediately through the API without changing the saved document", 
 
   const dismiss = [
     ...container.querySelectorAll<HTMLButtonElement>("button"),
-  ].find((button) => button.textContent === "Dismiss")!;
+  ].find((button) => button.ariaLabel === "Settle review")!;
 
   await act(async () => dismiss.click());
 
@@ -736,7 +736,7 @@ it("offers to dismiss a review whose worktree is gone, without reading its diff"
 
     const dismiss = () =>
       [...container.querySelectorAll<HTMLButtonElement>("button")].find(
-        (button) => button.textContent === "Dismiss review",
+        (button) => button.textContent === "Settle review",
       );
 
     await act(async () => dismiss()!.click());

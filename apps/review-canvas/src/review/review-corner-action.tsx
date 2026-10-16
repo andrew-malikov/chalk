@@ -4,7 +4,7 @@ import { fontSize, fontWeight } from "@canvas/styles/scale.stylex";
 import { shellStyles } from "@canvas/styles/shell-styles";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import { useTutorial } from "@canvas/tutorial/tutorial-context";
-import { Button } from "@canvas/ui/button";
+import { Button, IconButton } from "@canvas/ui/button";
 import type { IconProps } from "@canvas/ui/icons";
 import { surfaceStyles } from "@canvas/ui/surface";
 import * as stylex from "@stylexjs/stylex";
@@ -19,6 +19,7 @@ export function ReviewCornerAction(): ReactElement | null {
   const tutorial = useTutorial();
 
   const closeTooltip = useTooltip("Close tutorial");
+  const settleTooltip = useTooltip("Settle review");
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const control = useRef<HTMLDivElement>(null);
@@ -58,10 +59,14 @@ export function ReviewCornerAction(): ReactElement | null {
 
   return (
     <div ref={control} {...stylex.props(shellStyles.topbarItem, styles.action)}>
-      <Button loading={busy} disabled={busy} onClick={() => void dismiss()}>
+      <IconButton
+        ref={settleTooltip}
+        aria-label="Settle review"
+        loading={busy}
+        onClick={() => void dismiss()}
+      >
         <ArchiveIcon xstyle={styles.icon} />
-        <span>Dismiss</span>
-      </Button>
+      </IconButton>
       {failed && (
         <span
           ref={errorPopover}
@@ -73,7 +78,7 @@ export function ReviewCornerAction(): ReactElement | null {
           )}
           role="alert"
         >
-          Could not dismiss the review. Try again.
+          Could not settle the review. Try again.
         </span>
       )}
     </div>
@@ -92,8 +97,8 @@ export function ArchiveIcon({ xstyle }: IconProps = {}): ReactElement {
 }
 
 // The single end-of-review control, sized to fit inside the topbar.
-// Dismissal is terminal but reversible, so it reads as a quiet outline rather
-// than a destructive fill. It never uses a bare X: that reads as "close".
+// Settling is terminal but reversible, so it is a quiet icon rather than a
+// destructive fill. It never uses a bare X: that reads as "close".
 const styles = stylex.create({
   action: {
     position: "relative",

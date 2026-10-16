@@ -272,7 +272,7 @@ function mount(
             hunk.hunkContent.every((content) => content.type === "context"),
           ))
           ? "unified"
-          : session.bridge.currentDiffLayout(),
+          : session.bridge.diffPreference("layout"),
       theme: theme === "light" ? "pierre-light" : "pierre-dark",
       themeType: theme,
     });
@@ -282,8 +282,10 @@ function mount(
 
   const themeSubscription = session.bridge.onDidChangeTheme(refreshOptions);
 
-  const layoutSubscription =
-    session.bridge.onDidChangeDiffLayout(refreshOptions);
+  const layoutSubscription = session.bridge.onDidChangeDiffPreference(
+    "layout",
+    refreshOptions,
+  );
 
   function focus() {
     spec.onDidFocus?.();

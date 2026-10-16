@@ -3,7 +3,10 @@ import { GitLabProvider } from "@canvas/gitlab/gitlab-context";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDiffFilesProvider } from "@canvas/review/review-diff-files-context";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
-import { testReviewSession } from "@canvas/test/review-session-test-utils";
+import {
+  testDiffPreferences,
+  testReviewSession,
+} from "@canvas/test/review-session-test-utils";
 import type {
   GitLabState,
   ReviewDiffFileWire,
@@ -388,8 +391,7 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
     release = resolve;
   });
 
-  let layout: "split" | "unified" = "split";
-  let onLayout = () => {};
+  const preferences = testDiffPreferences();
 
   const request = vi.fn<
     (source: string, init?: RequestInit) => Promise<Response>
@@ -414,12 +416,7 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
     {},
     {
       request,
-      currentDiffLayout: () => layout,
-      onDidChangeDiffLayout: (listener) => {
-        onLayout = () => listener(layout);
-
-        return { dispose() {} };
-      },
+      ...preferences,
     },
   );
 
@@ -494,13 +491,6 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
     ).toBe(true),
   );
 
-  const wrap = container.querySelector<HTMLButtonElement>(
-    '[aria-pressed="false"]',
-  )!;
-
-  await userEvent.click(wrap);
-  expect(wrap.getAttribute("aria-pressed")).toBe("true");
-
   const added = code().find(
     (node) =>
       node.hasAttribute("data-additions") &&
@@ -555,8 +545,7 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
   viewed.click();
   expect(toggleViewed).toHaveBeenCalledWith("b.ts");
   await act(async () => {
-    layout = "unified";
-    onLayout();
+    await preferences.setDiffPreference("layout", "unified");
   });
   await vi.waitFor(() =>
     expect(
@@ -858,11 +847,12 @@ it("uses the structural default, navigates functions, and offers text mode when 
     .replace("  return 5", "    return 5");
 
   let fail = false;
+  const preferences = testDiffPreferences({ mode: "structural" });
 
   const session = testReviewSession(
     {},
     {
-      defaultDiffMode: "structural",
+      ...preferences,
       request: async (input) => {
         const url = new URL(input);
 
@@ -946,22 +936,9 @@ it("uses the structural default, navigates functions, and offers text mode when 
       .map((row) => row.textContent)
       .join("\n");
 
-  const mode = () =>
-    container.querySelector<HTMLSelectElement>('[aria-label="Diff mode"]')!;
-
-  await vi.waitFor(() => expect(mode()?.value).toBe("structural"));
   await vi.waitFor(() => expect(changes()).toContain("return 2"));
   expect(changes()).not.toContain("return 5");
 
-  const functions = container.querySelector<HTMLSelectElement>(
-    '[aria-label="Changed functions"]',
-  )!;
-
-  expect(functions.textContent).toContain("function answer()");
-  await act(async () => {
-    functions.value = "0";
-    functions.dispatchEvent(new Event("change", { bubbles: true }));
-  });
   fail = true;
   await render("two");
   await vi.waitFor(() =>
@@ -974,7 +951,7 @@ it("uses the structural default, navigates functions, and offers text mode when 
 
   await act(async () => textButton.click());
   await vi.waitFor(() => expect(changes()).toContain("return 5"));
-  expect(mode().value).toBe("text");
+  expect(preferences.diffPreference("mode")).toBe("text");
 });
 
 const treeRow = (tree: HTMLElement, path: string) =>

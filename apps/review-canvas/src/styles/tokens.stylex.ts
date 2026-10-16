@@ -35,7 +35,6 @@ export const tokens = stylex.defineConsts({
   chromeIconSize: "var(--chrome-icon-size)",
   chromeTracking: "var(--chrome-tracking)",
   controlBg: "var(--control-bg)",
-  courierArc: "var(--courier-arc)",
   diagramBorder: "var(--diagram-border)",
   diagramCanvasBg: "var(--diagram-canvas-bg)",
   diagramSurface: "var(--diagram-surface)",

@@ -21,6 +21,7 @@ import { withClass } from "@canvas/styles/stylex-props";
 import { tokens } from "@canvas/styles/tokens.stylex";
 import type { LeaseScope } from "@review/node/review-api/activity";
 import * as stylex from "@stylexjs/stylex";
+import { type AnimationPlaybackControls, animate } from "motion";
 import {
   type Context,
   createContext,
@@ -60,12 +61,6 @@ export function lensRowElement(
   return row?.getClientRects().length ? row : null;
 }
 
-const HOP_MS = 340;
-
-const JUMP_MS = 540;
-
-const LEAVE_MS = 440;
-
 const SIT_AFTER_MS = 3000;
 
 /** Where he stands on an element: its top edge, centered on a small thing,
@@ -88,6 +83,75 @@ const reducedMotion = () =>
   matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 type Idle = "none" | "march" | "sit";
+
+type Move = "hopping" | "jumping" | "leaving";
+
+interface Parts {
+  arc: HTMLElement;
+  squash: HTMLElement;
+  shadow: HTMLElement;
+}
+
+// The hop: the wrapper slides (CSS, courierMotion.hop), the arc lifts, the
+// body squashes on landing. The jump, on click: higher, with a wobble and
+// happy eyes. The lease ended: up and out.
+const moves: Record<
+  Move,
+  (parts: Parts, height: number) => AnimationPlaybackControls[]
+> = {
+  hopping: ({ arc, squash, shadow }, height) => [
+    animate(
+      arc,
+      { y: [0, -height, 0] },
+      { duration: 0.26, times: [0, 0.45, 1], ease: "easeOut" },
+    ),
+    animate(
+      squash,
+      {
+        scaleX: [1.1, 0.92, 0.92, 1.14, 1],
+        scaleY: [0.9, 1.1, 1.06, 0.84, 1],
+      },
+      { duration: 0.34, times: [0, 0.3, 0.76, 0.84, 1], ease: "easeOut" },
+    ),
+    animate(
+      shadow,
+      { scale: [1, 0.6, 1], opacity: [0.18, 0.08, 0.18] },
+      { duration: 0.26, times: [0, 0.45, 1], ease: "easeOut" },
+    ),
+  ],
+  jumping: ({ arc, squash, shadow }) => [
+    animate(
+      arc,
+      { y: [0, -58, 0] },
+      { duration: 0.42, times: [0, 0.5, 1], ease: [0.3, 0, 0.2, 1] },
+    ),
+    animate(
+      squash,
+      {
+        scaleX: [1.25, 0.82, 0.9, 0.9, 1.22, 1],
+        scaleY: [0.7, 1.24, 1.1, 1.06, 0.76, 1],
+        rotate: [0, -6, 6, 0, 0, 0],
+      },
+      {
+        duration: 0.52,
+        times: [0, 0.18, 0.5, 0.8, 0.88, 1],
+        ease: "easeOut",
+      },
+    ),
+    animate(
+      shadow,
+      { scale: [1, 0.45, 1], opacity: [0.18, 0.05, 0.18] },
+      { duration: 0.42, times: [0, 0.5, 1], ease: [0.3, 0, 0.2, 1] },
+    ),
+  ],
+  leaving: ({ arc }) => [
+    animate(
+      arc,
+      { y: [0, -10, -260], opacity: [1, 0.75, 0] },
+      { duration: 0.42, times: [0, 0.25, 1], ease: [0.4, 0, 1, 1] },
+    ),
+  ],
+};
 
 /**
  * Stands on whatever the cursor names, hops when it moves, marches in place
@@ -113,15 +177,34 @@ export function Courier({
   const roots = useReviewRoots();
   const activity = useContext(AuthoringActivityContext);
   const cursor = useContext(cursorContext(scope));
-  const node = useRef<HTMLDivElement>(null);
+  const arcRef = useRef<HTMLSpanElement>(null);
+  const squashRef = useRef<HTMLSpanElement>(null);
+  const shadowRef = useRef<HTMLSpanElement>(null);
 
   const [position, setPosition] = useState<{ x: number; y: number } | null>(
     null,
   );
 
-  const [motion, setMotion] = useState<
-    "hopping" | "jumping" | "leaving" | null
-  >(null);
+  const [motion, setMotion] = useState<Move | null>(null);
+  const moveId = useRef(0);
+
+  /** Plays a move; resolves true unless a later move took over. */
+  const perform = async (next: Move, height = 0) => {
+    const id = ++moveId.current;
+    setMotion(next);
+    const arc = arcRef.current;
+    const squash = squashRef.current;
+    const shadow = shadowRef.current;
+
+    if (arc && squash && shadow && !reducedMotion())
+      await Promise.all(
+        moves[next]({ arc, squash, shadow }, height).map(
+          (part) => part.finished,
+        ),
+      );
+
+    return id === moveId.current;
+  };
 
   const [idle, setIdle] = useState<Idle>("none");
   const [gone, setGone] = useState(false);
@@ -207,19 +290,10 @@ export function Courier({
     hopped.current = cursor.seq;
 
     if (reducedMotion()) return;
-    node.current?.style.setProperty(
-      "--courier-arc",
-      `${Math.min(72, 18 + distance * 0.28)}px`,
-    );
     setIdle("none");
-    setMotion("hopping");
-
-    const timer = setTimeout(
-      () => setMotion((current) => (current === "hopping" ? null : current)),
-      HOP_MS,
-    );
-
-    return () => clearTimeout(timer);
+    void perform("hopping", Math.min(72, 18 + distance * 0.28)).then((done) => {
+      if (done) setMotion(null);
+    });
   }, [position, cursor]);
 
   // With nothing arriving he marches, then sits.
@@ -235,19 +309,18 @@ export function Courier({
   useEffect(() => {
     if (live || activity === undefined || unknown || !position || gone) return;
     setIdle("none");
-    setMotion("leaving");
+    let cancelled = false;
+    void perform("leaving").then((done) => {
+      if (cancelled || !done) return;
+      setGone(true);
+      setMotion(null);
+      setPosition(null);
+      arrival.current = null;
+    });
 
-    const timer = setTimeout(
-      () => {
-        setGone(true);
-        setMotion(null);
-        setPosition(null);
-        arrival.current = null;
-      },
-      reducedMotion() ? 0 : LEAVE_MS,
-    );
-
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+    };
   }, [live, unknown, activity === undefined, Boolean(position), gone]);
 
   // A lease that begins again brings him back.
@@ -257,9 +330,9 @@ export function Courier({
 
   const jump = () => {
     if (reducedMotion() || motion === "leaving") return;
-    setMotion(null);
-    requestAnimationFrame(() => setMotion("jumping"));
-    setTimeout(() => setMotion((m) => (m === "jumping" ? null : m)), JUMP_MS);
+    void perform("jumping").then((done) => {
+      if (done) setMotion(null);
+    });
   };
 
   if (!position || gone || activity === undefined) return null;
@@ -274,7 +347,6 @@ export function Courier({
   // courier is a marker: code, tests and the lens list's :has(> .courier) find it.
   return (
     <div
-      ref={node}
       {...withClass("courier", styles.courier, unknown && styles.unknown)}
       data-scope={scope}
       data-state={unknown ? "unknown" : live ? "live" : "ended"}
@@ -298,39 +370,24 @@ export function Courier({
             {description}
           </span>
         )}
-        <span
-          {...stylex.props(
-            styles.arc,
-            motion === "hopping" && styles.hopArc,
-            motion === "jumping" && styles.jumpArc,
-            motion === "leaving" && styles.leave,
-          )}
-        >
+        <span ref={arcRef} {...stylex.props(styles.arc)}>
           <span
             {...stylex.props(
               styles.body,
               idle === "sit" && styles.sitting,
               unknown && styles.slumped,
-              idle === "march"
-                ? styles.bob
-                : motion === "hopping"
-                  ? styles.squash
-                  : motion === "jumping" && styles.jumpSquash,
+              idle === "march" && styles.bob,
             )}
           >
-            <CourierFigure
-              xstyle={styles.figureSvg}
-              pose={{ idle, jumping: motion === "jumping" }}
-            />
+            <span ref={squashRef} {...stylex.props(styles.body)}>
+              <CourierFigure
+                xstyle={styles.figureSvg}
+                pose={{ idle, jumping: motion === "jumping" }}
+              />
+            </span>
           </span>
         </span>
-        <span
-          {...stylex.props(
-            styles.shadow,
-            motion === "hopping" && styles.hopShadow,
-            motion === "jumping" && styles.jumpShadow,
-          )}
-        />
+        <span ref={shadowRef} {...stylex.props(styles.shadow)} />
       </button>
     </div>
   );
@@ -341,62 +398,9 @@ const REDUCED = "@media (prefers-reduced-motion: reduce)";
 const inDiffWorkspace = () =>
   stylex.when.ancestor(":is(*)", diffWorkspaceMarker);
 
-// The hop: the wrapper slides, the arc lifts, the body squashes on landing.
-
-const hopArc = stylex.keyframes({
-  "0%": { transform: "translateY(0)" },
-  "45%": { transform: "translateY(calc(var(--courier-arc, 40px) * -1))" },
-  "100%": { transform: "translateY(0)" },
-});
-
-const hopSquash = stylex.keyframes({
-  "0%": { transform: "scale(1.1, 0.9)" },
-  "30%": { transform: "scale(0.92, 1.1)" },
-  "76%": { transform: "scale(0.92, 1.06)" },
-  "84%": { transform: "scale(1.14, 0.84)" },
-  "100%": { transform: "scale(1, 1)" },
-});
-
-const hopShadow = stylex.keyframes({
-  "0%": { transform: "scale(1)", opacity: 0.18 },
-  "45%": { transform: "scale(0.6)", opacity: 0.08 },
-  "100%": { transform: "scale(1)", opacity: 0.18 },
-});
-
-// The jump, on click: higher, with a wobble and happy eyes.
-
-const jumpArc = stylex.keyframes({
-  "0%": { transform: "translateY(0)" },
-  "50%": { transform: "translateY(-58px)" },
-  "100%": { transform: "translateY(0)" },
-});
-
-const jumpSquash = stylex.keyframes({
-  "0%": { transform: "scale(1.25, 0.7)" },
-  "18%": { transform: "scale(0.82, 1.24) rotate(-6deg)" },
-  "50%": { transform: "scale(0.9, 1.1) rotate(6deg)" },
-  "80%": { transform: "scale(0.9, 1.06) rotate(0)" },
-  "88%": { transform: "scale(1.22, 0.76)" },
-  "100%": { transform: "scale(1, 1)" },
-});
-
-const jumpShadow = stylex.keyframes({
-  "0%": { transform: "scale(1)", opacity: 0.18 },
-  "50%": { transform: "scale(0.45)", opacity: 0.05 },
-  "100%": { transform: "scale(1)", opacity: 0.18 },
-});
-
 const marchBob = stylex.keyframes({
   "0%, 100%": { transform: "translateY(0) rotate(-2deg)" },
   "50%": { transform: "translateY(-1.5px) rotate(2deg)" },
-});
-
-// The lease ended: up and out.
-
-const leave = stylex.keyframes({
-  "0%": { transform: "translateY(0)" },
-  "25%": { transform: "translateY(-10px)" },
-  "100%": { transform: "translateY(-260px)", opacity: 0 },
 });
 
 // He stands on the top edge of whatever the cursor names and slides when it
@@ -479,37 +483,6 @@ const styles = stylex.create({
     height: "100%",
     transition: { default: null, [REDUCED]: "none" },
   },
-  hopArc: {
-    animationName: { default: hopArc, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.hop,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "ease-out", [REDUCED]: "ease" },
-  },
-  jumpArc: {
-    animationName: { default: jumpArc, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.jump,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: {
-      default: "cubic-bezier(0.3, 0, 0.2, 1)",
-      [REDUCED]: "ease",
-    },
-  },
-  leave: {
-    animationName: { default: leave, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.leave,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: {
-      default: "cubic-bezier(0.4, 0, 1, 1)",
-      [REDUCED]: "ease",
-    },
-    animationFillMode: { default: "forwards", [REDUCED]: "none" },
-  },
   body: {
     display: "block",
     width: "100%",
@@ -524,22 +497,6 @@ const styles = stylex.create({
   },
   slumped: {
     transform: "translateY(2px) rotate(-8deg)",
-  },
-  squash: {
-    animationName: { default: hopSquash, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.squash,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "ease-out", [REDUCED]: "ease" },
-  },
-  jumpSquash: {
-    animationName: { default: jumpSquash, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.bounce,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "ease-out", [REDUCED]: "ease" },
   },
   bob: {
     animationName: { default: marchBob, [REDUCED]: "none" },
@@ -561,24 +518,5 @@ const styles = stylex.create({
     backgroundColor: tokens.ink,
     opacity: 0.18,
     transition: { default: null, [REDUCED]: "none" },
-  },
-  hopShadow: {
-    animationName: { default: hopShadow, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.hop,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "ease-out", [REDUCED]: "ease" },
-  },
-  jumpShadow: {
-    animationName: { default: jumpShadow, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.jump,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: {
-      default: "cubic-bezier(0.3, 0, 0.2, 1)",
-      [REDUCED]: "ease",
-    },
   },
 });

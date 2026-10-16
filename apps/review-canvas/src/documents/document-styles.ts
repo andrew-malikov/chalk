@@ -32,6 +32,8 @@ const inDocumentLink = () => `${inDocument()}:is(a *)`;
 const inOpenDocumentLink = () =>
   `${inDocument()}:is(a[data-review-anchor-open] *)`;
 
+const inHoveredDocumentLink = () => `${inDocument()}:is(a:hover *)`;
+
 const afterProseItem = () => `${inProse()}:is(li + *)`;
 
 // The scratchpad has no title, so its opening heading sits at the top.
@@ -236,19 +238,26 @@ export const documentStyles = stylex.create({
     lineHeight: { default: null, [inDocument()]: 1.72 },
     textAlign: { default: null, [inDocument()]: "left" },
   },
-  // Links are just text in the link color, prose and code chips alike, with
-  // no visited distinction. Hover restores the plain underline, and the link
-  // whose peek is open carries a quiet wash of the same color.
+  // Links are underlined text in the link color, prose and code chips alike,
+  // with no visited distinction. Hover brightens to ink over the wash, and the
+  // link whose peek is open drops the underline for the wash alone.
   link: {
-    color: { default: null, [inDocument()]: tokens.accent },
+    color: {
+      default: null,
+      [inDocument()]: { default: tokens.accent, ":hover": tokens.ink },
+    },
     textDecoration: {
       default: null,
-      [inDocument()]: { default: "none", ":hover": "underline" },
+      [inDocument()]: {
+        default: "underline",
+        ":is([data-review-anchor-open])": "none",
+      },
     },
     backgroundColor: {
       default: null,
       [inDocument()]: {
         default: null,
+        ":hover": tokens.linkOpenWash,
         ":is([data-review-anchor-open])": tokens.linkOpenWash,
       },
     },
@@ -260,11 +269,13 @@ export const documentStyles = stylex.create({
       default: null,
       [inDocument()]: tokens.well,
       [inOpenDocumentLink()]: tokens.linkOpenWash,
+      [inHoveredDocumentLink()]: tokens.linkOpenWash,
     },
     color: {
       default: null,
       [inDocument()]: tokens.ink,
       [inDocumentLink()]: tokens.accent,
+      [inHoveredDocumentLink()]: tokens.ink,
     },
     fontFamily: { default: null, [inDocument()]: tokens.fontMono },
     fontSize: { default: null, [inDocument()]: "0.85em" },

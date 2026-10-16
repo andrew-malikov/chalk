@@ -341,7 +341,9 @@ test("theme and layout subscribers ignore unrelated tab preferences", async () =
     notify: () => {},
     preferences: {
       current: () => preferences,
-      set: async () => {},
+      set: async (patch) => {
+        preferences = { ...preferences, ...patch };
+      },
       subscribe: (listener) => {
         listeners.add(listener);
 
@@ -355,15 +357,19 @@ test("theme and layout subscribers ignore unrelated tab preferences", async () =
   });
 
   expect(await bridge.diffView.files()).toEqual([]);
-  expect(bridge.defaultDiffMode).toBe("text");
-  preferences = { ...preferences, defaultDiffMode: "structural" };
-  expect(bridge.defaultDiffMode).toBe("structural");
+  expect(bridge.diffPreference("mode")).toBe("text");
+  preferences = { ...preferences, diffMode: "structural" };
+  expect(bridge.diffPreference("mode")).toBe("structural");
+  await bridge.setDiffPreference("wrap", true);
+  expect(preferences.diffWrap).toBe(true);
 
   const themes: string[] = [],
     layouts: string[] = [];
 
   const a = bridge.onDidChangeTheme((value) => themes.push(value)),
-    b = bridge.onDidChangeDiffLayout((value) => layouts.push(value));
+    b = bridge.onDidChangeDiffPreference("layout", (value) =>
+      layouts.push(value),
+    );
 
   preferences = { ...preferences, reviewIds: ["r"] };
 

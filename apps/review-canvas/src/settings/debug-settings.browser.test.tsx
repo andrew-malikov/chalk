@@ -200,9 +200,6 @@ function createTestSession(): ReviewSession {
 
         return { dispose: () => (themeListener = undefined) };
       },
-      currentDiffLayout: () => "split",
-      async setDiffLayout() {},
-      onDidChangeDiffLayout: () => ({ dispose() {} }),
       ready() {},
     },
   );

@@ -935,7 +935,8 @@ const styles = stylex.create({
     font: "inherit",
     color: "inherit",
     cursor: "pointer",
-    backgroundColor: { default: "transparent", ":hover": tokens.well },
+    // Hover paints the chip, not the row, so it previews the selected shape.
+    backgroundColor: "transparent",
     outline: { default: null, ":focus-visible": `1px solid ${tokens.accent}` },
     outlineOffset: { default: null, ":focus-visible": "-2px" },
   },
@@ -967,6 +968,10 @@ const styles = stylex.create({
     height: "24px",
     padding: "0 8px",
     borderRadius: radius.pill,
+    backgroundColor: {
+      default: null,
+      [stylex.when.ancestor(":hover", lensToggleMarker)]: tokens.well,
+    },
   },
   chipActive: {
     paddingRight: "4px",

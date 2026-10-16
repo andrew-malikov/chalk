@@ -31,7 +31,7 @@ export function MissingCheckoutBanner({
               }
             }}
           >
-            Dismiss review
+            Settle review
           </Button>
         )
       }

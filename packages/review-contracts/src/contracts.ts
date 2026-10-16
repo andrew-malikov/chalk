@@ -307,6 +307,12 @@ export interface ReviewTooltipOptions {
   detail?: string;
 }
 
+export interface ReviewDiffPreferences {
+  layout: ReviewDiffLayout;
+  mode: "text" | "structural";
+  wrap: boolean;
+}
+
 export interface ReviewCanvasBridge {
   readonly config: ReviewRuntimeConfig;
   /** Legacy native host hook; React peeks use Pierre directly. */
@@ -317,14 +323,18 @@ export interface ReviewCanvasBridge {
   subscribe(listener: (event: ReviewSurfaceEvent) => void): ReviewDisposable;
   currentTheme(): ReviewTheme;
   onDidChangeTheme(listener: (theme: ReviewTheme) => void): ReviewDisposable;
-  // The diff layout is app-wide and backed by the `diffEditor.renderSideBySide`
-  // setting, so a choice outlives the session and the app restart.
-  currentDiffLayout(): ReviewDiffLayout;
-  /** Default for reviews without a saved Text/Structural mode choice. */
-  readonly defaultDiffMode?: "text" | "structural";
-  setDiffLayout(layout: ReviewDiffLayout): Promise<void>;
-  onDidChangeDiffLayout(
-    listener: (layout: ReviewDiffLayout) => void,
+  // Diff preferences are app-wide, so a choice applies to every review and
+  // outlives the app restart.
+  diffPreference<K extends keyof ReviewDiffPreferences>(
+    key: K,
+  ): ReviewDiffPreferences[K];
+  setDiffPreference<K extends keyof ReviewDiffPreferences>(
+    key: K,
+    value: ReviewDiffPreferences[K],
+  ): Promise<void>;
+  onDidChangeDiffPreference<K extends keyof ReviewDiffPreferences>(
+    key: K,
+    listener: (value: ReviewDiffPreferences[K]) => void,
   ): ReviewDisposable;
   notify?(message: { kind: "success" | "error"; text: string }): void;
   setupTooltip?(

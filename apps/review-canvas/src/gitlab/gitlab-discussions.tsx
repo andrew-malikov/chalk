@@ -5,7 +5,8 @@ import { cn } from "@canvas/lib/utils";
 import { ReviewPanelFrame } from "@canvas/review/review-components";
 import { loadingStyles } from "@canvas/styles/loading.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
-import { Button } from "@canvas/ui/button";
+import { Button, IconButton } from "@canvas/ui/button";
+import { RefreshIcon } from "@canvas/ui/icons";
 import type {
   GitLabDiscussion,
   GitLabDraft,
@@ -14,6 +15,7 @@ import type {
 import {
   CheckIcon,
   ChevronRightIcon,
+  ChevronsDownUpIcon,
   CornerDownRightIcon,
   MessageSquareIcon,
 } from "lucide-react";
@@ -26,21 +28,29 @@ export function GitLabDiscussionPanel() {
   const gitlab = useGitLab();
 
   if (!gitlab) return null;
+  const refreshing = gitlab.pending?.action === "refresh";
 
   return (
     <ReviewPanelFrame
-      label="GitLab"
       title="Discussions"
       onClose={gitlab.toggle}
       closeLabel="Close GitLab discussions"
       headerActions={
-        <Button
-          loading={gitlab.pending?.action === "refresh"}
+        <IconButton
+          size="large"
+          aria-label="Refresh GitLab discussions"
+          title="Refresh"
+          aria-busy={refreshing || undefined}
+          className={
+            refreshing
+              ? "tw:[&_svg]:animate-spin tw:motion-reduce:[&_svg]:animate-none"
+              : undefined
+          }
           disabled={!gitlab.editable || gitlab.busy}
           onClick={() => void gitlab.run("refresh")}
         >
-          Refresh
-        </Button>
+          <RefreshIcon />
+        </IconButton>
       }
     >
       <GitLabDiscussionContent />
@@ -128,14 +138,22 @@ export function GitLabDiscussionContent() {
       <h3 className={heading}>Open discussions · {open.length}</h3>
       {open.length === 0 && state && <p>No open discussions.</p>}
       {open.map((d) => (
-        <Discussion key={d.id} discussion={d} />
+        <Discussion
+          key={d.id}
+          discussion={d}
+          collapsible={!hasUnsentReply(d, drafts)}
+        />
       ))}
       <Collapsible
         summary={`Resolved · ${resolved.length}`}
         open={resolved.some((d) => d.id === gitlab.selected)}
       >
         {resolved.map((d) => (
-          <Discussion key={d.id} discussion={d} />
+          <Discussion
+            key={d.id}
+            discussion={d}
+            collapsible={!hasUnsentReply(d, drafts)}
+          />
         ))}
       </Collapsible>
       {unsent.length > 0 && (
@@ -164,6 +182,15 @@ export type GitLabInlineAnnotation =
   | { kind: "draft"; id: string }
   | { kind: "collapsed"; ids: string[] };
 
+function hasUnsentReply(discussion: GitLabDiscussion, drafts: GitLabDraft[]) {
+  return drafts.some(
+    (d) =>
+      d.status !== "sent" &&
+      d.target.kind === "reply" &&
+      d.target.discussionId === discussion.id,
+  );
+}
+
 /** Threads with local drafts stay open so the draft is never hidden. */
 export function discussionCollapsed(
   discussion: GitLabDiscussion,
@@ -171,12 +198,7 @@ export function discussionCollapsed(
   drafts: GitLabDraft[],
 ) {
   return (
-    !drafts.some(
-      (d) =>
-        d.status !== "sent" &&
-        d.target.kind === "reply" &&
-        d.target.discussionId === discussion.id,
-    ) &&
+    !hasUnsentReply(discussion, drafts) &&
     (collapsed[discussion.id] ?? discussion.resolved)
   );
 }
@@ -211,7 +233,7 @@ export function GitLabInlineContent({
 
   return (
     <section
-      className="tw:m-0 tw:box-border tw:flex tw:w-full tw:min-w-0 tw:flex-col tw:gap-2 tw:whitespace-normal tw:bg-[var(--surface-raised)] tw:p-3 tw:font-[family-name:var(--chrome-font)] tw:text-[13px] tw:text-[var(--ink)]"
+      className="tw:m-0 tw:box-border tw:flex tw:w-full tw:min-w-0 tw:flex-col tw:gap-2 tw:whitespace-normal tw:bg-[var(--surface)] tw:p-3 tw:font-[family-name:var(--chrome-font)] tw:text-[13px] tw:text-[var(--ink)]"
       aria-label={`GitLab ${annotation.kind} ${annotation.id}`}
     >
       {gitlab.error && <p role="alert">{gitlab.error}</p>}
@@ -328,6 +350,14 @@ function Discussion({
       ref.current?.scrollIntoView?.({ block: "nearest" });
   }, [gitlab.selected, discussion.id, inline]);
 
+  // Inline threads render only when expanded; collapsed ones become line chips.
+  const collapsed =
+    !inline &&
+    collapsible &&
+    (gitlab.collapsed[discussion.id] ?? discussion.resolved);
+
+  const first = discussion.comments[0];
+
   return (
     <div
       ref={ref}
@@ -357,94 +387,124 @@ function Discussion({
             : "General discussion"}
         </span>
       )}
-      {discussion.comments.map((note, index) => (
-        <div
-          key={note.id}
-          className={cn(
-            "tw:flex tw:min-w-0 tw:items-start tw:gap-3",
-            index > 0 && "tw:ms-11",
-          )}
-        >
-          <span
-            className="tw:flex tw:size-8 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-full tw:bg-[color-mix(in_srgb,var(--link)_12%,transparent)] tw:text-[11px] tw:font-semibold tw:text-[var(--link)]"
-            aria-hidden="true"
-          >
-            {(note.author.name || note.author.username)
-              .slice(0, 2)
-              .toUpperCase()}
+      {collapsed && first ? (
+        <div className="tw:flex tw:min-w-0 tw:items-baseline tw:gap-2">
+          <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-[var(--ink-muted)]">
+            <strong className="tw:text-[var(--ink)]">
+              {authorName(first.author, gitlab.state?.account?.id)}
+            </strong>{" "}
+            {first.body}
           </span>
-          <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-1">
-            <div className="tw:flex tw:flex-wrap tw:items-baseline tw:gap-2">
-              <strong title={`@${note.author.username}`}>
-                {note.author.id === gitlab.state?.account?.id
-                  ? "You"
-                  : note.author.name || note.author.username}
-              </strong>
-              {note.author.bot && <span className={meta}>bot</span>}
-              <time
-                className={meta}
-                dateTime={note.createdAt}
-                title={new Date(note.createdAt).toLocaleString()}
-              >
-                {relativeTime(note.createdAt)}
-              </time>
-              {collapsible && index === 0 && (
-                <Button
-                  variant="ghost"
-                  className={cn(textAction, "tw:ms-auto tw:h-auto")}
-                  onClick={() => gitlab.collapse(discussion.id, true)}
-                >
-                  Collapse
-                </Button>
-              )}
-            </div>
-            <NoteBody source={note.body} />
-          </div>
-        </div>
-      ))}
-      <div className={cn(actions, "tw:ms-11 tw:items-center")}>
-        <Button
-          variant="ghost"
-          className={textAction}
-          disabled={!gitlab.editable || gitlab.busy}
-          onClick={() =>
-            gitlab.compose(
-              { kind: "reply", discussionId: discussion.id },
-              inline ? "inline" : "panel",
-            )
-          }
-        >
-          <CornerDownRightIcon aria-hidden="true" />
-          Reply
-        </Button>
-        {discussion.resolvable && !discussion.resolved && (
+          {discussion.comments.length > 1 && (
+            <span className={meta}>{discussion.comments.length}</span>
+          )}
           <Button
             variant="ghost"
-            className={textAction}
-            loading={
-              gitlab.pending?.action === "resolve" &&
-              gitlab.pending.input.discussionId === discussion.id
-            }
-            disabled={!gitlab.editable || gitlab.busy}
-            onClick={() =>
-              void gitlab.run("resolve", { discussionId: discussion.id })
-            }
+            className={cn(textAction, "tw:h-auto")}
+            aria-expanded={false}
+            onClick={() => gitlab.collapse(discussion.id, false)}
           >
-            Resolve
+            Expand
           </Button>
-        )}
-        {discussion.resolved && <span className={meta}>Resolved</span>}
-        <a
-          className="tw:ms-auto tw:text-[11px] tw:text-[var(--ink-faint)] tw:no-underline tw:hover:underline"
-          href={gitlab.state?.identity.url}
-          target="_blank"
-          rel="noreferrer"
-        >
-          View on GitLab
-        </a>
-      </div>
+        </div>
+      ) : (
+        <>
+          {discussion.comments.map((note, index) => (
+            <div
+              key={note.id}
+              className={cn(
+                "tw:flex tw:min-w-0 tw:items-start tw:gap-3",
+                index > 0 && "tw:ms-11",
+              )}
+            >
+              <span
+                className="tw:flex tw:size-8 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-full tw:bg-[color-mix(in_srgb,var(--link)_12%,transparent)] tw:text-[11px] tw:font-semibold tw:text-[var(--link)]"
+                aria-hidden="true"
+              >
+                {(note.author.name || note.author.username)
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </span>
+              <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-1">
+                <div className="tw:flex tw:flex-wrap tw:items-baseline tw:gap-2">
+                  <strong title={`@${note.author.username}`}>
+                    {authorName(note.author, gitlab.state?.account?.id)}
+                  </strong>
+                  {note.author.bot && <span className={meta}>bot</span>}
+                  <time
+                    className={meta}
+                    dateTime={note.createdAt}
+                    title={new Date(note.createdAt).toLocaleString()}
+                  >
+                    {relativeTime(note.createdAt)}
+                  </time>
+                  {collapsible && index === 0 && (
+                    <IconButton
+                      aria-label="Collapse discussion"
+                      title="Collapse discussion"
+                      className="tw:ms-auto"
+                      onClick={() => gitlab.collapse(discussion.id, true)}
+                    >
+                      <ChevronsDownUpIcon aria-hidden="true" />
+                    </IconButton>
+                  )}
+                </div>
+                <NoteBody source={note.body} />
+              </div>
+            </div>
+          ))}
+          <div className={cn(actions, "tw:ms-11 tw:items-center")}>
+            <Button
+              variant="ghost"
+              className={textAction}
+              disabled={!gitlab.editable || gitlab.busy}
+              onClick={() =>
+                gitlab.compose(
+                  { kind: "reply", discussionId: discussion.id },
+                  inline ? "inline" : "panel",
+                )
+              }
+            >
+              <CornerDownRightIcon aria-hidden="true" />
+              Reply
+            </Button>
+            {discussion.resolvable && !discussion.resolved && (
+              <Button
+                variant="ghost"
+                className={textAction}
+                loading={
+                  gitlab.pending?.action === "resolve" &&
+                  gitlab.pending.input.discussionId === discussion.id
+                }
+                disabled={!gitlab.editable || gitlab.busy}
+                onClick={() =>
+                  void gitlab.run("resolve", { discussionId: discussion.id })
+                }
+              >
+                Resolve
+              </Button>
+            )}
+            {discussion.resolved && <span className={meta}>Resolved</span>}
+            <a
+              className="tw:ms-auto tw:text-[11px] tw:text-[var(--ink-faint)] tw:no-underline tw:hover:underline"
+              href={gitlab.state?.identity.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View on GitLab
+            </a>
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+function authorName(
+  author: GitLabDiscussion["comments"][number]["author"],
+  accountId: number | undefined,
+) {
+  return author.id === accountId ? "You" : author.name || author.username;
 }
 
 function DraftEditor({
@@ -503,7 +563,7 @@ function DraftEditor({
         card,
         inline && inlineCard,
         attached &&
-          "tw:-mt-2 tw:rounded-t-none tw:bg-[var(--surface-raised)] tw:pt-5",
+          "tw:-mt-2 tw:rounded-t-none tw:bg-[var(--surface)] tw:pt-5",
       )}
     >
       <div className="tw:flex tw:flex-wrap tw:items-baseline tw:justify-between tw:gap-2 tw:wrap-anywhere">
@@ -674,7 +734,7 @@ function NoteBody({ source }: { source: string }) {
 const card =
   "tw:flex tw:min-w-0 tw:flex-col tw:gap-2.5 tw:rounded-[8px] tw:border tw:border-[var(--chrome-border)] tw:p-3";
 
-const inlineCard = "tw:max-w-[820px] tw:gap-3 tw:bg-[var(--surface)]";
+const inlineCard = "tw:max-w-[820px] tw:gap-3 tw:bg-[var(--surface-raised)]";
 
 const actions = "tw:flex tw:flex-wrap tw:gap-2";
 

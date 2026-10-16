@@ -26,6 +26,7 @@ export function createCanvasUi(
   onError: (cause: unknown) => void,
 ): ReviewCanvasUi & ReviewDisposable {
   let currentMenu: ReviewDisposable | undefined;
+  let menuAnchor: HTMLElement | undefined;
   const dialogs = new Set<() => void>();
 
   // Keep the host's imperative API; React owns the shared shadcn overlays.
@@ -45,7 +46,15 @@ export function createCanvasUi(
   return {
     theme,
     showMenu(request) {
+      // A second click on the open menu's anchor closes it, like a native menu.
+      if (currentMenu && menuAnchor === request.anchor) {
+        currentMenu.dispose();
+
+        return { dispose() {} };
+      }
+
       currentMenu?.dispose();
+      menuAnchor = request.anchor;
       const box = request.anchor.getBoundingClientRect();
       let closed = false;
       let unmount = () => {};
@@ -90,6 +99,12 @@ export function createCanvasUi(
             container={parent()}
             align="start"
             className="tw:min-w-[180px] tw:font-[family-name:var(--chrome-font)]"
+            // Leave the anchor's press to its click, which toggles the menu.
+            onInteractOutside={(event) => {
+              // SAFETY: Radix dispatches outside events on the DOM node pressed or focused.
+              if (request.anchor.contains(event.target as Node))
+                event.preventDefault();
+            }}
             onCloseAutoFocus={(event) => {
               event.preventDefault();
 

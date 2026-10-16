@@ -43,7 +43,7 @@ export function useCanvasMenu(
       "aria-haspopup": "menu" as const,
       "aria-expanded": open,
       onClick: (event: MouseEvent<HTMLButtonElement>) =>
-        show(event.currentTarget),
+        open ? menu.current?.dispose() : show(event.currentTarget),
       onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => {
         if (event.key === "ArrowDown" || event.key === "ArrowUp") {
           event.preventDefault();

@@ -13,6 +13,7 @@ import type {
   ReviewCanvasBridge,
   ReviewDesktopDiscovery,
   ReviewDiffFileWire,
+  ReviewDiffPreferences,
   ReviewDisposable,
   ReviewInlineEditorRange,
   ReviewSourceView,
@@ -27,6 +28,15 @@ import type {
   NativeOpenRequest,
   ShellPreferences,
 } from "./rpc";
+
+const DIFF_PREFERENCE_KEYS = {
+  layout: "diffLayout",
+  mode: "diffMode",
+  wrap: "diffWrap",
+} as const satisfies Record<
+  keyof ReviewDiffPreferences,
+  keyof ShellPreferences
+>;
 
 export function createAuthenticatedRequest(
   discovery: ReviewDesktopDiscovery,
@@ -218,6 +228,12 @@ export function createCanvasBridge(
 
   const listeners = new Set<(event: ReviewSurfaceEvent) => void>();
 
+  function diffPreferences(): ReviewDiffPreferences {
+    const { diffLayout, diffMode, diffWrap } = preferences.current();
+
+    return { layout: diffLayout, mode: diffMode, wrap: diffWrap };
+  }
+
   function watch<T>(read: () => T, listener: (value: T) => void) {
     let previous = read();
 
@@ -278,13 +294,11 @@ export function createCanvasBridge(
     },
     currentTheme: options.theme,
     onDidChangeTheme: (listener) => watch(options.theme, listener),
-    currentDiffLayout: () => preferences.current().diffLayout,
-    get defaultDiffMode() {
-      return preferences.current().defaultDiffMode;
-    },
-    setDiffLayout: (layout) => preferences.set({ diffLayout: layout }),
-    onDidChangeDiffLayout: (listener) =>
-      watch(() => preferences.current().diffLayout, listener),
+    diffPreference: (key) => diffPreferences()[key],
+    setDiffPreference: (key, value) =>
+      preferences.set({ [DIFF_PREFERENCE_KEYS[key]]: value }),
+    onDidChangeDiffPreference: (key, listener) =>
+      watch(() => diffPreferences()[key], listener),
     notify: options.notify,
     ready: () => {},
   };

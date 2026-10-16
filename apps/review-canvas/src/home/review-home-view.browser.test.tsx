@@ -142,7 +142,7 @@ describe("ReviewHome", () => {
     expect(titles()).toEqual(["Zulu"]);
     await act(async () =>
       container
-        .querySelector<HTMLButtonElement>('button[aria-label="Dismiss Zulu"]')!
+        .querySelector<HTMLButtonElement>('button[aria-label="Settle Zulu"]')!
         .click(),
     );
     expect(onDismiss).toHaveBeenCalledWith(reviews[0]);
@@ -188,7 +188,7 @@ describe("ReviewHome", () => {
       labels.findIndex((text) => text.includes("A review")),
     );
     expect(container.querySelectorAll("table")).toHaveLength(1);
-    expect(container.textContent).not.toContain("Dismiss Scratchpad");
+    expect(container.textContent).not.toContain("Settle Scratchpad");
     expect(container.textContent).toContain("6 blocks");
     expect(container.textContent).toContain("2 diagrams");
 
@@ -341,7 +341,7 @@ describe("ReviewHome", () => {
     await act(async () =>
       container
         .querySelector<HTMLButtonElement>(
-          '[aria-label="Dismissed sessions"] > button',
+          '[aria-label="Settled sessions"] > button',
         )!
         .click(),
     );
@@ -384,7 +384,7 @@ describe("ReviewHome", () => {
         container
           .querySelector<HTMLButtonElement>(
             isDismissed
-              ? '[aria-label="Dismissed sessions"] > button'
+              ? '[aria-label="Settled sessions"] > button'
               : '[aria-label="Actions for Pending review"]',
           )!
           .click(),
@@ -489,7 +489,7 @@ describe("ReviewHome", () => {
     await act(async () =>
       container
         .querySelector<HTMLButtonElement>(
-          '[aria-label="Dismiss Native review"]',
+          '[aria-label="Settle Native review"]',
         )!
         .click(),
     );
@@ -506,7 +506,7 @@ describe("ReviewHome", () => {
     await act(async () =>
       container
         .querySelector<HTMLButtonElement>(
-          '[aria-label="Dismissed sessions"] > button',
+          '[aria-label="Settled sessions"] > button',
         )!
         .click(),
     );

@@ -411,11 +411,101 @@ it("stacks collapsed discussions as chips on their line that take no diff height
     expect(container.textContent).toContain("@markup");
 
     await userEvent.click(
-      [...container.querySelectorAll("button")].find(
-        (b) => b.textContent === "Collapse",
+      container.querySelector<HTMLElement>(
+        '[aria-label="Collapse discussion"]',
       )!,
     );
     await vi.waitFor(() => expect(chip()).not.toBeNull());
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    localStorage.clear();
+  }
+});
+
+it("collapses a sidebar discussion to a one-line summary and expands it back", async () => {
+  const state: GitLabState = {
+    identity: {
+      host: "gitlab.test",
+      url: "https://gitlab.test/a/b/-/merge_requests/1",
+      projectId: 1,
+      projectPath: "a/b",
+      iid: 1,
+      cloneUrl: "https://gitlab.test/a/b.git",
+    },
+    account: { id: 7, username: "andrew", name: "Andrew" },
+    refs: {
+      baseSha: "a".repeat(40),
+      startSha: "a".repeat(40),
+      headSha: "b".repeat(40),
+    },
+    discussions: [
+      {
+        id: "thread",
+        resolvable: true,
+        resolved: false,
+        comments: [
+          {
+            id: 1,
+            body: "Can we rework it?",
+            author: { id: 8, username: "markup", name: "Markup" },
+            createdAt: "2026-10-07T10:00:00Z",
+          },
+          {
+            id: 2,
+            body: "Sure thing",
+            author: { id: 7, username: "andrew", name: "Andrew" },
+            createdAt: "2026-10-07T11:00:00Z",
+          },
+        ],
+      },
+    ],
+    drafts: [],
+  };
+
+  const session = testReviewSession();
+  session.review!.gitlab = state.identity;
+  session.fetch = async () => Response.json(state);
+
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+
+  const button = (label: string) =>
+    [...container.querySelectorAll("button")].find(
+      (b) => b.textContent === label,
+    );
+
+  try {
+    await act(async () =>
+      root.render(
+        <TestCanvasQuery>
+          <ReviewSessionProvider session={session}>
+            <GitLabProvider>
+              <GitLabDiscussionContent />
+            </GitLabProvider>
+          </ReviewSessionProvider>
+        </TestCanvasQuery>,
+      ),
+    );
+
+    const collapse = () =>
+      container.querySelector<HTMLElement>(
+        '[aria-label="Collapse discussion"]',
+      );
+    await vi.waitFor(() => expect(collapse()).not.toBeNull());
+    expect(container.textContent).toContain("Sure thing");
+
+    await userEvent.click(collapse()!);
+    await vi.waitFor(() => expect(button("Expand")).toBeDefined());
+    expect(container.textContent).toContain("Can we rework it?");
+    expect(container.textContent).not.toContain("Sure thing");
+    expect(button("Reply")).toBeUndefined();
+
+    await userEvent.click(button("Expand")!);
+    await vi.waitFor(() =>
+      expect(container.textContent).toContain("Sure thing"),
+    );
   } finally {
     await act(async () => root.unmount());
     container.remove();

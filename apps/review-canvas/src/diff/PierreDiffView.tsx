@@ -1,5 +1,4 @@
 import { useAgentSelection } from "@canvas/agent-context/agent-selection";
-import { NativeSelect } from "@canvas/components/ui/native-select";
 import { useGitLab } from "@canvas/gitlab/gitlab-context";
 import {
   type GitLabInlineAnnotation,
@@ -11,7 +10,6 @@ import { useReviewSession } from "@canvas/host/review-session";
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
 import {
   readReviewUiState,
-  useReviewUiState,
   writeReviewUiState,
 } from "@canvas/review/review-ui-state";
 import { loadingStyles } from "@canvas/styles/loading.stylex";
@@ -38,7 +36,6 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   ExternalLinkIcon,
-  WrapTextIcon,
 } from "lucide-react";
 import {
   useCallback,
@@ -53,6 +50,7 @@ import { createPortal } from "react-dom";
 import { z } from "zod";
 
 import { ChangedFilesTree } from "./changed-files-tree";
+import { useDiffPreference } from "./diff-settings";
 import {
   type PierreComparisonEntry,
   loadPierreComparison,
@@ -82,11 +80,8 @@ interface SavedView {
 export function PierreDiffView(props: Props) {
   const session = useReviewSession();
 
-  const [structural, setStructural] = useReviewUiState(
-    "diff-structural",
-    session.bridge.defaultDiffMode === "structural",
-    { scope: "session" },
-  );
+  const [mode, setMode] = useDiffPreference("mode");
+  const structural = mode === "structural";
 
   const summary = useReviewDiffFiles();
   const revision = props.scope ? undefined : summary.revision;
@@ -155,7 +150,7 @@ export function PierreDiffView(props: Props) {
       url={comparisonUrl}
       revision={revision}
       structural={structural}
-      setStructural={setStructural}
+      setStructural={(value) => setMode(value ? "structural" : "text")}
     />
   );
 }
@@ -259,7 +254,7 @@ function Comparison({
 
   const textSelection = useRef<CodeViewLineSelection | null>(null);
 
-  const [wrap, setWrap] = useReviewUiState("diff-wrap", false);
+  const [wrap] = useDiffPreference("wrap");
 
   // Pierre hydrates metadata in place; each mounted viewer owns its copy.
   const renderedDiffs = useRef(
@@ -283,17 +278,7 @@ function Comparison({
     !saved.current.anchor && !lens?.wholeFiles ? lens?.ranges[0] : undefined,
   );
 
-  const layout = useSyncExternalStore(
-    useCallback(
-      (notify) => {
-        const subscription = session.bridge.onDidChangeDiffLayout(notify);
-
-        return () => subscription.dispose();
-      },
-      [session.bridge],
-    ),
-    () => session.bridge.currentDiffLayout(),
-  );
+  const [layout] = useDiffPreference("layout");
 
   const theme = useSyncExternalStore(
     useCallback(
@@ -759,7 +744,7 @@ function Comparison({
       overflow: wrap ? ("wrap" as const) : ("scroll" as const),
       stickyHeaders: true,
       unsafeCSS:
-        ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}[data-diffs-header]{box-shadow:inset 0 1px var(--rule)}",
+        ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}[data-diffs-header]{box-shadow:inset 0 1px var(--rule)}:host(:first-child) [data-diffs-header]{box-shadow:none}:is([data-line-annotation],[data-gutter-buffer=annotation]){--diffs-annotation-bg:var(--diffs-bg)}",
       onPostRender: restore,
       loadDiffFiles:
         committed && !structural
@@ -849,75 +834,17 @@ function Comparison({
       )}
       data-rejected-files={entries.filter((entry) => entry.error).length}
     >
-      <div
-        {...stylex.props(styles.toolbar)}
-        role="toolbar"
-        aria-label="Diff display"
-      >
-        {lens && (
+      {lens && (
+        <div
+          {...stylex.props(styles.toolbar)}
+          role="toolbar"
+          aria-label="Diff display"
+        >
           <span {...stylex.props(styles.lensNotice)}>
             Showing full file diffs for this lens
           </span>
-        )}
-        {structural && chosen?.diff?.hunks.some((hunk) => hunk.hunkContext) && (
-          <div {...stylex.props(styles.functionPicker)}>
-            <NativeSelect
-              size="sm"
-              aria-label="Changed functions"
-              value=""
-              onChange={(event) => {
-                const hunk = chosen.diff!.hunks[Number(event.target.value)];
-
-                if (!hunk) return;
-                viewer.current?.scrollTo({
-                  type: "line",
-                  id: chosen.file.path,
-                  lineNumber: hunk.additionCount
-                    ? hunk.additionStart
-                    : hunk.deletionStart,
-                  side: hunk.additionCount ? "additions" : "deletions",
-                  align: "start",
-                });
-              }}
-            >
-              <option value="" disabled>
-                Changed functions
-              </option>
-              {chosen.diff.hunks.map(
-                (hunk, index) =>
-                  hunk.hunkContext && (
-                    <option key={index} value={index}>
-                      {hunk.hunkContext}
-                    </option>
-                  ),
-              )}
-            </NativeSelect>
-          </div>
-        )}
-        <div {...stylex.props(styles.modePicker)}>
-          <NativeSelect
-            size="sm"
-            aria-label="Diff mode"
-            value={structural ? "structural" : "text"}
-            onChange={(event) =>
-              setStructural(event.target.value === "structural")
-            }
-            title="Group code changes by function and ignore formatting-only edits"
-          >
-            <option value="text">Text diff</option>
-            <option value="structural">Structural diff</option>
-          </NativeSelect>
         </div>
-        <Button
-          variant="secondary"
-          xstyle={[styles.wrapButton, wrap && styles.wrapActive]}
-          aria-pressed={wrap}
-          onClick={() => setWrap(!wrap)}
-        >
-          <WrapTextIcon aria-hidden="true" />
-          Wrap lines
-        </Button>
-      </div>
+      )}
       {treeContainer &&
         createPortal(
           <ChangedFilesTree
@@ -1103,15 +1030,7 @@ const styles = stylex.create({
     fontSize: fontSize.body,
   },
   noticeActions: { display: "flex", flexWrap: "wrap", gap: 8 },
-  wrapButton: { height: 32 },
-  wrapActive: {
-    backgroundColor: tokens.accentWash,
-    borderColor: tokens.accentOutline,
-    color: tokens.accent,
-  },
   lensNotice: { marginInlineEnd: "auto" },
-  functionPicker: { maxWidth: "min(256px, 100%)", minWidth: 0 },
-  modePicker: { flexShrink: 0 },
   headerActions: { display: "flex", gap: 8, alignItems: "center" },
   toolbar: {
     display: "flex",
@@ -1120,7 +1039,8 @@ const styles = stylex.create({
     alignItems: "center",
     justifyContent: "flex-end",
     paddingInline: 8,
-    paddingBlock: 8,
+    // CodeView's layout paddingTop supplies the gap below.
+    paddingTop: 8,
     fontFamily: tokens.fontSans,
     fontSize: fontSize.body,
     color: tokens.inkMuted,
