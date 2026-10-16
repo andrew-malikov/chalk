@@ -104,7 +104,7 @@ export function writeReviewUiState<T>(
     const storage = reviewUiStorage(scope);
     const serialized = JSON.stringify(value);
 
-    // Zustand also calls its storage adapter for changes to transient fields.
+    // Skip writes when only transient state changed.
     if (storage && storage.getItem(key) !== serialized) {
       storage.setItem(key, serialized);
     }

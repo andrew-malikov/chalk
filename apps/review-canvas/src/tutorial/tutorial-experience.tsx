@@ -89,7 +89,7 @@ export function TutorialExperienceProvider({
   const [targets, setTargets] = useState<readonly HTMLElement[]>([]);
 
   const diagramTourKind =
-    useOptionalReviewPanel((state) => state.overlayTour?.kind) ?? null;
+    useOptionalReviewPanel((state) => state.context.overlayTour?.kind) ?? null;
 
   const steps = useMemo(
     () => availableTutorialSteps(review.softwareMapEnabled),

@@ -42,8 +42,7 @@
     "tailwind-merge": "3.7.0",
     "tailwindcss": "4.3.3",
     "xstate": "5.33.2",
-    "zod": "catalog:",
-    "zustand": "5.0.15"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@chalk/server": "workspace:*",

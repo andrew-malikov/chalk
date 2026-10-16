@@ -2,9 +2,7 @@ import {
   type JsonValue,
   isJsonObject,
   jsonNumber,
-  jsonValueSchema,
 } from "@chalk/review-contracts";
-import type { PersistOptions, PersistStorage } from "zustand/middleware";
 
 import {
   type ReviewUiScope,
@@ -25,7 +23,7 @@ interface ReviewPersistence<T, Saved> {
 
 const VERSION = 1;
 
-/** Persist only resumable data; validate it before it can enter a live store. */
+/** Persist only resumable data; validate it before it can enter a live actor. */
 export function reviewPersistence<T, Saved>({
   key,
   scope,
@@ -33,48 +31,33 @@ export function reviewPersistence<T, Saved>({
   parse,
   restore = (saved, current) => ({ ...current, ...saved }),
   legacy = false,
-}: ReviewPersistence<T, Saved>): PersistOptions<T, unknown> {
-  const storage: PersistStorage<unknown> = {
-    getItem(name) {
-      const value = readReviewUiState<JsonValue>(scope, name);
-
-      if (value === null) return null;
-
-      if (isJsonObject(value) && "state" in value) {
-        const version = jsonNumber(value.version);
-
-        return version === undefined ? null : { state: value.state, version };
-      }
-
-      return legacy ? { state: value, version: 0 } : null;
-    },
-    setItem: (name, value) => writeReviewUiState(scope, name, value),
-    removeItem: (name) => removeReviewUiState(scope, name),
-  };
-
+}: ReviewPersistence<T, Saved>) {
   return {
-    name: key,
-    storage,
-    version: VERSION,
-    partialize,
-    // Zustand rewrites storage after a migration and swallows a throw, so an
-    // unreadable record is left in place rather than replaced by defaults.
-    migrate: (value, previousVersion) => {
-      const json = jsonValueSchema.parse(value);
+    read(current: T): T {
+      const value = readReviewUiState<JsonValue>(scope, key);
 
-      if (previousVersion !== 0 || !legacy || parse(json) === undefined) {
-        throw new Error(`Unsupported UI state version: ${previousVersion}`);
-      }
+      if (value === null) return current;
+      const wrapped = isJsonObject(value) && "state" in value;
+      const version = wrapped ? jsonNumber(value.version) : 0;
 
-      return json;
+      if (version !== VERSION && !(legacy && version === 0)) return current;
+      const saved = parse(wrapped ? value.state : value);
+
+      if (saved === undefined) return current;
+      const restored = restore(saved, current);
+
+      if (version === 0) this.write(restored);
+
+      return restored;
     },
-    merge: (value, current) => {
-      const json = jsonValueSchema.safeParse(value);
-
-      if (!json.success) return current;
-      const saved = parse(json.data);
-
-      return saved === undefined ? current : restore(saved, current);
+    write(state: T): void {
+      writeReviewUiState(scope, key, {
+        state: partialize(state),
+        version: VERSION,
+      });
+    },
+    clear(): void {
+      removeReviewUiState(scope, key);
     },
   };
 }

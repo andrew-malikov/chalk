@@ -14,13 +14,14 @@ import {
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createActor } from "xstate";
 
 import {
   DatabaseLens,
   type DatabaseLensProps,
   lensUseCases,
 } from "./database-lens";
-import { createDiagramNavigationStore } from "./diagram-navigation-store";
+import { diagramNavigationMachine } from "./diagram-navigation-machine";
 
 // The lens mounts a live software-map canvas whose edge router loads the
 // libavoid wasm. The desktop serves it over the review API; the test hands the
@@ -122,9 +123,11 @@ describe("DatabaseLens", () => {
       softwareMapNavigationKey({ title: "Delayed" }),
     );
 
-    createDiagramNavigationStore(key, "", new Set())
-      .getState()
-      .setSelectedNodeId("selected");
+    createActor(diagramNavigationMachine, {
+      input: { key, modelKey: "", expandedNodeIds: new Set<string>() },
+    })
+      .start()
+      .send({ type: "setSelectedNodeId", next: "selected" });
     const container = document.createElement("div");
     document.body.append(container);
     root = createRoot(container);
@@ -159,13 +162,15 @@ describe("DatabaseLens", () => {
 
     await act(async () => render(false));
     expect(
-      createDiagramNavigationStore(key, "", new Set()).getState()
-        .selectedNodeId,
+      createActor(diagramNavigationMachine, {
+        input: { key, modelKey: "", expandedNodeIds: new Set<string>() },
+      }).getSnapshot().context.selectedNodeId,
     ).toBe("selected");
     await act(async () => render(true));
     expect(
-      createDiagramNavigationStore(key, "", new Set()).getState()
-        .selectedNodeId,
+      createActor(diagramNavigationMachine, {
+        input: { key, modelKey: "", expandedNodeIds: new Set<string>() },
+      }).getSnapshot().context.selectedNodeId,
     ).toBe("selected");
   });
 

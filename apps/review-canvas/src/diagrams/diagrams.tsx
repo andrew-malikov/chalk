@@ -4,7 +4,7 @@ import { useMotionPhase } from "@canvas/drawing/draw-queue-provider";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import {
   useReviewPanel,
-  useReviewPanelStore,
+  useReviewPanelActor,
 } from "@canvas/review/review-panel";
 import type { GuidedTour, PeekAnchor } from "@canvas/review/review-panel-model";
 import { useReviewDebugSettings } from "@canvas/settings/debug-settings";
@@ -271,12 +271,14 @@ export function SequenceDiagram(block: SequenceDiagramProps) {
   // The tour IS the fullscreen mode: the inline figure becomes the stage
   // and the standard GuidedTourPanel docks beside it. A stored anchor this
   // tour no longer has leaves it closed.
-  const panelStore = useReviewPanelStore();
+  const panelActor = useReviewPanelActor();
 
   const tourState = useReviewPanel((state) =>
-    state.overlayTour?.tourId === tour.id &&
-    tour.stops.some((stop) => stop.anchor.id === state.overlayTour!.anchor)
-      ? state.overlayTour
+    state.context.overlayTour?.tourId === tour.id &&
+    tour.stops.some(
+      (stop) => stop.anchor.id === state.context.overlayTour!.anchor,
+    )
+      ? state.context.overlayTour
       : null,
   );
 
@@ -289,15 +291,22 @@ export function SequenceDiagram(block: SequenceDiagramProps) {
 
       if (!nextAnchor) return;
 
-      panelStore
-        .getState()
-        .openOverlayTour({ tourId: tour.id, kind: "sequence" }, nextAnchor);
+      panelActor.send({
+        type: "openOverlayTour",
+        tour: { tourId: tour.id, kind: "sequence" },
+        anchor: nextAnchor,
+      });
     },
-    [panelStore, tour, tourAnchor],
+    [panelActor, tour, tourAnchor],
   );
 
-  const { closeOverlayTour: closeTour, moveOverlayTour: changeTourAnchor } =
-    panelStore.getState();
+  const closeTour = useCallback(
+    () => panelActor.send({ type: "closeOverlayTour" }),
+    [panelActor],
+  );
+
+  const changeTourAnchor = (anchor: string, { reveal }: { reveal: boolean }) =>
+    panelActor.send({ type: "moveOverlayTour", anchor, reveal });
 
   const { portalTarget } = useDiagramTourShell(tourOpen, closeTour);
 
@@ -354,7 +363,7 @@ function SequenceDiagramFigure({
 }) {
   const stage = onCloseTour !== undefined;
   const sequenceScrollRef = useRef<HTMLDivElement | null>(null);
-  const panelMotion = useReviewPanel((state) => state.motion);
+  const panelMotion = useReviewPanel((state) => state.context.motion);
   const [availableWidth, setAvailableWidth] = useState(0);
   useEffect(() => {
     const scroll = sequenceScrollRef.current;

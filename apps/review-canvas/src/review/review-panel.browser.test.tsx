@@ -3,7 +3,14 @@ import { ReviewDebugSettingsProvider } from "@canvas/settings/debug-settings";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import { REVIEW_CANVAS_RESUME_EVENT } from "@chalk/review-contracts";
 import type { AnchorRef } from "@review/documents/authoring";
-import { type ReactNode, act, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  StrictMode,
+  act,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -11,9 +18,12 @@ import { GuidedTourPanel, ReviewPanelHost } from "./review-components";
 import { ReviewProvider } from "./review-context";
 import {
   ReviewPanelProvider,
+  useOptionalReviewPanel,
   useReviewPanel,
+  useReviewPanelActor,
   useSuppressPanelMotionOnCanvasResume,
 } from "./review-panel";
+import type { ReviewPanelActor } from "./review-panel-machine";
 import type { GuidedTour } from "./review-panel-model";
 
 let root: ReturnType<typeof createRoot> | undefined;
@@ -155,6 +165,98 @@ describe("Review panel host", () => {
   });
 });
 
+describe("Review panel actor lifecycle", () => {
+  it("keeps restored navigation usable through Strict Mode replay", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    const capture = vi.fn<(actor: ReviewPanelActor) => void>();
+
+    await act(async () => {
+      root!.render(
+        <StrictMode>
+          <ReviewPanelProvider restore={() => ({ view: "diff" })}>
+            <PanelActorProbe capture={capture} />
+          </ReviewPanelProvider>
+        </StrictMode>,
+      );
+    });
+
+    expect(container.textContent).toBe("diff");
+    await act(async () => container.querySelector("button")!.click());
+    expect(container.textContent).toBe("review");
+  });
+
+  it("disposes a removed review without interrupting its sibling", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    const captureFirst = vi.fn<(actor: ReviewPanelActor) => void>();
+    const captureSecond = vi.fn<(actor: ReviewPanelActor) => void>();
+
+    const render = (first: boolean) =>
+      root!.render(
+        <>
+          {first && (
+            <ReviewPanelProvider key="first">
+              <PanelActorProbe capture={captureFirst} />
+            </ReviewPanelProvider>
+          )}
+          <ReviewPanelProvider key="second">
+            <PanelActorProbe capture={captureSecond} />
+          </ReviewPanelProvider>
+        </>,
+      );
+
+    await act(async () => render(true));
+    const first = captureFirst.mock.calls[0]![0];
+    const second = captureSecond.mock.calls[0]![0];
+    await act(async () => first.send({ type: "showView", view: "diff" }));
+    expect(container.textContent).toBe("diffreview");
+
+    await act(async () => render(false));
+    await act(async () => {
+      first.send({ type: "showView", view: "map" });
+      second.send({ type: "showView", view: "commits" });
+    });
+
+    expect(first.getSnapshot().value).toBe("diff");
+    expect(container.textContent).toBe("commits");
+    expect(captureSecond.mock.calls.at(-1)![0]).toBe(second);
+  });
+
+  it("allows optional consumers outside a provider", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+
+    await act(async () => root!.render(<OptionalPanelProbe />));
+    expect(container.textContent).toBe("no review");
+  });
+});
+
+function PanelActorProbe({
+  capture,
+}: {
+  capture(actor: ReviewPanelActor): void;
+}) {
+  const actor = useReviewPanelActor();
+  const view = useReviewPanel((snapshot) => snapshot.value);
+  useEffect(() => capture(actor), [actor, capture]);
+
+  return (
+    <button onClick={() => actor.send({ type: "showView", view: "review" })}>
+      {view}
+    </button>
+  );
+}
+
+function OptionalPanelProbe() {
+  const view = useOptionalReviewPanel((snapshot) => snapshot.value);
+
+  return <span>{view ?? "no review"}</span>;
+}
+
 describe("Guided tour panel", () => {
   it("activates the tour stop that crosses the panel reading line", async () => {
     const container = document.createElement("div");
@@ -269,19 +371,25 @@ describe("Guided tour panel", () => {
 });
 
 function OpenReplacingPanel() {
-  const openPeek = useReviewPanel((state) => state.openPeek);
+  const actor = useReviewPanelActor();
   useEffect(() => {
-    openPeek({
-      kind: "peek",
-      anchor: { id: "earlier", title: "Earlier detail" } as AnchorRef,
-      content: { kind: "inline-code", text: "earlier();" },
+    actor.send({
+      type: "openPeek",
+      panel: {
+        kind: "peek",
+        anchor: { id: "earlier", title: "Earlier detail" } as AnchorRef,
+        content: { kind: "inline-code", text: "earlier();" },
+      },
     });
-    openPeek({
-      kind: "peek",
-      anchor: { id: "startup", title: "Startup detail" } as AnchorRef,
-      content: { kind: "inline-code", text: "start();" },
+    actor.send({
+      type: "openPeek",
+      panel: {
+        kind: "peek",
+        anchor: { id: "startup", title: "Startup detail" } as AnchorRef,
+        content: { kind: "inline-code", text: "start();" },
+      },
     });
-  }, [openPeek]);
+  }, [actor]);
 
   return null;
 }
@@ -293,19 +401,21 @@ const peekFixture = {
 } as const;
 
 function OpenPeekPanel() {
-  const openPeek = useReviewPanel((state) => state.openPeek);
-  useEffect(() => openPeek(peekFixture), [openPeek]);
+  const actor = useReviewPanelActor();
+  useEffect(
+    () => actor.send({ type: "openPeek", panel: peekFixture }),
+    [actor],
+  );
 
   return null;
 }
 
 function RestorePeekPanel() {
-  const openPeek = useReviewPanel((state) => state.openPeek);
-  const suppressMotion = useReviewPanel((state) => state.suppressMotion);
+  const actor = useReviewPanelActor();
   useEffect(() => {
-    openPeek(peekFixture);
-    suppressMotion();
-  }, [openPeek, suppressMotion]);
+    actor.send({ type: "openPeek", panel: peekFixture });
+    actor.send({ type: "suppressMotion" });
+  }, [actor]);
 
   return null;
 }

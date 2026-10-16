@@ -70,16 +70,17 @@ import {
 import { useReviewLenses } from "./review/review-lenses";
 import {
   useReviewPanel,
-  useReviewPanelStore,
+  useReviewPanelActor,
   useSuppressPanelMotionOnCanvasResume,
 } from "./review/review-panel";
-import { type ReviewDiffScope } from "./review/review-panel-store";
+import { type ReviewDiffScope } from "./review/review-panel-machine";
 import {
   ReviewRootsProvider,
   useReviewContainer,
 } from "./review/review-root-context";
 import { ReviewToc } from "./review/review-toc";
 import {
+  type ReviewView,
   offeredReviewViews,
   reviewViewLabel,
 } from "./review/review-view-route";
@@ -200,7 +201,6 @@ function ReviewLayout({
 }): ReactElement {
   const documentRoute = document.routePath;
   const documentRevision = document.key;
-  const panelStore = useReviewPanelStore();
 
   const articleRef = useRef<HTMLElement | null>(null);
   const appRef = useRef<HTMLDivElement | null>(null);
@@ -292,12 +292,12 @@ function ReviewLayoutContent({
   // The scratchpad is a document and nothing else: no source tree to browse,
   // nothing to dismiss.
   const scratchpad = session.review?.kind === "scratchpad";
-  const panelStore = useReviewPanelStore();
+  const panelActor = useReviewPanelActor();
   useSuppressPanelMotionOnCanvasResume(appRef);
-  const activePanel = useReviewPanel((state) => state.active);
-  const panelMotion = useReviewPanel((state) => state.motion);
-  const activeView = useReviewPanel((state) => state.view);
-  const diffScope = useReviewPanel((state) => state.diffScope);
+  const activePanel = useReviewPanel((state) => state.context.active);
+  const panelMotion = useReviewPanel((state) => state.context.motion);
+  const activeView = useReviewPanel((state) => state.value);
+  const diffScope = useReviewPanel((state) => state.context.diffScope);
 
   // The full diff stays mounted while another view shows, at the width it
   // had when it was hidden: following the column through a side peek's
@@ -323,8 +323,10 @@ function ReviewLayoutContent({
       ? { right: "auto", width: `${frozenDiffWidth}px` }
       : undefined;
 
-  const mapFocus = useReviewPanel((state) => state.mapFocus);
-  const showView = useReviewPanel((state) => state.showView);
+  const mapFocus = useReviewPanel((state) => state.context.mapFocus);
+
+  const showView = (view: ReviewView) =>
+    panelActor.send({ type: "showView", view });
 
   const debugSettings = useReviewDebugSettings();
 
@@ -345,19 +347,19 @@ function ReviewLayoutContent({
   });
 
   useDocumentEmbedScroll(scrollRegionRef);
-  useReviewViewStateSync({ scrollRegionRef, panelStore });
+  useReviewViewStateSync({ scrollRegionRef, panelActor });
 
   // Diagrams only read the open tour, so a restored tour whose diagram is
   // no longer in the document would sit in the store unrendered. The
   // document and its tour overlay commit before this effect runs.
   const canvasRoot = useReviewContainer();
   useEffect(() => {
-    const { overlayTour, closeOverlayTour } = panelStore.getState();
+    const { overlayTour } = panelActor.getSnapshot().context;
 
     if (overlayTour && !canvasRoot?.querySelector(".diagram-tour-overlay")) {
-      closeOverlayTour();
+      panelActor.send({ type: "closeOverlayTour" });
     }
-  }, [canvasRoot, documentRevision, panelStore]);
+  }, [canvasRoot, documentRevision, panelActor]);
 
   const hasChangeRange =
     !!range.worktreeRevision || range.baseCommit !== range.headCommit;
@@ -417,8 +419,8 @@ function ReviewLayoutContent({
   );
 
   useLayoutEffect(() => {
-    panelStore.getState().setAvailableViews(reviewViews);
-  }, [panelStore, reviewViews]);
+    panelActor.send({ type: "setAvailableViews", views: reviewViews });
+  }, [panelActor, reviewViews]);
 
   const lenses = useReviewLenses();
 
@@ -431,11 +433,12 @@ function ReviewLayoutContent({
   useLayoutEffect(() => {
     return session.surface.subscribe((event) => {
       if (event.event !== "showReviewView") return;
-      const { availableViews, showView } = panelStore.getState();
+      const { availableViews } = panelActor.getSnapshot().context;
 
-      if (availableViews.includes(event.view)) showView(event.view);
+      if (availableViews.includes(event.view))
+        panelActor.send({ type: "showView", view: event.view });
     });
-  }, [panelStore, session.surface]);
+  }, [panelActor, session.surface]);
 
   const activeSoftwareMapSource = useMemo(
     () =>
@@ -691,8 +694,8 @@ function ReviewLayoutContent({
                         : undefined
                     }
                     focusRequest={mapFocus?.pending ? mapFocus : null}
-                    onFocusRequestHandled={
-                      panelStore.getState().consumeMapFocus
+                    onFocusRequestHandled={(requestId) =>
+                      panelActor.send({ type: "consumeMapFocus", requestId })
                     }
                     height="100%"
                     showChrome={false}
@@ -708,7 +711,10 @@ function ReviewLayoutContent({
                 commits={commits}
                 range={range}
                 onOpenDiff={(commit, file) => {
-                  panelStore.getState().openCommitDiff({ commit, file });
+                  panelActor.send({
+                    type: "openCommitDiff",
+                    scope: { commit, file },
+                  });
                 }}
               />
             )}

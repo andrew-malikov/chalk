@@ -11,17 +11,17 @@ import {
   jsonString,
   reviewViewSchema,
 } from "@chalk/review-contracts";
+import { useActorRef } from "@xstate/react";
 import type { RefObject } from "react";
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { persist } from "zustand/middleware";
-import { createStore } from "zustand/vanilla";
+import { useLayoutEffect, useMemo, useRef } from "react";
+import { type ActorRefFrom, assign, setup } from "xstate";
 
 import type {
   OverlayTour,
   ReviewLensSelection,
   ReviewNavigationRestore,
-  ReviewPanelStore,
-} from "./review-panel-store";
+  ReviewPanelActor,
+} from "./review-panel-machine";
 import { reviewPersistence } from "./review-persistence";
 import { removeReviewUiState, reviewUiStateKey } from "./review-ui-state";
 import { type ReviewView, offeredReviewViews } from "./review-view-route";
@@ -60,40 +60,51 @@ export interface PersistedTourPanel {
 
 export function useReviewViewStateSync({
   scrollRegionRef,
-  panelStore,
+  panelActor,
 }: {
   scrollRegionRef: RefObject<HTMLElement | null>;
-  panelStore: ReviewPanelStore;
+  panelActor: ReviewPanelActor;
 }): void {
   const session = useReviewSession();
   const key = reviewViewStateKey(session.config);
 
-  const saved = useMemo(() => createReviewViewStateStore(key), [key]);
-  const initialState = useMemo(() => saved.getState(), [saved]);
+  const initialState = useMemo(() => viewPersistence(key).read({}), [key]);
+
+  const saved = useActorRef(reviewViewStateMachine, {
+    input: { key, value: initialState },
+  });
+
+  useLayoutEffect(() => {
+    saved.send({ type: "configure", key, value: initialState });
+  }, [saved, key, initialState]);
 
   // Layout, so navigation from a host event right after mount still persists.
-  useLayoutEffect(
-    () =>
-      panelStore.subscribe((state, previous) => {
-        if (
-          state.view === previous.view &&
-          state.lens === previous.lens &&
-          state.overlayTour === previous.overlayTour &&
-          state.diffScope === previous.diffScope
-        ) {
-          return;
-        }
+  useLayoutEffect(() => {
+    let previous = panelActor.getSnapshot();
 
-        // The store holds the tour a legacy panel record restored, so the
-        // record is rewritten as an overlay tour, never as a panel.
-        saved.setState({
+    const subscription = panelActor.subscribe((snapshot) => {
+      const state = snapshot.context;
+      const prior = previous.context;
+      const viewChanged = snapshot.value !== previous.value;
+      previous = snapshot;
+
+      if (
+        !viewChanged &&
+        state.lens === prior.lens &&
+        state.overlayTour === prior.overlayTour &&
+        state.diffScope === prior.diffScope
+      ) {
+        return;
+      }
+
+      // A restored legacy panel is rewritten as a fullscreen tour.
+      saved.send({
+        type: "update",
+        value: {
           panel: undefined,
-          ...(state.view !== previous.view && { activeView: state.view }),
-          ...(state.lens !== previous.lens && {
-            lens: state.lens ?? undefined,
-          }),
-          // Written on every change: a scope a restore dropped must not
-          // come back on another version.
+          ...(viewChanged && { activeView: snapshot.value }),
+          ...(state.lens !== prior.lens && { lens: state.lens ?? undefined }),
+          // A scope dropped during restoration must stay dropped on later versions.
           diffScope: state.diffScope
             ? {
                 commit: state.diffScope.commit.commit,
@@ -107,31 +118,34 @@ export function useReviewViewStateSync({
                 kind: state.overlayTour.kind,
               }
             : undefined,
-        });
-      }),
-    [panelStore, saved],
-  );
+        },
+      });
+    });
+
+    return () => subscription.unsubscribe();
+  }, [panelActor, saved, key]);
 
   // A scroll position belongs to the view it was taken on.
   const restoreScrollTop = useMemo(
     () =>
-      (initialState.scrollView ?? "review") === panelStore.getState().view
+      (initialState.scrollView ?? "review") === panelActor.getSnapshot().value
         ? initialState.scrollTop
         : undefined,
-    [initialState, panelStore],
+    [initialState, panelActor],
   );
 
   const scrollRestorationPending = useScrollRestoration(
     scrollRegionRef,
-    panelStore,
+    panelActor,
     restoreScrollTop,
   );
 
   useScrollCapture(
     scrollRegionRef,
-    panelStore,
+    panelActor,
     saved,
     scrollRestorationPending,
+    key,
   );
 }
 
@@ -202,7 +216,7 @@ export function reviewViewStateKey(config: ReviewClientConfig): string {
 export function readPersistedReviewViewState(
   config: ReviewClientConfig,
 ): PersistedReviewViewState {
-  return createReviewViewStateStore(reviewViewStateKey(config)).getState();
+  return viewPersistence(reviewViewStateKey(config)).read({});
 }
 
 export function clearPersistedReviewViewState(
@@ -211,24 +225,55 @@ export function clearPersistedReviewViewState(
   removeReviewUiState("session", reviewViewStateKey(config));
 }
 
-function createReviewViewStateStore(key: string) {
-  return createStore<PersistedReviewViewState>()(
-    persist(
-      () => ({}),
-      reviewPersistence<PersistedReviewViewState, PersistedReviewViewState>({
-        key,
-        scope: "session",
-        legacy: true,
-        partialize: (state) => state,
-        parse: parsePersistedReviewViewState,
-      }),
-    ),
-  );
+function viewPersistence(key: string) {
+  return reviewPersistence<PersistedReviewViewState, PersistedReviewViewState>({
+    key,
+    scope: "session",
+    legacy: true,
+    partialize: (state) => state,
+    parse: parsePersistedReviewViewState,
+  });
 }
+
+interface ReviewViewStateInput {
+  key: string;
+  value: PersistedReviewViewState;
+}
+
+type ReviewViewStateEvent =
+  | { type: "configure"; key: string; value: PersistedReviewViewState }
+  | { type: "update"; value: Partial<PersistedReviewViewState> };
+
+const reviewViewStateMachine = setup({
+  types: {
+    // SAFETY: XState reads `context` only for type inference.
+    context: {} as ReviewViewStateInput,
+    // SAFETY: XState reads `input` only for type inference.
+    input: {} as ReviewViewStateInput,
+    // SAFETY: XState reads `events` only for type inference.
+    events: {} as ReviewViewStateEvent,
+  },
+}).createMachine({
+  context: ({ input }) => input,
+  on: {
+    configure: {
+      guard: ({ context, event }) => context.key !== event.key,
+      actions: assign(({ event }) => ({ key: event.key, value: event.value })),
+    },
+    update: {
+      actions: [
+        assign({
+          value: ({ context, event }) => ({ ...context.value, ...event.value }),
+        }),
+        ({ context }) => viewPersistence(context.key).write(context.value),
+      ],
+    },
+  },
+});
 
 function useScrollRestoration(
   scrollRegionRef: RefObject<HTMLElement | null>,
-  panelStore: ReviewPanelStore,
+  panelActor: ReviewPanelActor,
   scrollTop: number | undefined,
 ): RefObject<boolean> {
   const pendingRef = useRef(false);
@@ -246,7 +291,7 @@ function useScrollRestoration(
       scrollRegion.removeEventListener("pointerdown", abortForUserInput);
       scrollRegion.removeEventListener("touchstart", abortForUserInput);
       scrollRegion.removeEventListener("keydown", abortForNavigationKey);
-      unsubscribeView();
+      viewSubscription.unsubscribe();
     };
 
     const finish = () => {
@@ -308,8 +353,10 @@ function useScrollRestoration(
     scrollRegion.addEventListener("keydown", abortForNavigationKey);
 
     // The position belongs to the view it was taken on.
-    const unsubscribeView = panelStore.subscribe((state, previous) => {
-      if (state.view !== previous.view) finish();
+    const initialView = panelActor.getSnapshot().value;
+
+    const viewSubscription = panelActor.subscribe((snapshot) => {
+      if (snapshot.value !== initialView) finish();
     });
 
     resizeObserver =
@@ -334,7 +381,7 @@ function useScrollRestoration(
       removeUserListeners();
       pendingRef.current = false;
     };
-  }, [panelStore, scrollRegionRef, scrollTop]);
+  }, [panelActor, scrollRegionRef, scrollTop]);
 
   return pendingRef;
 }
@@ -356,11 +403,13 @@ function* layoutChildren(element: Element): Generator<Element> {
 
 function useScrollCapture(
   scrollRegionRef: RefObject<HTMLElement | null>,
-  panelStore: ReviewPanelStore,
-  saved: ReturnType<typeof createReviewViewStateStore>,
+  panelActor: ReviewPanelActor,
+  saved: ActorRefFrom<typeof reviewViewStateMachine>,
   restorationPending: RefObject<boolean>,
+  key: string,
 ): void {
-  useEffect(() => {
+  // Flush while the actor is still running; useActorRef stops it in passive cleanup.
+  useLayoutEffect(() => {
     const scrollRegion = scrollRegionRef.current;
 
     if (!scrollRegion) return;
@@ -374,9 +423,12 @@ function useScrollCapture(
       dirty = false;
 
       if (restorationPending.current) return;
-      saved.setState({
-        scrollTop: scrollRegion.scrollTop,
-        scrollView: panelStore.getState().view,
+      saved.send({
+        type: "update",
+        value: {
+          scrollTop: scrollRegion.scrollTop,
+          scrollView: panelActor.getSnapshot().value,
+        },
       });
     };
 
@@ -395,7 +447,7 @@ function useScrollCapture(
 
       if (dirty) write();
     };
-  }, [panelStore, saved, restorationPending, scrollRegionRef]);
+  }, [panelActor, saved, restorationPending, scrollRegionRef, key]);
 }
 
 function parsePersistedReviewViewState(

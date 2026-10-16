@@ -4,7 +4,7 @@ import { drawStyles } from "@canvas/drawing/draw-styles";
 import { useReviewSession } from "@canvas/host/review-session";
 import {
   useReviewPanel,
-  useReviewPanelStore,
+  useReviewPanelActor,
 } from "@canvas/review/review-panel";
 import type { GuidedTour, PeekAnchor } from "@canvas/review/review-panel-model";
 import { formatSchemaExample } from "@canvas/software-map/c4-projection";
@@ -30,21 +30,22 @@ import type {
 } from "@review/documents/document";
 import { type DiffSelection } from "@review/documents/lens-selection";
 import * as stylex from "@stylexjs/stylex";
+import { useSelector } from "@xstate/react";
 import {
   type ChangeEvent,
+  type SetStateAction,
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { useStore } from "zustand";
 
-import { createDatabaseLensStore } from "./database-lens-store";
+import { useDatabaseLensSelection } from "./database-lens-machine";
 import {
-  type DiagramNavigationStore,
-  createDiagramNavigationStore,
-} from "./diagram-navigation-store";
+  type DiagramNavigationActor,
+  useDiagramNavigation,
+} from "./diagram-navigation-machine";
 import { diagramStyles } from "./diagram-styles";
 import { DiagramTourOverlay, useDiagramTourShell } from "./diagram-tour";
 
@@ -276,22 +277,22 @@ export function DatabaseLens(block: DatabaseLensProps) {
 
   const session = useReviewSession();
 
-  const panelStore = useReviewPanelStore();
+  const panelActor = useReviewPanelActor();
 
   const storageKey = session.storageKey("database-lens", lensId);
-  const useCaseIdsKey = JSON.stringify(useCases.map((useCase) => useCase.id));
 
-  const lensState = useMemo(
-    () =>
-      createDatabaseLensStore(
-        storageKey,
-        useCases.map((useCase) => useCase.id),
-      ),
-    [storageKey, useCaseIdsKey],
+  const lensState = useDatabaseLensSelection(
+    storageKey,
+    useCases.map((useCase) => useCase.id),
   );
 
-  const activeUseCaseId = useStore(lensState, (state) => state.activeUseCaseId);
-  const { setActiveUseCaseId } = lensState.getState();
+  const activeUseCaseId = useSelector(
+    lensState,
+    (snapshot) => snapshot.context.activeUseCaseId,
+  );
+
+  const setActiveUseCaseId = (id: string) =>
+    lensState.send({ type: "selectUseCase", id });
 
   const activeUseCase =
     useCases.find((useCase) => useCase.id === activeUseCaseId) ??
@@ -304,14 +305,15 @@ export function DatabaseLens(block: DatabaseLensProps) {
     activeUseCase?.id,
   );
 
-  const navigation = useMemo(
-    () =>
-      createDiagramNavigationStore(
-        diagramKey,
-        activeUseCase?.id,
-        initialDatabaseC4ExpandedNodeIds(activeUseCase?.operations ?? []),
-      ),
+  const initialExpandedNodeIds = useMemo(
+    () => initialDatabaseC4ExpandedNodeIds(activeUseCase?.operations ?? []),
     [diagramKey],
+  );
+
+  const navigation = useDiagramNavigation(
+    diagramKey,
+    activeUseCase?.id,
+    initialExpandedNodeIds,
   );
 
   const tourEntries: GuidedTour[] = useMemo(
@@ -347,11 +349,11 @@ export function DatabaseLens(block: DatabaseLensProps) {
   // lens card becomes the stage and GuidedTourPanel docks beside it.
   const tourState = useReviewPanel((state) =>
     activeTour &&
-    state.overlayTour?.tourId === activeTour.id &&
+    state.context.overlayTour?.tourId === activeTour.id &&
     activeTour.stops.some(
-      (stop) => stop.anchor.id === state.overlayTour!.anchor,
+      (stop) => stop.anchor.id === state.context.overlayTour!.anchor,
     )
-      ? state.overlayTour
+      ? state.context.overlayTour
       : null,
   );
 
@@ -365,12 +367,11 @@ export function DatabaseLens(block: DatabaseLensProps) {
     // Inline, the select only switches the diagram; with the tour open it
     // stays fullscreen and steps onto the new use case's tour.
     if (tourOpen && firstAnchor) {
-      panelStore
-        .getState()
-        .openOverlayTour(
-          { tourId: tourIdFor(lensId, useCase.id), kind: "database" },
-          firstAnchor,
-        );
+      panelActor.send({
+        type: "openOverlayTour",
+        tour: { tourId: tourIdFor(lensId, useCase.id), kind: "database" },
+        anchor: firstAnchor,
+      });
     }
   };
 
@@ -391,18 +392,22 @@ export function DatabaseLens(block: DatabaseLensProps) {
 
       if (!nextAnchor) return;
 
-      panelStore
-        .getState()
-        .openOverlayTour(
-          { tourId: activeTour.id, kind: "database" },
-          nextAnchor,
-        );
+      panelActor.send({
+        type: "openOverlayTour",
+        tour: { tourId: activeTour.id, kind: "database" },
+        anchor: nextAnchor,
+      });
     },
-    [activeTour, activeUseCase, panelStore, tourAnchor],
+    [activeTour, activeUseCase, panelActor, tourAnchor],
   );
 
-  const { closeOverlayTour: closeTour, moveOverlayTour: changeTourAnchor } =
-    panelStore.getState();
+  const closeTour = useCallback(
+    () => panelActor.send({ type: "closeOverlayTour" }),
+    [panelActor],
+  );
+
+  const changeTourAnchor = (anchor: string, { reveal }: { reveal: boolean }) =>
+    panelActor.send({ type: "moveOverlayTour", anchor, reveal });
 
   const { portalTarget } = useDiagramTourShell(tourOpen, closeTour);
 
@@ -518,7 +523,7 @@ function DatabaseUseCaseDiagram({
   activeAnchor,
   onOpenAnchor,
 }: {
-  navigation: DiagramNavigationStore;
+  navigation: DiagramNavigationActor;
   useCase: ParsedUseCase;
   stores: LensStores;
   activeAnchor: string | null;
@@ -554,21 +559,28 @@ function DatabaseC4UseCaseDiagram({
   highlights,
   onOpenAnchor,
 }: {
-  navigation: DiagramNavigationStore;
+  navigation: DiagramNavigationActor;
   useCase: ParsedUseCase;
   stores: LensStores;
   resolvedOperations: ResolvedOperation[];
   highlights: ReturnType<typeof selectDatabaseOperationHighlights>;
   onOpenAnchor: (anchor: string) => void;
 }) {
-  const selectedNodeId = useStore(navigation, (state) => state.selectedNodeId);
-
-  const expandedNodeIds = useStore(
+  const selectedNodeId = useSelector(
     navigation,
-    (state) => state.expandedNodeIds,
+    (snapshot) => snapshot.context.selectedNodeId,
   );
 
-  const { setSelectedNodeId, setExpandedNodeIds } = navigation.getState();
+  const expandedNodeIds = useSelector(
+    navigation,
+    (snapshot) => snapshot.context.expandedNodeIds,
+  );
+
+  const setSelectedNodeId = (next: SetStateAction<string | null>) =>
+    navigation.send({ type: "setSelectedNodeId", next });
+
+  const setExpandedNodeIds = (next: SetStateAction<Set<string>>) =>
+    navigation.send({ type: "setExpandedNodeIds", next });
 
   const defaultExpandedNodeIds = useMemo(
     () => initialDatabaseC4ExpandedNodeIds(resolvedOperations),
@@ -577,7 +589,7 @@ function DatabaseC4UseCaseDiagram({
 
   const seededDefaultNodeIdsRef = useMemo(
     () => ({ current: new Set(defaultExpandedNodeIds) }),
-    [navigation],
+    [navigation, useCase.id],
   );
 
   const defaultExpandedNodeIdKey = useMemo(

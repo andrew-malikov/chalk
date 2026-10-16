@@ -1,10 +1,16 @@
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
-import { type RefObject, act, createElement, useRef } from "react";
+import { type RefObject, StrictMode, act, createElement, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createActor } from "xstate";
 
-import { createReviewPanelStore } from "./review-panel-store";
+import { ReviewPanelProvider, useReviewPanelActor } from "./review-panel";
+import {
+  type ReviewNavigationRestore,
+  type ReviewPanelActor,
+  createReviewPanelMachine,
+} from "./review-panel-machine";
 import { writeReviewUiState } from "./review-ui-state";
 import {
   readPersistedReviewViewState,
@@ -12,6 +18,10 @@ import {
   reviewViewStateKey,
   useReviewViewStateSync,
 } from "./review-view-state";
+
+function createReviewPanelActor(restore?: ReviewNavigationRestore) {
+  return createActor(createReviewPanelMachine(restore)).start();
+}
 
 type TestReviewSession = ReturnType<typeof testReviewSession>;
 
@@ -69,9 +79,52 @@ afterEach(() => {
 });
 
 describe("review view state", () => {
+  it("persists navigation after provider effects replay in Strict Mode", () => {
+    const session = testReviewSession();
+    storeState(session, { activeView: "commits" });
+    let actor: ReviewPanelActor;
+
+    function Harness() {
+      actor = useReviewPanelActor();
+
+      return (
+        <ViewStateHarness
+          actor={actor}
+          metrics={{ scrollHeight: 1_000, clientHeight: 200 }}
+          captureElement={() => {}}
+        />
+      );
+    }
+
+    const container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    act(() =>
+      root!.render(
+        <StrictMode>
+          <ReviewSessionProvider session={session}>
+            <ReviewPanelProvider
+              restore={() =>
+                readReviewNavigationRestore(session.config, canvas)
+              }
+            >
+              <Harness />
+            </ReviewPanelProvider>
+          </ReviewSessionProvider>
+        </StrictMode>,
+      ),
+    );
+
+    expect(actor!.getSnapshot().value).toBe("commits");
+    act(() => actor.send({ type: "showView", view: "diff" }));
+    expect(readPersistedReviewViewState(session.config).activeView).toBe(
+      "diff",
+    );
+  });
+
   it("restores a selected commit and file using current commit metadata", () => {
     const session = testReviewSession();
-    const store = createReviewPanelStore();
+    const actor = createReviewPanelActor();
 
     const commit = {
       commit: "a".repeat(40),
@@ -84,19 +137,24 @@ describe("review view state", () => {
       deletions: 0,
     };
 
-    renderViewState({ session, store });
-    act(() => store.getState().openCommitDiff({ commit, file: "file.ts" }));
+    renderViewState({ session, actor });
+    act(() =>
+      actor.send({
+        type: "openCommitDiff",
+        scope: { commit, file: "file.ts" },
+      }),
+    );
     unmount();
 
-    const restored = createReviewPanelStore(
+    const restored = createReviewPanelActor(
       readReviewNavigationRestore(session.config, {
         ...canvas,
         commits: [{ ...commit, subject: "Current metadata" }],
       }),
     );
 
-    expect(restored.getState().view).toBe("diff");
-    expect(restored.getState().diffScope).toEqual({
+    expect(restored.getSnapshot().value).toBe("diff");
+    expect(restored.getSnapshot().context.diffScope).toEqual({
       commit: { ...commit, subject: "Current metadata" },
       file: "file.ts",
       restoreFile: true,
@@ -116,7 +174,7 @@ describe("review view state", () => {
       traceStorage: "hosted",
     });
     const restore = readReviewNavigationRestore(session.config, canvas);
-    expect(createReviewPanelStore(restore).getState().view).toBe("review");
+    expect(createReviewPanelActor(restore).getSnapshot().value).toBe("review");
     expect(request).not.toHaveBeenCalled();
   });
 
@@ -151,6 +209,27 @@ describe("review view state", () => {
     expect(harness.element.scrollTop).toBe(350);
     flushNextFrame();
     expect(readPersistedReviewViewState(session.config).scrollTop).toBe(350);
+  });
+
+  it("flushes pending scroll to the old review before persisting the next review", () => {
+    const first = testReviewSession({ reviewId: "switch-a" });
+    const second = testReviewSession({ reviewId: "switch-b" });
+    storeState(second, { scrollTop: 80 });
+    const harness = renderViewState({ session: first });
+    act(() => {
+      harness.element.scrollTop = 180;
+      harness.element.dispatchEvent(new Event("scroll"));
+    });
+    harness.renderSession(second);
+    expect(readPersistedReviewViewState(first.config).scrollTop).toBe(180);
+    expect(harness.element.scrollTop).toBe(80);
+    act(() => {
+      harness.element.scrollTop = 120;
+      harness.element.dispatchEvent(new Event("scroll"));
+    });
+    flushNextFrame();
+    expect(readPersistedReviewViewState(second.config).scrollTop).toBe(120);
+    expect(readPersistedReviewViewState(first.config).scrollTop).toBe(180);
   });
 
   it("flushes the final scroll position when cleanup cancels a pending frame", () => {
@@ -196,7 +275,7 @@ describe("review view state", () => {
 
     const diff = renderViewState({
       session,
-      store: createReviewPanelStore({ view: "diff" }),
+      actor: createReviewPanelActor({ view: "diff" }),
     });
 
     expect(diff.element.scrollTop).toBe(0);
@@ -206,7 +285,7 @@ describe("review view state", () => {
 
     const resumed = renderViewState({
       session,
-      store: createReviewPanelStore({ view: "diff" }),
+      actor: createReviewPanelActor({ view: "diff" }),
     });
 
     expect(resumed.element.scrollTop).toBe(320);
@@ -218,7 +297,7 @@ describe("review view state", () => {
     storeState(session, { scrollTop: 320 });
     const harness = renderViewState({ session, metrics });
 
-    act(() => harness.store.getState().showView("commits"));
+    act(() => harness.actor.send({ type: "showView", view: "commits" }));
     metrics.scrollHeight = 700;
     triggerResize();
 
@@ -299,21 +378,26 @@ describe("review view state", () => {
 
   it("persists only resumable panel modes", () => {
     const session = testReviewSession();
-    const store = createReviewPanelStore();
-    renderViewState({ session, store });
+    const actor = createReviewPanelActor();
+    renderViewState({ session, actor });
 
     act(() =>
-      store.getState().openPeek({
-        kind: "peek",
-        content: { kind: "inline-code", text: "start();" },
+      actor.send({
+        type: "openPeek",
+        panel: {
+          kind: "peek",
+          content: { kind: "inline-code", text: "start();" },
+        },
       }),
     );
     expect(readPersistedReviewViewState(session.config)).toEqual({});
 
     act(() =>
-      store
-        .getState()
-        .openOverlayTour({ tourId: "flow", kind: "sequence" }, "second"),
+      actor.send({
+        type: "openOverlayTour",
+        tour: { tourId: "flow", kind: "sequence" },
+        anchor: "second",
+      }),
     );
     expect(readPersistedReviewViewState(session.config)).toEqual({
       overlayTour: { tourId: "flow", activeAnchor: "second", kind: "sequence" },
@@ -324,20 +408,22 @@ describe("review view state", () => {
     const session = testReviewSession();
     storeState(session, { activeView: "map" });
     // The canvas opened without a map, so it started on the chalk.
-    const store = createReviewPanelStore({ view: "review" });
-    renderViewState({ session, store });
+    const actor = createReviewPanelActor({ view: "review" });
+    renderViewState({ session, actor });
 
     act(() =>
-      store
-        .getState()
-        .openOverlayTour({ tourId: "flow", kind: "sequence" }, "second"),
+      actor.send({
+        type: "openOverlayTour",
+        tour: { tourId: "flow", kind: "sequence" },
+        anchor: "second",
+      }),
     );
     expect(readPersistedReviewViewState(session.config)).toMatchObject({
       activeView: "map",
       overlayTour: { tourId: "flow", activeAnchor: "second" },
     });
 
-    act(() => store.getState().showView("diff"));
+    act(() => actor.send({ type: "showView", view: "diff" }));
     expect(readPersistedReviewViewState(session.config)).toEqual({
       activeView: "diff",
     });
@@ -345,13 +431,13 @@ describe("review view state", () => {
 
   it("ignores a persisted Threads panel from an older build", () => {
     const legacySession = testReviewSession({ reviewId: "legacy-threads" });
-    const legacyStore = createReviewPanelStore();
+    const legacyStore = createReviewPanelActor();
     storeState(legacySession, {
       panel: { kind: "threads" },
     });
-    renderViewState({ session: legacySession, store: legacyStore });
+    renderViewState({ session: legacySession, actor: legacyStore });
 
-    expect(legacyStore.getState().active).toBeNull();
+    expect(legacyStore.getSnapshot().context.active).toBeNull();
     expect(readPersistedReviewViewState(legacySession.config).panel).toBe(
       undefined,
     );
@@ -429,11 +515,11 @@ const canvas = {
 
 function renderViewState({
   session,
-  store = createReviewPanelStore(),
+  actor = createReviewPanelActor(),
   metrics = { scrollHeight: 1_000, clientHeight: 200 },
 }: {
   session: TestReviewSession;
-  store?: ReturnType<typeof createReviewPanelStore>;
+  actor?: ReviewPanelActor;
   metrics?: { scrollHeight: number; clientHeight: number };
 }) {
   const container = document.createElement("div");
@@ -446,7 +532,7 @@ function renderViewState({
       root?.render(
         <ReviewSessionProvider session={next}>
           <ViewStateHarness
-            store={store}
+            actor={actor}
             metrics={metrics}
             captureElement={(value: HTMLDivElement) => {
               element = value;
@@ -458,15 +544,15 @@ function renderViewState({
 
   renderSession(session);
 
-  return { element: element!, store, renderSession };
+  return { element: element!, actor, renderSession };
 }
 
 function ViewStateHarness({
-  store,
+  actor,
   metrics,
   captureElement,
 }: {
-  store: ReturnType<typeof createReviewPanelStore>;
+  actor: ReviewPanelActor;
   metrics: { scrollHeight: number; clientHeight: number };
   captureElement(element: HTMLDivElement): void;
 }) {
@@ -474,7 +560,7 @@ function ViewStateHarness({
   const scrollTop = useRef(0);
   useReviewViewStateSync({
     scrollRegionRef: scrollRegionRef as RefObject<HTMLElement | null>,
-    panelStore: store,
+    panelActor: actor,
   });
 
   return createElement("div", {

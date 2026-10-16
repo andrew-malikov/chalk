@@ -1,5 +1,5 @@
 import { useReviewSession } from "@canvas/host/review-session";
-import { useOptionalReviewPanelStore } from "@canvas/review/review-panel";
+import { useOptionalReviewPanelActor } from "@canvas/review/review-panel";
 import {
   type GitLabDiscussion,
   type GitLabDraft,
@@ -82,7 +82,7 @@ const message = (error: unknown) =>
 /** One save queue per review. Editor text survives a failed save; publishing waits for durable revisions. */
 export function GitLabProvider({ children }: { children: ReactNode }) {
   const session = useReviewSession();
-  const panels = useOptionalReviewPanelStore();
+  const panels = useOptionalReviewPanelActor();
   const sessionRef = useRef(session);
   sessionRef.current = session;
   const enabled = !!session.review?.gitlab;
@@ -291,7 +291,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const show = () => {
-    panels?.getState().close();
+    panels?.send({ type: "close" });
     setOpen(true);
   };
 
@@ -361,7 +361,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
       session.review?.pins?.base === stateRef.current?.refs.baseSha &&
       session.review?.pins?.head === stateRef.current?.refs.headSha
     ) {
-      panels?.getState().showView("diff");
+      panels?.send({ type: "showView", view: "diff" });
       setReveal({ ...discussion.location, nonce: Date.now() });
     }
   };
@@ -381,7 +381,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
         setCollapsed((current) => ({ ...current, [id]: value })),
       reveal,
       toggle: () => {
-        const panelState = panels?.getState();
+        const panelState = panels?.getSnapshot().context;
 
         if (open && !panelState?.active) setOpen(false);
         else show();

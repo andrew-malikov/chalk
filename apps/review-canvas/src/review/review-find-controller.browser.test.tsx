@@ -14,7 +14,7 @@ import type {
   ReviewInlineEditorHandle,
 } from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
-import { act, useLayoutEffect, useMemo, useRef } from "react";
+import { StrictMode, act, useLayoutEffect, useMemo, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 
@@ -41,6 +41,34 @@ afterEach(async () => {
   await act(async () => root?.unmount());
   root = undefined;
   document.body.replaceChildren();
+});
+
+it("keeps find usable after Strict Mode replays its lifecycle", async () => {
+  const handle = findHandle();
+  const container = document.createElement("div");
+  document.body.append(container);
+  const host = createReviewFindHost();
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      <StrictMode>
+        <FindHarness host={host} handles={[handle]} />
+      </StrictMode>,
+    );
+  });
+  await act(async () => {
+    expect(host.showFind("Alpha")).toBe(true);
+  });
+  await vi.waitFor(() => {
+    expect(findCount(container)?.textContent).toBe("1 of 3");
+  });
+  await act(async () => button(container, "Close Find").click());
+  await act(async () => {
+    host.showFind();
+  });
+  await vi.waitFor(() => {
+    expect(findCount(container)?.textContent).toBe("1 of 3");
+  });
 });
 
 it("orders duplicate editors with MDX and wraps navigation", async () => {

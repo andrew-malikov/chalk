@@ -6,7 +6,7 @@ import {
 } from "@canvas/diff/diff-count";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { useReviewLenses } from "@canvas/review/review-lenses";
-import { useReviewPanel } from "@canvas/review/review-panel";
+import { useReviewPanelActor } from "@canvas/review/review-panel";
 import { callEdgeMarker } from "@canvas/styles/markers.stylex";
 import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
 import { withClass } from "@canvas/styles/stylex-props";
@@ -229,7 +229,7 @@ function TreeConnectors({
 
 /** Document host: the same tree, with source peeks instead of diff navigation. */
 export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
-  const openPeek = useReviewPanel((state) => state.openPeek);
+  const panelActor = useReviewPanelActor();
 
   return (
     <figure
@@ -244,14 +244,17 @@ export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
             (stop) => stop.id === sectionId,
           )!;
 
-          openPeek({
-            kind: "peek",
-            anchor: {
-              id: anchorId ?? sectionId!,
-              title: stop.label,
-              peek: source,
+          panelActor.send({
+            type: "openPeek",
+            panel: {
+              kind: "peek",
+              anchor: {
+                id: anchorId ?? sectionId!,
+                title: stop.label,
+                peek: source,
+              },
+              content: { kind: "source", source },
             },
-            content: { kind: "source", source },
           });
         }}
       />

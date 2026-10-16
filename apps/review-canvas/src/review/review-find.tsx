@@ -1,6 +1,5 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { Input } from "@canvas/components/ui/input";
-import type { ReviewClientConfig } from "@canvas/host/review-client";
 import { useOptionalReviewSession } from "@canvas/host/review-session";
 import { setCssHighlight } from "@canvas/lib/css-highlights";
 import { fontSize, layer } from "@canvas/styles/scale.stylex";
@@ -14,6 +13,7 @@ import type {
   ReviewInlineEditorHandle,
 } from "@chalk/review-contracts";
 import * as stylex from "@stylexjs/stylex";
+import { useActorRef, useSelector } from "@xstate/react";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import {
   type ReactNode,
@@ -27,13 +27,10 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { useStore } from "zustand";
+import type { ActorRefFrom } from "xstate";
 
+import { type ReviewFindMatch, reviewFindMachine } from "./review-find-machine";
 import { compileReviewFindQuery } from "./review-find-query";
-import {
-  type ReviewFindMatch,
-  createReviewFindStore,
-} from "./review-find-store";
 import { reviewFindRanges } from "./review-find-text";
 import { useReviewRoots } from "./review-root-context";
 
@@ -102,13 +99,12 @@ export function ReviewFindProvider({
 }) {
   const session = useOptionalReviewSession();
 
-  const [controller] = useState(() =>
-    createFindController(articleRef, session?.config),
-  );
+  const actor = useActorRef(reviewFindMachine, { input: session?.config });
+  const [controller] = useState(() => createFindController(articleRef, actor));
 
   const previousDocument = useRef(documentKey);
 
-  useEffect(() => controller.connect(), [controller]);
+  useLayoutEffect(() => controller.connect(), [controller]);
 
   useEffect(() => {
     host?.attach(controller);
@@ -138,14 +134,14 @@ type ReviewFindController = ReturnType<typeof createFindController>;
  * highlights, focus, and scrolling. */
 function createFindController(
   articleRef: RefObject<HTMLElement | null>,
-  config?: ReviewClientConfig,
+  actor: ActorRefFrom<typeof reviewFindMachine>,
 ) {
-  const store = createReviewFindStore(config);
   const registrations = new Set<ReviewInlineFindRegistration>();
   const inputRef = createRef<HTMLInputElement>();
   let reviewActive = true;
   let priorFocus: HTMLElement | null = null;
   let searchScheduled = false;
+  let connected = false;
 
   const clearHighlights = () => {
     setCssHighlight(articleRef.current, ALL_HIGHLIGHT, []);
@@ -158,7 +154,7 @@ function createFindController(
 
   const close = (restoreFocus: boolean, clearQuery = false) => {
     clearHighlights();
-    store.getState().close({ clearQuery });
+    actor.send({ type: "close", clearQuery });
     const target = priorFocus;
     priorFocus = null;
 
@@ -166,12 +162,12 @@ function createFindController(
   };
 
   const reveal = (index: number) => {
-    const { matches, setActiveIndex } = store.getState();
+    const { matches } = actor.getSnapshot().context;
 
     if (matches.length === 0) return;
     const wrapped = (index + matches.length) % matches.length;
     const match = matches[wrapped]!;
-    setActiveIndex(wrapped);
+    actor.send({ type: "setActiveIndex", index: wrapped });
     setCssHighlight(articleRef.current, ACTIVE_HIGHLIGHT, []);
 
     for (const registration of registrations) {
@@ -179,7 +175,8 @@ function createFindController(
     }
 
     // A frame later the search may have closed or moved on.
-    const current = () => store.getState().matches.includes(match);
+    const current = () =>
+      connected && actor.getSnapshot().context.matches.includes(match);
 
     if (match.kind === "mdx") {
       expandReviewSection(match.node);
@@ -201,13 +198,14 @@ function createFindController(
   };
 
   const search = () => {
-    const { open, query } = store.getState();
+    const snapshot = actor.getSnapshot();
+    const { query } = snapshot.context;
 
-    if (!open) return;
+    if (!connected || !snapshot.matches("open")) return;
 
     if (!query.text) {
       clearHighlights();
-      store.getState().clearResults();
+      actor.send({ type: "clearResults" });
 
       return;
     }
@@ -215,16 +213,18 @@ function createFindController(
     const compiled = compileReviewFindQuery(query);
 
     if ("error" in compiled) {
-      store.getState().rejectQuery(compiled.error);
+      actor.send({ type: "rejectQuery", error: compiled.error });
 
       return;
     }
 
     clearHighlights();
-    const generation = store.getState().startSearch();
+    // A search triggered by a subscriber queues its event until that notification ends.
+    const generation = snapshot.context.generation + 1;
+    actor.send({ type: "startSearch" });
     // Editor searches are expensive; only a query the reader pauses on runs.
     setTimeout(() => {
-      if (store.getState().generation === generation) {
+      if (connected && actor.getSnapshot().context.generation === generation) {
         run(generation, query, compiled.expression);
       }
     }, SEARCH_DELAY_MS);
@@ -275,7 +275,9 @@ function createFindController(
         ),
       ].sort((left, right) => compareDocumentOrder(left.node, right.node));
 
-      if (!store.getState().completeSearch(generation, matches)) return;
+      if (!connected || actor.getSnapshot().context.generation !== generation)
+        return;
+      actor.send({ type: "completeSearch", generation, matches });
       setCssHighlight(article, ALL_HIGHLIGHT, ranges);
 
       if (matches.length > 0) reveal(0);
@@ -293,28 +295,39 @@ function createFindController(
   };
 
   return {
-    store,
+    actor,
     inputRef,
     connect() {
-      const unsubscribe = store.subscribe((state, previous) => {
-        if (state.open !== previous.open || state.query !== previous.query) {
-          search();
-        }
+      connected = true;
+      let previous = actor.getSnapshot();
+
+      const subscription = actor.subscribe((snapshot) => {
+        const changed =
+          snapshot.matches("open") !== previous.matches("open") ||
+          snapshot.context.query !== previous.context.query;
+
+        previous = snapshot;
+
+        if (changed) search();
       });
 
       return () => {
-        unsubscribe();
+        connected = false;
+        subscription.unsubscribe();
         clearHighlights();
-        store.getState().close();
+        actor.send({ type: "close" });
       };
     },
     showFind(seed?: string) {
       if (!reviewActive) return false;
 
-      if (!store.getState().open) {
+      if (!actor.getSnapshot().matches("open")) {
         const active = articleRef.current?.ownerDocument.activeElement;
         priorFocus = active instanceof HTMLElement ? active : null;
-        store.getState().show(seed ?? selectedMdxText(articleRef.current));
+        actor.send({
+          type: "show",
+          seed: seed ?? selectedMdxText(articleRef.current),
+        });
       }
 
       requestAnimationFrame(() => {
@@ -328,7 +341,9 @@ function createFindController(
       close(true);
     },
     navigate(delta: number) {
-      const { searching, matches, activeIndex } = store.getState();
+      const snapshot = actor.getSnapshot();
+      const { matches, activeIndex } = snapshot.context;
+      const searching = snapshot.matches({ open: "searching" });
 
       if (!searching && matches.length > 0) reveal(activeIndex + delta);
     },
@@ -342,14 +357,14 @@ function createFindController(
       return () => {
         registration.clearFind();
         registrations.delete(registration);
-        store.getState().forgetRegistration(registration);
+        actor.send({ type: "forgetRegistration", registration });
         scheduleSearch();
       };
     },
     setReviewActive(active: boolean) {
       reviewActive = active;
 
-      if (!active && store.getState().open) close(false);
+      if (!active && actor.getSnapshot().matches("open")) close(false);
     },
   };
 }
@@ -359,15 +374,27 @@ function ReviewFindWidget({
 }: {
   controller: ReviewFindController;
 }) {
-  const { store, inputRef } = controller;
+  const { actor, inputRef } = controller;
   const shellRef = useReviewRoots()?.shellRef;
   const [overlayHost, setOverlayHost] = useState<HTMLElement | null>(null);
-  const open = useStore(store, (state) => state.open);
-  const query = useStore(store, (state) => state.query);
-  const searching = useStore(store, (state) => state.searching);
-  const invalid = useStore(store, (state) => state.error);
-  const matchCount = useStore(store, (state) => state.matches.length);
-  const activeIndex = useStore(store, (state) => state.activeIndex);
+  const open = useSelector(actor, (snapshot) => snapshot.matches("open"));
+  const query = useSelector(actor, (snapshot) => snapshot.context.query);
+
+  const searching = useSelector(actor, (snapshot) =>
+    snapshot.matches({ open: "searching" }),
+  );
+
+  const invalid = useSelector(actor, (snapshot) => snapshot.context.error);
+
+  const matchCount = useSelector(
+    actor,
+    (snapshot) => snapshot.context.matches.length,
+  );
+
+  const activeIndex = useSelector(
+    actor,
+    (snapshot) => snapshot.context.activeIndex,
+  );
 
   // Passive, not layout: a descendant's layout effect runs before the ancestor
   // host ref attaches, so the shell is not there yet; no deps because the shell
@@ -377,8 +404,6 @@ function ReviewFindWidget({
   });
 
   if (!open || !overlayHost) return null;
-
-  const { setText, toggleOption } = store.getState();
 
   return createPortal(
     <div
@@ -401,7 +426,9 @@ function ReviewFindWidget({
           aria-invalid={invalid ? "true" : undefined}
           title={invalid ?? undefined}
           value={query.text}
-          onChange={(event) => setText(event.currentTarget.value)}
+          onChange={(event) =>
+            actor.send({ type: "setText", text: event.currentTarget.value })
+          }
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               event.preventDefault();
@@ -417,7 +444,9 @@ function ReviewFindWidget({
             label="Match Case"
             description="Match Case: use the same uppercase and lowercase letters."
             active={query.matchCase}
-            onClick={() => toggleOption("matchCase")}
+            onClick={() =>
+              actor.send({ type: "toggleOption", option: "matchCase" })
+            }
           >
             Aa
           </FindToggle>
@@ -426,7 +455,9 @@ function ReviewFindWidget({
             description="Match Whole Word: find complete words only."
             xstyle={styles.wholeWord}
             active={query.wholeWord}
-            onClick={() => toggleOption("wholeWord")}
+            onClick={() =>
+              actor.send({ type: "toggleOption", option: "wholeWord" })
+            }
           >
             ab
           </FindToggle>
@@ -435,7 +466,9 @@ function ReviewFindWidget({
             description="Use Regular Expression: search with a regular expression."
             xstyle={styles.regex}
             active={query.isRegex}
-            onClick={() => toggleOption("isRegex")}
+            onClick={() =>
+              actor.send({ type: "toggleOption", option: "isRegex" })
+            }
           >
             .*
           </FindToggle>

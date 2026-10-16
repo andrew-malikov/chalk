@@ -6,9 +6,9 @@ import { ReviewSection } from "@canvas/review/review-components";
 import { ReviewProvider } from "@canvas/review/review-context";
 import {
   ReviewPanelProvider,
-  useReviewPanelStore,
+  useReviewPanelActor,
 } from "@canvas/review/review-panel";
-import type { ReviewPanelStore } from "@canvas/review/review-panel-store";
+import type { ReviewPanelActor } from "@canvas/review/review-panel-machine";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { shellStyles } from "@canvas/styles/shell-styles";
 import { withClass } from "@canvas/styles/stylex-props";
@@ -38,7 +38,7 @@ let root: ReturnType<typeof createRoot> | null = null;
 
 let canvasRoot: HTMLElement;
 
-let panelStore: ReviewPanelStore;
+let panelActor: ReviewPanelActor;
 
 beforeEach(() => {
   session = testReviewSession(
@@ -141,7 +141,7 @@ function render(
       <ReviewSessionProvider session={session}>
         <ReviewProvider>
           <ReviewPanelProvider>
-            <PanelStoreProbe />
+            <PanelActorProbe />
             <TutorialProvider tutorial={tutorial}>
               <Shell {...props} />
             </TutorialProvider>
@@ -152,8 +152,8 @@ function render(
   });
 }
 
-function PanelStoreProbe(): null {
-  panelStore = useReviewPanelStore();
+function PanelActorProbe(): null {
+  panelActor = useReviewPanelActor();
 
   return null;
 }
@@ -350,9 +350,11 @@ describe("TutorialExperience", () => {
 
     expect(card()?.textContent).toContain("Walk the sequence");
     await act(async () => {
-      panelStore
-        .getState()
-        .openOverlayTour({ tourId: "t", kind: "sequence" }, "a");
+      panelActor.send({
+        type: "openOverlayTour",
+        tour: { tourId: "t", kind: "sequence" },
+        anchor: "a",
+      });
       await Promise.resolve();
     });
 
@@ -375,9 +377,11 @@ describe("TutorialExperience", () => {
 
     expect(card()?.textContent).toContain("Inspect the database flow");
     await act(async () => {
-      panelStore
-        .getState()
-        .openOverlayTour({ tourId: "t", kind: "database" }, "a");
+      panelActor.send({
+        type: "openOverlayTour",
+        tour: { tourId: "t", kind: "database" },
+        anchor: "a",
+      });
       await Promise.resolve();
     });
 

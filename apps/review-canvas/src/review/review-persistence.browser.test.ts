@@ -1,10 +1,9 @@
 import { TEST_REVIEW_CONFIG } from "@canvas/test/review-session-test-utils";
 import { beforeEach, expect, it, vi } from "vitest";
+import { assign, createActor, setup } from "xstate";
 import { z } from "zod";
-import { persist } from "zustand/middleware";
-import { createStore } from "zustand/vanilla";
 
-import { createReviewFindStore } from "./review-find-store";
+import { reviewFindMachine } from "./review-find-machine";
 import { reviewPersistence } from "./review-persistence";
 import { type ReviewUiScope, reviewUiStateKey } from "./review-ui-state";
 
@@ -18,49 +17,73 @@ const savedSchema = z.object({ selected: z.string() });
 interface State {
   selected: string;
   busy: boolean;
-  select(value: string): void;
+}
+
+function selectionPersistence(
+  key = "selection",
+  scope: ReviewUiScope = "session",
+) {
+  return reviewPersistence<State, { selected: string }>({
+    key,
+    scope,
+    legacy: true,
+    partialize: ({ selected }) => ({ selected }),
+    parse: (value) => savedSchema.safeParse(value).data,
+  });
 }
 
 function createSelection(key = "selection", scope: ReviewUiScope = "session") {
-  return createStore<State>()(
-    persist(
-      (set) => ({
-        selected: "default",
-        busy: false,
-        select: (selected) => set({ selected }),
-      }),
-      reviewPersistence<State, { selected: string }>({
-        key,
-        scope,
-        legacy: true,
-        partialize: ({ selected }) => ({ selected }),
-        parse: (value) => savedSchema.safeParse(value).data,
-      }),
-    ),
-  );
+  const saved = selectionPersistence(key, scope);
+
+  return createActor(
+    setup({
+      types: {
+        context: {} as State,
+        events: {} as
+          | { type: "select"; selected: string }
+          | { type: "setBusy"; busy: boolean },
+      },
+    }).createMachine({
+      context: () => saved.read({ selected: "default", busy: false }),
+      on: {
+        select: {
+          actions: [
+            assign({ selected: ({ event }) => event.selected }),
+            ({ context }) => saved.write(context),
+          ],
+        },
+        setBusy: {
+          actions: [
+            assign({ busy: ({ event }) => event.busy }),
+            ({ context }) => saved.write(context),
+          ],
+        },
+      },
+    }),
+  ).start();
 }
 
 it("hydrates deliberate selections synchronously without restoring transient state", () => {
   const first = createSelection();
   expect(localStorage.getItem("selection")).toBeNull();
-  first.getState().select("file.ts");
-  first.setState({ busy: true });
+  first.send({ type: "select", selected: "file.ts" });
+  first.send({ type: "setBusy", busy: true });
 
   const restored = createSelection();
-  expect(restored.getState().selected).toBe("file.ts");
-  expect(restored.getState().busy).toBe(false);
-  restored.getState().select("other.ts");
-  expect(createSelection().getState().selected).toBe("other.ts");
+  expect(restored.getSnapshot().context.selected).toBe("file.ts");
+  expect(restored.getSnapshot().context.busy).toBe(false);
+  restored.send({ type: "select", selected: "other.ts" });
+  expect(createSelection().getSnapshot().context.selected).toBe("other.ts");
 });
 
 it("does not write unchanged persisted fields on transient updates", () => {
   const store = createSelection();
-  store.getState().select("file.ts");
+  store.send({ type: "select", selected: "file.ts" });
   const write = vi.spyOn(Storage.prototype, "setItem");
 
   try {
-    store.setState({ busy: true });
-    store.setState({ busy: false });
+    store.send({ type: "setBusy", busy: true });
+    store.send({ type: "setBusy", busy: false });
     expect(write).not.toHaveBeenCalled();
   } finally {
     write.mockRestore();
@@ -69,7 +92,7 @@ it("does not write unchanged persisted fields on transient updates", () => {
 
 it("migrates legacy JSON and ignores malformed and future records", () => {
   localStorage.setItem("selection", JSON.stringify({ selected: "old.ts" }));
-  expect(createSelection().getState().selected).toBe("old.ts");
+  expect(createSelection().getSnapshot().context.selected).toBe("old.ts");
   expect(JSON.parse(localStorage.getItem("selection")!)).toEqual({
     state: { selected: "old.ts" },
     version: 1,
@@ -82,27 +105,38 @@ it("migrates legacy JSON and ignores malformed and future records", () => {
     JSON.stringify({ state: { selected: "invalid.ts" }, version: "1" }),
   ]) {
     localStorage.setItem("selection", raw);
-    expect(createSelection().getState().selected).toBe("default");
+    expect(createSelection().getSnapshot().context.selected).toBe("default");
     expect(localStorage.getItem("selection")).toBe(raw);
   }
 });
 
 it("keeps window state temporary and review state durable and isolated", () => {
-  createSelection("review-a").getState().select("a.ts");
-  createSelection("review-b").getState().select("b.ts");
-  createSelection("temporary", "window").getState().select("temp.ts");
+  createSelection("review-a").send({ type: "select", selected: "a.ts" });
+  createSelection("review-b").send({ type: "select", selected: "b.ts" });
+  createSelection("temporary", "window").send({
+    type: "select",
+    selected: "temp.ts",
+  });
   sessionStorage.clear();
 
-  expect(createSelection("review-a").getState().selected).toBe("a.ts");
-  expect(createSelection("review-b").getState().selected).toBe("b.ts");
-  expect(createSelection("temporary", "window").getState().selected).toBe(
+  expect(createSelection("review-a").getSnapshot().context.selected).toBe(
+    "a.ts",
+  );
+  expect(createSelection("review-b").getSnapshot().context.selected).toBe(
+    "b.ts",
+  );
+  expect(
+    createSelection("temporary", "window").getSnapshot().context.selected,
+  ).toBe("default");
+  const first = createSelection("review-a");
+  selectionPersistence("review-a").clear();
+  expect(createSelection("review-a").getSnapshot().context.selected).toBe(
     "default",
   );
-  const first = createSelection("review-a");
-  first.persist.clearStorage();
-  expect(createSelection("review-a").getState().selected).toBe("default");
-  first.getState().select("a.ts");
-  expect(createSelection("review-a").getState().selected).toBe("a.ts");
+  first.send({ type: "select", selected: "a.ts" });
+  expect(createSelection("review-a").getSnapshot().context.selected).toBe(
+    "a.ts",
+  );
 });
 
 it("keeps actions usable when storage is unavailable or full", () => {
@@ -114,8 +148,8 @@ it("keeps actions usable when storage is unavailable or full", () => {
 
   try {
     store = createSelection();
-    store.getState().select("in-memory.ts");
-    expect(store.getState().selected).toBe("in-memory.ts");
+    store.send({ type: "select", selected: "in-memory.ts" });
+    expect(store.getSnapshot().context.selected).toBe("in-memory.ts");
   } finally {
     read.mockRestore();
   }
@@ -127,18 +161,21 @@ it("keeps actions usable when storage is unavailable or full", () => {
     });
 
   try {
-    store.getState().select("still-usable.ts");
-    expect(store.getState().selected).toBe("still-usable.ts");
+    store.send({ type: "select", selected: "still-usable.ts" });
+    expect(store.getSnapshot().context.selected).toBe("still-usable.ts");
   } finally {
     write.mockRestore();
   }
 });
 
 it("restores find inputs per review, leaving matches and handles transient", () => {
-  const first = createReviewFindStore(TEST_REVIEW_CONFIG);
-  first.getState().show("Alpha");
-  first.getState().toggleOption("matchCase");
-  first.getState().startSearch();
+  const first = createActor(reviewFindMachine, {
+    input: TEST_REVIEW_CONFIG,
+  }).start();
+
+  first.send({ type: "show", seed: "Alpha" });
+  first.send({ type: "toggleOption", option: "matchCase" });
+  first.send({ type: "startSearch" });
 
   const raw = localStorage.getItem(
     reviewUiStateKey(TEST_REVIEW_CONFIG, "session", "find"),
@@ -151,15 +188,21 @@ it("restores find inputs per review, leaving matches and handles transient", () 
     isRegex: false,
   });
 
-  const restored = createReviewFindStore(TEST_REVIEW_CONFIG);
-  expect(restored.getState().query).toEqual(first.getState().query);
-  expect(restored.getState()).toMatchObject({
-    open: false,
-    searching: false,
+  const restored = createActor(reviewFindMachine, {
+    input: TEST_REVIEW_CONFIG,
+  }).start();
+
+  expect(restored.getSnapshot().matches("closed")).toBe(true);
+  expect(restored.getSnapshot().context.query).toEqual(
+    first.getSnapshot().context.query,
+  );
+  expect(restored.getSnapshot().context).toMatchObject({
     matches: [],
     activeIndex: -1,
   });
   expect(
-    createReviewFindStore({ reviewId: "another-review" }).getState().query.text,
+    createActor(reviewFindMachine, { input: { reviewId: "another-review" } })
+      .start()
+      .getSnapshot().context.query.text,
   ).toBe("");
 });

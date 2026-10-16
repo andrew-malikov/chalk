@@ -2,7 +2,7 @@ import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import {
   useReviewPanel,
-  useReviewPanelStore,
+  useReviewPanelActor,
 } from "@canvas/review/review-panel";
 import type {
   GuidedTour,
@@ -15,7 +15,7 @@ import { tokens } from "@canvas/styles/tokens.stylex";
 import type { FlowDiagramBlock } from "@review/blocks/flow_diagram";
 import type { Snapshot } from "@review/node/review-api/store";
 import * as stylex from "@stylexjs/stylex";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 
 import { DiagramHeader } from "./diagram-header";
@@ -71,16 +71,22 @@ export function FlowDiagram({
     [node.id, node.title, stops],
   );
 
-  const panelStore = useReviewPanelStore();
+  const panelActor = useReviewPanelActor();
 
   const selection = useReviewPanel((state) =>
-    state.overlayTour?.tourId === tour.id &&
-    stops.some((stop) => stop.anchor.id === state.overlayTour!.anchor)
-      ? state.overlayTour
+    state.context.overlayTour?.tourId === tour.id &&
+    stops.some((stop) => stop.anchor.id === state.context.overlayTour!.anchor)
+      ? state.context.overlayTour
       : null,
   );
 
-  const { closeOverlayTour: close, moveOverlayTour } = panelStore.getState();
+  const close = useCallback(
+    () => panelActor.send({ type: "closeOverlayTour" }),
+    [panelActor],
+  );
+
+  const moveOverlayTour = (anchor: string, { reveal }: { reveal: boolean }) =>
+    panelActor.send({ type: "moveOverlayTour", anchor, reveal });
 
   const { portalTarget } = useDiagramTourShell(selection !== null, close);
 
@@ -94,9 +100,11 @@ export function FlowDiagram({
     )?.anchor.id;
 
     if (anchor)
-      panelStore
-        .getState()
-        .openOverlayTour({ tourId: tour.id, kind: "flow" }, anchor);
+      panelActor.send({
+        type: "openOverlayTour",
+        tour: { tourId: tour.id, kind: "flow" },
+        anchor,
+      });
   };
 
   const figure = (fullscreen: boolean) => (

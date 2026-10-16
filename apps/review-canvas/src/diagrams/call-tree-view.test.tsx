@@ -4,7 +4,7 @@ import {
   ReviewPanelProvider,
   useReviewPanel,
 } from "@canvas/review/review-panel";
-import type { ReviewPanelStoreState } from "@canvas/review/review-panel-store";
+import type { ReviewPanelSnapshot } from "@canvas/review/review-panel-machine";
 import {
   reviewSessionElement,
   testReviewSession,
@@ -50,10 +50,12 @@ describe("DocumentCallTree", () => {
     (
       globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
     ).IS_REACT_ACT_ENVIRONMENT = true;
-    const opened = vi.fn<(active: ReviewPanelStoreState["active"]) => void>();
+
+    const opened =
+      vi.fn<(active: ReviewPanelSnapshot["context"]["active"]) => void>();
 
     function PanelSpy() {
-      const active = useReviewPanel((state) => state.active);
+      const active = useReviewPanel((state) => state.context.active);
 
       if (active) opened(active);
 

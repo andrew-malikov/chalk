@@ -37,7 +37,11 @@ import type {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useReviewActions } from "./review-context";
-import { useOptionalReviewPanelStore, useReviewPanel } from "./review-panel";
+import {
+  useOptionalReviewPanelActor,
+  useReviewPanel,
+  useReviewPanelActor,
+} from "./review-panel";
 import type {
   GuidedTour,
   GuidedTourStop,
@@ -90,7 +94,7 @@ export function ReviewPanelFrame({
   children: ReactNode;
 }) {
   const appRef = useReviewRoots()?.appRef;
-  const panelMotion = useReviewPanel((state) => state.motion);
+  const panelMotion = useReviewPanel((state) => state.context.motion);
 
   const sheet = useBottomSheetResize({
     stateKey: "bottomSheetFraction",
@@ -127,7 +131,6 @@ export function ReviewPanelFrame({
         docked && panelStyles.docked,
         tray && panelStyles.tray,
       )}
-      role="complementary"
       aria-label={title ?? label}
       style={panelStyle}
     >
@@ -340,9 +343,9 @@ export function ProsePeekAnchor({
   inertFallback,
   children,
 }: ProsePeekAnchorProps) {
-  const panelStore = useOptionalReviewPanelStore();
+  const panelActor = useOptionalReviewPanelActor();
 
-  if (!panelStore && inertFallback !== undefined) {
+  if (!panelActor && inertFallback !== undefined) {
     return <>{inertFallback}</>;
   }
 
@@ -374,11 +377,12 @@ export function AnchorLink({
   anchor,
   children,
 }: ReviewComponentProps<"AnchorLink"> & { children?: ReactNode }) {
-  const openPeek = useReviewPanel((state) => state.openPeek);
+  const panelActor = useReviewPanelActor();
 
   const peekOpen = useReviewPanel(
     (state) =>
-      state.active?.kind === "peek" && state.active.anchor?.id === anchor.id,
+      state.context.active?.kind === "peek" &&
+      state.context.active.anchor?.id === anchor.id,
   );
 
   return (
@@ -387,10 +391,13 @@ export function AnchorLink({
       anchorId={anchor.id}
       isOpen={peekOpen}
       onOpen={(text) => {
-        openPeek({
-          kind: "peek",
-          anchor: { ...anchor, title: text || anchor.title },
-          content: { kind: "source", source: anchor.peek },
+        panelActor.send({
+          type: "openPeek",
+          panel: {
+            kind: "peek",
+            anchor: { ...anchor, title: text || anchor.title },
+            content: { kind: "source", source: anchor.peek },
+          },
         });
       }}
     >
@@ -438,8 +445,8 @@ function keepAnchorLinkVisible(link: HTMLElement) {
 
 /** The only top-level renderer for Review's side peek. */
 export function ReviewPanelHost() {
-  const activePanel = useReviewPanel((state) => state.active);
-  const close = useReviewPanel((state) => state.close);
+  const activePanel = useReviewPanel((state) => state.context.active);
+  const panelActor = useReviewPanelActor();
 
   return (
     <>
@@ -447,7 +454,7 @@ export function ReviewPanelHost() {
         <ReviewPeekPanel
           anchor={activePanel.anchor}
           content={activePanel.content}
-          onClose={close}
+          onClose={() => panelActor.send({ type: "close" })}
         />
       ) : null}
     </>

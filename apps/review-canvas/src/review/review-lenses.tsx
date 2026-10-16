@@ -31,7 +31,7 @@ import {
 } from "react";
 
 import { canvasQueryKeys } from "./canvas-query";
-import { useReviewPanel, useReviewPanelStore } from "./review-panel";
+import { useReviewPanel, useReviewPanelActor } from "./review-panel";
 
 /** A resolved selection, tagged with the comparison its own pins name so its
  * changed lines are counted there and not in the document's comparison. */
@@ -84,7 +84,7 @@ export function ReviewLensesProvider({
   children: ReactNode;
 }) {
   const queryClient = useQueryClient();
-  const panelStore = useReviewPanelStore();
+  const panelActor = useReviewPanelActor();
   const [changedPaths, setChangedPaths] = useState<string[]>([]);
 
   const [unfoldRanges, setUnfoldRanges] = useState<readonly FileLineRange[]>(
@@ -97,7 +97,7 @@ export function ReviewLensesProvider({
   const mode = structuralDiffEnabled ? "structural" : "textual";
   const route = `/${snapshot.reviewId}/progress`;
   const progressKey = canvasQueryKeys.lensProgress(snapshot.version, mode);
-  const selectedLens = useReviewPanel((state) => state.lens);
+  const selectedLens = useReviewPanel((state) => state.context.lens);
 
   // A lens chosen on another version or diff mode no longer applies.
   const activeId =
@@ -264,7 +264,7 @@ export function ReviewLensesProvider({
       setChangedPaths(files.map((file) => file.path));
       setUnfoldRanges(viewed ? [] : files.flatMap((file) => file.sources));
 
-      if (collapseLens && viewed) panelStore.getState().clearLens();
+      if (collapseLens && viewed) panelActor.send({ type: "clearLens" });
     } catch {
       // The mutation holds the error while this version is shown.
     } finally {
@@ -310,11 +310,12 @@ export function ReviewLensesProvider({
       structuralDiffEnabled,
       select: (id) => {
         if (!lenses.some((item) => item.id === id && !item.unavailable)) return;
-        panelStore
-          .getState()
-          .selectLens({ id, version: snapshot.version, mode });
+        panelActor.send({
+          type: "selectLens",
+          lens: { id, version: snapshot.version, mode },
+        });
       },
-      clear: () => panelStore.getState().clearLens(),
+      clear: () => panelActor.send({ type: "clearLens" }),
       resolve: (sources) =>
         sources.flatMap((source) =>
           (progress?.resolvedSelections[selectionKey(source)] ?? []).map(
@@ -366,7 +367,7 @@ export function ReviewLensesProvider({
       client,
       route,
       snapshot,
-      panelStore,
+      panelActor,
     ],
   );
 

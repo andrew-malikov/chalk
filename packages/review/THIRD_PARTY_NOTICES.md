@@ -91,4 +91,3 @@ Direct third-party runtime/UI dependencies currently include:
 - `react` and `react-dom` (`MIT`)
 - `semver` (`ISC`)
 - `zod` (`MIT`)
-- `zustand` (`MIT`)

@@ -1,4 +1,4 @@
-import { createDiagramNavigationStore } from "@canvas/diagrams/diagram-navigation-store";
+import { useDiagramNavigation } from "@canvas/diagrams/diagram-navigation-machine";
 import { diagramStyles } from "@canvas/diagrams/diagram-styles";
 import { hasTextSelectionWithin } from "@canvas/diagrams/diagram-text-selection";
 import { flowLayer } from "@canvas/diagrams/flow-layers.stylex";
@@ -37,6 +37,7 @@ import { surfaceStyles } from "@canvas/ui/surface";
 import { textStyles } from "@canvas/ui/text";
 import { codePeekSource } from "@review/documents/source";
 import * as stylex from "@stylexjs/stylex";
+import { useSelector } from "@xstate/react";
 import {
   Background,
   BaseEdge,
@@ -56,6 +57,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
+  type SetStateAction,
   createContext,
   useCallback,
   useContext,
@@ -66,7 +68,6 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { useStore } from "zustand";
 
 import {
   c4EdgeLabelPoint,
@@ -371,27 +372,40 @@ function SoftwareMapWithModel({
     navigationKey,
   );
 
-  const navigation = useMemo(
-    () =>
-      createDiagramNavigationStore(
-        storageKey,
-        modelKey,
-        initialSoftwareMapExpandedNodeIds(model),
-      ),
-    [storageKey, modelKey],
+  const initialExpandedNodeIds = useMemo(
+    () => initialSoftwareMapExpandedNodeIds(model),
+    [modelKey],
   );
 
-  const expanded = useStore(navigation, (state) => state.expanded);
+  const navigation = useDiagramNavigation(
+    storageKey,
+    modelKey,
+    initialExpandedNodeIds,
+  );
 
-  const expandedNodeIds = useStore(
+  const expanded = useSelector(
     navigation,
-    (state) => state.expandedNodeIds,
+    (snapshot) => snapshot.context.expanded,
   );
 
-  const selectedNodeId = useStore(navigation, (state) => state.selectedNodeId);
+  const expandedNodeIds = useSelector(
+    navigation,
+    (snapshot) => snapshot.context.expandedNodeIds,
+  );
 
-  const { setExpanded, setExpandedNodeIds, setSelectedNodeId } =
-    navigation.getState();
+  const selectedNodeId = useSelector(
+    navigation,
+    (snapshot) => snapshot.context.selectedNodeId,
+  );
+
+  const setExpanded = (expanded: boolean) =>
+    navigation.send({ type: "setExpanded", expanded });
+
+  const setExpandedNodeIds = (next: SetStateAction<Set<string>>) =>
+    navigation.send({ type: "setExpandedNodeIds", next });
+
+  const setSelectedNodeId = (next: SetStateAction<string | null>) =>
+    navigation.send({ type: "setSelectedNodeId", next });
 
   const [inspectedNode, setInspectedNode] =
     useState<SoftwareMapNodeSnapshot | null>(null);
@@ -419,9 +433,14 @@ function SoftwareMapWithModel({
   const mapRootRef = useRef<HTMLElement | null>(null);
 
   const defaultExpansionActiveRef = useMemo(
-    () => ({ current: !navigation.getState().restored }),
-    [navigation],
+    () => ({ current: !navigation.getSnapshot().context.restored }),
+    [navigation, storageKey, modelKey],
   );
+
+  useLayoutEffect(() => {
+    defaultExpansionActiveRef.current =
+      !navigation.getSnapshot().context.restored;
+  }, [navigation, storageKey, modelKey]);
 
   const rememberedChildNodeIdsRef = useRef(new Map<string, string>());
 
@@ -442,7 +461,7 @@ function SoftwareMapWithModel({
       nodeId: targetPath,
       requireExpanded: false,
     });
-  }, [focusRequest, navigation]);
+  }, [focusRequest, navigation, storageKey, modelKey]);
 
   const resolvedDataReady = Boolean(pinnedData);
 
@@ -469,7 +488,7 @@ function SoftwareMapWithModel({
 
       return next;
     });
-  }, [projectionModel, navigation]);
+  }, [projectionModel, navigation, storageKey, modelKey]);
 
   const changeSummaries = useMemo(
     () =>

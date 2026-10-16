@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import { useOptionalReviewPanelStore } from "./review-panel";
+import { useOptionalReviewPanelActor } from "./review-panel";
 
 export type ReviewSubmissionOutcome = "dismissed";
 
@@ -51,12 +51,12 @@ export function ReviewProvider({
   const [submissionOutcome, setSubmissionOutcome] =
     useState<ReviewSubmissionOutcome | null>(null);
 
-  const panelStore = useOptionalReviewPanelStore();
+  const panelActor = useOptionalReviewPanelActor();
 
   const openSoftwareMapElement = useCallback(
     (elementPath: string) =>
-      panelStore?.getState().focusMapElement(elementPath),
-    [panelStore],
+      panelActor?.send({ type: "focusMapElement", elementPath }),
+    [panelActor],
   );
 
   const dismissReview = useCallback(async () => {

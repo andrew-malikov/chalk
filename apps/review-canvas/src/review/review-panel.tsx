@@ -1,84 +1,82 @@
 import { REVIEW_CANVAS_RESUME_EVENT } from "@chalk/review-contracts";
+import { useActorRef, useSelector } from "@xstate/react";
 import {
   type ReactNode,
   type RefObject,
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from "react";
-import { useStore } from "zustand";
 
 import {
   type ReviewNavigationRestore,
-  type ReviewPanelStore,
-  type ReviewPanelStoreState,
-  createReviewPanelStore,
-} from "./review-panel-store";
+  type ReviewPanelActor,
+  type ReviewPanelSnapshot,
+  createReviewPanelMachine,
+} from "./review-panel-machine";
 
-const ReviewPanelContext = createContext<ReviewPanelStore | null>(null);
-
-const fallbackReviewPanelStore = createReviewPanelStore();
+const ReviewPanelContext = createContext<ReviewPanelActor | null>(null);
 
 export function ReviewPanelProvider({
   children,
   restore,
 }: {
   children: ReactNode;
-  /** Called once, when the provider mounts: the canvas re-renders often, and
-   * restoring reads storage. */
+  /** Read storage once per mount; live edits re-render the canvas often. */
   restore?: () => ReviewNavigationRestore;
 }) {
-  const [store] = useState(() => createReviewPanelStore(restore?.()));
+  const [machine] = useState(() => createReviewPanelMachine(restore?.()));
+  const actor = useActorRef(machine);
 
   return (
-    <ReviewPanelContext.Provider value={store}>
+    <ReviewPanelContext.Provider value={actor}>
       {children}
     </ReviewPanelContext.Provider>
   );
 }
 
 export function useReviewPanel<T>(
-  selector: (state: ReviewPanelStoreState) => T,
+  selector: (snapshot: ReviewPanelSnapshot) => T,
 ): T {
-  return useStore(useReviewPanelStore(), selector);
+  return useSelector(useReviewPanelActor(), selector);
 }
 
-export function useOptionalReviewPanelStore(): ReviewPanelStore | null {
+export function useOptionalReviewPanelActor(): ReviewPanelActor | null {
   return useContext(ReviewPanelContext);
 }
 
 export function useOptionalReviewPanel<T>(
-  selector: (state: ReviewPanelStoreState) => T,
+  selector: (snapshot: ReviewPanelSnapshot) => T,
 ): T | undefined {
-  const store = useContext(ReviewPanelContext);
-  const selected = useStore(store ?? fallbackReviewPanelStore, selector);
+  const actor = useOptionalReviewPanelActor();
 
-  return store ? selected : undefined;
+  return useSelector(actor ?? undefined, (snapshot) =>
+    snapshot ? selector(snapshot) : undefined,
+  );
 }
 
-export function useReviewPanelStore(): ReviewPanelStore {
-  const store = useContext(ReviewPanelContext);
+export function useReviewPanelActor(): ReviewPanelActor {
+  const actor = useOptionalReviewPanelActor();
 
-  if (!store) {
+  if (!actor) {
     throw new Error(
       "Review panel components must render inside ReviewPanelProvider",
     );
   }
 
-  return store;
+  return actor;
 }
 
 export function useSuppressPanelMotionOnCanvasResume(
   appRef: RefObject<HTMLElement | null>,
 ): void {
-  const store = useReviewPanelStore();
+  const actor = useReviewPanelActor();
   useEffect(() => {
     const canvasRoot = appRef.current?.closest(".review-canvas-root");
 
     if (!canvasRoot) return;
-    const suppressMotion = () => store.getState().suppressMotion();
+    const suppressMotion = () => actor.send({ type: "suppressMotion" });
     canvasRoot.addEventListener(REVIEW_CANVAS_RESUME_EVENT, suppressMotion);
 
     return () =>
@@ -86,5 +84,5 @@ export function useSuppressPanelMotionOnCanvasResume(
         REVIEW_CANVAS_RESUME_EVENT,
         suppressMotion,
       );
-  }, [appRef, store]);
+  }, [appRef, actor]);
 }
