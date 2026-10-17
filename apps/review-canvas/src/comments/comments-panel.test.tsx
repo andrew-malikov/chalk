@@ -1,4 +1,5 @@
 import { ReviewSessionProvider } from "@canvas/host/review-session";
+import { ReviewPanelProvider } from "@canvas/review/review-panel";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import type { CommentsState } from "@chalk/review-contracts";
 // @vitest-environment jsdom
@@ -7,7 +8,7 @@ import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 
 import { CommentsProvider } from "./comments-context";
-import { CommentsContent } from "./comments-panel";
+import { CommentsPanel } from "./comments-panel";
 
 it("keeps unsaved text after an autosave failure and flushes the latest edit before explicit posting", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -85,9 +86,11 @@ it("keeps unsaved text after an autosave failure and flushes the latest edit bef
     await act(async () =>
       root.render(
         <ReviewSessionProvider session={session}>
-          <CommentsProvider>
-            <CommentsContent />
-          </CommentsProvider>
+          <ReviewPanelProvider>
+            <CommentsProvider>
+              <CommentsPanel />
+            </CommentsProvider>
+          </ReviewPanelProvider>
         </ReviewSessionProvider>,
       ),
     );
@@ -117,9 +120,11 @@ it("keeps unsaved text after an autosave failure and flushes the latest edit bef
     await act(async () =>
       root.render(
         <ReviewSessionProvider session={historical}>
-          <CommentsProvider>
-            <CommentsContent />
-          </CommentsProvider>
+          <ReviewPanelProvider>
+            <CommentsProvider>
+              <CommentsPanel />
+            </CommentsProvider>
+          </ReviewPanelProvider>
         </ReviewSessionProvider>,
       ),
     );
@@ -168,9 +173,11 @@ it("shows agent comments without sending controls when the review has no provide
     await act(async () =>
       root.render(
         <ReviewSessionProvider session={session}>
-          <CommentsProvider>
-            <CommentsContent />
-          </CommentsProvider>
+          <ReviewPanelProvider>
+            <CommentsProvider>
+              <CommentsPanel />
+            </CommentsProvider>
+          </ReviewPanelProvider>
         </ReviewSessionProvider>,
       ),
     );

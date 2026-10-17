@@ -4,6 +4,7 @@ import { AgentSelectionProvider } from "@canvas/agent-context/agent-selection";
 import { PierreDiffView } from "@canvas/diff/PierreDiffView";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDiffFilesProvider } from "@canvas/review/review-diff-files-context";
+import { ReviewPanelProvider } from "@canvas/review/review-panel";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import type {
@@ -17,7 +18,7 @@ import { expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
 import { CommentsProvider } from "./comments-context";
-import { CommentsContent } from "./comments-panel";
+import { CommentsContent, CommentsPanel } from "./comments-panel";
 
 it("V10: drafts from hovered/selected Git lines and resolves with stable loading feedback while retaining the reply", async () => {
   const gitlab: GitLabState = {
@@ -599,5 +600,266 @@ it("collapses a sidebar discussion to a one-line summary and expands it back", a
     await act(async () => root.unmount());
     container.remove();
     localStorage.clear();
+  }
+});
+
+it("orders drafts and discussions by latest activity, hides resolved threads, and focuses a general reply", async () => {
+  const draftId = crypto.randomUUID();
+
+  const state: CommentsState = {
+    comments: [
+      {
+        id: draftId,
+        text: "Keep my reply",
+        author: "agent",
+        target: { kind: "reply", discussionId: "general" },
+        version: 1,
+        status: "saved",
+        createdAt: "2026-10-10T10:00:00.000Z",
+      },
+      {
+        id: crypto.randomUUID(),
+        text: "A draft between discussions",
+        author: "user",
+        target: { kind: "general" },
+        version: 1,
+        status: "saved",
+        createdAt: "2026-10-11T10:00:00.000Z",
+      },
+    ],
+    gitlab: {
+      identity: {
+        host: "gitlab.test",
+        url: "https://gitlab.test/a/b/-/merge_requests/1",
+        projectId: 1,
+        projectPath: "a/b",
+        iid: 1,
+        cloneUrl: "https://gitlab.test/a/b.git",
+      },
+      account: { id: 7, username: "andrew", name: "Andrew" },
+      refs: {
+        baseSha: "a".repeat(40),
+        startSha: "a".repeat(40),
+        headSha: "b".repeat(40),
+      },
+      discussions: [
+        {
+          id: "general",
+          resolvable: true,
+          resolved: false,
+          comments: [
+            {
+              id: 1,
+              body: "Can we rework it?",
+              author: { id: 8, username: "markup", name: "Markup" },
+              createdAt: "2026-10-07T10:00:00Z",
+            },
+          ],
+        },
+        {
+          id: "newest",
+          resolvable: true,
+          resolved: false,
+          comments: [
+            {
+              id: 2,
+              body: "An older thread with a new reply",
+              author: { id: 8, username: "markup", name: "Markup" },
+              createdAt: "2026-10-01T10:00:00Z",
+            },
+            {
+              id: 3,
+              body: "The newest posted reply",
+              author: { id: 7, username: "andrew", name: "Andrew" },
+              createdAt: "2026-10-12T10:00:00Z",
+            },
+          ],
+        },
+        {
+          id: "resolved",
+          resolvable: true,
+          resolved: true,
+          comments: [
+            {
+              id: 4,
+              body: "A resolved thread",
+              author: { id: 7, username: "andrew", name: "Andrew" },
+              createdAt: "2026-10-13T10:00:00Z",
+            },
+          ],
+        },
+      ],
+    },
+  };
+
+  const session = testReviewSession();
+  session.fetch = async (endpoint, init) => {
+    const input = init?.body ? JSON.parse(String(init.body)) : {};
+
+    if (endpoint === "/comments/discard")
+      state.comments = state.comments.filter((d) => d.id !== input.id);
+
+    if (endpoint === "/comments/save") {
+      const draft = {
+        ...input,
+        author: "user",
+        status: "saved",
+        version: (input.version ?? 0) + 1,
+        createdAt: new Date().toISOString(),
+      };
+
+      state.comments = [
+        ...state.comments.filter((d) => d.id !== input.id),
+        draft,
+      ];
+
+      return Response.json(draft);
+    }
+
+    return Response.json(state);
+  };
+
+  const container = document.createElement("div");
+  container.className = "review-canvas-root";
+  container.style.cssText = "height:600px;width:450px;position:relative";
+  document.body.append(container);
+  const root = createRoot(container);
+
+  try {
+    await act(async () =>
+      root.render(
+        <TestCanvasQuery>
+          <ReviewSessionProvider session={session}>
+            <ReviewPanelProvider>
+              <CommentsProvider>
+                <CommentsPanel />
+              </CommentsProvider>
+            </ReviewPanelProvider>
+          </ReviewSessionProvider>
+        </TestCanvasQuery>,
+      ),
+    );
+
+    const textbox = () =>
+      [...container.querySelectorAll<HTMLElement>('[role="textbox"]')].find(
+        (e) => e.textContent === "Keep my reply",
+      );
+
+    await vi.waitFor(() =>
+      expect(textbox()?.textContent).toBe("Keep my reply"),
+    );
+    const content = container.textContent!;
+    expect(content.indexOf("The newest posted reply")).toBeLessThan(
+      content.indexOf("A draft between discussions"),
+    );
+    expect(content.indexOf("A draft between discussions")).toBeLessThan(
+      content.indexOf("Can we rework it?"),
+    );
+    expect(content.indexOf("Keep my reply")).toBeLessThan(
+      content.indexOf("Resolved · 1"),
+    );
+    const resolved = container.querySelector("details")!;
+    expect(resolved.open).toBe(false);
+    expect(resolved.getBoundingClientRect().height).toBe(
+      resolved.querySelector("summary")!.getBoundingClientRect().height,
+    );
+    const header = container.querySelector("header")!;
+    expect(header.textContent).toContain("New comment");
+    expect(header.textContent).toContain("Post all");
+    await act(async () => {
+      container.style.width = "320px";
+    });
+    expect(header.scrollWidth).toBeLessThanOrEqual(header.clientWidth);
+    await act(async () => {
+      container.style.width = "450px";
+    });
+    const draft = textbox()!.closest('[id$="-body"]')!.parentElement!;
+    await userEvent.click(
+      draft.querySelector<HTMLElement>('[aria-label="Collapse discussion"]')!,
+    );
+    expect(textbox()!.getBoundingClientRect().height).toBe(0);
+
+    const reply = [...draft.parentElement!.querySelectorAll("button")].find(
+      (b) => b.textContent === "Reply",
+    )!;
+
+    await userEvent.click(reply);
+    await vi.waitFor(() => expect(document.activeElement).toBe(textbox()));
+    expect(textbox()!.getBoundingClientRect().height).toBeGreaterThan(0);
+    expect(textbox()!.textContent).toBe("Keep my reply");
+    expect(container.querySelectorAll('[role="textbox"]')).toHaveLength(2);
+    await userEvent.click(
+      [...draft.querySelectorAll("button")].find(
+        (b) => b.textContent === "Discard",
+      )!,
+    );
+    await vi.waitFor(() => expect(textbox()).toBeUndefined());
+    await userEvent.click(reply);
+    await vi.waitFor(() =>
+      expect(document.activeElement?.getAttribute("role")).toBe("textbox"),
+    );
+    const focused = document.activeElement!;
+    await userEvent.click(reply);
+    expect(container.querySelectorAll('[role="textbox"]')).toHaveLength(2);
+    expect(focused.textContent).toBe("");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+it("centers a collapsed draft title, agent badge and toggle on the same row", async () => {
+  const session = testReviewSession();
+  session.fetch = async () =>
+    Response.json({
+      comments: [
+        {
+          id: crypto.randomUUID(),
+          text: "Check this",
+          author: "agent",
+          target: { kind: "general" },
+          status: "saved",
+          version: 1,
+        },
+      ],
+    });
+  const container = document.createElement("div");
+  container.className = "review-canvas-root";
+  container.style.width = "450px";
+  document.body.append(container);
+  const root = createRoot(container);
+
+  try {
+    await act(async () =>
+      root.render(
+        <TestCanvasQuery>
+          <ReviewSessionProvider session={session}>
+            <CommentsProvider>
+              <CommentsContent />
+            </CommentsProvider>
+          </ReviewSessionProvider>
+        </TestCanvasQuery>,
+      ),
+    );
+
+    const toggle = () =>
+      container.querySelector<HTMLElement>(
+        '[aria-label="Collapse discussion"]',
+      );
+
+    await vi.waitFor(() => expect(toggle()).not.toBeNull());
+    const header = toggle()!.parentElement!;
+    await userEvent.click(toggle()!);
+
+    const centers = [...header.children].map((node) => {
+      const rect = node.getBoundingClientRect();
+
+      return rect.top + rect.height / 2;
+    });
+
+    expect(Math.max(...centers) - Math.min(...centers)).toBeLessThanOrEqual(1);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
   }
 });

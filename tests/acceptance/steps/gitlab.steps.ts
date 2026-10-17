@@ -62,7 +62,7 @@ When(
         .click();
     }
 
-    await editor(page).fill(text);
+    await page.locator('[role="textbox"]:focus').fill(text);
 
     if (!gitlabReview.saveUnavailable) {
       await expect

@@ -34,6 +34,7 @@ export interface CommentDraft {
   text: string;
   target: CommentTarget;
   version?: number;
+  createdAt?: string;
   dirty: boolean;
   error?: string;
   /** Bumped per edit, so a save only marks clean the text it sent. */
@@ -102,6 +103,7 @@ function receive(context: CommentsContext, next: CommentsState) {
         text: draft.text,
         target: draft.target,
         version: draft.version,
+        createdAt: draft.createdAt,
         dirty: false,
         generation: editor.generation,
       };
@@ -186,6 +188,7 @@ export function createCommentsMachine(request: CommentsRequest) {
               text: event.text,
               target: previous?.target ?? draft!.target,
               version: previous?.version ?? draft?.version,
+              createdAt: previous?.createdAt ?? draft?.createdAt,
               dirty: true,
               generation: (previous?.generation ?? 0) + 1,
             },
@@ -198,21 +201,35 @@ export function createCommentsMachine(request: CommentsRequest) {
 
         const existing =
           target.kind === "reply"
-            ? context.state?.comments.find(
+            ? (Object.entries(context.editors).find(
+                ([id, editor]) =>
+                  editor.target.kind === "reply" &&
+                  editor.target.discussionId === target.discussionId &&
+                  !context.state?.comments.some(
+                    (d) => d.id === id && !isOpen(d),
+                  ),
+              )?.[0] ??
+              context.state?.comments.find(
                 (d) =>
                   d.target.kind === "reply" &&
                   d.target.discussionId === target.discussionId &&
                   isOpen(d),
-              )
+              )?.id)
             : undefined;
 
-        if (existing) return { selected: existing.id };
+        if (existing) return { selected: existing };
 
         return {
           selected: event.id,
           editors: {
             ...context.editors,
-            [event.id]: { text: "", target, dirty: true, generation: 1 },
+            [event.id]: {
+              text: "",
+              target,
+              dirty: true,
+              generation: 1,
+              createdAt: new Date().toISOString(),
+            },
           },
         };
       }),

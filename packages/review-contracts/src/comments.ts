@@ -48,6 +48,8 @@ export const reviewCommentSchema = z.object({
   author: z.enum(["user", "agent"]),
   target: commentTargetSchema,
   version: z.number().int().nonnegative(),
+  /** Older saved drafts may predate timestamp tracking. */
+  createdAt: z.iso.datetime().optional(),
   /** Anything but `saved` comes from sending it to a provider. */
   status: z.enum(["saved", "failed", "sending", "uncertain", "sent"]),
   error: z.string().optional(),

@@ -92,6 +92,7 @@ export class CommentStorage {
         author: existing?.author ?? "user",
         target: existing?.target ?? input.target,
         version: (existing?.version ?? 0) + 1,
+        createdAt: existing ? existing.createdAt : new Date().toISOString(),
         status: "saved",
       };
 

@@ -26,6 +26,7 @@ import { useComments } from "./comments-context";
 
 export function CommentsPanel() {
   const comments = useComments();
+  const drafts = useCommentDrafts();
 
   if (!comments) return null;
   const refreshing = comments.pending?.action === "refresh";
@@ -36,23 +37,47 @@ export function CommentsPanel() {
       onClose={comments.toggle}
       closeLabel="Close comments"
       headerActions={
-        comments.state?.gitlab && (
-          <IconButton
-            size="large"
-            aria-label="Refresh"
-            title="Refresh"
-            aria-busy={refreshing || undefined}
-            className={
-              refreshing
-                ? "tw:[&_svg]:animate-spin tw:motion-reduce:[&_svg]:animate-none"
-                : undefined
-            }
-            disabled={!comments.editable || comments.busy}
-            onClick={() => comments.run("refresh")}
+        <>
+          <Button
+            disabled={!comments.editable || comments.busy || !comments.state}
+            onClick={() => comments.compose({ kind: "general" })}
           >
-            <RefreshIcon />
-          </IconButton>
-        )
+            New comment
+          </Button>
+          {comments.state?.gitlab && (
+            <Button
+              loading={
+                comments.pending?.action === "post" &&
+                !comments.pending.input.id
+              }
+              disabled={
+                !comments.editable ||
+                comments.busy ||
+                !drafts.some((d) => ["saved", "failed"].includes(d.status))
+              }
+              onClick={() => comments.run("post")}
+            >
+              Post all
+            </Button>
+          )}
+          {comments.state?.gitlab && (
+            <IconButton
+              size="large"
+              aria-label="Refresh"
+              title="Refresh"
+              aria-busy={refreshing || undefined}
+              className={
+                refreshing
+                  ? "tw:[&_svg]:animate-spin tw:motion-reduce:[&_svg]:animate-none"
+                  : undefined
+              }
+              disabled={!comments.editable || comments.busy}
+              onClick={() => comments.run("refresh")}
+            >
+              <RefreshIcon />
+            </IconButton>
+          )}
+        </>
       }
     >
       <CommentsContent />
@@ -77,6 +102,7 @@ export function useCommentDrafts(): ReviewComment[] {
         author: "user",
         status: "saved",
         version: 0,
+        createdAt: editor.createdAt,
       })),
   ];
 }
@@ -88,9 +114,59 @@ export function CommentsContent() {
   if (!comments) return null;
   const gitlab = comments.state?.gitlab;
 
-  const open = gitlab?.discussions.filter((d) => !d.resolved) ?? [];
-  const resolved = gitlab?.discussions.filter((d) => d.resolved) ?? [];
   const unsent = drafts.filter((d) => d.status !== "sent");
+
+  const threads = (gitlab?.discussions ?? []).map((discussion) => {
+    const replies = unsent.filter(
+      (d) =>
+        d.target.kind === "reply" && d.target.discussionId === discussion.id,
+    );
+
+    return {
+      kind: "discussion" as const,
+      id: discussion.id,
+      discussion,
+      replies,
+      time: Math.max(
+        0,
+        ...discussion.comments.map((c) => Date.parse(c.createdAt) || 0),
+        ...replies.map((d) => Date.parse(d.createdAt ?? "") || 0),
+      ),
+    };
+  });
+
+  const resolved = threads
+    .filter((t) => t.discussion.resolved)
+    .sort((a, b) => b.time - a.time);
+
+  // shortcut: untimed legacy drafts follow dated entries in reverse stored order; remove when legacy drafts are gone.
+  const open = [
+    ...threads.filter((t) => !t.discussion.resolved),
+    ...unsent
+      .toReversed()
+      .filter((d) => !threads.some((t) => t.replies.includes(d)))
+      .map((draft) => ({
+        kind: "draft" as const,
+        id: draft.id,
+        draft,
+        time: Date.parse(draft.createdAt ?? "") || 0,
+      })),
+  ].sort((a, b) => b.time - a.time);
+
+  const renderThread = (thread: (typeof threads)[number]) => (
+    <div
+      key={thread.id}
+      className="tw:flex tw:min-w-0 tw:max-w-[820px] tw:flex-col"
+    >
+      <Discussion
+        discussion={thread.discussion}
+        collapsible={thread.replies.length === 0}
+      />
+      {thread.replies.map((draft) => (
+        <DraftEditor key={draft.id} draft={draft} attached />
+      ))}
+    </div>
+  );
 
   return (
     <div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-4 tw:p-4 tw:font-[family-name:var(--chrome-font)] tw:text-[13px] tw:text-[var(--ink)]">
@@ -116,63 +192,26 @@ export function CommentsContent() {
       {comments.error && <p role="alert">{comments.error}</p>}
       {gitlab?.connectionError && <p role="alert">{gitlab.connectionError}</p>}
       {gitlab?.sourceError && <p role="alert">{gitlab.sourceError}</p>}
-      <div className={actions}>
-        <Button
-          disabled={!comments.editable || comments.busy || !comments.state}
-          onClick={() => comments.compose({ kind: "general" })}
-        >
-          New comment
-        </Button>
-        {gitlab && (
-          <Button
-            loading={
-              comments.pending?.action === "post" && !comments.pending.input.id
-            }
-            disabled={
-              !comments.editable ||
-              comments.busy ||
-              !unsent.some((d) => ["saved", "failed"].includes(d.status))
-            }
-            onClick={() => comments.run("post")}
-          >
-            Post all
-          </Button>
-        )}
-      </div>
-      {gitlab && (
-        <>
-          <h3 className={heading}>Open discussions · {open.length}</h3>
-          {open.length === 0 && <p>No open discussions.</p>}
-          {open.map((d) => (
-            <Discussion
-              key={d.id}
-              discussion={d}
-              collapsible={!hasUnsentReply(d, drafts)}
-            />
-          ))}
-          <Collapsible
-            summary={`Resolved · ${resolved.length}`}
-            open={resolved.some((d) => d.id === comments.selected)}
-          >
-            {resolved.map((d) => (
-              <Discussion
-                key={d.id}
-                discussion={d}
-                collapsible={!hasUnsentReply(d, drafts)}
-              />
-            ))}
-          </Collapsible>
-        </>
+      <h3 className={heading}>Comments · {open.length}</h3>
+      {comments.state && open.length === 0 && <p>No open comments.</p>}
+      {open.map((entry) =>
+        entry.kind === "draft" ? (
+          <DraftEditor key={entry.id} draft={entry.draft} />
+        ) : (
+          renderThread(entry)
+        ),
       )}
-      {unsent.length > 0 && (
-        <>
-          <h3 className={heading}>
-            {gitlab ? "Local drafts" : "Comments"} · {unsent.length}
-          </h3>
-          {unsent.map((d) => (
-            <DraftEditor key={d.id} draft={d} />
-          ))}
-        </>
+      {gitlab && (
+        <Collapsible
+          summary={`Resolved · ${resolved.length}`}
+          open={resolved.some(
+            (t) =>
+              t.id === comments.selected ||
+              t.replies.some((d) => d.id === comments.selected),
+          )}
+        >
+          {resolved.map(renderThread)}
+        </Collapsible>
       )}
     </div>
   );
@@ -247,7 +286,7 @@ export function InlineComments({
       aria-label={`${annotation.kind === "draft" ? "Comment" : "GitLab discussion"} ${annotation.id}`}
     >
       {comments.error && <p role="alert">{comments.error}</p>}
-      <div className="tw:flex tw:flex-col">
+      <div className="tw:flex tw:max-w-[820px] tw:flex-col">
         {discussion && (
           <Discussion
             discussion={discussion}
@@ -400,7 +439,7 @@ function Discussion({
       className={cn(
         card,
         inlineCard,
-        inline && "tw:relative tw:z-[1]",
+        "tw:relative tw:z-[1]",
         comments.selected === discussion.id && "tw:border-[var(--ink-faint)]",
       )}
     >
@@ -557,6 +596,7 @@ function DraftEditor({
   attached?: boolean;
 }) {
   const comments = useComments()!;
+  const ref = useRef<HTMLDivElement>(null);
   const editor = comments.editors[draft.id];
   const labelId = useId();
   const collapsed = comments.collapsed[draft.id] ?? false;
@@ -565,6 +605,10 @@ function DraftEditor({
   const locked = !["saved", "failed"].includes(draft.status);
   const target = editor?.target ?? draft.target;
   const gitlab = comments.state?.gitlab;
+  useEffect(() => {
+    if (!inline && !collapsed && comments.selected === draft.id)
+      ref.current?.scrollIntoView?.({ block: "nearest" });
+  }, [comments.selected, draft.id, inline, collapsed]);
 
   const canPost =
     !!gitlab &&
@@ -604,14 +648,18 @@ function DraftEditor({
 
   return (
     <div
+      ref={ref}
       className={cn(
         card,
         inline && inlineCard,
-        attached && "tw:-mt-2 tw:rounded-t-none tw:bg-[var(--surface)] tw:pt-5",
+        attached &&
+          "tw:mx-3 tw:-mt-2 tw:bg-[var(--surface)] tw:pt-5 tw:motion-safe:animate-[comment-reply-enter_180ms_cubic-bezier(0.16,1,0.3,1)]",
       )}
     >
-      <div className="tw:flex tw:flex-wrap tw:items-baseline tw:justify-between tw:gap-2 tw:wrap-anywhere">
-        <span id={labelId}>{targetLabel(editor?.target ?? draft.target)}</span>
+      <div className="tw:flex tw:items-center tw:gap-2">
+        <span className="tw:min-w-0 tw:wrap-anywhere" id={labelId}>
+          {targetLabel(editor?.target ?? draft.target)}
+        </span>
         {draft.author === "agent" && <Chip className="tw:me-auto">Agent</Chip>}
         <IconButton
           aria-label={collapsed ? "Expand discussion" : "Collapse discussion"}
@@ -633,7 +681,7 @@ function DraftEditor({
         id={`${labelId}-body`}
         className={collapsed ? "tw:hidden" : "tw:contents"}
       >
-        {thread && !inline && (
+        {thread && !inline && !attached && (
           <Button variant="ghost" onClick={() => comments.select(thread)}>
             {thread.location
               ? `${thread.location.file}:${thread.location.from}`

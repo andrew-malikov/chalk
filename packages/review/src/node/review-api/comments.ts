@@ -126,6 +126,7 @@ export class ReviewComments {
           author: "agent" as const,
           target,
           version: 1,
+          createdAt: new Date().toISOString(),
           status: "saved" as const,
         };
       }),

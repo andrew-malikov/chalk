@@ -88,6 +88,7 @@ export function CommentsProvider({ children }: { children: ReactNode }) {
 
   const [machine] = useState(() => createCommentsMachine(request));
   const actor = useActorRef(machine);
+
   const { state, editors, pending, error, selected } = useSelector(
     actor,
     (snapshot) => snapshot.context,
@@ -170,6 +171,10 @@ export function CommentsProvider({ children }: { children: ReactNode }) {
 
       if (!actor.getSnapshot().can(event)) return;
       actor.send(event);
+      const selected = actor.getSnapshot().context.selected;
+
+      if (selected)
+        setCollapsed((current) => ({ ...current, [selected]: false }));
 
       if (placement === "inline") {
         setOpen(false);

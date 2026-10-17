@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 
 import { CommentStorage } from "./comment-storage.js";
 
@@ -56,5 +56,37 @@ it("durably saves revisions and protects in-flight, uncertain and confirmed send
     otherDb.close();
     reopened.close();
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+it("keeps a draft's creation time across saves and reads legacy drafts without timestamps", () => {
+  const db = new Database(":memory:");
+  db.exec(
+    'CREATE TABLE reviews(id TEXT PRIMARY KEY); INSERT INTO reviews VALUES ("review")',
+  );
+  const storage = new CommentStorage(db);
+  vi.useFakeTimers();
+
+  try {
+    vi.setSystemTime(new Date("2026-10-10T10:00:00Z"));
+
+    const draft = storage.save("review", {
+      id: randomUUID(),
+      text: "First draft",
+      target: { kind: "general" },
+    });
+
+    expect(draft.createdAt).toBe("2026-10-10T10:00:00.000Z");
+    vi.setSystemTime(new Date("2026-10-11T10:00:00Z"));
+    storage.save("review", { ...draft, text: "Edited draft" });
+    expect(storage.read("review")[0]?.createdAt).toBe(draft.createdAt);
+    const legacy = { ...draft, id: randomUUID(), createdAt: undefined };
+    storage.update("review", (comments) => comments.push(legacy));
+    expect(storage.read("review")[1]?.text).toBe("First draft");
+    storage.save("review", { ...legacy, text: "Edited legacy draft" });
+    expect(storage.read("review")[1]?.createdAt).toBeUndefined();
+  } finally {
+    vi.useRealTimers();
+    db.close();
   }
 });
