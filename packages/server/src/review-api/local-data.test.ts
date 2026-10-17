@@ -23,7 +23,7 @@ import {
   REVIEW_CLIENT_HEADER,
   REVIEW_CLIENT_REMOTE,
 } from "@chalk/review-contracts";
-import { ReviewApiClient } from "@chalk/review-contracts";
+import { ReviewApiClient, commentsStateSchema } from "@chalk/review-contracts";
 import { createGlobalReviewServer } from "@chalk/server/desktop-server.js";
 import type { Pins } from "@review/documents/document.js";
 import { selectSource } from "@review/documents/lens-selection";
@@ -3694,4 +3694,72 @@ it("rejects trace uploads before storing bytes and trace quote edits before savi
     }),
   ).toThrow(/Invalid input/);
   expect(local.store.read(review.reviewId).document).toEqual([]);
+});
+
+it("adds agent comments all or none and follows them as the source moves", async () => {
+  const commit = (text: string) => {
+    writeFileSync(path.join(repository, "notes.ts"), text);
+    git("add", "notes.ts");
+    git("-c", "commit.gpgsign=false", "commit", "-qm", "Notes");
+
+    return local.data.resolvePins(pins.repositoryId, pins.base, "HEAD");
+  };
+
+  const first = await commit("a\nb\nc\nd\n");
+
+  const { reviewId } = await local.store.execute(
+    command({ type: "create", title: "Comments", pins: first }),
+  );
+
+  const app = createReviewApi(local.store, local.data);
+
+  const add = (comments: object[]) =>
+    app.request(`/${reviewId}/comments/add`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ comments }),
+    });
+
+  const read = async () =>
+    commentsStateSchema.parse(
+      await (await app.request(`/${reviewId}/comments`)).json(),
+    ).comments;
+
+  const repin = async (next: Pins) =>
+    local.store.execute(command({ type: "repin", reviewId, pins: next }));
+
+  const checkC = {
+    text: "Check c",
+    source: { file: "notes.ts", fromLine: 3, toLine: 3 },
+  };
+
+  expect(
+    (
+      await add([
+        checkC,
+        { text: "Gone", source: { file: "notes.ts", fromLine: 9, toLine: 9 } },
+      ])
+    ).status,
+  ).toBe(400);
+  expect((await add([{ text: "Reply", discussionId: "thread" }])).status).toBe(
+    400,
+  );
+  expect(await read()).toEqual([]);
+
+  expect((await add([checkC, { text: "Overall" }])).status).toBe(200);
+  await repin(await commit("added\na\nb\nc\nd\n"));
+  expect(await read()).toMatchObject([
+    {
+      author: "agent",
+      text: "Check c",
+      target: { kind: "inline", position: { from: 4, to: 4 } },
+    },
+    { author: "agent", target: { kind: "general" } },
+  ]);
+
+  await repin(await commit("a\nrewritten\nd\n"));
+  expect((await read())[0]).toMatchObject({
+    text: "Check c",
+    target: { unmapped: true, position: { from: 4 } },
+  });
 });

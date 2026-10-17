@@ -79,7 +79,7 @@ describe("GitLab boundary", () => {
   });
 });
 
-describe("conservative draft mapping", () => {
+describe("conservative comment mapping", () => {
   it("moves an unchanged range when code is inserted before it", () => {
     expect(
       remapLineRange("a\nb\nc\nd\ne\nf\ng", "added\na\nb\nc\nd\ne\nf\ng", 4, 5),

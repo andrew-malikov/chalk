@@ -6,17 +6,21 @@ import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDiffFilesProvider } from "@canvas/review/review-diff-files-context";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
-import type { GitLabState, ReviewDiffFileWire } from "@chalk/review-contracts";
+import type {
+  CommentsState,
+  GitLabState,
+  ReviewDiffFileWire,
+} from "@chalk/review-contracts";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
-import { GitLabProvider } from "./gitlab-context";
-import { GitLabDiscussionContent } from "./gitlab-discussions";
+import { CommentsProvider } from "./comments-context";
+import { CommentsContent } from "./comments-panel";
 
 it("V10: drafts from hovered/selected Git lines and resolves with stable loading feedback while retaining the reply", async () => {
-  const state: GitLabState = {
+  const gitlab: GitLabState = {
     identity: {
       host: "gitlab.test",
       url: "https://gitlab.test/a/b/-/merge_requests/1",
@@ -47,8 +51,9 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
         ],
       },
     ],
-    drafts: [],
   };
+
+  const state: CommentsState = { comments: [], gitlab };
 
   const files: ReviewDiffFileWire[] = [
     { path: "a.ts", status: "modified", additions: 2, deletions: 2 },
@@ -71,22 +76,22 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
     },
   );
 
-  session.review!.gitlab = state.identity;
   const resolveRequest = Promise.withResolvers<void>();
   let resolveCalls = 0;
   session.fetch = async (endpoint, init) => {
     const input = init?.body ? JSON.parse(String(init.body)) : {};
 
-    if (endpoint === "/gitlab/drafts") {
+    if (endpoint === "/comments/save") {
       const draft = {
         ...input,
+        author: "user",
         status: "saved",
         version:
-          (state.drafts.find((d) => d.id === input.id)?.version ?? 0) + 1,
+          (state.comments.find((d) => d.id === input.id)?.version ?? 0) + 1,
       };
 
-      state.drafts = state.drafts.filter((d) => d.id !== input.id);
-      state.drafts.push(draft);
+      state.comments = state.comments.filter((d) => d.id !== input.id);
+      state.comments.push(draft);
 
       return Response.json(draft);
     }
@@ -94,11 +99,11 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
     if (endpoint === "/gitlab/resolve") {
       resolveCalls++;
       await resolveRequest.promise;
-      state.discussions[0]!.resolved = true;
+      gitlab.discussions[0]!.resolved = true;
     }
 
-    if (endpoint === "/gitlab/discard")
-      state.drafts = state.drafts.filter((d) => d.id !== input.id);
+    if (endpoint === "/comments/discard")
+      state.comments = state.comments.filter((d) => d.id !== input.id);
 
     return Response.json(state);
   };
@@ -119,18 +124,18 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
       root.render(
         <TestCanvasQuery>
           <ReviewSessionProvider session={session}>
-            <GitLabProvider>
+            <CommentsProvider>
               <AgentSelectionProvider revision="one">
                 <ReviewDiffFilesProvider documentKey="one">
                   <div style={{ width: 650, height: 600 }}>
                     <PierreDiffView inWorkspace />
                   </div>
                   <div style={{ width: 450, height: 600, overflow: "auto" }}>
-                    <GitLabDiscussionContent />
+                    <CommentsContent />
                   </div>
                 </ReviewDiffFilesProvider>
               </AgentSelectionProvider>
-            </GitLabProvider>
+            </CommentsProvider>
           </ReviewSessionProvider>
         </TestCanvasQuery>,
       ),
@@ -156,9 +161,7 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
     )!;
 
     const comment = () =>
-      container.querySelector<HTMLButtonElement>(
-        '[aria-label="GitLab comment"]',
-      );
+      container.querySelector<HTMLButtonElement>('[aria-label="Comment"]');
 
     const selectLines = async (column: Element, from: number, to = from) => {
       const line = (n: number) =>
@@ -188,13 +191,13 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
 
       const hovered = () =>
         container.querySelector<HTMLElement>(
-          '[aria-label^="GitLab draft"] [role="textbox"]',
+          '[aria-label^="Comment "] [role="textbox"]',
         );
 
       await vi.waitFor(() => expect(hovered()).not.toBeNull());
       await userEvent.fill(hovered()!, `Hovered ${side}`);
       await vi.waitFor(() =>
-        expect(state.drafts[0]?.target).toMatchObject({
+        expect(state.comments[0]?.target).toMatchObject({
           kind: "inline",
           position: { oldPath: "a.ts", newPath: "a.ts", side, from: 1, to: 1 },
         }),
@@ -202,7 +205,7 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
       await userEvent.click(
         [
           ...container
-            .querySelector<HTMLElement>('[aria-label^="GitLab draft"]')!
+            .querySelector<HTMLElement>('[aria-label^="Comment "]')!
             .querySelectorAll("button"),
         ].find((b) => b.textContent === "Discard")!,
       );
@@ -214,24 +217,22 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
     await userEvent.click(comment()!);
     await vi.waitFor(() =>
       expect(
-        container.querySelector(
-          '[aria-label^="GitLab draft"] [role="textbox"]',
-        ),
+        container.querySelector('[aria-label^="Comment "] [role="textbox"]'),
       ).not.toBeNull(),
     );
 
     const inline = container.querySelector<HTMLElement>(
-      '[aria-label^="GitLab draft"] [role="textbox"]',
+      '[aria-label^="Comment "] [role="textbox"]',
     )!;
 
     expect(document.activeElement).toBe(inline);
     await userEvent.fill(inline, "Inline text");
-    await vi.waitFor(() => expect(state.drafts[0]?.text).toBe("Inline text"));
+    await vi.waitFor(() => expect(state.comments[0]?.text).toBe("Inline text"));
     expect(
-      container.querySelector('[aria-label^="GitLab draft"] [role="textbox"]'),
+      container.querySelector('[aria-label^="Comment "] [role="textbox"]'),
     ).toBe(inline);
     expect(document.activeElement).toBe(inline);
-    expect(state.drafts[0]?.target).toMatchObject({
+    expect(state.comments[0]?.target).toMatchObject({
       kind: "inline",
       position: {
         oldPath: "a.ts",
@@ -264,7 +265,7 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
     resolveRequest.resolve();
     await vi.waitFor(() => expect(thread().textContent).toContain("Resolved"));
     expect(reply.textContent).toBe("Keep this reply");
-    expect(state.drafts.find((d) => d.target.kind === "reply")?.text).toBe(
+    expect(state.comments.find((d) => d.target.kind === "reply")?.text).toBe(
       "Keep this reply",
     );
   } finally {
@@ -276,7 +277,7 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
 });
 
 it("stacks collapsed discussions as chips on their line that take no diff height", async () => {
-  const state: GitLabState = {
+  const gitlab: GitLabState = {
     identity: {
       host: "gitlab.test",
       url: "https://gitlab.test/a/b/-/merge_requests/1",
@@ -321,8 +322,9 @@ it("stacks collapsed discussions as chips on their line that take no diff height
         ],
       },
     ],
-    drafts: [],
   };
+
+  const state: CommentsState = { comments: [], gitlab };
 
   const files: ReviewDiffFileWire[] = [
     { path: "a.ts", status: "modified", additions: 2, deletions: 2 },
@@ -341,7 +343,6 @@ it("stacks collapsed discussions as chips on their line that take no diff height
     },
   );
 
-  session.review!.gitlab = state.identity;
   session.fetch = async () => Response.json(state);
 
   const container = document.createElement("div");
@@ -355,7 +356,7 @@ it("stacks collapsed discussions as chips on their line that take no diff height
       root.render(
         <TestCanvasQuery>
           <ReviewSessionProvider session={session}>
-            <GitLabProvider>
+            <CommentsProvider>
               <AgentSelectionProvider revision="one">
                 <ReviewDiffFilesProvider documentKey="one">
                   <div style={{ width: 900, height: 600 }}>
@@ -363,7 +364,7 @@ it("stacks collapsed discussions as chips on their line that take no diff height
                   </div>
                 </ReviewDiffFilesProvider>
               </AgentSelectionProvider>
-            </GitLabProvider>
+            </CommentsProvider>
           </ReviewSessionProvider>
         </TestCanvasQuery>,
       ),
@@ -424,7 +425,7 @@ it("stacks collapsed discussions as chips on their line that take no diff height
 });
 
 it("collapses a sidebar discussion to a one-line summary and expands it back", async () => {
-  const state: GitLabState = {
+  const gitlab: GitLabState = {
     identity: {
       host: "gitlab.test",
       url: "https://gitlab.test/a/b/-/merge_requests/1",
@@ -460,11 +461,11 @@ it("collapses a sidebar discussion to a one-line summary and expands it back", a
         ],
       },
     ],
-    drafts: [],
   };
 
+  const state: CommentsState = { comments: [], gitlab };
+
   const session = testReviewSession();
-  session.review!.gitlab = state.identity;
   session.fetch = async () => Response.json(state);
 
   const container = document.createElement("div");
@@ -481,9 +482,9 @@ it("collapses a sidebar discussion to a one-line summary and expands it back", a
       root.render(
         <TestCanvasQuery>
           <ReviewSessionProvider session={session}>
-            <GitLabProvider>
-              <GitLabDiscussionContent />
-            </GitLabProvider>
+            <CommentsProvider>
+              <CommentsContent />
+            </CommentsProvider>
           </ReviewSessionProvider>
         </TestCanvasQuery>,
       ),

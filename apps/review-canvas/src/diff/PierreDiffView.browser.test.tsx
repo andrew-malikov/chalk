@@ -1,5 +1,5 @@
 import { AgentSelectionProvider } from "@canvas/agent-context/agent-selection";
-import { GitLabProvider } from "@canvas/gitlab/gitlab-context";
+import { CommentsProvider } from "@canvas/comments/comments-context";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { ReviewDiffFilesProvider } from "@canvas/review/review-diff-files-context";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
@@ -8,6 +8,7 @@ import {
   testReviewSession,
 } from "@canvas/test/review-session-test-utils";
 import type {
+  CommentsState,
   GitLabState,
   ReviewDiffFileWire,
   ReviewDiffLens,
@@ -39,7 +40,7 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
     deletions: 1,
   };
 
-  const state: GitLabState = {
+  const gitlab: GitLabState = {
     identity: {
       host: "gitlab.test",
       url: "https://gitlab.test/a/b/-/merge_requests/1",
@@ -83,8 +84,9 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
         ],
       },
     ],
-    drafts: [],
   };
+
+  const state: CommentsState = { comments: [], gitlab };
 
   const session = testReviewSession(
     {},
@@ -99,11 +101,10 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
 
   session.review = {
     ...session.review!,
-    gitlab: state.identity,
     pins: {
       ...session.review!.pins!,
-      base: state.refs.baseSha,
-      head: state.refs.headSha,
+      base: gitlab.refs.baseSha,
+      head: gitlab.refs.headSha,
     },
   };
   let failSave = true;
@@ -111,39 +112,43 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
   session.fetch = async (endpoint, init) => {
     const input = init?.body ? JSON.parse(String(init.body)) : {};
 
-    if (endpoint === "/gitlab/drafts") {
+    if (endpoint === "/comments/save") {
       if (failSave)
         return Response.json({ error: "Disk unavailable" }, { status: 409 });
-      const previous = state.drafts.find((d) => d.id === input.id);
+      const previous = state.comments.find((d) => d.id === input.id);
 
       const draft = {
         ...input,
+        author: "user",
         status: "saved",
         version: (previous?.version ?? 0) + 1,
       };
 
-      state.drafts = [...state.drafts.filter((d) => d.id !== draft.id), draft];
+      state.comments = [
+        ...state.comments.filter((d) => d.id !== draft.id),
+        draft,
+      ];
 
       return Response.json(draft);
     }
 
     if (endpoint === "/gitlab/post") {
-      const draft = state.drafts.find((d) => d.id === input.id)!;
+      const draft = state.comments.find((d) => d.id === input.id)!;
       posts.push(draft.text);
-      state.discussions[0]!.comments.push({
-        ...state.discussions[0]!.comments[0]!,
+      gitlab.discussions[0]!.comments.push({
+        ...gitlab.discussions[0]!.comments[0]!,
         id: 3,
         body: draft.text,
-        author: state.account!,
+        author: gitlab.account!,
       });
       draft.status = "sent";
       draft.noteId = 3;
     }
 
-    if (endpoint === "/gitlab/resolve") state.discussions[0]!.resolved = true;
+    if (endpoint === "/gitlab/resolve") gitlab.discussions[0]!.resolved = true;
 
-    if (endpoint === "/gitlab/discard")
-      state.drafts = state.drafts.filter((d) => d.id !== input.id);
+    if (endpoint === "/comments/discard")
+      state.comments = state.comments.filter((d) => d.id !== input.id);
 
     return Response.json(state);
   };
@@ -164,13 +169,13 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
               review: { ...session.review!, historicalRevision },
             }}
           >
-            <GitLabProvider>
+            <CommentsProvider>
               <AgentSelectionProvider revision="gitlab">
                 <ReviewDiffFilesProvider documentKey="gitlab">
                   <PierreDiffView inWorkspace />
                 </ReviewDiffFilesProvider>
               </AgentSelectionProvider>
-            </GitLabProvider>
+            </CommentsProvider>
           </ReviewSessionProvider>
         </TestCanvasQuery>,
       ),
@@ -228,8 +233,8 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
     "Follow-up draft",
   );
   await click("Resolve");
-  await vi.waitFor(() => expect(state.discussions[0]!.resolved).toBe(true));
-  expect(state.drafts.find((d) => d.status === "saved")?.text).toBe(
+  await vi.waitFor(() => expect(gitlab.discussions[0]!.resolved).toBe(true));
+  expect(state.comments.find((d) => d.status === "saved")?.text).toBe(
     "Follow-up draft",
   );
   expect(
@@ -259,7 +264,7 @@ it("comments on the full native text selection using the selection button", asyn
     deletions: 1,
   };
 
-  const state: GitLabState = {
+  const gitlab: GitLabState = {
     identity: {
       host: "gitlab.test",
       url: "https://gitlab.test/a/b/-/merge_requests/1",
@@ -275,8 +280,9 @@ it("comments on the full native text selection using the selection button", asyn
       headSha: "b".repeat(40),
     },
     discussions: [],
-    drafts: [],
   };
+
+  const state: CommentsState = { comments: [], gitlab };
 
   const session = testReviewSession(
     {},
@@ -289,16 +295,16 @@ it("comments on the full native text selection using the selection button", asyn
     },
   );
 
-  session.review = { ...session.review!, gitlab: state.identity };
   session.fetch = async (endpoint, init) => {
-    if (endpoint === "/gitlab/drafts") {
+    if (endpoint === "/comments/save") {
       const draft = {
         ...JSON.parse(String(init?.body)),
+        author: "user",
         status: "saved",
         version: 1,
       };
 
-      state.drafts = [draft];
+      state.comments = [draft];
 
       return Response.json(draft);
     }
@@ -315,13 +321,13 @@ it("comments on the full native text selection using the selection button", asyn
     root!.render(
       <TestCanvasQuery>
         <ReviewSessionProvider session={session}>
-          <GitLabProvider>
+          <CommentsProvider>
             <AgentSelectionProvider revision="selection">
               <ReviewDiffFilesProvider documentKey="selection">
                 <PierreDiffView inWorkspace />
               </ReviewDiffFilesProvider>
             </AgentSelectionProvider>
-          </GitLabProvider>
+          </CommentsProvider>
         </ReviewSessionProvider>
       </TestCanvasQuery>,
     ),
@@ -344,7 +350,7 @@ it("comments on the full native text selection using the selection button", asyn
   });
 
   const floating = container.querySelector<HTMLButtonElement>(
-    '[aria-label="GitLab comment"]',
+    '[aria-label="Comment"]',
   )!;
 
   const end = last.lastElementChild!.getBoundingClientRect();
@@ -364,8 +370,10 @@ it("comments on the full native text selection using the selection button", asyn
     container.querySelector<HTMLElement>('[role="textbox"]')!,
     "Selected range",
   );
-  await vi.waitFor(() => expect(state.drafts[0]?.text).toBe("Selected range"));
-  expect(state.drafts[0]!.target).toMatchObject({
+  await vi.waitFor(() =>
+    expect(state.comments[0]?.text).toBe("Selected range"),
+  );
+  expect(state.comments[0]!.target).toMatchObject({
     kind: "inline",
     position: {
       oldPath: "old.ts",

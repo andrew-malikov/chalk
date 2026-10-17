@@ -1,11 +1,10 @@
-import type { GitLabIdentity } from "@chalk/review-contracts";
-
 export interface ReviewSessionData {
   /** Absent for a review. The scratchpad hides review-only chrome. */
   kind?: "scratchpad";
-  gitlab?: GitLabIdentity;
   /** Absent for a document whose references all carry their own pins. */
-  pins?: { base: string; head: string };
+  pins?: { base: string; head: string; worktreeRevision?: string };
+  /** Changes whenever the review's comments do. */
+  commentsRevision?: number;
   /** `worktree` when the head side is the checkout's working files rather
    * than the pinned head commit. */
   targetKind?: "worktree" | "commits";

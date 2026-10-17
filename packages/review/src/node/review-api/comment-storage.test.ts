@@ -4,42 +4,21 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type { GitLabState } from "@chalk/review-contracts";
 import { expect, it } from "vitest";
 
-import { GitLabStorage } from "./gitlab-state.js";
-
-const initial: GitLabState = {
-  identity: {
-    host: "gitlab.test",
-    url: "https://gitlab.test/a/b/-/merge_requests/1",
-    projectId: 1,
-    projectPath: "a/b",
-    iid: 1,
-    cloneUrl: "https://gitlab.test/a/b.git",
-  },
-  account: null,
-  refs: {
-    baseSha: "a".repeat(40),
-    startSha: "a".repeat(40),
-    headSha: "b".repeat(40),
-  },
-  discussions: [],
-  drafts: [],
-};
+import { CommentStorage } from "./comment-storage.js";
 
 it("durably saves revisions and protects in-flight, uncertain and confirmed sends across hosts", () => {
-  const root = mkdtempSync(path.join(tmpdir(), "gitlab-state-"));
+  const root = mkdtempSync(path.join(tmpdir(), "comment-storage-"));
   const file = path.join(root, "state.sqlite");
   const db = new Database(file);
   db.exec(
     'CREATE TABLE reviews(id TEXT PRIMARY KEY); INSERT INTO reviews VALUES ("review")',
   );
-  let state = new GitLabStorage(db);
-  state.seed("review", initial);
+  let state = new CommentStorage(db);
   const id = randomUUID();
 
-  const draft = state.save("review", {
+  const comment = state.save("review", {
     id,
     text: "Keep this reply",
     target: { kind: "reply", discussionId: "thread" },
@@ -47,21 +26,21 @@ it("durably saves revisions and protects in-flight, uncertain and confirmed send
 
   db.close();
   const reopened = new Database(file);
-  state = new GitLabStorage(reopened);
+  state = new CommentStorage(reopened);
   const otherDb = new Database(file);
-  const other = new GitLabStorage(otherDb);
+  const other = new CommentStorage(otherDb);
 
   try {
-    expect(state.read("review").drafts[0]?.text).toBe("Keep this reply");
+    expect(state.read("review")[0]?.text).toBe("Keep this reply");
     expect(() =>
-      state.save("review", { ...draft, text: "stale", version: 0 }),
+      state.save("review", { ...comment, text: "stale", version: 0 }),
     ).toThrow(/changed/);
     const sending = state.beginPost("review", id);
     expect(sending?.status).toBe("sending");
     expect(other.beginPost("review", id)).toBeUndefined();
-    expect(() => other.save("review", { ...draft, text: "overwrite" })).toThrow(
-      /sending/,
-    );
+    expect(() =>
+      other.save("review", { ...comment, text: "overwrite" }),
+    ).toThrow(/sending/);
     state.finishPost("review", id, {
       status: "uncertain",
       error: "Verify on GitLab",
@@ -72,7 +51,7 @@ it("durably saves revisions and protects in-flight, uncertain and confirmed send
     state.finishPost("review", id, { status: "sent", noteId: 42 });
     expect(other.beginPost("review", id)).toBeUndefined();
     expect(() => state.discard("review", id)).toThrow(/sent/);
-    expect(state.read("review").drafts[0]?.noteId).toBe(42);
+    expect(state.read("review")[0]?.noteId).toBe(42);
   } finally {
     otherDb.close();
     reopened.close();

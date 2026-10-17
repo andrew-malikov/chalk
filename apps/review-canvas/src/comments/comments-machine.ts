@@ -1,9 +1,9 @@
 import {
-  type GitLabDraft,
-  type GitLabState,
-  type GitLabTarget,
-  gitLabDraftSchema,
-  gitLabStateSchema,
+  type CommentTarget,
+  type CommentsState,
+  type ReviewComment,
+  commentsStateSchema,
+  reviewCommentSchema,
 } from "@chalk/review-contracts";
 import {
   type ActorRefFrom,
@@ -14,14 +14,14 @@ import {
   setup,
 } from "xstate";
 
-export type GitLabAction =
+export type CommentAction =
   | "refresh"
   | "post"
   | "discard"
   | "resolve"
   | "recover";
 
-export type GitLabActionInput = {
+export type CommentActionInput = {
   id?: string;
   discussionId?: string;
   verified?: boolean;
@@ -30,9 +30,9 @@ export type GitLabActionInput = {
 };
 
 /** Local text of one draft; the single copy every editor of that draft shows. */
-export interface GitLabEditor {
+export interface CommentDraft {
   text: string;
-  target: GitLabTarget;
+  target: CommentTarget;
   version?: number;
   dirty: boolean;
   error?: string;
@@ -40,44 +40,48 @@ export interface GitLabEditor {
   generation: number;
 }
 
-export type GitLabRequest = (
+export type CommentsRequest = (
   endpoint: `/${string}`,
   body?: object,
 ) => Promise<unknown>;
 
-interface GitLabContext {
+interface CommentsContext {
   editable: boolean;
-  state: GitLabState | null;
-  editors: Record<string, GitLabEditor>;
-  pending: { action: GitLabAction; input: GitLabActionInput } | null;
+  state: CommentsState | null;
+  editors: Record<string, CommentDraft>;
+  pending: { action: CommentAction; input: CommentActionInput } | null;
   error: string | null;
   /** The draft or discussion to focus. */
   selected: string | null;
+  /** The server changed since the last load; reload once nothing is in flight. */
+  stale: boolean;
 }
 
-export type GitLabEvent =
+export type CommentsEvent =
   /** Loads on the first one; later ones only update `editable`. */
   | { type: "load"; editable: boolean }
   | { type: "edit"; id: string; text: string }
   /** `id` names the new draft unless the thread already has a reply draft. */
-  | { type: "compose"; id: string; target: GitLabTarget }
+  | { type: "compose"; id: string; target: CommentTarget }
   | { type: "select"; id: string }
-  | { type: "run"; action: GitLabAction; input?: GitLabActionInput };
+  | { type: "run"; action: CommentAction; input?: CommentActionInput }
+  /** Someone, such as an agent, changed the comments. */
+  | { type: "sync" };
 
 // oxlint-disable-next-line anti-slop/no-unknown-parameters -- Errors from fetch and schema parsing are checked as Error instances here.
 export const message = (error: unknown) =>
-  error instanceof Error ? error.message : "GitLab operation failed.";
+  error instanceof Error ? error.message : "Comment operation failed.";
 
-const isOpen = (draft: GitLabDraft) =>
+const isOpen = (draft: ReviewComment) =>
   ["saved", "failed"].includes(draft.status);
 
 export async function saveDraft(
-  request: GitLabRequest,
+  request: CommentsRequest,
   id: string,
-  editor: GitLabEditor,
+  editor: CommentDraft,
 ) {
-  return gitLabDraftSchema.parse(
-    await request("/gitlab/drafts", {
+  return reviewCommentSchema.parse(
+    await request("/comments/save", {
       id,
       text: editor.text,
       target: editor.target,
@@ -87,10 +91,10 @@ export async function saveDraft(
 }
 
 /** Server state replaces local text only where nothing is waiting to be saved. */
-function receive(context: GitLabContext, next: GitLabState) {
+function receive(context: CommentsContext, next: CommentsState) {
   const editors = { ...context.editors };
 
-  for (const draft of next.drafts) {
+  for (const draft of next.comments) {
     const editor = editors[draft.id];
 
     if (editor && !editor.dirty)
@@ -103,27 +107,36 @@ function receive(context: GitLabContext, next: GitLabState) {
       };
   }
 
+  // A saved comment discarded elsewhere leaves with its clean editor.
+  for (const [id, editor] of Object.entries(editors))
+    if (
+      !editor.dirty &&
+      editor.version !== undefined &&
+      !next.comments.some((c) => c.id === id)
+    )
+      delete editors[id];
+
   return { state: next, editors };
 }
 
-const firstDirty = (context: GitLabContext) =>
+const firstDirty = (context: CommentsContext) =>
   Object.entries(context.editors).find(([, editor]) => editor.dirty);
 
 /** One save or request at a time. Editor text survives a failed save; actions wait for every draft to be saved. */
-export function createGitLabMachine(request: GitLabRequest) {
+export function createCommentsMachine(request: CommentsRequest) {
   return setup({
     types: {
       // SAFETY: XState reads `context` only for type inference.
-      context: {} as GitLabContext,
+      context: {} as CommentsContext,
       // SAFETY: XState reads `events` only for type inference.
-      events: {} as GitLabEvent,
+      events: {} as CommentsEvent,
     },
     actors: {
       load: fromPromise(async () =>
-        gitLabStateSchema.parse(await request("/gitlab")),
+        commentsStateSchema.parse(await request("/comments")),
       ),
       save: fromPromise(
-        async ({ input: [id, editor] }: { input: [string, GitLabEditor] }) => {
+        async ({ input: [id, editor] }: { input: [string, CommentDraft] }) => {
           try {
             return {
               id,
@@ -136,13 +149,14 @@ export function createGitLabMachine(request: GitLabRequest) {
         },
       ),
       request: fromPromise(
-        async ({
-          input,
-        }: {
-          input: NonNullable<GitLabContext["pending"]>;
-        }) =>
-          gitLabStateSchema.parse(
-            await request(`/gitlab/${input.action}`, input.input),
+        async ({ input }: { input: NonNullable<CommentsContext["pending"]> }) =>
+          commentsStateSchema.parse(
+            await request(
+              input.action === "discard"
+                ? "/comments/discard"
+                : `/gitlab/${input.action}`,
+              input.input,
+            ),
           ),
       ),
     },
@@ -150,7 +164,7 @@ export function createGitLabMachine(request: GitLabRequest) {
       canStart: ({ context }) => context.editable && !context.pending,
       canEdit: ({ context, event }) => {
         assertEvent(event, "edit");
-        const draft = context.state?.drafts.find((d) => d.id === event.id);
+        const draft = context.state?.comments.find((d) => d.id === event.id);
 
         return (
           context.editable &&
@@ -162,7 +176,7 @@ export function createGitLabMachine(request: GitLabRequest) {
     actions: {
       edit: assign(({ context, event }) => {
         assertEvent(event, "edit");
-        const draft = context.state?.drafts.find((d) => d.id === event.id);
+        const draft = context.state?.comments.find((d) => d.id === event.id);
         const previous = context.editors[event.id];
 
         return {
@@ -184,7 +198,7 @@ export function createGitLabMachine(request: GitLabRequest) {
 
         const existing =
           target.kind === "reply"
-            ? context.state?.drafts.find(
+            ? context.state?.comments.find(
                 (d) =>
                   d.target.kind === "reply" &&
                   d.target.discussionId === target.discussionId &&
@@ -212,7 +226,7 @@ export function createGitLabMachine(request: GitLabRequest) {
       }),
     },
   }).createMachine({
-    id: "gitlab",
+    id: "comments",
     initial: "unloaded",
     context: {
       editable: false,
@@ -221,6 +235,7 @@ export function createGitLabMachine(request: GitLabRequest) {
       pending: null,
       error: null,
       selected: null,
+      stale: false,
     },
     on: {
       load: { actions: assign({ editable: ({ event }) => event.editable }) },
@@ -229,6 +244,7 @@ export function createGitLabMachine(request: GitLabRequest) {
       compose: { guard: "canStart", actions: "compose" },
       run: { guard: "canStart", actions: "run" },
       select: { actions: assign({ selected: ({ event }) => event.id }) },
+      sync: { actions: assign({ stale: true }) },
     },
     states: {
       unloaded: {
@@ -248,7 +264,8 @@ export function createGitLabMachine(request: GitLabRequest) {
           onDone: [
             // Show the stored state first, then refresh it from GitLab.
             {
-              guard: ({ context }) => context.editable,
+              guard: ({ context, event }) =>
+                context.editable && !!event.output.gitlab,
               target: "requesting",
               actions: assign(({ context, event }) =>
                 receive(context, event.output),
@@ -275,7 +292,7 @@ export function createGitLabMachine(request: GitLabRequest) {
         initial: "waiting",
         states: {
           waiting: {},
-          debouncing: { after: { 400: "#gitlab.flush" } },
+          debouncing: { after: { 400: "#comments.flush" } },
         },
         on: {
           edit: {
@@ -291,12 +308,14 @@ export function createGitLabMachine(request: GitLabRequest) {
             reenter: true,
           },
           run: { guard: "canStart", actions: "run", target: "flush" },
+          sync: { actions: assign({ stale: true }), target: "flush" },
         },
       },
       flush: {
         always: [
           { guard: ({ context }) => !!firstDirty(context), target: "saving" },
           { guard: ({ context }) => !!context.pending, target: "requesting" },
+          { guard: ({ context }) => context.stale, target: "syncing" },
           { target: "idle" },
         ],
       },
@@ -331,7 +350,7 @@ export function createGitLabMachine(request: GitLabRequest) {
                 const { id, generation, draft } = event.output as {
                   id: string;
                   generation: number;
-                  draft: GitLabDraft;
+                  draft: ReviewComment;
                 };
 
                 const latest = context.editors[id];
@@ -356,8 +375,8 @@ export function createGitLabMachine(request: GitLabRequest) {
                       { ...context, editors },
                       {
                         ...context.state,
-                        drafts: [
-                          ...context.state.drafts.filter((d) => d.id !== id),
+                        comments: [
+                          ...context.state.comments.filter((d) => d.id !== id),
                           draft,
                         ],
                       },
@@ -368,12 +387,31 @@ export function createGitLabMachine(request: GitLabRequest) {
           ],
         },
       },
+      syncing: {
+        invoke: {
+          src: "load",
+          onDone: {
+            target: "flush",
+            actions: assign(({ context, event }) => ({
+              ...receive(context, event.output),
+              stale: false,
+            })),
+          },
+          onError: {
+            target: "idle",
+            actions: assign(({ event }) => ({
+              error: message(event.error),
+              stale: false,
+            })),
+          },
+        },
+      },
       requesting: {
         invoke: {
           src: "request",
           input: ({ context }) => context.pending!,
           onDone: {
-            target: "idle",
+            target: "flush",
             actions: assign(({ context, event }) => {
               const editors = { ...context.editors };
               const { action, input } = context.pending!;
@@ -400,6 +438,6 @@ export function createGitLabMachine(request: GitLabRequest) {
   });
 }
 
-export type GitLabSnapshot = SnapshotFrom<
-  ActorRefFrom<ReturnType<typeof createGitLabMachine>>
+export type CommentsSnapshot = SnapshotFrom<
+  ActorRefFrom<ReturnType<typeof createCommentsMachine>>
 >;

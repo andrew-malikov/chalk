@@ -1,16 +1,13 @@
 import type { Database } from "bun:sqlite";
 
 import {
-  type GitLabDraft,
   type GitLabIdentity,
   type GitLabState,
-  gitLabSaveDraftSchema,
   gitLabStateSchema,
 } from "@chalk/review-contracts";
 import { ReviewInputError } from "@review/documents/document.js";
-import type { z } from "zod";
 
-/** Drafts live outside snapshot history. SQLite transactions coordinate separate hosts. */
+/** Provider state for a review's MR; comments live in CommentStorage. */
 export class GitLabStorage {
   constructor(private readonly db: Database) {
     db.exec(
@@ -59,113 +56,5 @@ export class GitLabStorage {
         return result;
       })
       .immediate();
-  }
-  save(id: string, input: z.infer<typeof gitLabSaveDraftSchema>): GitLabDraft {
-    return this.update(id, (state) => {
-      const existing = state.drafts.find((d) => d.id === input.id);
-
-      if (existing && !["saved", "failed"].includes(existing.status))
-        throw new ReviewInputError(
-          `Draft is ${existing.status}; verify the outcome before editing.`,
-          409,
-        );
-
-      if (
-        existing
-          ? input.version !== existing.version
-          : input.version !== undefined
-      )
-        throw new ReviewInputError(
-          "Draft changed. Reopen it before saving.",
-          409,
-        );
-
-      const draft: GitLabDraft = {
-        id: input.id,
-        text: input.text,
-        target: input.target,
-        version: (existing?.version ?? 0) + 1,
-        status: "saved",
-      };
-
-      if (existing) Object.assign(existing, draft, { error: undefined });
-      else state.drafts.push(draft);
-
-      return draft;
-    });
-  }
-  discard(id: string, draftId: string) {
-    this.update(id, (state) => {
-      const draft = this.draft(state, draftId);
-
-      if (!["saved", "failed"].includes(draft.status))
-        throw new ReviewInputError(
-          `Draft is ${draft.status}; it cannot be discarded.`,
-          409,
-        );
-      state.drafts = state.drafts.filter((d) => d.id !== draftId);
-    });
-  }
-  beginPost(id: string, draftId: string): GitLabDraft | undefined {
-    return this.update(id, (state) => {
-      const draft = this.draft(state, draftId);
-
-      if (!["saved", "failed"].includes(draft.status)) return undefined;
-
-      if (!draft.text.trim())
-        throw new ReviewInputError("Write a comment before posting.");
-
-      if (draft.target.kind === "inline" && draft.target.unmapped)
-        throw new ReviewInputError(
-          "Select the current code again before posting this unmapped draft.",
-          409,
-        );
-      draft.status = "sending";
-      draft.error = undefined;
-      draft.version++;
-
-      return structuredClone(draft);
-    });
-  }
-  finishPost(
-    id: string,
-    draftId: string,
-    result: Pick<GitLabDraft, "status" | "error" | "noteId">,
-  ) {
-    this.update(id, (state) => {
-      const draft = this.draft(state, draftId);
-
-      if (draft.status !== "sending")
-        throw new ReviewInputError("Post outcome changed.", 409);
-      Object.assign(draft, result);
-      draft.version++;
-    });
-  }
-  recover(id: string, draftId: string, posted: boolean, noteId?: number) {
-    this.update(id, (state) => {
-      const draft = this.draft(state, draftId);
-
-      if (draft.status !== "uncertain" && draft.status !== "sending")
-        throw new ReviewInputError(
-          "Only an unconfirmed post needs verification.",
-          409,
-        );
-
-      if (posted && !noteId)
-        throw new ReviewInputError("Supply the verified GitLab note ID.");
-      Object.assign(draft, {
-        status: posted ? "sent" : "saved",
-        noteId: posted ? noteId : undefined,
-        error: undefined,
-        version: draft.version + 1,
-      });
-    });
-  }
-  private draft(state: GitLabState, id: string) {
-    const draft = state.drafts.find((d) => d.id === id);
-
-    if (!draft) throw new ReviewInputError("Draft not found.", 404);
-
-    return draft;
   }
 }

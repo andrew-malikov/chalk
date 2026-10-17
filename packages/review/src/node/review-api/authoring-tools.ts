@@ -6,6 +6,7 @@ import {
   activityEndSchema,
   activityUpdateSchema,
 } from "./activity.js";
+import { agentCommentSchema } from "./comments.js";
 import { instructionsQuerySchema } from "./instructions.js";
 import { uploadSchema } from "./local-data.js";
 import { inspectQuerySchema, readQuerySchemas } from "./read-schemas.js";
@@ -35,7 +36,7 @@ export function authoringTools(scratchpadAvailable = false) {
 
   const descriptions = {
     create:
-      'Create a review of saved working files, immutable commits, or a GitLab MR. For GitLab, supply mergeRequestUrl alone (optional title). The host uses glab authentication and an independent managed Git clone, pins the MR diff refs, and reopens an existing review for the same host/project/MR. Incompatible with pins, target and scratchpad. GitLab discussion drafts and posting are manual in Desktop. Revisions are resolved on acceptance. A worktree target reviews the saved files in its checkout, uncommitted and untracked ones included, against base: the branch to compare against, by default the default branch of the repository. The diff starts at the merge base of base and HEAD, which follows rebases. Omitted commits base means source at head with no diff; supply the parent to review introduced changes. kind:"scratchpad" names the one scratchpad, which the host creates itself. The result carries review, the review as review_list shows it: its target with resolved commits, origin metadata, repositoryName and repositoryPath, so no follow-up read is needed before diffing. When Desktop is available the review opens there and the result reports opened, softwareMapEnabled and environmentIssues, as review_open does; set open:false to author in the background without taking over Desktop.',
+      'Create a review of saved working files, immutable commits, or a GitLab MR. For GitLab, supply mergeRequestUrl alone (optional title). The host uses glab authentication and an independent managed Git clone, pins the MR diff refs, and reopens an existing review for the same host/project/MR. Incompatible with pins, target and scratchpad. Posting comments to GitLab is manual in Desktop. Revisions are resolved on acceptance. A worktree target reviews the saved files in its checkout, uncommitted and untracked ones included, against base: the branch to compare against, by default the default branch of the repository. The diff starts at the merge base of base and HEAD, which follows rebases. Omitted commits base means source at head with no diff; supply the parent to review introduced changes. kind:"scratchpad" names the one scratchpad, which the host creates itself. The result carries review, the review as review_list shows it: its target with resolved commits, origin metadata, repositoryName and repositoryPath, so no follow-up read is needed before diffing. When Desktop is available the review opens there and the result reports opened, softwareMapEnabled and environmentIssues, as review_open does; set open:false to author in the background without taking over Desktop.',
     set_target:
       "Change the review target, preserving document and component IDs. Returns warnings for source references needing repair. Earlier versions keep their retained source.",
     edit: 'Edit a document component. Common content shapes: section `{"type":"section","title":"…","children":[]}`; prose `{"type":"markdown","markdown":"…"}`. Sections require `children` (not `blocks`); Markdown uses `markdown` (not `text`). To populate a section later, insert content with `edit.parentId` set to its returned ID. Flow diagram: `{"type":"flow_diagram","title":"Flow","nodes":[{"key":"a","label":"Start"},{"key":"b","label":"Finish"}],"edges":[{"from":"a","to":"b"}]}`. Use nodes and edges arrays (not children); at least one node is required, edges may be empty, and edge endpoints name unique node keys. Code peek: `{"type":"code_peek","source":{"file":"src/app.ts","start":{"side":"head","line":10},"end":{"side":"head","line":20}}}`. Call stack diff: `{"type":"call_stack_diff","title":"Request flow","base":[{"label":"Entry","source":{"file":"src/app.ts","start":{"side":"base","line":10},"end":{"side":"base","line":20}}}],"head":[{"label":"Entry","source":{"file":"src/app.ts","start":{"side":"head","line":10},"end":{"side":"head","line":20}}}]}`. Both base and head arrays are required; either may be empty. Each frame requires source; optional key/parentKey express nesting, and parentKey must name an earlier frame on that side. Sequence: `{"type":"sequence","title":"Request","actors":{"a":"Client","b":"Server"},"steps":[{"from":"a","to":"b","label":"Send","explanation":"Client sends a request."}]}`. actors is a key-to-label object; steps reference actor keys and each needs exactly one of source, explanation, or code. Database lens: `{"type":"database_lens","title":"Read items","actors":{"app":"App"},"stores":{"db":{"label":"DB","storage":"relational","collections":{"items":{"label":"Items","fields":{"id":{"label":"ID","dataType":"integer"}}}}}},"useCases":[{"label":"Load","operations":[{"kind":"read","actor":"app","store":"db","collection":"items","label":"Fetch items","source":{"file":"src/app.ts","start":{"side":"head","line":10},"end":{"side":"head","line":20}}}]}]}`. actors, stores, collections, and fields are keyed objects; useCases and operations are arrays. Include at least one store and use case, with at least one operation per use case; each operation requires source and must reference declared keys. Source paths are repository-relative; line numbers are 1-based and inclusive. Replace example paths and lines with verified source ranges. The host assigns short durable IDs; use returned IDs to edit components in place. The result identifies the edited component and, for an insert or replace, its first-level children, so they can be edited without a follow-up read. Accepted edits are saved immediately. Omitted placement appends; on the scratchpad it lands at the top, so insert a multi-block thought bottom-up or chain each block with afterId. null removes an optional field in a patch. While a reader may be watching, write small and often: one paragraph per edit, so the document draws itself as you go. Insert a new diagram whole, with all its nodes and edges or steps; the board traces it in one quick pass. Change a diagram already on the board one unit at a time: insert, update or remove a flow_node, flow_edge or step by ID (parentId names the diagram). Link each added flow_node to a node already drawn, so it arrives attached; a separate flow_edge is only for two nodes that already exist. Removing a flow_node removes its edges.',
@@ -151,6 +152,23 @@ export function authoringTools(scratchpadAvailable = false) {
       z.strictObject(review),
       "GET",
       "/:reviewId/lenses",
+    ),
+    tool(
+      "comment_add",
+      "Propose review comments, as a reviewer would leave them on a merge request. Use when asked to review a change: findings go here, not into the document. Each comment is Markdown text and either source (lines of the review's current target; side defaults to head, use base for removed lines) or, for a GitLab MR review, discussionId to reply to a discussion; with neither it is a general comment. Comments appear in Desktop's Comments panel and inline in the Diff view, marked as from an agent; the user edits, discards or posts them. Nothing is sent to GitLab without the user. All comments are added or none; fix the reported one and resend the batch. Needs no lease. Read review_comment_list first when the review may already have comments, so you do not repeat them.",
+      z.strictObject({
+        ...review,
+        comments: z.array(agentCommentSchema).min(1).max(100),
+      }),
+      "POST",
+      "/:reviewId/comments/add",
+    ),
+    tool(
+      "comment_list",
+      "Read the review's comments (author user or agent; inline ones carry their current position, or unmapped when their code changed) and, for a GitLab MR review, its GitLab discussions.",
+      z.strictObject(review),
+      "GET",
+      "/:reviewId/comments",
     ),
     tool(
       "history",

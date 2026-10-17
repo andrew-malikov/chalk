@@ -5,11 +5,12 @@ import { cn } from "@canvas/lib/utils";
 import { ReviewPanelFrame } from "@canvas/review/review-components";
 import { loadingStyles } from "@canvas/styles/loading";
 import { Button, IconButton } from "@canvas/ui/button";
+import { Chip } from "@canvas/ui/chip";
 import { RefreshIcon } from "@canvas/ui/icons";
 import type {
+  CommentTarget,
   GitLabDiscussion,
-  GitLabDraft,
-  GitLabTarget,
+  ReviewComment,
 } from "@chalk/review-contracts";
 import {
   CheckIcon,
@@ -21,143 +22,153 @@ import {
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 import { CommentEditor } from "./comment-editor";
-import { useGitLab } from "./gitlab-context";
+import { useComments } from "./comments-context";
 
-export function GitLabDiscussionPanel() {
-  const gitlab = useGitLab();
+export function CommentsPanel() {
+  const comments = useComments();
 
-  if (!gitlab) return null;
-  const refreshing = gitlab.pending?.action === "refresh";
+  if (!comments) return null;
+  const refreshing = comments.pending?.action === "refresh";
 
   return (
     <ReviewPanelFrame
-      title="Discussions"
-      onClose={gitlab.toggle}
-      closeLabel="Close GitLab discussions"
+      title="Comments"
+      onClose={comments.toggle}
+      closeLabel="Close comments"
       headerActions={
-        <IconButton
-          size="large"
-          aria-label="Refresh GitLab discussions"
-          title="Refresh"
-          aria-busy={refreshing || undefined}
-          className={
-            refreshing
-              ? "tw:[&_svg]:animate-spin tw:motion-reduce:[&_svg]:animate-none"
-              : undefined
-          }
-          disabled={!gitlab.editable || gitlab.busy}
-          onClick={() => gitlab.run("refresh")}
-        >
-          <RefreshIcon />
-        </IconButton>
+        comments.state?.gitlab && (
+          <IconButton
+            size="large"
+            aria-label="Refresh"
+            title="Refresh"
+            aria-busy={refreshing || undefined}
+            className={
+              refreshing
+                ? "tw:[&_svg]:animate-spin tw:motion-reduce:[&_svg]:animate-none"
+                : undefined
+            }
+            disabled={!comments.editable || comments.busy}
+            onClick={() => comments.run("refresh")}
+          >
+            <RefreshIcon />
+          </IconButton>
+        )
       }
     >
-      <GitLabDiscussionContent />
+      <CommentsContent />
     </ReviewPanelFrame>
   );
 }
 
-export function useGitLabDrafts(): GitLabDraft[] {
-  const gitlab = useGitLab();
+export function useCommentDrafts(): ReviewComment[] {
+  const comments = useComments();
 
-  if (!gitlab) return [];
-  const { state, editors } = gitlab;
+  if (!comments) return [];
+  const { state, editors } = comments;
 
   return [
-    ...(state?.drafts ?? []),
+    ...(state?.comments ?? []),
     ...Object.entries(editors)
-      .filter(([id]) => !state?.drafts.some((d) => d.id === id))
-      .map(([id, editor]): GitLabDraft => ({
+      .filter(([id]) => !state?.comments.some((d) => d.id === id))
+      .map(([id, editor]): ReviewComment => ({
         id,
         text: editor.text,
         target: editor.target,
+        author: "user",
         status: "saved",
         version: 0,
       })),
   ];
 }
 
-export function GitLabDiscussionContent() {
-  const gitlab = useGitLab();
-  const drafts = useGitLabDrafts();
+export function CommentsContent() {
+  const comments = useComments();
+  const drafts = useCommentDrafts();
 
-  if (!gitlab) return null;
-  const { state } = gitlab;
+  if (!comments) return null;
+  const gitlab = comments.state?.gitlab;
 
-  const open = state?.discussions.filter((d) => !d.resolved) ?? [];
-  const resolved = state?.discussions.filter((d) => d.resolved) ?? [];
+  const open = gitlab?.discussions.filter((d) => !d.resolved) ?? [];
+  const resolved = gitlab?.discussions.filter((d) => d.resolved) ?? [];
   const unsent = drafts.filter((d) => d.status !== "sent");
 
   return (
     <div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-4 tw:p-4 tw:font-[family-name:var(--chrome-font)] tw:text-[13px] tw:text-[var(--ink)]">
-      {state ? (
+      {!comments.state && (
+        <p role="status" className={cn(undefined, loadingStyles.text)}>
+          Loading comments…
+        </p>
+      )}
+      {gitlab && (
         <div className="tw:flex tw:flex-col tw:gap-1.5 tw:text-[12px] tw:wrap-anywhere tw:text-[var(--ink-faint)]">
-          <a href={state.identity.url} target="_blank" rel="noreferrer">
-            {state.identity.projectPath} !{state.identity.iid}
+          <a href={gitlab.identity.url} target="_blank" rel="noreferrer">
+            {gitlab.identity.projectPath} !{gitlab.identity.iid}
           </a>
           <span>
-            {state.identity.host} ·{" "}
-            {state.account
-              ? `Posting as @${state.account.username}`
+            {gitlab.identity.host} ·{" "}
+            {gitlab.account
+              ? `Posting as @${gitlab.account.username}`
               : "Posting account unavailable"}
           </span>
         </div>
-      ) : (
-        <p role="status" className={cn(undefined, loadingStyles.text)}>
-          Loading GitLab discussions…
-        </p>
       )}
-      {!gitlab.editable && (
-        <p>Open the current local review to draft or post comments.</p>
-      )}
-      {gitlab.error && <p role="alert">{gitlab.error}</p>}
-      {state?.connectionError && <p role="alert">{state.connectionError}</p>}
-      {state?.sourceError && <p role="alert">{state.sourceError}</p>}
+      {!comments.editable && <p>Open the current review to write comments.</p>}
+      {comments.error && <p role="alert">{comments.error}</p>}
+      {gitlab?.connectionError && <p role="alert">{gitlab.connectionError}</p>}
+      {gitlab?.sourceError && <p role="alert">{gitlab.sourceError}</p>}
       <div className={actions}>
         <Button
-          disabled={!gitlab.editable || gitlab.busy || !state}
-          onClick={() => gitlab.compose({ kind: "general" })}
+          disabled={!comments.editable || comments.busy || !comments.state}
+          onClick={() => comments.compose({ kind: "general" })}
         >
           New comment
         </Button>
-        <Button
-          loading={
-            gitlab.pending?.action === "post" && !gitlab.pending.input.id
-          }
-          disabled={
-            !gitlab.editable ||
-            gitlab.busy ||
-            !unsent.some((d) => ["saved", "failed"].includes(d.status))
-          }
-          onClick={() => gitlab.run("post")}
-        >
-          Post all
-        </Button>
+        {gitlab && (
+          <Button
+            loading={
+              comments.pending?.action === "post" && !comments.pending.input.id
+            }
+            disabled={
+              !comments.editable ||
+              comments.busy ||
+              !unsent.some((d) => ["saved", "failed"].includes(d.status))
+            }
+            onClick={() => comments.run("post")}
+          >
+            Post all
+          </Button>
+        )}
       </div>
-      <h3 className={heading}>Open discussions · {open.length}</h3>
-      {open.length === 0 && state && <p>No open discussions.</p>}
-      {open.map((d) => (
-        <Discussion
-          key={d.id}
-          discussion={d}
-          collapsible={!hasUnsentReply(d, drafts)}
-        />
-      ))}
-      <Collapsible
-        summary={`Resolved · ${resolved.length}`}
-        open={resolved.some((d) => d.id === gitlab.selected)}
-      >
-        {resolved.map((d) => (
-          <Discussion
-            key={d.id}
-            discussion={d}
-            collapsible={!hasUnsentReply(d, drafts)}
-          />
-        ))}
-      </Collapsible>
+      {gitlab && (
+        <>
+          <h3 className={heading}>Open discussions · {open.length}</h3>
+          {open.length === 0 && <p>No open discussions.</p>}
+          {open.map((d) => (
+            <Discussion
+              key={d.id}
+              discussion={d}
+              collapsible={!hasUnsentReply(d, drafts)}
+            />
+          ))}
+          <Collapsible
+            summary={`Resolved · ${resolved.length}`}
+            open={resolved.some((d) => d.id === comments.selected)}
+          >
+            {resolved.map((d) => (
+              <Discussion
+                key={d.id}
+                discussion={d}
+                collapsible={!hasUnsentReply(d, drafts)}
+              />
+            ))}
+          </Collapsible>
+        </>
+      )}
       {unsent.length > 0 && (
         <>
-          <h3 className={heading}>Local drafts · {unsent.length}</h3>
+          <h3 className={heading}>
+            {gitlab ? "Local drafts" : "Comments"} · {unsent.length}
+          </h3>
           {unsent.map((d) => (
             <DraftEditor key={d.id} draft={d} />
           ))}
@@ -167,7 +178,7 @@ export function GitLabDiscussionContent() {
   );
 }
 
-function targetLabel(target: GitLabTarget) {
+function targetLabel(target: CommentTarget) {
   if (target.kind === "general") return "General comment";
 
   if (target.kind === "reply") return "Reply to discussion";
@@ -176,12 +187,12 @@ function targetLabel(target: GitLabTarget) {
   return `${p.side === "head" ? p.newPath : p.oldPath}:${p.from}${p.to !== p.from ? `–${p.to}` : ""} · ${p.side}`;
 }
 
-export type GitLabInlineAnnotation =
+export type CommentAnnotation =
   | { kind: "discussion"; id: string }
   | { kind: "draft"; id: string }
   | { kind: "collapsed"; ids: string[] };
 
-function hasUnsentReply(discussion: GitLabDiscussion, drafts: GitLabDraft[]) {
+function hasUnsentReply(discussion: GitLabDiscussion, drafts: ReviewComment[]) {
   return drafts.some(
     (d) =>
       d.status !== "sent" &&
@@ -194,7 +205,7 @@ function hasUnsentReply(discussion: GitLabDiscussion, drafts: GitLabDraft[]) {
 export function discussionCollapsed(
   discussion: GitLabDiscussion,
   collapsed: Record<string, boolean>,
-  drafts: GitLabDraft[],
+  drafts: ReviewComment[],
 ) {
   return (
     !hasUnsentReply(discussion, drafts) &&
@@ -202,22 +213,22 @@ export function discussionCollapsed(
   );
 }
 
-export function GitLabInlineContent({
+export function InlineComments({
   annotation,
 }: {
-  annotation: GitLabInlineAnnotation;
+  annotation: CommentAnnotation;
 }) {
-  const gitlab = useGitLab();
-  const drafts = useGitLabDrafts();
+  const comments = useComments();
+  const drafts = useCommentDrafts();
 
-  if (!gitlab) return null;
+  if (!comments) return null;
 
   if (annotation.kind === "collapsed")
     return <DiscussionChips ids={annotation.ids} />;
 
   const discussion =
     annotation.kind === "discussion"
-      ? gitlab.state?.discussions.find((d) => d.id === annotation.id)
+      ? comments.state?.gitlab?.discussions.find((d) => d.id === annotation.id)
       : undefined;
 
   const local = drafts.filter(
@@ -233,9 +244,9 @@ export function GitLabInlineContent({
   return (
     <section
       className="tw:m-0 tw:box-border tw:flex tw:w-full tw:min-w-0 tw:flex-col tw:gap-2 tw:whitespace-normal tw:bg-[var(--surface)] tw:p-3 tw:font-[family-name:var(--chrome-font)] tw:text-[13px] tw:text-[var(--ink)]"
-      aria-label={`GitLab ${annotation.kind} ${annotation.id}`}
+      aria-label={`${annotation.kind === "draft" ? "Comment" : "GitLab discussion"} ${annotation.id}`}
     >
-      {gitlab.error && <p role="alert">{gitlab.error}</p>}
+      {comments.error && <p role="alert">{comments.error}</p>}
       <div className="tw:flex tw:flex-col">
         {discussion && (
           <Discussion
@@ -259,10 +270,10 @@ export function GitLabInlineContent({
 
 /** Collapsed threads take no height; their chips overlay the right end of the commented line. */
 function DiscussionChips({ ids }: { ids: string[] }) {
-  const gitlab = useGitLab()!;
+  const comments = useComments()!;
 
   const discussions = ids.flatMap(
-    (id) => gitlab.state?.discussions.find((d) => d.id === id) ?? [],
+    (id) => comments.state?.gitlab?.discussions.find((d) => d.id === id) ?? [],
   );
 
   // A lone thread has room for its author; a stack shows state colors only.
@@ -286,7 +297,7 @@ function DiscussionChips({ ids }: { ids: string[] }) {
               aria-expanded={false}
               aria-label={`Expand ${discussion.resolved ? "resolved " : ""}discussion by @${author}`}
               title={`@${author}: ${discussion.comments[0]?.body.slice(0, 200)}`}
-              onClick={() => gitlab.collapse(discussion.id, false)}
+              onClick={() => comments.collapse(discussion.id, false)}
               className={cn(
                 "tw:flex tw:h-[18px] tw:cursor-pointer tw:items-center tw:justify-center tw:gap-1 tw:rounded-full tw:border tw:bg-[var(--surface-raised)] tw:whitespace-nowrap tw:hover:z-[1] tw:hover:text-[var(--ink)]",
                 single ? "tw:px-2" : "tw:w-[18px]",
@@ -342,18 +353,18 @@ function Discussion({
   /** Threads with local drafts stay open so the draft is never hidden. */
   collapsible?: boolean;
 }) {
-  const gitlab = useGitLab()!;
+  const comments = useComments()!;
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!inline && gitlab.selected === discussion.id)
+    if (!inline && comments.selected === discussion.id)
       ref.current?.scrollIntoView?.({ block: "nearest" });
-  }, [gitlab.selected, discussion.id, inline]);
+  }, [comments.selected, discussion.id, inline]);
 
   // Inline threads render only when expanded; collapsed ones become line chips.
   const collapsed =
     !inline &&
     collapsible &&
-    (gitlab.collapsed[discussion.id] ?? discussion.resolved);
+    (comments.collapsed[discussion.id] ?? discussion.resolved);
 
   const first = discussion.comments[0];
 
@@ -364,14 +375,14 @@ function Discussion({
         card,
         inlineCard,
         inline && "tw:relative tw:z-[1]",
-        gitlab.selected === discussion.id && "tw:border-[var(--ink-faint)]",
+        comments.selected === discussion.id && "tw:border-[var(--ink-faint)]",
       )}
     >
       {inline ? null : discussion.location ? (
         <Button
           variant="ghost"
           className="tw:h-auto tw:self-start tw:bg-transparent tw:px-0 tw:has-[>svg]:px-0 tw:text-[11px] tw:text-[color:var(--ink-faint)] tw:hover:text-[color:var(--ink)]"
-          onClick={() => gitlab.select(discussion)}
+          onClick={() => comments.select(discussion)}
         >
           {discussion.location.file}:{discussion.location.from}
           {discussion.location.to !== discussion.location.from
@@ -391,7 +402,7 @@ function Discussion({
           {/* Blocks flow inline so the rendered body still truncates to one line. */}
           <div className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-[var(--ink-muted)] tw:[&_*]:inline tw:[&_*]:m-0 tw:[&_img]:hidden">
             <strong className="tw:text-[var(--ink)]">
-              {authorName(first.author, gitlab.state?.account?.id)}
+              {authorName(first.author, comments.state?.gitlab?.account?.id)}
             </strong>{" "}
             <MarkdownContent source={first.body} />
           </div>
@@ -402,7 +413,7 @@ function Discussion({
             variant="ghost"
             className={cn(textAction, "tw:h-auto")}
             aria-expanded={false}
-            onClick={() => gitlab.collapse(discussion.id, false)}
+            onClick={() => comments.collapse(discussion.id, false)}
           >
             Expand
           </Button>
@@ -428,7 +439,10 @@ function Discussion({
               <div className="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:gap-1">
                 <div className="tw:flex tw:flex-wrap tw:items-baseline tw:gap-2">
                   <strong title={`@${note.author.username}`}>
-                    {authorName(note.author, gitlab.state?.account?.id)}
+                    {authorName(
+                      note.author,
+                      comments.state?.gitlab?.account?.id,
+                    )}
                   </strong>
                   {note.author.bot && <span className={meta}>bot</span>}
                   <time
@@ -443,7 +457,7 @@ function Discussion({
                       aria-label="Collapse discussion"
                       title="Collapse discussion"
                       className="tw:ms-auto"
-                      onClick={() => gitlab.collapse(discussion.id, true)}
+                      onClick={() => comments.collapse(discussion.id, true)}
                     >
                       <ChevronsDownUpIcon aria-hidden="true" />
                     </IconButton>
@@ -457,9 +471,9 @@ function Discussion({
             <Button
               variant="ghost"
               className={textAction}
-              disabled={!gitlab.editable || gitlab.busy}
+              disabled={!comments.editable || comments.busy}
               onClick={() =>
-                gitlab.compose(
+                comments.compose(
                   { kind: "reply", discussionId: discussion.id },
                   inline ? "inline" : "panel",
                 )
@@ -473,12 +487,12 @@ function Discussion({
                 variant="ghost"
                 className={textAction}
                 loading={
-                  gitlab.pending?.action === "resolve" &&
-                  gitlab.pending.input.discussionId === discussion.id
+                  comments.pending?.action === "resolve" &&
+                  comments.pending.input.discussionId === discussion.id
                 }
-                disabled={!gitlab.editable || gitlab.busy}
+                disabled={!comments.editable || comments.busy}
                 onClick={() =>
-                  gitlab.run("resolve", { discussionId: discussion.id })
+                  comments.run("resolve", { discussionId: discussion.id })
                 }
               >
                 Resolve
@@ -487,7 +501,7 @@ function Discussion({
             {discussion.resolved && <span className={meta}>Resolved</span>}
             <a
               className="tw:ms-auto tw:text-[11px] tw:text-[var(--ink-faint)] tw:no-underline tw:hover:underline"
-              href={gitlab.state?.identity.url}
+              href={comments.state?.gitlab?.identity.url}
               target="_blank"
               rel="noreferrer"
             >
@@ -512,27 +526,31 @@ function DraftEditor({
   inline = false,
   attached = false,
 }: {
-  draft: GitLabDraft;
+  draft: ReviewComment;
   inline?: boolean;
   attached?: boolean;
 }) {
-  const gitlab = useGitLab()!;
-  const editor = gitlab.editors[draft.id];
+  const comments = useComments()!;
+  const editor = comments.editors[draft.id];
   const labelId = useId();
   const [verified, setVerified] = useState(false);
   const [noteId, setNoteId] = useState("");
   const locked = !["saved", "failed"].includes(draft.status);
   const target = editor?.target ?? draft.target;
+  const gitlab = comments.state?.gitlab;
 
   const canPost =
-    gitlab.editable &&
-    !gitlab.busy &&
+    !!gitlab &&
+    comments.editable &&
+    !comments.busy &&
     !!(editor?.text ?? draft.text).trim() &&
     !(draft.target.kind === "inline" && draft.target.unmapped);
 
   const thread =
     target.kind === "reply"
-      ? gitlab.state?.discussions.find((d) => d.id === target.discussionId)
+      ? comments.state?.gitlab?.discussions.find(
+          (d) => d.id === target.discussionId,
+        )
       : undefined;
 
   const saveStatus = (
@@ -567,18 +585,19 @@ function DraftEditor({
     >
       <div className="tw:flex tw:flex-wrap tw:items-baseline tw:justify-between tw:gap-2 tw:wrap-anywhere">
         <span id={labelId}>{targetLabel(editor?.target ?? draft.target)}</span>
-        {inline && (
+        {draft.author === "agent" && <Chip className="tw:me-auto">Agent</Chip>}
+        {inline && gitlab && (
           <span className={meta}>
-            {gitlab.state?.account
-              ? `Posting as @${gitlab.state.account.username}`
+            {gitlab.account
+              ? `Posting as @${gitlab.account.username}`
               : "Posting account unavailable"}{" "}
-            · {gitlab.state?.identity.host}
+            · {gitlab.identity.host}
           </span>
         )}
       </div>
 
       {thread && !inline && (
-        <Button variant="ghost" onClick={() => gitlab.select(thread)}>
+        <Button variant="ghost" onClick={() => comments.select(thread)}>
           {thread.location
             ? `${thread.location.file}:${thread.location.from}`
             : `@${thread.comments[0]?.author.username} · ${thread.comments[0]?.body.slice(0, 80)}`}
@@ -592,12 +611,12 @@ function DraftEditor({
       )}
       <CommentEditor
         value={editor?.text ?? draft.text}
-        onChange={(text) => gitlab.edit(draft.id, text)}
+        onChange={(text) => comments.edit(draft.id, text)}
         onSubmit={() => {
-          if (canPost) gitlab.run("post", { id: draft.id });
+          if (canPost) comments.run("post", { id: draft.id });
         }}
-        disabled={!gitlab.editable || gitlab.busy || locked}
-        focused={gitlab.selected === draft.id}
+        disabled={!comments.editable || comments.busy || locked}
+        focused={comments.selected === draft.id}
         placeholder="Write your comment…"
         labelledBy={labelId}
         inline={inline}
@@ -607,31 +626,33 @@ function DraftEditor({
       )}
       {!locked ? (
         <div className={cn(actions, "tw:items-center")}>
+          {gitlab && (
+            <Button
+              variant="primary"
+              loading={
+                comments.pending?.action === "post" &&
+                comments.pending.input.id === draft.id
+              }
+              disabled={!canPost}
+              onClick={() => comments.run("post", { id: draft.id })}
+            >
+              Post
+            </Button>
+          )}
           <Button
-            variant="primary"
             loading={
-              gitlab.pending?.action === "post" &&
-              gitlab.pending.input.id === draft.id
+              comments.pending?.action === "discard" &&
+              comments.pending.input.id === draft.id
             }
-            disabled={!canPost}
-            onClick={() => gitlab.run("post", { id: draft.id })}
-          >
-            Post
-          </Button>
-          <Button
-            loading={
-              gitlab.pending?.action === "discard" &&
-              gitlab.pending.input.id === draft.id
-            }
-            disabled={!gitlab.editable || gitlab.busy}
-            onClick={() => gitlab.run("discard", { id: draft.id })}
+            disabled={!comments.editable || comments.busy}
+            onClick={() => comments.run("discard", { id: draft.id })}
           >
             Discard
           </Button>
           {editor?.error && (
             <Button
-              disabled={gitlab.busy}
-              onClick={() => gitlab.edit(draft.id, editor.text)}
+              disabled={comments.busy}
+              onClick={() => comments.edit(draft.id, editor.text)}
             >
               Retry save
             </Button>
@@ -645,20 +666,20 @@ function DraftEditor({
             <Checkbox
               aria-label="I checked this MR on GitLab and verified the outcome"
               checked={verified}
-              disabled={!gitlab.editable || gitlab.busy}
+              disabled={!comments.editable || comments.busy}
               onCheckedChange={(checked) => setVerified(checked === true)}
             />{" "}
             I checked this MR on GitLab and verified the outcome
           </label>
           <Button
             loading={
-              gitlab.pending?.action === "recover" &&
-              gitlab.pending.input.id === draft.id &&
-              gitlab.pending.input.posted === false
+              comments.pending?.action === "recover" &&
+              comments.pending.input.id === draft.id &&
+              comments.pending.input.posted === false
             }
-            disabled={!verified || !gitlab.editable || gitlab.busy}
+            disabled={!verified || !comments.editable || comments.busy}
             onClick={() =>
-              gitlab.run("recover", {
+              comments.run("recover", {
                 id: draft.id,
                 verified: true,
                 posted: false,
@@ -678,19 +699,19 @@ function DraftEditor({
           </label>
           <Button
             loading={
-              gitlab.pending?.action === "recover" &&
-              gitlab.pending.input.id === draft.id &&
-              gitlab.pending.input.posted === true
+              comments.pending?.action === "recover" &&
+              comments.pending.input.id === draft.id &&
+              comments.pending.input.posted === true
             }
             disabled={
               !verified ||
               !Number.isSafeInteger(Number(noteId)) ||
               Number(noteId) < 1 ||
-              !gitlab.editable ||
-              gitlab.busy
+              !comments.editable ||
+              comments.busy
             }
             onClick={() =>
-              gitlab.run("recover", {
+              comments.run("recover", {
                 id: draft.id,
                 verified: true,
                 posted: true,

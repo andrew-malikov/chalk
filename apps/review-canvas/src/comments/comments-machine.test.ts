@@ -1,48 +1,53 @@
-import type { GitLabState } from "@chalk/review-contracts";
+import type { CommentsState } from "@chalk/review-contracts";
 import { expect, it, vi } from "vitest";
 import { createActor, waitFor } from "xstate";
 
-import { type GitLabRequest, createGitLabMachine } from "./gitlab-machine";
+import {
+  type CommentsRequest,
+  createCommentsMachine,
+} from "./comments-machine";
 
 const id = crypto.randomUUID();
 
-const state: GitLabState = {
-  identity: {
-    host: "gitlab.test",
-    url: "https://gitlab.test/a/b/-/merge_requests/1",
-    projectId: 1,
-    projectPath: "a/b",
-    iid: 1,
-    cloneUrl: "https://gitlab.test/a/b.git",
+const state: CommentsState = {
+  comments: [],
+  gitlab: {
+    identity: {
+      host: "gitlab.test",
+      url: "https://gitlab.test/a/b/-/merge_requests/1",
+      projectId: 1,
+      projectPath: "a/b",
+      iid: 1,
+      cloneUrl: "https://gitlab.test/a/b.git",
+    },
+    account: { id: 7, username: "andrew", name: "Andrew" },
+    refs: {
+      baseSha: "a".repeat(40),
+      startSha: "a".repeat(40),
+      headSha: "b".repeat(40),
+    },
+    discussions: [],
   },
-  account: { id: 7, username: "andrew", name: "Andrew" },
-  refs: {
-    baseSha: "a".repeat(40),
-    startSha: "a".repeat(40),
-    headSha: "b".repeat(40),
-  },
-  discussions: [],
-  drafts: [],
 };
 
 /** Saves wait until the test releases them, so edits can land mid-save. */
-function gitlab() {
+function comments() {
   const saves: { text: string; release(): void }[] = [];
   const posted: string[] = [];
   let failSave = false;
   let version = 0;
 
-  const request: GitLabRequest = async (endpoint, body) => {
+  const request: CommentsRequest = async (endpoint, body) => {
     const input = body as { id: string; text: string; target: unknown };
 
-    if (endpoint === "/gitlab/drafts") {
+    if (endpoint === "/comments/save") {
       const { promise, resolve } = Promise.withResolvers<void>();
       saves.push({ text: input.text, release: resolve });
       await promise;
 
       if (failSave) throw new Error("Disk unavailable");
 
-      return { ...input, status: "saved", version: ++version };
+      return { ...input, author: "user", status: "saved", version: ++version };
     }
 
     if (endpoint === "/gitlab/post") posted.push(saves.at(-1)!.text);
@@ -50,7 +55,7 @@ function gitlab() {
     return state;
   };
 
-  const actor = createActor(createGitLabMachine(request)).start();
+  const actor = createActor(createCommentsMachine(request)).start();
   actor.send({ type: "load", editable: true });
 
   return {
@@ -64,7 +69,7 @@ function gitlab() {
 
 it("saves an edit typed during a save without marking it saved early", async () => {
   vi.useFakeTimers();
-  const { actor, saves, settle } = gitlab();
+  const { actor, saves, settle } = comments();
   await settle();
 
   actor.send({ type: "compose", id, target: { kind: "general" } });
@@ -90,7 +95,7 @@ it("saves an edit typed during a save without marking it saved early", async () 
 });
 
 it("posts only after the latest text is saved", async () => {
-  const { actor, saves, posted, settle } = gitlab();
+  const { actor, saves, posted, settle } = comments();
   await settle();
 
   actor.send({ type: "compose", id, target: { kind: "general" } });
@@ -107,7 +112,7 @@ it("posts only after the latest text is saved", async () => {
 });
 
 it("keeps the text and reports the failure when a save before posting fails", async () => {
-  const { actor, saves, posted, failSaves, settle } = gitlab();
+  const { actor, saves, posted, failSaves, settle } = comments();
   await settle();
 
   actor.send({ type: "compose", id, target: { kind: "general" } });

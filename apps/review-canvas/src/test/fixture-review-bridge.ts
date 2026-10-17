@@ -1,4 +1,5 @@
 import type {
+  CommentsState,
   JsonValue,
   ReviewCanvasBridge,
   ReviewCommitSummary,
@@ -62,6 +63,9 @@ export function fixtureReviewBridge(api: FixtureReviewApi): ReviewCanvasBridge {
       return Response.json(searchParams.has("file") ? "" : []);
 
     if (route === `/${id}/commits`) return Response.json(api.commits ?? []);
+
+    if (route === `/${id}/comments`)
+      return Response.json({ comments: [] } satisfies CommentsState);
 
     const map = /^\/[^/]+\/maps\/([^/]+)$/.exec(route);
 

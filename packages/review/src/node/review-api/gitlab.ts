@@ -388,25 +388,34 @@ function remotePosition(position: GitLabPosition) {
 }
 
 /** Exact surrounding context must have one match; repeated/rewritten code stays unmapped. */
-export function remapLineRange(
-  before: string,
-  after: string,
+/** The selected lines with up to three lines around them, and the file's digest, to find them again after the source changes. */
+export function lineContext(text: string, from: number, to: number) {
+  const lines = text.split("\n");
+
+  if (from < 1 || to < from || to > lines.length) return null;
+  const start = Math.max(0, from - 4);
+
+  return {
+    start,
+    lines: lines.slice(start, Math.min(lines.length, to + 3)),
+    digest: createHash("sha256").update(text).digest("hex"),
+  };
+}
+
+/** Where the context is now: in place in an unchanged file, else its only occurrence; null when it changed or repeats. */
+export function findLineRange(
+  context: { start: number; lines: string[]; digest: string },
+  text: string,
   from: number,
   to: number,
 ): { from: number; to: number } | null {
-  const old = before.split("\n");
-  const next = after.split("\n");
-
-  if (from < 1 || to < from || to > old.length) return null;
-
-  if (before === after) return { from, to };
-  const start = Math.max(0, from - 4);
-  const end = Math.min(old.length, to + 3);
-  const context = old.slice(start, end);
+  if (createHash("sha256").update(text).digest("hex") === context.digest)
+    return { from, to };
+  const next = text.split("\n");
   let found: number | undefined;
 
-  for (let index = 0; index <= next.length - context.length; index++) {
-    if (!context.every((value, offset) => next[index + offset] === value))
+  for (let index = 0; index <= next.length - context.lines.length; index++) {
+    if (!context.lines.every((value, offset) => next[index + offset] === value))
       continue;
 
     if (found !== undefined) return null;
@@ -415,5 +424,16 @@ export function remapLineRange(
 
   return found === undefined
     ? null
-    : { from: found + from - start, to: found + to - start };
+    : { from: found + from - context.start, to: found + to - context.start };
+}
+
+export function remapLineRange(
+  before: string,
+  after: string,
+  from: number,
+  to: number,
+): { from: number; to: number } | null {
+  const context = lineContext(before, from, to);
+
+  return context && findLineRange(context, after, from, to);
 }

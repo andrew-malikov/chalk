@@ -693,7 +693,7 @@ const styles = {
   sectionExpanded: "tw:bg-[color:var(--transparent)]",
   row: "tw:flex tw:items-center tw:pr-[8px] tw:gap-[7px]",
   toggle:
-    "tw:flex tw:flex-[1] tw:min-w-0 tw:items-center tw:gap-[8px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:text-left tw:p-[3px_4px_3px_8px] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:text-[color:inherit] tw:cursor-pointer tw:bg-[color:transparent] tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[-2px]",
+    "tw:flex tw:flex-[1] tw:min-w-0 tw:items-center tw:gap-[8px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:text-left tw:p-[3px_4px_3px_8px] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:text-[color:inherit] tw:cursor-pointer tw:bg-[color:transparent] tw:hover:bg-transparent tw:dark:hover:bg-transparent tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[-2px]",
   // A lens with no changes (usually Uncategorized) has nothing to filter to.
   toggleEmpty:
     "tw:text-[color:var(--ink-faint)] tw:cursor-default tw:bg-[color:transparent]",

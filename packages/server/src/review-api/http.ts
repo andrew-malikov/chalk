@@ -5,7 +5,7 @@ import {
   REVIEW_CLIENT_HEADER,
   REVIEW_CLIENT_REMOTE,
   type ReviewStructuralDiffEvent,
-  gitLabSaveDraftSchema,
+  saveCommentSchema,
 } from "@chalk/review-contracts";
 import { readBoundedRequestJson } from "@chalk/server/hono-http.js";
 import { HttpJsonError } from "@chalk/server/http-json.js";
@@ -21,6 +21,7 @@ import {
   selectionMarkdown,
 } from "@review/node/review-api/agent-selection.js";
 import { authoringTools } from "@review/node/review-api/authoring-tools.js";
+import { agentCommentSchema } from "@review/node/review-api/comments.js";
 import { documentText } from "@review/node/review-api/document-text.js";
 import {
   instructionsQuerySchema,
@@ -184,61 +185,92 @@ export function createReviewApi(
       await renderInstructions(topic, await instructionContext()),
     );
   });
-  app.get("/:id/gitlab", (context) =>
-    context.json(store.gitlab.read(context.req.param("id"))),
-  );
-  app.post("/:id/gitlab/:action", async (context) => {
-    if (!data)
-      throw new ReviewInputError("GitLab source service is unavailable.", 409);
-    const id = context.req.param("id");
 
+  const comments = () => {
+    if (!data) throw new ReviewInputError("Comments are unavailable.", 409);
+
+    return data;
+  };
+
+  /** Comments belong to the current review; older versions only show them. */
+  const currentReview = (context: Context) => {
+    const id = context.req.param("id")!;
     const snapshot = store.read(id);
     const version = context.req.query("version");
 
     if (version !== undefined && Number(version) !== snapshot.version)
       throw new ReviewInputError(
-        "Historical reviews cannot modify GitLab. Open the current review.",
+        "Historical reviews cannot change comments. Open the current review.",
         409,
       );
+
+    return { id, snapshot };
+  };
+
+  app.get("/:id/comments", async (context) =>
+    context.json(await comments().comments.state(context.req.param("id"))),
+  );
+  app.post("/:id/comments/add", async (context) => {
+    const { id } = currentReview(context);
+
+    const input = z
+      .strictObject({ comments: z.array(agentCommentSchema).min(1).max(100) })
+      .parse(await readBoundedRequestJson(context.req.raw));
+
+    return context.json({
+      added: await comments().comments.add(id, input.comments),
+    });
+  });
+  app.post("/:id/comments/:action", async (context) => {
+    const { id } = currentReview(context);
+    const action = context.req.param("action");
+    const input = await readBoundedRequestJson(context.req.raw);
+
+    if (action === "save")
+      return context.json(
+        await comments().comments.save(id, saveCommentSchema.parse(input)),
+      );
+
+    if (action === "discard") {
+      store.comments.discard(
+        id,
+        z.strictObject({ id: z.uuid() }).parse(input).id,
+      );
+
+      return context.json(await comments().comments.state(id));
+    }
+
+    throw new ReviewInputError("Unknown comment action.", 404);
+  });
+  app.post("/:id/gitlab/:action", async (context) => {
+    if (!data)
+      throw new ReviewInputError("GitLab source service is unavailable.", 409);
+    const { id, snapshot } = currentReview(context);
 
     if (!snapshot.origin?.gitlab)
       throw new ReviewInputError("This review has no GitLab MR.", 404);
     const action = context.req.param("action");
 
-    if (action === "refresh")
-      return context.json(await data.gitlab.refresh(id));
-    const input = await readBoundedRequestJson(context.req.raw);
+    if (action === "refresh") {
+      await data.gitlab.refresh(id);
 
-    if (action === "drafts")
-      return context.json(
-        await data.gitlab.save(id, gitLabSaveDraftSchema.parse(input)),
-      );
-    const draftInput = z.strictObject({ id: z.uuid() });
-
-    if (action === "discard") {
-      store.gitlab.discard(id, draftInput.parse(input).id);
-
-      return context.json(store.gitlab.read(id));
+      return context.json(await data.comments.state(id));
     }
 
+    const input = await readBoundedRequestJson(context.req.raw);
+
     if (action === "post")
-      return context.json(
-        await data.gitlab.post(
-          id,
-          z.strictObject({ id: z.uuid().optional() }).parse(input).id,
-        ),
+      await data.gitlab.post(
+        id,
+        z.strictObject({ id: z.uuid().optional() }).parse(input).id,
       );
-
-    if (action === "resolve")
-      return context.json(
-        await data.gitlab.resolve(
-          id,
-          z.strictObject({ discussionId: z.string().min(1) }).parse(input)
-            .discussionId,
-        ),
+    else if (action === "resolve")
+      await data.gitlab.resolve(
+        id,
+        z.strictObject({ discussionId: z.string().min(1) }).parse(input)
+          .discussionId,
       );
-
-    if (action === "recover") {
+    else if (action === "recover") {
       const recovery = z
         .strictObject({
           id: z.uuid(),
@@ -248,17 +280,15 @@ export function createReviewApi(
         })
         .parse(input);
 
-      return context.json(
-        await data.gitlab.recover(
-          id,
-          recovery.id,
-          recovery.posted,
-          recovery.noteId,
-        ),
+      await data.gitlab.recover(
+        id,
+        recovery.id,
+        recovery.posted,
+        recovery.noteId,
       );
-    }
+    } else throw new ReviewInputError("Unknown GitLab action.", 404);
 
-    throw new ReviewInputError("Unknown GitLab action.", 404);
+    return context.json(await data.comments.state(id));
   });
   app.get("/:id/progress", async (context) => {
     if (!data) throw new ReviewInputError("Source data is unavailable.", 409);
@@ -466,6 +496,7 @@ export function createReviewApi(
                         ...readReview(reviewId),
                         activity: store.activity.read(reviewId),
                         coverageRevision: data?.coverageRevision ?? 0,
+                        commentsRevision: store.comments.revision(reviewId),
                       },
               };
             } catch (error) {
@@ -494,6 +525,9 @@ export function createReviewApi(
               if (mark(result.reviewId)) notify();
             }),
             store.activity.subscribe((id) => {
+              if (mark(id)) notify();
+            }),
+            store.comments.subscribe((id) => {
               if (mark(id)) notify();
             }),
             store.activity.subscribeWorking(() => {

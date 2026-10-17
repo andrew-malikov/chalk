@@ -8,7 +8,6 @@ import type {
   GitLabPosition,
   GitLabRefs,
   GitLabState,
-  GitLabTarget,
 } from "@chalk/review-contracts";
 import { type Pins, ReviewInputError } from "@review/documents/document.js";
 import { devReviewHome } from "@review/node/storage/review-home-paths.js";
@@ -154,7 +153,6 @@ export class GitLabReviews {
         refs: metadata.refs,
         account: await client.account(),
         discussions: await client.discussions(identity.projectId, identity.iid),
-        drafts: [],
         refreshedAt: new Date().toISOString(),
       };
 
@@ -316,7 +314,7 @@ export class GitLabReviews {
             "Cannot refresh GitLab. Check glab authentication for this host and your connection.";
         });
 
-        return this.store.gitlab.read(id);
+        return;
       }
 
       const snapshot = this.store.read(id);
@@ -354,33 +352,8 @@ export class GitLabReviews {
           }
         }
 
-        // Map from original immutable commits only after the new pins have been accepted.
-        const current = this.store.gitlab.read(id);
-
-        const mapped = await Promise.all(
-          current.drafts.map(async (draft) => ({
-            id: draft.id,
-            version: draft.version,
-            target: await this.mapTarget(cwd, refs, draft.target),
-          })),
-        );
-
         this.store.gitlab.update(id, (state) => {
           state.refs = refs;
-
-          for (const result of mapped) {
-            const draft = state.drafts.find((d) => d.id === result.id);
-
-            if (
-              draft &&
-              draft.version === result.version &&
-              ["saved", "failed"].includes(draft.status) &&
-              JSON.stringify(draft.target) !== JSON.stringify(result.target)
-            ) {
-              draft.target = result.target;
-              draft.version++;
-            }
-          }
         });
       } catch (error) {
         sourceError =
@@ -399,8 +372,6 @@ export class GitLabReviews {
         current.sourceError = sourceError;
         current.discussions = state.discussions;
       });
-
-      return this.store.gitlab.read(id);
     });
   }
   private async text(cwd: string, sha: string, file: string) {
@@ -413,66 +384,30 @@ export class GitLabReviews {
 
     return this.git(cwd, ["show", `${sha}:${file}`]);
   }
-  private async mapTarget(
-    cwd: string,
-    refs: GitLabRefs,
-    target: GitLabTarget,
-  ): Promise<GitLabTarget> {
-    if (target.kind !== "inline") return target;
-
-    try {
-      const position = target.position;
-
-      const file =
-        position.side === "head" ? position.newPath : position.oldPath;
-
-      const sha =
-        position.side === "head" ? position.headSha : position.baseSha;
-
-      const next = position.side === "head" ? refs.headSha : refs.baseSha;
-
-      const range = remapLineRange(
-        await this.text(cwd, sha, file),
-        await this.text(cwd, next, file),
-        position.from,
-        position.to,
-      );
-
-      if (!range) return { ...target, unmapped: true };
-
-      return {
-        kind: "inline",
-        position: await this.position(cwd, { ...position, ...refs, ...range }),
-        unmapped: false,
-      };
-    } catch {
-      return { ...target, unmapped: true };
-    }
-  }
   private async mapDiscussions(cwd: string, pins: Pins, state: GitLabState) {
     for (const discussion of state.discussions) {
       delete discussion.location;
+      const position = discussion.position;
 
-      if (!discussion.position) continue;
+      if (!position) continue;
+      const side = position.side;
+      const file = side === "head" ? position.newPath : position.oldPath;
 
-      const target = await this.mapTarget(
-        cwd,
-        {
-          baseSha: pins.base,
-          startSha: state.refs.startSha,
-          headSha: pins.head,
-        },
-        { kind: "inline", position: discussion.position },
-      );
+      try {
+        const range = remapLineRange(
+          await this.text(
+            cwd,
+            side === "head" ? position.headSha : position.baseSha,
+            file,
+          ),
+          await this.text(cwd, pins[side], file),
+          position.from,
+          position.to,
+        );
 
-      if (target.kind === "inline" && !target.unmapped) {
-        const p = target.position;
-        discussion.location = {
-          file: p.side === "head" ? p.newPath : p.oldPath,
-          side: p.side,
-          from: p.from,
-          to: p.to,
-        };
+        if (range) discussion.location = { file, side, ...range };
+      } catch {
+        /* Unmapped: the file is gone at the current pins. */
       }
     }
   }
@@ -572,48 +507,7 @@ export class GitLabReviews {
       oppositeTo: opposite(input.to),
     };
   }
-  async save(id: string, input: Parameters<ReviewStore["gitlab"]["save"]>[1]) {
-    if (input.target.kind === "inline") {
-      const state = this.store.gitlab.read(id);
-      const snapshot = this.store.read(id);
-      const position = input.target.position;
-
-      const existing = state.drafts.find((d) => d.id === input.id);
-
-      if (
-        input.target.unmapped &&
-        existing?.target.kind === "inline" &&
-        existing.target.unmapped &&
-        JSON.stringify(existing.target) === JSON.stringify(input.target)
-      )
-        return this.store.gitlab.save(id, input);
-
-      if (
-        position.baseSha !== snapshot.pins?.base ||
-        position.headSha !== snapshot.pins.head ||
-        position.startSha !== state.refs.startSha
-      )
-        throw new ReviewInputError(
-          "Source changed. Select the current code again.",
-          409,
-        );
-
-      if (!input.target.unmapped)
-        input = {
-          ...input,
-          target: {
-            kind: "inline",
-            position: await this.position(
-              this.directory(state.identity),
-              position,
-            ),
-          },
-        };
-    }
-
-    return this.store.gitlab.save(id, input);
-  }
-  async post(id: string, draftId?: string) {
+  async post(id: string, commentId?: string) {
     const state = this.store.gitlab.read(id);
 
     return this.locked(state.identity, async () => {
@@ -630,28 +524,28 @@ export class GitLabReviews {
         s.account = account;
       });
 
-      const ids = draftId
-        ? [draftId]
-        : this.store.gitlab
+      const ids = commentId
+        ? [commentId]
+        : this.store.comments
             .read(id)
-            .drafts.filter((d) => ["saved", "failed"].includes(d.status))
-            .map((d) => d.id);
+            .filter((c) => ["saved", "failed"].includes(c.status))
+            .map((c) => c.id);
 
-      for (const draftId of ids) {
+      for (const commentId of ids) {
         let draft;
 
         try {
-          draft = this.store.gitlab.beginPost(id, draftId);
+          draft = this.store.comments.beginPost(id, commentId);
         } catch (error) {
-          this.store.gitlab.update(id, (s) => {
-            const d = s.drafts.find((d) => d.id === draftId);
+          this.store.comments.update(id, (comments) => {
+            const d = comments.find((c) => c.id === commentId);
 
             if (d && ["saved", "failed"].includes(d.status)) {
               d.status = "failed";
               d.error =
                 error instanceof ReviewInputError
                   ? error.message
-                  : "Cannot post draft.";
+                  : "Cannot post comment.";
               d.version++;
             }
           });
@@ -662,20 +556,21 @@ export class GitLabReviews {
         let writeAttempted = false;
 
         try {
+          let position: GitLabPosition | undefined;
+
           if (draft.target.kind === "inline") {
-            const position = draft.target.position;
+            const target = draft.target.position;
             const refs = this.store.gitlab.read(id).refs;
             const pins = this.store.read(id).pins;
 
             if (
-              position.baseSha !== refs.baseSha ||
-              position.startSha !== refs.startSha ||
-              position.headSha !== refs.headSha ||
-              position.baseSha !== pins?.base ||
-              position.headSha !== pins.head
+              target.baseSha !== refs.baseSha ||
+              target.headSha !== refs.headSha ||
+              target.baseSha !== pins?.base ||
+              target.headSha !== pins.head
             )
               throw new ReviewInputError(
-                "Draft source changed. Refresh and select the current code before posting.",
+                "Comment source changed. Refresh and select the current code before posting.",
                 409,
               );
 
@@ -689,9 +584,18 @@ export class GitLabReviews {
               JSON.stringify(this.store.gitlab.read(id).refs)
             )
               throw new ReviewInputError(
-                "MR changed. Refresh and verify this draft before posting.",
+                "MR changed. Refresh and verify this comment before posting.",
                 409,
               );
+
+            position = await this.position(this.directory(state.identity), {
+              ...refs,
+              oldPath: target.oldPath,
+              newPath: target.newPath,
+              side: target.side,
+              from: target.from,
+              to: target.to,
+            });
           }
 
           writeAttempted = true;
@@ -703,15 +607,15 @@ export class GitLabReviews {
             draft.target.kind === "reply"
               ? draft.target.discussionId
               : undefined,
-            draft.target.kind === "inline" ? draft.target.position : undefined,
+            position,
           );
 
-          this.store.gitlab.finishPost(id, draft.id, {
+          this.store.comments.finishPost(id, draft.id, {
             status: "sent",
             noteId,
           });
         } catch (error) {
-          this.store.gitlab.finishPost(id, draft.id, {
+          this.store.comments.finishPost(id, draft.id, {
             status:
               !writeAttempted ||
               (error instanceof ReviewInputError &&
@@ -747,8 +651,6 @@ export class GitLabReviews {
             "Posting outcomes saved; discussion refresh failed. Refresh when connected.";
         });
       }
-
-      return this.store.gitlab.read(id);
     });
   }
   async resolve(id: string, discussionId: string) {
@@ -766,17 +668,18 @@ export class GitLabReviews {
 
         if (d) d.resolved = true;
       });
-
-      return this.store.gitlab.read(id);
     });
   }
-  async recover(id: string, draftId: string, posted: boolean, noteId?: number) {
+  async recover(
+    id: string,
+    commentId: string,
+    posted: boolean,
+    noteId?: number,
+  ) {
     const state = this.store.gitlab.read(id);
 
     return this.locked(state.identity, async () => {
-      this.store.gitlab.recover(id, draftId, posted, noteId);
-
-      return this.store.gitlab.read(id);
+      this.store.comments.recover(id, commentId, posted, noteId);
     });
   }
 }

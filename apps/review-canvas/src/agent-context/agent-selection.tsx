@@ -1,4 +1,4 @@
-import { useGitLab } from "@canvas/gitlab/gitlab-context";
+import { useComments } from "@canvas/comments/comments-context";
 import { useReviewSession } from "@canvas/host/review-session";
 import { cn } from "@canvas/lib/utils";
 import { controlStyles } from "@canvas/styles/controls-styles";
@@ -47,7 +47,7 @@ export function AgentSelectionProvider({
   children: ReactNode;
 }) {
   const session = useReviewSession();
-  const gitlab = useGitLab();
+  const comments = useComments();
   const [overlayHost, setOverlayHost] = useState<HTMLElement | null>(null);
 
   const bindOverlay = useCallback((node: HTMLSpanElement | null) => {
@@ -259,14 +259,10 @@ export function AgentSelectionProvider({
                     className={cn(surfaceStyles.popover, styles.actions)}
                     onMouseDown={(event) => event.preventDefault()}
                   >
-                    {gitlab?.editable &&
-                      gitlab.state &&
+                    {comments?.editable &&
+                      session.review?.pins &&
                       selection.target.kind === "code" &&
                       !selection.apiSource?.commit &&
-                      gitlab.state.refs.headSha ===
-                        session.review?.pins?.head &&
-                      gitlab.state.refs.baseSha ===
-                        session.review?.pins?.base &&
                       (!selection.apiSource?.pins ||
                         (selection.apiSource.pins.head ===
                           session.review?.pins?.head &&
@@ -278,21 +274,21 @@ export function AgentSelectionProvider({
                         selection.apiSource.reviewId ===
                           session.config.reviewId) && (
                         <Button
-                          disabled={gitlab.busy}
-                          aria-label="GitLab comment"
-                          title="GitLab comment"
+                          disabled={comments.busy}
+                          aria-label="Comment"
+                          title="Comment"
                           onClick={() => {
-                            if (
-                              selection.target.kind !== "code" ||
-                              !gitlab.state
-                            )
+                            const pins = session.review?.pins;
+
+                            if (selection.target.kind !== "code" || !pins)
                               return;
                             const target = selection.target;
-                            gitlab.compose(
+                            comments.compose(
                               {
                                 kind: "inline",
                                 position: {
-                                  ...gitlab.state.refs,
+                                  baseSha: pins.base,
+                                  headSha: pins.head,
                                   oldPath:
                                     selection.selectedDiff?.oldPath ||
                                     target.path,
@@ -316,7 +312,7 @@ export function AgentSelectionProvider({
                           {selection.range ? (
                             <PlusIcon size={16} aria-hidden="true" />
                           ) : (
-                            "GitLab comment"
+                            "Comment"
                           )}
                         </Button>
                       )}

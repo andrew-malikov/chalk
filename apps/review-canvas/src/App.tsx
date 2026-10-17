@@ -37,6 +37,8 @@ import {
   useAgentSelection,
 } from "./agent-context/agent-selection";
 import { observeAgentTextSelection } from "./agent-context/agent-text-selection";
+import { CommentsProvider, useComments } from "./comments/comments-context";
+import { CommentsPanel } from "./comments/comments-panel";
 import { DiffSettingsControl } from "./diff/diff-settings";
 import { ReviewDiffView } from "./diff/DiffView";
 import { ReviewCommitsView } from "./diff/ReviewCommitsView";
@@ -44,8 +46,6 @@ import { useDocumentEmbedScroll } from "./documents/document-embed-scroll";
 import { documentStyles } from "./documents/document-styles";
 import { ReviewDocumentBoundary } from "./documents/review-document-boundary";
 import { reportReviewDocumentRenderError } from "./documents/review-document-error-report";
-import { GitLabProvider, useGitLab } from "./gitlab/gitlab-context";
-import { GitLabDiscussionPanel } from "./gitlab/gitlab-discussions";
 import { useReviewSession } from "./host/review-session";
 import { useTooltip } from "./lib/use-tooltip";
 import {
@@ -214,7 +214,7 @@ function ReviewLayout({
             documentRoute={documentRoute}
             softwareMapEnabled={softwareMapEnabled}
           >
-            <GitLabProvider>
+            <CommentsProvider>
               <AgentSelectionProvider revision={documentRevision}>
                 <ReviewLayoutContent
                   appRef={appRef}
@@ -238,7 +238,7 @@ function ReviewLayout({
                   commits={commits}
                 />
               </AgentSelectionProvider>
-            </GitLabProvider>
+            </CommentsProvider>
           </ReviewProvider>
         </ReviewDebugSettingsProvider>
       </ReviewFindProvider>
@@ -276,7 +276,7 @@ function ReviewLayoutContent({
   commits: readonly ReviewCommitSummary[];
 }): ReactElement {
   const session = useReviewSession();
-  const gitlab = useGitLab();
+  const comments = useComments();
   const review = useReview();
   // The scratchpad is a document and nothing else: no source tree to browse,
   // nothing to dismiss.
@@ -319,8 +319,8 @@ function ReviewLayoutContent({
 
   const debugSettings = useReviewDebugSettings();
 
-  const gitlabShown = !!gitlab?.open && activePanel === null;
-  const rightPanelOpen = activePanel !== null || gitlabShown;
+  const commentsShown = !!comments?.open && activePanel === null;
+  const rightPanelOpen = activePanel !== null || commentsShown;
 
   const sidePeekResize = useRightPanelResize({
     stateKey: "side-peek-width",
@@ -578,10 +578,10 @@ function ReviewLayoutContent({
               </div>
               <ReviewBatonChip outcome={review.submissionOutcome} />
               <DiffSettingsControl />
-              {gitlab && (
-                <DiscussionsButton
-                  expanded={gitlabShown}
-                  onClick={gitlab.toggle}
+              {comments && (
+                <CommentsButton
+                  expanded={commentsShown}
+                  onClick={comments.toggle}
                 />
               )}
               {!scratchpad &&
@@ -747,7 +747,7 @@ function ReviewLayoutContent({
         />
       )}
       <div className={cn(shellStyles.detailHost, detailHostMarker)}>
-        {gitlabShown && <GitLabDiscussionPanel />}
+        {commentsShown && <CommentsPanel />}
         <ReviewPanelHost />
       </div>
     </div>
@@ -795,20 +795,20 @@ const scopeBarStyles = {
  * the review is simply waiting: the corner action already says what to do, and
  * a standing "awaiting your review" chip was noise on every review.
  */
-function DiscussionsButton({
+function CommentsButton({
   expanded,
   onClick,
 }: {
   expanded: boolean;
   onClick(): void;
 }): ReactElement {
-  const tooltip = useTooltip("Discussions");
+  const tooltip = useTooltip("Comments");
 
   return (
     <IconButton
       ref={tooltip}
       className={shellStyles.topbarItem}
-      aria-label="Discussions"
+      aria-label="Comments"
       aria-expanded={expanded}
       onClick={onClick}
     >

@@ -29,6 +29,9 @@ follow these first six steps exactly, without any extraneous tool calls.
 - repin the chalk
 - read the existing chalk (if you haven't already,) read the diff since last chalk, make any necessary updates to the chalk.
 
+**reviewing**
+when the user asks you to review the change (with a new chalk, or an existing one they point at: find it with `session_list`), leave findings as comments with `session_comment_add`, not in the chalk's prose. read `session_comment_list` first so you do not repeat existing comments. anchor each finding to the exact lines it is about; use a general comment only for findings about the change as a whole.
+
 **guidelines**
 - IMPORTANT: Write incrementally. The user sees you write on the canvas in real-time. Show them visual progress every few seconds.
 - use `session_activity_update` to provide regular status updates on your area of focus.

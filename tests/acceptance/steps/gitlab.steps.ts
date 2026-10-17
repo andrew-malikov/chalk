@@ -4,15 +4,13 @@ import type { DataTable } from "playwright-bdd";
 import { Given, Then, When } from "../support/fixtures";
 
 const panel = (page: Page) =>
-  page.getByRole("complementary", { name: "Discussions", exact: true });
+  page.getByRole("complementary", { name: "Comments", exact: true });
 
 const editor = (page: Page) => page.getByRole("textbox").last();
 
 async function showDiscussions(page: Page) {
   if (!(await panel(page).isVisible()))
-    await page
-      .getByRole("button", { name: "Discussions", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Comments", exact: true }).click();
   await expect(panel(page)).toBeVisible();
 }
 
@@ -20,7 +18,7 @@ async function postDraft(page: Page) {
   const completed = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
-      /\/gitlab\/(post|drafts)$/.test(new URL(response.url()).pathname),
+      /\/(gitlab\/post|comments\/save)$/.test(new URL(response.url()).pathname),
   );
 
   await page.getByRole("button", { name: "Post", exact: true }).last().click();
@@ -53,9 +51,7 @@ When(
           .setBaseAndExtent(line, 0, line, line.childNodes.length);
         document.dispatchEvent(new Event("selectionchange"));
       });
-      await page
-        .getByRole("button", { name: "GitLab comment", exact: true })
-        .click();
+      await page.getByRole("button", { name: "Comment", exact: true }).click();
     } else {
       await showDiscussions(page);
       await panel(page)
@@ -71,7 +67,7 @@ When(
     if (!gitlabReview.saveUnavailable) {
       await expect
         .poll(async () =>
-          (await gitlabReview.state()).drafts.some(
+          (await gitlabReview.state()).comments.some(
             (draft) => draft.text === text,
           ),
         )
@@ -92,7 +88,7 @@ Then(
   async ({ page, gitlabReview }, kind: string, text: string) => {
     await expect(panel(page).getByRole("textbox")).toHaveText(text);
 
-    const draft = (await gitlabReview.state()).drafts.find(
+    const draft = (await gitlabReview.state()).comments.find(
       (draft) => draft.text === text,
     );
 
@@ -106,7 +102,8 @@ Then(
       expect(draft?.target).toMatchObject({
         kind: "inline",
         position: {
-          ...state.refs,
+          baseSha: state.gitlab!.refs.baseSha,
+          headSha: state.gitlab!.refs.headSha,
           oldPath: "code.ts",
           newPath: "code.ts",
           side: "head",
@@ -133,7 +130,7 @@ Then(
     await expect(panel(page).getByRole("alert").first()).toContainText(
       "Draft storage unavailable",
     );
-    expect((await gitlabReview.state()).drafts).toEqual([]);
+    expect((await gitlabReview.state()).comments).toEqual([]);
   },
 );
 
@@ -158,7 +155,7 @@ Then(
     await expect
       .poll(
         async () =>
-          (await gitlabReview.state()).drafts.find(
+          (await gitlabReview.state()).comments.find(
             (draft) => draft.text === text,
           )?.status,
       )
@@ -188,7 +185,7 @@ Then(
 Then("no local drafts remain to post", async ({ page, gitlabReview }) => {
   await expect
     .poll(async () =>
-      (await gitlabReview.state()).drafts.filter(
+      (await gitlabReview.state()).comments.filter(
         (draft) => draft.status !== "sent",
       ),
     )
@@ -226,10 +223,10 @@ Then(
   "{string} is sent and {string} remains as a failed draft",
   async ({ page, gitlabReview }, sent: string, failed: string) => {
     const state = await gitlabReview.state();
-    expect(state.drafts.find((draft) => draft.text === sent)?.status).toBe(
+    expect(state.comments.find((draft) => draft.text === sent)?.status).toBe(
       "sent",
     );
-    expect(state.drafts.find((draft) => draft.text === failed)?.status).toBe(
+    expect(state.comments.find((draft) => draft.text === failed)?.status).toBe(
       "failed",
     );
     await expect(panel(page).getByRole("textbox")).toHaveText(failed);
@@ -264,7 +261,7 @@ Then(
       }),
     ).toBeDisabled();
     const state = await gitlabReview.state();
-    expect(state.drafts[0]?.status).toBe("uncertain");
+    expect(state.comments[0]?.status).toBe("uncertain");
     await gitlabReview.retryUncertainPost();
     expect(gitlabReview.attempts).toEqual(["Uncertain comment"]);
   },
@@ -298,12 +295,12 @@ Then(
   "the verified draft is {string} without another posting attempt",
   async ({ page, gitlabReview }, state: string) => {
     await expect
-      .poll(async () => (await gitlabReview.state()).drafts[0]?.status)
+      .poll(async () => (await gitlabReview.state()).comments[0]?.status)
       .toBe(state === "sent" ? "sent" : "saved");
     expect(gitlabReview.attempts).toEqual(["Uncertain comment"]);
 
     if (state === "sent") {
-      expect((await gitlabReview.state()).drafts[0]?.noteId).toBe(501);
+      expect((await gitlabReview.state()).comments[0]?.noteId).toBe(501);
       await expect(panel(page).getByRole("textbox")).toHaveCount(0);
     } else
       await expect(
@@ -340,7 +337,7 @@ When("I refresh the GitLab review", async ({ page }) => {
 Then(
   "the inline draft is {string} and retains {string}",
   async ({ page, gitlabReview }, result: string, text: string) => {
-    const draft = (await gitlabReview.state()).drafts.find(
+    const draft = (await gitlabReview.state()).comments.find(
       (draft) => draft.text === text,
     );
 
@@ -412,9 +409,7 @@ Then(
       const response = await gitlabReview.historicalAction(action!);
       expect(response.status, action).toBe(409);
       expect(await response.json(), action).toMatchObject({
-        error: expect.stringContaining(
-          "Historical reviews cannot modify GitLab",
-        ),
+        error: expect.stringContaining("Historical reviews cannot"),
       });
       expect(await gitlabReview.state()).toEqual(before);
     }
@@ -433,6 +428,6 @@ Then(
     await expect(panel(page).getByRole("alert").first()).toContainText(
       "posting account changed",
     );
-    expect((await gitlabReview.state()).drafts[0]?.status).toBe("saved");
+    expect((await gitlabReview.state()).comments[0]?.status).toBe("saved");
   },
 );

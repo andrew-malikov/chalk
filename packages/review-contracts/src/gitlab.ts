@@ -46,30 +46,6 @@ export const gitLabPositionSchema = gitLabRefsSchema
 
 export type GitLabPosition = z.infer<typeof gitLabPositionSchema>;
 
-export const gitLabTargetSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("general") }),
-  z.object({ kind: z.literal("reply"), discussionId: z.string().min(1) }),
-  z.object({
-    kind: z.literal("inline"),
-    position: gitLabPositionSchema,
-    unmapped: z.boolean().optional(),
-  }),
-]);
-
-export type GitLabTarget = z.infer<typeof gitLabTargetSchema>;
-
-export const gitLabDraftSchema = z.object({
-  id: z.uuid(),
-  text: z.string().max(1_000_000),
-  target: gitLabTargetSchema,
-  version: z.number().int().nonnegative(),
-  status: z.enum(["saved", "failed", "sending", "uncertain", "sent"]),
-  error: z.string().optional(),
-  noteId: line.optional(),
-});
-
-export type GitLabDraft = z.infer<typeof gitLabDraftSchema>;
-
 export const gitLabDiscussionSchema = z.object({
   id: z.string(),
   resolved: z.boolean(),
@@ -100,17 +76,9 @@ export const gitLabStateSchema = z.object({
   account: gitLabAccountSchema.nullable(),
   refs: gitLabRefsSchema,
   discussions: z.array(gitLabDiscussionSchema),
-  drafts: z.array(gitLabDraftSchema),
   connectionError: z.string().optional(),
   sourceError: z.string().optional(),
   refreshedAt: z.string().optional(),
 });
 
 export type GitLabState = z.infer<typeof gitLabStateSchema>;
-
-export const gitLabSaveDraftSchema = z.strictObject({
-  id: z.uuid(),
-  text: z.string().max(1_000_000),
-  target: gitLabTargetSchema,
-  version: z.number().int().nonnegative().optional(),
-});

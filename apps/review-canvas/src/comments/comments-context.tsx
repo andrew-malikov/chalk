@@ -1,6 +1,6 @@
 import { useReviewSession } from "@canvas/host/review-session";
 import { useOptionalReviewPanelActor } from "@canvas/review/review-panel";
-import type { GitLabDiscussion, GitLabTarget } from "@chalk/review-contracts";
+import type { CommentTarget, GitLabDiscussion } from "@chalk/review-contracts";
 import { useActorRef, useSelector } from "@xstate/react";
 import {
   type ReactNode,
@@ -13,15 +13,15 @@ import {
 import { z } from "zod";
 
 import {
-  type GitLabAction,
-  type GitLabActionInput,
-  type GitLabSnapshot,
-  createGitLabMachine,
+  type CommentAction,
+  type CommentActionInput,
+  type CommentsSnapshot,
+  createCommentsMachine,
   saveDraft,
-} from "./gitlab-machine";
+} from "./comments-machine";
 
-type GitLabContextValue = Pick<
-  GitLabSnapshot["context"],
+type CommentsContextValue = Pick<
+  CommentsSnapshot["context"],
   "state" | "editors" | "pending" | "error" | "selected"
 > & {
   editable: boolean;
@@ -32,9 +32,9 @@ type GitLabContextValue = Pick<
   collapse(id: string, value: boolean): void;
   toggle(): void;
   edit(id: string, text: string): void;
-  compose(target: GitLabTarget, placement?: "inline" | "panel"): void;
+  compose(target: CommentTarget, placement?: "inline" | "panel"): void;
   select(discussion: GitLabDiscussion): void;
-  run(action: GitLabAction, input?: GitLabActionInput): void;
+  run(action: CommentAction, input?: CommentActionInput): void;
   reveal: {
     file: string;
     side: "base" | "head";
@@ -44,19 +44,19 @@ type GitLabContextValue = Pick<
   } | null;
 };
 
-const Context = createContext<GitLabContextValue | null>(null);
+const Context = createContext<CommentsContextValue | null>(null);
 
-export function useGitLab() {
+export function useComments() {
   return useContext(Context);
 }
 
-/** Draft state lives in the GitLab machine; this adds the panel and diff coordination around it. */
-export function GitLabProvider({ children }: { children: ReactNode }) {
+/** Comment state lives in the comments machine; this adds the panel and diff coordination around it. */
+export function CommentsProvider({ children }: { children: ReactNode }) {
   const session = useReviewSession();
   const panels = useOptionalReviewPanelActor();
   const sessionRef = useRef(session);
   sessionRef.current = session;
-  const enabled = !!session.review?.gitlab;
+  const enabled = !!session.review && session.review.kind !== "scratchpad";
 
   const editable = enabled && session.review?.historicalRevision === null;
 
@@ -79,14 +79,14 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
         if (!response.ok)
           throw new Error(
             z.object({ error: z.string() }).safeParse(value).data?.error ??
-              `GitLab request failed (${response.status}).`,
+              `Comment request failed (${response.status}).`,
           );
 
         return value;
       },
   );
 
-  const [machine] = useState(() => createGitLabMachine(request));
+  const [machine] = useState(() => createCommentsMachine(request));
   const actor = useActorRef(machine);
   const { state, editors, pending, error, selected } = useSelector(
     actor,
@@ -95,11 +95,20 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
 
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-  const [reveal, setReveal] = useState<GitLabContextValue["reveal"]>(null);
+  const [reveal, setReveal] = useState<CommentsContextValue["reveal"]>(null);
 
   useEffect(() => {
     if (enabled) actor.send({ type: "load", editable });
   }, [actor, enabled, editable]);
+  // Agents add comments, and inline ones follow the source when it moves.
+  const pins = session.review?.pins;
+  const revision = `${session.review?.commentsRevision}:${pins?.base}:${pins?.head}:${pins?.worktreeRevision}`;
+  const lastRevision = useRef(revision);
+  useEffect(() => {
+    if (lastRevision.current === revision) return;
+    lastRevision.current = revision;
+    actor.send({ type: "sync" });
+  }, [actor, revision]);
   // The actor stops with the provider; send text the debounce has not saved yet.
   // shortcut: unordered after a save still in flight for the same draft, which then fails on its version; queue behind it if that shows up.
   useEffect(
@@ -132,7 +141,7 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
     setOpen(true);
   };
 
-  const value: GitLabContextValue = {
+  const value: CommentsContextValue = {
     state,
     editors,
     editable,
@@ -173,8 +182,8 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
 
       if (
         discussion.location &&
-        session.review?.pins?.base === state?.refs.baseSha &&
-        session.review?.pins?.head === state?.refs.headSha
+        session.review?.pins?.base === state?.gitlab?.refs.baseSha &&
+        session.review?.pins?.head === state?.gitlab?.refs.headSha
       ) {
         panels?.send({ type: "showView", view: "diff" });
         setReveal({ ...discussion.location, nonce: Date.now() });

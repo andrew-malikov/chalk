@@ -159,3 +159,5 @@ export { structuralRows } from "./source-alignment.js";
 export * from "./review-event-stream.js";
 
 export * from "./gitlab.js";
+
+export * from "./comments.js";

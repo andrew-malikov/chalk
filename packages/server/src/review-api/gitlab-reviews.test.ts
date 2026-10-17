@@ -14,7 +14,7 @@ import { expect, it } from "vitest";
 
 import { createReviewApi } from "./http.js";
 
-it("creates an isolated MR once, retains drafts on partial posting and refuses dirty/committed advancement", async () => {
+it("creates an isolated MR once, retains comments on partial posting and refuses dirty/committed advancement", async () => {
   const root = mkdtempSync(path.join(tmpdir(), "gitlab-mr-"));
   const origin = path.join(root, "origin");
 
@@ -131,8 +131,8 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
       "team/repo",
     );
 
-    const drafts = ["okay", "fail"].map((text) =>
-      local.store.gitlab.save(first.reviewId, {
+    const comments = ["okay", "fail"].map((text) =>
+      local.store.comments.save(first.reviewId, {
         id: randomUUID(),
         text,
         target: { kind: "general" },
@@ -141,13 +141,13 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
 
     await local.data.gitlab.post(first.reviewId);
     expect(
-      local.store.gitlab.read(first.reviewId).drafts.map((d) => d.status),
+      local.store.comments.read(first.reviewId).map((c) => c.status),
     ).toEqual(["sent", "failed"]);
     expect(posts).toBe(2);
-    await local.data.gitlab.post(first.reviewId, drafts[0]!.id);
+    await local.data.gitlab.post(first.reviewId, comments[0]!.id);
     expect(posts).toBe(2);
 
-    const reply = local.store.gitlab.save(first.reviewId, {
+    const reply = local.store.comments.save(first.reviewId, {
       id: randomUUID(),
       text: "unsent reply",
       target: { kind: "reply", discussionId: "thread" },
@@ -155,30 +155,27 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
 
     await local.data.gitlab.resolve(first.reviewId, "thread");
     expect(
-      local.store.gitlab
-        .read(first.reviewId)
-        .drafts.find((d) => d.id === reply.id)?.text,
+      local.store.comments.read(first.reviewId).find((c) => c.id === reply.id)
+        ?.text,
     ).toBe("unsent reply");
     uncertain = true;
     await local.data.gitlab.post(first.reviewId, reply.id);
     await local.data.gitlab.post(first.reviewId, reply.id);
     expect(posts).toBe(3);
     expect(
-      local.store.gitlab
-        .read(first.reviewId)
-        .drafts.find((d) => d.id === reply.id)?.status,
+      local.store.comments.read(first.reviewId).find((c) => c.id === reply.id)
+        ?.status,
     ).toBe("uncertain");
 
-    const inline = await local.data.gitlab.save(first.reviewId, {
+    const inline = await local.data.comments.save(first.reviewId, {
       id: randomUUID(),
-      text: "range draft",
+      text: "range comment",
       target: {
         kind: "inline",
         position: {
           baseSha: base,
-          startSha: base,
           headSha: snapshot.pins!.head,
-          oldPath: "unrelated.ts",
+          oldPath: "code.ts",
           newPath: "code.ts",
           side: "head",
           from: 2,
@@ -187,12 +184,6 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
       },
     });
 
-    expect(
-      inline.target.kind === "inline" && inline.target.position.oppositeFrom,
-    ).toBeUndefined();
-    expect(
-      inline.target.kind === "inline" && inline.target.position.oldPath,
-    ).toBe("code.ts");
     writeFileSync(
       path.join(origin, "code.ts"),
       "added\none\ntwo changed\nthree\n",
@@ -211,16 +202,16 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
     await local.data.gitlab.refresh(first.reviewId);
     expect(local.store.read(first.reviewId).pins?.head).toBe(head);
 
-    const moved = local.store.gitlab
-      .read(first.reviewId)
-      .drafts.find((d) => d.id === inline.id)!;
+    const moved = (
+      await local.data.comments.state(first.reviewId)
+    ).comments.find((c) => c.id === inline.id)!;
 
     expect(moved.target.kind === "inline" && moved.target.position.from).toBe(
       3,
     );
-    expect(moved.text).toBe("range draft");
+    expect(moved.text).toBe("range comment");
 
-    const stale = local.store.gitlab.save(first.reviewId, {
+    const stale = local.store.comments.save(first.reviewId, {
       id: randomUUID(),
       text: "Old position preserved",
       target: inline.target,
@@ -229,9 +220,8 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
     await local.data.gitlab.post(first.reviewId, stale.id);
     expect(posts).toBe(3);
     expect(
-      local.store.gitlab
-        .read(first.reviewId)
-        .drafts.find((d) => d.id === stale.id)?.status,
+      local.store.comments.read(first.reviewId).find((c) => c.id === stale.id)
+        ?.status,
     ).toBe("failed");
 
     execFileSync(
@@ -275,10 +265,9 @@ it("creates an isolated MR once, retains drafts on partial posting and refuses d
     await local.data.gitlab.refresh(first.reviewId);
     expect(local.store.gitlab.read(first.reviewId).sourceError).toBeUndefined();
     expect(
-      local.store.gitlab
-        .read(first.reviewId)
-        .drafts.find((d) => d.id === inline.id)?.text,
-    ).toBe("range draft");
+      local.store.comments.read(first.reviewId).find((c) => c.id === inline.id)
+        ?.text,
+    ).toBe("range comment");
     const api = createReviewApi(local.store, local.data);
 
     const historical = await api.request(

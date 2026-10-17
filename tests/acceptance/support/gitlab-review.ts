@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type { GitLabState } from "@chalk/review-contracts";
+import type { CommentsState } from "@chalk/review-contracts";
 import { type Page, expect } from "@playwright/test";
 
 import {
@@ -202,7 +202,7 @@ export class GitLabReview {
       if (
         this.saveUnavailable &&
         request.method() === "POST" &&
-        url.pathname.endsWith("/gitlab/drafts")
+        url.pathname.endsWith("/comments/save")
       ) {
         await route.fulfill({
           status: 409,
@@ -241,7 +241,7 @@ export class GitLabReview {
       { snapshot: JSON.stringify(snapshot), current: version === undefined },
     );
     await this.page
-      .getByRole("button", { name: "Discussions", exact: true })
+      .getByRole("button", { name: "Comments", exact: true })
       .click();
     await expect(
       this.page.getByRole("button", { name: "New comment", exact: true }),
@@ -253,15 +253,15 @@ export class GitLabReview {
       ).toBeEnabled();
   }
 
-  async state(): Promise<GitLabState> {
-    const response = await this.api.request(`/${this.reviewId}/gitlab`);
+  async state(): Promise<CommentsState> {
+    const response = await this.api.request(`/${this.reviewId}/comments`);
     expect(response.status).toBe(200);
 
     return response.json();
   }
 
   async retryUncertainPost() {
-    const draft = (await this.state()).drafts[0]!;
+    const draft = (await this.state()).comments[0]!;
 
     const response = await this.api.request(`/${this.reviewId}/gitlab/post`, {
       method: "POST",
@@ -270,7 +270,7 @@ export class GitLabReview {
     });
 
     expect(response.status).toBe(200);
-    expect((await this.state()).drafts[0]?.status).toBe("uncertain");
+    expect((await this.state()).comments[0]?.status).toBe("uncertain");
   }
 
   async restart() {
@@ -314,7 +314,7 @@ export class GitLabReview {
   }
 
   async historicalAction(action: string) {
-    const draft = (await this.state()).drafts[0]!;
+    const draft = (await this.state()).comments[0]!;
 
     const bodies = {
       drafts: {
@@ -333,8 +333,15 @@ export class GitLabReview {
     const body = Object.entries(bodies).find(([key]) => key === action)?.[1];
     expect(body, `Unknown historical action: ${action}`).toBeDefined();
 
+    const route =
+      action === "drafts"
+        ? "comments/save"
+        : action === "discard"
+          ? "comments/discard"
+          : `gitlab/${action}`;
+
     return this.api.request(
-      `/${this.reviewId}/gitlab/${action}?version=${this.historicalVersion}`,
+      `/${this.reviewId}/${route}?version=${this.historicalVersion}`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },

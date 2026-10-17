@@ -91,6 +91,7 @@ export function ApiCanvas({
 
   const [version, setVersion] = useState(content.version);
   const [coverageRevision, setCoverageRevision] = useState(0);
+  const [commentsRevision, setCommentsRevision] = useState(0);
   const [activity, setActivity] = useState<ActivitySnapshot | "unknown">();
   const [cursor, setCursor] = useState<AuthoringCursor | null>(null);
   const [lensCursor, setLensCursor] = useState<AuthoringCursor | null>(null);
@@ -157,7 +158,11 @@ export function ApiCanvas({
 
       let shownVersion: string | undefined;
       await client.follow<
-        Snapshot & { activity: ActivitySnapshot; coverageRevision?: number }
+        Snapshot & {
+          activity: ActivitySnapshot;
+          coverageRevision?: number;
+          commentsRevision?: number;
+        }
       >(
         content.reviewId,
         abort.signal,
@@ -168,6 +173,7 @@ export function ApiCanvas({
             nextCursor(current, lensMemory, snapshot, "lenses"),
           );
           setCoverageRevision(snapshot.coverageRevision ?? 0);
+          setCommentsRevision(snapshot.commentsRevision ?? 0);
 
           if (version !== undefined) return;
 
@@ -285,10 +291,14 @@ export function ApiCanvas({
       ...baseSession,
       review: {
         kind: snapshot.kind,
-        gitlab: snapshot.origin?.gitlab,
         pins: snapshot.pins
-          ? { base: snapshot.pins.base, head: snapshot.pins.head }
+          ? {
+              base: snapshot.pins.base,
+              head: snapshot.pins.head,
+              worktreeRevision: snapshot.pins.worktreeRevision,
+            }
           : undefined,
+        commentsRevision,
         targetKind: snapshot.target?.kind,
         historicalRevision: version === undefined ? null : String(version),
         updatedAtMs: Date.parse(snapshot.createdAt),
@@ -305,7 +315,7 @@ export function ApiCanvas({
         },
       },
     };
-  }, [baseSession, client, content.reviewId, data, version]);
+  }, [baseSession, client, commentsRevision, content.reviewId, data, version]);
 
   // Only the latest version of a review this machine owns takes edits.
   const editable = version === undefined && data !== undefined;

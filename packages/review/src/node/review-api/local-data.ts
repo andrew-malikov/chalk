@@ -63,6 +63,7 @@ import {
 import { z } from "zod";
 
 import { checkoutFs } from "./checkout-fs.js";
+import { ReviewComments } from "./comments.js";
 import {
   type ComparisonCoverage,
   type CoverageMode,
@@ -132,6 +133,7 @@ interface RepositoryVcs {
 /** Local source/resource boundary, including Desktop-only local language context. */
 export class LocalReviewData {
   readonly gitlab: GitLabReviews;
+  readonly comments: ReviewComments;
   private readonly workspaceManager?: ReviewWorkspaces;
 
   get workspaces(): ReviewWorkspaces {
@@ -450,6 +452,7 @@ export class LocalReviewData {
     } = {},
   ) {
     this.gitlab = new GitLabReviews(store, options.gitlab);
+    this.comments = new ReviewComments(store, this);
 
     if (options.manageWorkspaces !== false)
       this.workspaceManager = new ReviewWorkspaces(

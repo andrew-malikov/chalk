@@ -1,11 +1,11 @@
 import { useAgentSelection } from "@canvas/agent-context/agent-selection";
-import { useGitLab } from "@canvas/gitlab/gitlab-context";
+import { useComments } from "@canvas/comments/comments-context";
 import {
-  type GitLabInlineAnnotation,
-  GitLabInlineContent,
+  type CommentAnnotation,
+  InlineComments,
   discussionCollapsed,
-  useGitLabDrafts,
-} from "@canvas/gitlab/gitlab-discussions";
+  useCommentDrafts,
+} from "@canvas/comments/comments-panel";
 import { useReviewSession } from "@canvas/host/review-session";
 import { cn } from "@canvas/lib/utils";
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
@@ -176,8 +176,8 @@ function Comparison({
   setStructural(value: boolean): void;
 }) {
   const session = useReviewSession();
-  const gitlab = useGitLab();
-  const drafts = useGitLabDrafts();
+  const comments = useComments();
+  const drafts = useCommentDrafts();
   const queryClient = useQueryClient();
   const select = useAgentSelection();
   const preferred = useRef(revealFile);
@@ -259,8 +259,7 @@ function Comparison({
     new WeakMap<FileDiffMetadata, FileDiffMetadata>(),
   );
 
-  const viewer =
-    useRef<CodeViewHandle<GitLabInlineAnnotation, undefined>>(null);
+  const viewer = useRef<CodeViewHandle<CommentAnnotation, undefined>>(null);
 
   const container = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -290,22 +289,26 @@ function Comparison({
     () => session.theme(),
   );
 
-  const annotations: (DiffLineAnnotation<GitLabInlineAnnotation> & {
+  const annotations: (DiffLineAnnotation<CommentAnnotation> & {
     file: string;
   })[] = [];
 
-  if (
-    !scope &&
-    session.review?.historicalRevision === null &&
-    session.review?.pins?.base === gitlab?.state?.refs.baseSha &&
-    session.review?.pins?.head === gitlab?.state?.refs.headSha
-  ) {
+  const gitlab = comments?.state?.gitlab;
+  const pins = session.review?.pins;
+
+  if (!scope && session.review?.historicalRevision === null && pins) {
     const chips = new Map<
       string,
       { annotation: (typeof annotations)[number]; ids: string[] }
     >();
 
-    for (const discussion of gitlab?.state?.discussions ?? []) {
+    // Discussion locations are mapped onto the MR's refs, which the pins match once refreshed.
+    const discussions =
+      pins.base === gitlab?.refs.baseSha && pins.head === gitlab.refs.headSha
+        ? gitlab.discussions
+        : [];
+
+    for (const discussion of discussions) {
       if (!discussion.location) continue;
 
       const annotation = {
@@ -315,7 +318,7 @@ function Comparison({
         metadata: { kind: "discussion", id: discussion.id },
       } as const;
 
-      if (!discussionCollapsed(discussion, gitlab!.collapsed, drafts)) {
+      if (!discussionCollapsed(discussion, comments!.collapsed, drafts)) {
         annotations.push(annotation);
         continue;
       }
@@ -342,8 +345,8 @@ function Comparison({
         draft.status === "sent" ||
         target.kind !== "inline" ||
         target.unmapped ||
-        target.position.baseSha !== gitlab?.state?.refs.baseSha ||
-        target.position.headSha !== gitlab?.state?.refs.headSha
+        target.position.baseSha !== pins.base ||
+        target.position.headSha !== pins.head
       )
         continue;
       const p = target.position;
@@ -357,7 +360,7 @@ function Comparison({
   }
 
   const annotationRevision = useRef({ key: "", version: 0 });
-  // Editor text lives in GitLab context; typing must not recreate Pierre's slots.
+  // Editor text lives in comments context; typing must not recreate Pierre's slots.
   const annotationKey = JSON.stringify(annotations);
 
   if (annotationRevision.current.key !== annotationKey)
@@ -367,7 +370,7 @@ function Comparison({
     };
   const annotationVersion = annotationRevision.current.version;
 
-  const items = useMemo<CodeViewItem<GitLabInlineAnnotation>[]>(
+  const items = useMemo<CodeViewItem<CommentAnnotation>[]>(
     () =>
       visible.flatMap((entry) => {
         if (!entry.diff) return [];
@@ -431,13 +434,13 @@ function Comparison({
     [save],
   );
 
-  const lastGitLabReveal = useRef<number | undefined>(undefined);
+  const lastCommentReveal = useRef<number | undefined>(undefined);
   useEffect(() => {
-    const reveal = gitlab?.reveal;
+    const reveal = comments?.reveal;
 
     if (
       !reveal ||
-      lastGitLabReveal.current === reveal.nonce ||
+      lastCommentReveal.current === reveal.nonce ||
       hidden ||
       scope ||
       lens
@@ -454,12 +457,12 @@ function Comparison({
         { fromLine: reveal.from, toLine: reveal.to },
         reveal.side,
       );
-      lastGitLabReveal.current = reveal.nonce;
+      lastCommentReveal.current = reveal.nonce;
 
       return;
     }
 
-    lastGitLabReveal.current = reveal.nonce;
+    lastCommentReveal.current = reveal.nonce;
     navigate(entry.path);
     pendingReveal.current = undefined;
     pendingRange.current = {
@@ -483,7 +486,7 @@ function Comparison({
         side: reveal.side === "head" ? "additions" : "deletions",
       },
     });
-  }, [gitlab?.reveal, hidden, scope, lens, files, navigate, session.surface]);
+  }, [comments?.reveal, hidden, scope, lens, files, navigate, session.surface]);
   const previousReveal = useRef(revealFile);
   useEffect(() => {
     if (previousReveal.current === revealFile) return;
@@ -890,7 +893,7 @@ function Comparison({
           position: "relative",
         }}
         renderAnnotation={(annotation) => (
-          <GitLabInlineContent annotation={annotation.metadata} />
+          <InlineComments annotation={annotation.metadata} />
         )}
         renderHeaderPrefix={(item) => (
           <IconButton

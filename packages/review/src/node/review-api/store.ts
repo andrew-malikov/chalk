@@ -56,6 +56,7 @@ import {
 import { z } from "zod";
 
 import { type LeaseScope, ReviewActivity } from "./activity.js";
+import { CommentStorage } from "./comment-storage.js";
 import { GitLabStorage } from "./gitlab-state.js";
 import { mergeRequestUrlSchema } from "./gitlab.js";
 
@@ -215,6 +216,7 @@ export interface ReviewProviders {
 export class ReviewStore {
   readonly activity: ReviewActivity;
   readonly gitlab: GitLabStorage;
+  readonly comments: CommentStorage;
   private readonly db: Database;
   private pending: Promise<unknown> = Promise.resolve();
   private closing = false;
@@ -405,6 +407,7 @@ export class ReviewStore {
     this.db.exec("DROP TABLE IF EXISTS authoring_drafts");
     this.activity = new ReviewActivity(this.db, (id) => this.assertExists(id));
     this.gitlab = new GitLabStorage(this.db);
+    this.comments = new CommentStorage(this.db);
 
     this.observedDataVersion = this.dataVersion();
     this.observedVersions = this.currentVersions();
@@ -1110,6 +1113,7 @@ export class ReviewStore {
           () => {
             for (const table of [
               "gitlab_reviews",
+              "review_comments",
               "authoring_sessions",
               "review_coverage",
               "review_attention",

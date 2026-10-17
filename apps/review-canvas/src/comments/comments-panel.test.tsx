@@ -1,13 +1,13 @@
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
-import type { GitLabState } from "@chalk/review-contracts";
+import type { CommentsState } from "@chalk/review-contracts";
 // @vitest-environment jsdom
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 
-import { GitLabProvider } from "./gitlab-context";
-import { GitLabDiscussionContent } from "./gitlab-discussions";
+import { CommentsProvider } from "./comments-context";
+import { CommentsContent } from "./comments-panel";
 
 it("keeps unsaved text after an autosave failure and flushes the latest edit before explicit posting", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -16,27 +16,28 @@ it("keeps unsaved text after an autosave failure and flushes the latest edit bef
     document.createElement("span").getClientRects();
   Range.prototype.getBoundingClientRect = () => new DOMRect();
 
-  const state: GitLabState = {
-    identity: {
-      host: "gitlab.test",
-      url: "https://gitlab.test/a/b/-/merge_requests/1",
-      projectId: 1,
-      projectPath: "a/b",
-      iid: 1,
-      cloneUrl: "https://gitlab.test/a/b.git",
+  const state: CommentsState = {
+    comments: [],
+    gitlab: {
+      identity: {
+        host: "gitlab.test",
+        url: "https://gitlab.test/a/b/-/merge_requests/1",
+        projectId: 1,
+        projectPath: "a/b",
+        iid: 1,
+        cloneUrl: "https://gitlab.test/a/b.git",
+      },
+      account: { id: 7, username: "andrew", name: "Andrew" },
+      refs: {
+        baseSha: "a".repeat(40),
+        startSha: "a".repeat(40),
+        headSha: "b".repeat(40),
+      },
+      discussions: [],
     },
-    account: { id: 7, username: "andrew", name: "Andrew" },
-    refs: {
-      baseSha: "a".repeat(40),
-      startSha: "a".repeat(40),
-      headSha: "b".repeat(40),
-    },
-    discussions: [],
-    drafts: [],
   };
 
   const session = testReviewSession();
-  session.review!.gitlab = state.identity;
   const calls: string[] = [];
   let rejectSave = true;
   let postedText: string | undefined;
@@ -44,27 +45,28 @@ it("keeps unsaved text after an autosave failure and flushes the latest edit bef
     calls.push(endpoint);
     const input = init?.body ? JSON.parse(String(init.body)) : {};
 
-    if (endpoint === "/gitlab/drafts") {
+    if (endpoint === "/comments/save") {
       if (rejectSave)
         return Response.json({ error: "Disk unavailable" }, { status: 409 });
-      const previous = state.drafts.find((d) => d.id === input.id);
+      const previous = state.comments.find((d) => d.id === input.id);
 
       const draft = {
         ...input,
+        author: "user",
         status: "saved",
         version: (previous?.version ?? 0) + 1,
       };
 
-      state.drafts = state.drafts.filter((d) => d.id !== input.id);
-      state.drafts.push(draft);
+      state.comments = state.comments.filter((d) => d.id !== input.id);
+      state.comments.push(draft);
 
       return Response.json(draft);
     }
 
     if (endpoint === "/gitlab/post") {
-      postedText = state.drafts[0]?.text;
-      state.drafts[0]!.status = "sent";
-      state.drafts[0]!.noteId = 42;
+      postedText = state.comments[0]?.text;
+      state.comments[0]!.status = "sent";
+      state.comments[0]!.noteId = 42;
     }
 
     return Response.json(state);
@@ -83,9 +85,9 @@ it("keeps unsaved text after an autosave failure and flushes the latest edit bef
     await act(async () =>
       root.render(
         <ReviewSessionProvider session={session}>
-          <GitLabProvider>
-            <GitLabDiscussionContent />
-          </GitLabProvider>
+          <CommentsProvider>
+            <CommentsContent />
+          </CommentsProvider>
         </ReviewSessionProvider>,
       ),
     );
@@ -115,15 +117,76 @@ it("keeps unsaved text after an autosave failure and flushes the latest edit bef
     await act(async () =>
       root.render(
         <ReviewSessionProvider session={historical}>
-          <GitLabProvider>
-            <GitLabDiscussionContent />
-          </GitLabProvider>
+          <CommentsProvider>
+            <CommentsContent />
+          </CommentsProvider>
         </ReviewSessionProvider>,
       ),
     );
     expect(button("New comment").disabled).toBe(true);
     expect(button("Post all").disabled).toBe(true);
     expect(calls.length).toBe(callsBefore);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("shows agent comments without sending controls when the review has no provider", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  Range.prototype.getClientRects = () =>
+    document.createElement("span").getClientRects();
+  Range.prototype.getBoundingClientRect = () => new DOMRect();
+
+  const state: CommentsState = {
+    comments: [
+      {
+        id: crypto.randomUUID(),
+        text: "Consider a guard here",
+        author: "agent",
+        target: { kind: "general" },
+        version: 1,
+        status: "saved",
+      },
+    ],
+  };
+
+  const session = testReviewSession();
+  const calls: string[] = [];
+  session.fetch = async (endpoint) => {
+    calls.push(endpoint);
+
+    return Response.json(state);
+  };
+
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+
+  try {
+    await act(async () =>
+      root.render(
+        <ReviewSessionProvider session={session}>
+          <CommentsProvider>
+            <CommentsContent />
+          </CommentsProvider>
+        </ReviewSessionProvider>,
+      ),
+    );
+    expect(container.textContent).toContain("Agent");
+    expect(container.querySelector('[role="textbox"]')?.textContent).toContain(
+      "Consider a guard here",
+    );
+
+    const labels = [...container.querySelectorAll("button")].map(
+      (b) => b.getAttribute("aria-label") ?? b.textContent,
+    );
+
+    expect(labels).toContain("Discard");
+    expect(labels).not.toContain("Post");
+    expect(labels).not.toContain("Post all");
+    expect(calls).toEqual(["/comments"]);
   } finally {
     await act(async () => root.unmount());
     container.remove();
