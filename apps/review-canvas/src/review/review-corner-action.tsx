@@ -4,7 +4,7 @@ import { cn } from "@canvas/lib/utils";
 import { shellStyles } from "@canvas/styles/shell-styles";
 import { useTutorial } from "@canvas/tutorial/tutorial-context";
 import { Button, IconButton } from "@canvas/ui/button";
-import type { IconProps } from "@canvas/ui/icons";
+import { CheckIcon, type IconProps } from "@canvas/ui/icons";
 import { surfaceStyles } from "@canvas/ui/surface";
 import { Archive } from "lucide-react";
 import { type ReactElement, useRef, useState } from "react";
@@ -63,7 +63,7 @@ export function ReviewCornerAction(): ReactElement | null {
         loading={busy}
         onClick={() => void dismiss()}
       >
-        <ArchiveIcon className={styles.icon} />
+        <CheckIcon />
       </IconButton>
       {failed && (
         <span

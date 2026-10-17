@@ -1026,30 +1026,32 @@ function Shell(
             )}
         </div>
       </header>
-      {!connected && (
-        <div
-          className="review-shell-notice tw:flex tw:items-center tw:justify-between tw:border-b tw:border-border tw:bg-[var(--tray)] tw:px-4 tw:py-2"
-          role="status"
-        >
-          Reconnecting to review server…
-        </div>
-      )}
-      {error && (
-        <div
-          className="review-shell-notice tw:flex tw:items-center tw:justify-between tw:border-b tw:border-border tw:bg-[var(--tray)] tw:px-4 tw:py-2"
-          role="alert"
-        >
-          {error}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Dismiss notification"
-            onClick={() => setError(undefined)}
+      <div className="review-shell-notices tw:fixed tw:right-[18px] tw:bottom-[18px] tw:z-[10001] tw:flex tw:max-w-[380px] tw:flex-col tw:gap-2">
+        {!connected && (
+          <div
+            className="review-shell-notice tw:flex tw:items-center tw:justify-between tw:gap-2 tw:rounded-[8px] tw:border tw:border-border tw:bg-[var(--tray)] tw:px-3 tw:py-2 tw:shadow-[0_8px_24px_var(--shadow-color-strong)]"
+            role="status"
           >
-            <XIcon aria-hidden="true" />
-          </Button>
-        </div>
-      )}
+            Reconnecting to review server…
+          </div>
+        )}
+        {error && (
+          <div
+            className="review-shell-notice tw:flex tw:items-center tw:justify-between tw:gap-2 tw:rounded-[8px] tw:border tw:border-border tw:bg-[var(--tray)] tw:px-3 tw:py-2 tw:shadow-[0_8px_24px_var(--shadow-color-strong)]"
+            role="alert"
+          >
+            {error}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Dismiss notification"
+              onClick={() => setError(undefined)}
+            >
+              <XIcon aria-hidden="true" />
+            </Button>
+          </div>
+        )}
+      </div>
       <div className="review-shell-body tw:relative tw:flex tw:min-h-0 tw:flex-1">
         <main
           className="review-shell-content tw:flex tw:min-h-0 tw:min-w-0 tw:flex-1 tw:flex-col tw:overflow-hidden"
@@ -1249,41 +1251,6 @@ function SettingsDialog({
               <option value="system">System</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
-            </NativeSelect>
-          </label>
-          <label htmlFor="shell-diff-layout">
-            <span>Diff layout</span>
-            <NativeSelect
-              id="shell-diff-layout"
-              aria-label="Diff layout"
-              value={preferences.diffLayout}
-              onChange={(event) => {
-                // SAFETY: the options below contain only supported layouts.
-                save({
-                  diffLayout: event.target
-                    .value as ShellPreferences["diffLayout"],
-                });
-              }}
-            >
-              <option value="split">Split</option>
-              <option value="unified">Unified</option>
-            </NativeSelect>
-          </label>
-          <label htmlFor="shell-diff-mode">
-            <span>Diff mode</span>
-            <NativeSelect
-              id="shell-diff-mode"
-              aria-label="Diff mode"
-              value={preferences.diffMode}
-              onChange={(event) => {
-                // SAFETY: the options below contain only supported modes.
-                save({
-                  diffMode: event.target.value as ShellPreferences["diffMode"],
-                });
-              }}
-            >
-              <option value="text">Text</option>
-              <option value="structural">Structural</option>
             </NativeSelect>
           </label>
         </div>

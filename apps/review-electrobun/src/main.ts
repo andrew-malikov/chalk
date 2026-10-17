@@ -144,7 +144,10 @@ async function run() {
   if (process.platform === "darwin") {
     // Center the 14px native controls in the shell's 56px header, and inset them
     // so the gap before them matches the gap to the search icon in the 88px slot.
-    window.setWindowButtonPosition(22, 21);
+    const placeButtons = () => window.setWindowButtonPosition(22, 21);
+    placeButtons();
+    // macOS lays the titlebar out again while CEF loads, resetting the buttons.
+    window.webview.on("dom-ready", placeButtons);
   }
 
   window.webview.setNavigationRules(["^*", "views://mainview/*"]);

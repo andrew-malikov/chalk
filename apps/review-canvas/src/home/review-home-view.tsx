@@ -2,9 +2,9 @@ import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { Input } from "@canvas/components/ui/input";
 import { CanvasUiContext, useCanvasMenu } from "@canvas/host/canvas-ui";
 import { cn } from "@canvas/lib/utils";
-import { ArchiveIcon } from "@canvas/review/review-corner-action";
 import { Button, IconButton } from "@canvas/ui/button";
 import { EmptyState } from "@canvas/ui/empty-state";
+import { CheckIcon } from "@canvas/ui/icons";
 import { OptionMenu } from "@canvas/ui/option-menu";
 import { textStyles } from "@canvas/ui/text";
 import type {
@@ -813,7 +813,7 @@ function DismissReviewButton({ review }: { review: ReviewApiSummary }) {
           .finally(() => setBusy(false));
       }}
     >
-      <ArchiveIcon className={styles.dismissIcon} />
+      <CheckIcon />
     </IconButton>
   );
 }
@@ -1046,8 +1046,6 @@ const styles = {
   // In the table it waits for its row's hover or focus.
   dismiss:
     "tw:opacity-0 tw:[&:is(.canvas-row:hover_*)]:opacity-[1] tw:[&:is(.canvas-row:focus-within_*)]:opacity-[1]",
-  dismissIcon:
-    "tw:size-[13px] tw:fill-[none] tw:stroke-[currentColor] tw:[stroke-linejoin:round] tw:stroke-[1.2]",
   // Paper desktop table: fixed metadata lanes and a flexible title column.
   tableSection: "tw:mt-[24px]",
   toolbar:
