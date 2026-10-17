@@ -1,10 +1,8 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { AGENT_LOGOS } from "@canvas/home/agent-logos";
+import { cn } from "@canvas/lib/utils";
 import { cliInstallReady } from "@canvas/settings/cli-install-status";
 import { controlStyles } from "@canvas/styles/controls-styles";
-import { fontSize, radius } from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { CopyIcon, copyText } from "@canvas/ui/copy-text";
 import { CheckIcon } from "@canvas/ui/icons";
 import { OptionMenu } from "@canvas/ui/option-menu";
@@ -13,7 +11,6 @@ import {
   type ReviewCliInstallTarget,
   ReviewCliInstallTargetSchema,
 } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { useEffect, useRef, useState } from "react";
 
 import { promptStyles } from "./prompt-styles";
@@ -127,9 +124,7 @@ export function ConnectCard({
   if (!cliInstallReady(status)) {
     return (
       <section aria-label="Connect your agents">
-        <p {...stylex.props(styles.note)}>
-          Install the chalk command in PATH first.
-        </p>
+        <p className={styles.note}>Install the chalk command in PATH first.</p>
       </section>
     );
   }
@@ -137,7 +132,7 @@ export function ConnectCard({
   return (
     <section aria-label="Connect your agents">
       <div
-        {...stylex.props(
+        className={cn(
           controlStyles.segmented,
           promptStyles.tabs,
           styles.agentTabs,
@@ -154,7 +149,7 @@ export function ConnectCard({
               size="xs"
               key={tab}
               type="button"
-              {...withClass(
+              className={cn(
                 "tw:h-auto tw:whitespace-normal tw:font-normal",
                 controlStyles.segment,
                 controlStyles.segmentLarge,
@@ -163,7 +158,7 @@ export function ConnectCard({
               aria-pressed={target === tab}
               onClick={() => selectTarget(tab)}
             >
-              <Logo xstyle={styles.logo} />
+              <Logo className={styles.logo} />
               {TARGET_LABELS[tab]}
             </ButtonPrimitive>
           );
@@ -174,7 +169,7 @@ export function ConnectCard({
         />
       </div>
       <div
-        {...stylex.props(controlStyles.segmented, promptStyles.tabs)}
+        className={cn(controlStyles.segmented, promptStyles.tabs)}
         role="group"
         aria-label="Setup method"
       >
@@ -184,7 +179,7 @@ export function ConnectCard({
             size="xs"
             key={tab}
             type="button"
-            {...withClass(
+            className={cn(
               "tw:h-auto tw:whitespace-normal tw:font-normal",
               controlStyles.segment,
               mode === tab && controlStyles.segmentActive,
@@ -198,9 +193,9 @@ export function ConnectCard({
       </div>
       {text ? (
         <>
-          <div {...stylex.props(styles.bodyWrap)}>
+          <div className={styles.bodyWrap}>
             <pre
-              {...stylex.props(
+              className={cn(
                 promptStyles.body,
                 collapsed && styles.collapsedBody,
               )}
@@ -208,7 +203,7 @@ export function ConnectCard({
             >
               {text.split(/(--[a-z][a-z-]*)/g).map((part, index) =>
                 part.startsWith("--") ? (
-                  <span {...stylex.props(styles.option)} key={index}>
+                  <span className={styles.option} key={index}>
                     {part}
                   </span>
                 ) : (
@@ -221,7 +216,7 @@ export function ConnectCard({
                 variant="ghost"
                 size="xs"
                 type="button"
-                {...withClass(
+                className={cn(
                   "tw:h-auto tw:whitespace-normal tw:font-normal",
                   styles.expand,
                 )}
@@ -232,13 +227,13 @@ export function ConnectCard({
               </ButtonPrimitive>
             ) : null}
           </div>
-          <div {...stylex.props(promptStyles.actions)}>
+          <div className={promptStyles.actions}>
             {collapsible && expanded ? (
               <ButtonPrimitive
                 variant="ghost"
                 size="xs"
                 type="button"
-                {...withClass(
+                className={cn(
                   "tw:h-auto tw:whitespace-normal tw:font-normal",
                   styles.collapse,
                 )}
@@ -252,7 +247,7 @@ export function ConnectCard({
               variant="ghost"
               size="xs"
               type="button"
-              {...withClass(
+              className={cn(
                 "tw:h-auto tw:whitespace-normal tw:font-normal",
                 promptStyles.copy,
               )}
@@ -268,12 +263,12 @@ export function ConnectCard({
           </div>
         </>
       ) : (
-        <p {...stylex.props(promptStyles.body)}>
+        <p className={promptStyles.body}>
           {`${plugin.label}\nInstall the chalk command first.`}
         </p>
       )}
       {status.error ? (
-        <p {...stylex.props(promptStyles.error)}>{status.error}</p>
+        <p className={promptStyles.error}>{status.error}</p>
       ) : null}
     </section>
   );
@@ -302,7 +297,7 @@ function OtherAgentMenu({
         };
       })}
       onChange={onSelect}
-      triggerStyle={[
+      triggerClassName={[
         controlStyles.segment,
         controlStyles.segmentLarge,
         styles.otherTrigger,
@@ -310,7 +305,7 @@ function OtherAgentMenu({
       ]}
       triggerProps={{ "aria-pressed": selected !== undefined }}
     >
-      {Logo ? <Logo xstyle={styles.logo} /> : null}
+      {Logo ? <Logo className={styles.logo} /> : null}
       {selected ? TARGET_LABELS[selected] : "Other…"}
     </OptionMenu>
   );
@@ -332,63 +327,19 @@ function readStoredTarget(): ReviewCliInstallTarget {
   return "claude";
 }
 
-const styles = stylex.create({
-  note: {
-    margin: "0 0 8px",
-    color: tokens.reviewHomeMeta,
-    fontSize: fontSize.body,
-  },
+const styles = {
+  note: "tw:m-[0_0_8px] tw:text-[color:var(--review-home-meta)] tw:text-[length:12px]",
   // The prompt card's tabs, one agent at a time.
-  agentTabs: {
-    flexWrap: "wrap",
-    marginBottom: "6px",
-  },
-  logo: {
-    width: "14px",
-    height: "14px",
-  },
-  otherTrigger: {
-    paddingRight: "6px",
-  },
-  bodyWrap: {
-    position: "relative",
-  },
-  collapsedBody: {
-    maxHeight: "calc(22px * 4)",
-    overflow: "hidden",
-    maskImage: "linear-gradient(to bottom, #000 35%, transparent)",
-  },
-  option: {
-    whiteSpace: "nowrap",
-  },
+  agentTabs: "tw:flex-wrap tw:mb-[6px]",
+  logo: "tw:size-[14px]",
+  otherTrigger: "tw:pr-[6px]",
+  bodyWrap: "tw:relative",
+  collapsedBody:
+    "tw:max-h-[calc(22px_*_4)] tw:overflow-hidden tw:[mask-image:linear-gradient(to_bottom,_#000_35%,_transparent)]",
+  option: "tw:whitespace-nowrap",
   // Sits on the fade, centered, like a "show full prompt" pill.
-  expand: {
-    position: "absolute",
-    bottom: 0,
-    left: "50%",
-    transform: "translateX(-50%)",
-    padding: "3px 12px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: {
-      default: tokens.reviewHomeRuleSoft,
-      ":hover": tokens.inkMuted,
-    },
-    borderRadius: radius.pill,
-    backgroundColor: tokens.raised,
-    color: tokens.ink,
-    font: `${fontSize.body}/18px ${tokens.fontSans}`,
-    cursor: "pointer",
-  },
-  collapse: {
-    marginRight: "auto",
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: "transparent",
-    color: { default: tokens.inkMuted, ":hover": tokens.ink },
-    font: `${fontSize.body}/22px ${tokens.fontSans}`,
-    cursor: "pointer",
-  },
-});
+  expand:
+    "tw:absolute tw:bottom-0 tw:left-[50%] tw:[transform:translateX(-50%)] tw:p-[3px_12px] tw:border-[1px] tw:border-solid tw:border-[color:var(--review-home-rule-soft)] tw:[&:hover]:border-[color:var(--ink-muted)] tw:rounded-[999px] tw:bg-[color:var(--raised)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[18px] tw:cursor-pointer",
+  collapse:
+    "tw:mr-[auto] tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:text-[color:var(--ink-muted)] tw:[&:hover]:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[22px] tw:cursor-pointer",
+};

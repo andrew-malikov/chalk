@@ -1,13 +1,6 @@
 import { Badge } from "@canvas/components/ui/badge";
-import {
-  fontSize,
-  fontWeight,
-  radius,
-  tracking,
-} from "@canvas/styles/scale.stylex";
-import { type StyleArg, withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
+import { cn } from "@canvas/lib/utils";
+import type { ClassValue } from "clsx";
 import type { ComponentProps } from "react";
 
 type ChipProps = Omit<ComponentProps<"span">, "className" | "style"> & {
@@ -15,71 +8,34 @@ type ChipProps = Omit<ComponentProps<"span">, "className" | "style"> & {
   variant?: "tag" | "pill";
   // Large pills stand alone in a row; tags have one size.
   size?: "default" | "large";
-  className?: string;
-  xstyle?: StyleArg;
+  className?: ClassValue;
 };
 
 export function Chip({
   variant = "tag",
   size = "default",
   className,
-  xstyle,
   ...props
 }: ChipProps) {
   return (
     <Badge
       variant="secondary"
       {...props}
-      {...withClass(
-        [
-          "tw:h-[18px] tw:border-0 tw:py-0 tw:leading-none tw:text-muted-foreground",
-          variant === "tag"
-            ? "tw:rounded-sm tw:px-[5px] tw:text-[10px] tw:font-semibold tw:tracking-[0.06em] tw:uppercase"
-            : "tw:gap-1.5 tw:px-2 tw:text-[11px] tw:font-normal",
-          size === "large" && "tw:h-[22px]",
-          className,
-        ]
-          .filter(Boolean)
-          .join(" "),
-        xstyle,
+      className={cn(
+        "tw:h-[18px] tw:border-0 tw:py-0 tw:leading-none tw:text-muted-foreground",
+        variant === "tag"
+          ? "tw:rounded-sm tw:px-[5px] tw:text-[10px] tw:font-semibold tw:tracking-[0.06em] tw:uppercase"
+          : "tw:gap-1.5 tw:px-2 tw:text-[11px] tw:font-normal",
+        size === "large" && "tw:h-[22px]",
+        className,
       )}
     />
   );
 }
 
 // Exported for chips that are buttons. Sites set their own tone after these.
-export const chipStyles = stylex.create({
-  tag: {
-    display: "inline-flex",
-    flex: "0 0 auto",
-    alignItems: "center",
-    height: "18px",
-    padding: "0 5px",
-    borderRadius: radius.small,
-    backgroundColor: tokens.well,
-    color: tokens.inkMuted,
-    fontSize: fontSize.micro,
-    fontWeight: fontWeight.semibold,
-    lineHeight: 1,
-    letterSpacing: tracking.caps,
-    textTransform: "uppercase",
-    whiteSpace: "nowrap",
-  },
-  pill: {
-    display: "inline-flex",
-    flex: "0 0 auto",
-    alignItems: "center",
-    gap: "6px",
-    height: "18px",
-    padding: "0 8px",
-    borderRadius: radius.pill,
-    backgroundColor: tokens.well,
-    color: tokens.inkMuted,
-    fontSize: fontSize.small,
-    lineHeight: 1,
-    whiteSpace: "nowrap",
-  },
-  large: {
-    height: "22px",
-  },
-});
+export const chipStyles = {
+  tag: "tw:inline-flex tw:flex-[0_0_auto] tw:items-center tw:h-[18px] tw:p-[0_5px] tw:rounded-[4px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink-muted)] tw:text-[length:10px] tw:font-semibold tw:leading-[1] tw:tracking-[0.08em] tw:uppercase tw:whitespace-nowrap",
+  pill: "tw:inline-flex tw:flex-[0_0_auto] tw:items-center tw:gap-[6px] tw:h-[18px] tw:p-[0_8px] tw:rounded-[999px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink-muted)] tw:text-[length:11px] tw:leading-[1] tw:whitespace-nowrap",
+  large: "tw:h-[22px]",
+};

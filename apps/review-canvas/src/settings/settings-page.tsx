@@ -1,7 +1,7 @@
 import { Switch } from "@canvas/components/ui/switch";
 import { ConnectCard } from "@canvas/home/connect-card";
 import { homeStyles } from "@canvas/home/home-styles";
-import { withClass } from "@canvas/styles/stylex-props";
+import { cn } from "@canvas/lib/utils";
 import { Button } from "@canvas/ui/button";
 import { textStyles } from "@canvas/ui/text";
 import type {
@@ -13,7 +13,6 @@ import type {
   ReviewReadyNotificationChoice,
   ReviewThemeChoice,
 } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { type ReactNode, useEffect, useState } from "react";
 
 import { Choice } from "./settings-choice";
@@ -117,13 +116,13 @@ export function SettingsPage({
   };
 
   return (
-    <main {...withClass("review-home", homeStyles.page)}>
-      <div {...stylex.props(homeStyles.scroll)}>
-        <div {...stylex.props(homeStyles.content, styles.page)}>
-          <div {...stylex.props(homeStyles.header)}>
-            <h1 {...stylex.props(homeStyles.heading)}>Settings</h1>
+    <main className={cn("review-home", homeStyles.page)}>
+      <div className={homeStyles.scroll}>
+        <div className={cn(homeStyles.content, styles.page)}>
+          <div className={homeStyles.header}>
+            <h1 className={homeStyles.heading}>Settings</h1>
           </div>
-          <p {...stylex.props(styles.lede)}>
+          <p className={styles.lede}>
             Settings apply to Chalk on this machine.
           </p>
 
@@ -267,7 +266,7 @@ export function SettingsPage({
               label="Structural Diffs"
               description="Structural rendering is temporarily unavailable. Your preference is saved."
             >
-              <div {...stylex.props(styles.toggle)}>
+              <div className={styles.toggle}>
                 <Switch
                   aria-label="Structural Diffs"
                   checked={structuralDiffEnabled}
@@ -279,7 +278,7 @@ export function SettingsPage({
               label="Software Map"
               description="Show the experimental Software Map view in sessions."
             >
-              <div {...stylex.props(styles.toggle)}>
+              <div className={styles.toggle}>
                 <Switch
                   aria-label="Software Map"
                   checked={softwareMapEnabled}
@@ -298,7 +297,7 @@ export function SettingsPage({
               label="Scratchpad"
               description="Show the experimental scratchpad on Home. Agents draw on it through Chalk's MCP tools."
             >
-              <div {...stylex.props(styles.toggle)}>
+              <div className={styles.toggle}>
                 <Switch
                   aria-label="Scratchpad"
                   checked={scratchpadEnabled}
@@ -315,7 +314,7 @@ export function SettingsPage({
             </Row>
           </Section>
 
-          {error ? <p {...stylex.props(styles.error)}>{error}</p> : null}
+          {error ? <p className={styles.error}>{error}</p> : null}
         </div>
       </div>
     </main>
@@ -324,10 +323,8 @@ export function SettingsPage({
 
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <section {...stylex.props(styles.section)} aria-label={label}>
-      <h2 {...stylex.props(textStyles.eyebrow, styles.sectionLabel)}>
-        {label}
-      </h2>
+    <section className={styles.section} aria-label={label}>
+      <h2 className={cn(textStyles.eyebrow, styles.sectionLabel)}>{label}</h2>
       {children}
     </section>
   );
@@ -343,12 +340,12 @@ function Row({
   children: ReactNode;
 }) {
   return (
-    <div {...stylex.props(styles.row)}>
-      <div {...stylex.props(styles.rowText)}>
-        <span {...stylex.props(styles.rowLabel)}>{label}</span>
-        <span {...stylex.props(styles.rowDescription)}>{description}</span>
+    <div className={styles.row}>
+      <div className={styles.rowText}>
+        <span className={styles.rowLabel}>{label}</span>
+        <span className={styles.rowDescription}>{description}</span>
       </div>
-      <div {...stylex.props(styles.rowControl)}>{children}</div>
+      <div className={styles.rowControl}>{children}</div>
     </div>
   );
 }

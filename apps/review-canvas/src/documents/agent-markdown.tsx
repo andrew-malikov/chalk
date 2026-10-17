@@ -1,8 +1,8 @@
 import { drawStyles } from "@canvas/drawing/draw-styles";
-import { withClass } from "@canvas/styles/stylex-props";
+import { cn } from "@canvas/lib/utils";
 import { isNumberValue, isStringValue } from "@chalk/review-contracts";
 import { type MarkdownNode, parseMarkdown } from "@review/documents/markdown";
-import * as stylex from "@stylexjs/stylex";
+import type { ClassValue } from "clsx";
 import {
   type ComponentType,
   Fragment,
@@ -87,10 +87,12 @@ export function MarkdownContent({
                     node.depth === 2 || node.depth === 3
                       ? headingId(heading++)
                       : undefined,
-                  ...stylex.props(
-                    headingStyle(node.depth),
-                    drawStyles.blockChild,
-                  ),
+                  ...{
+                    className: cn(
+                      headingStyle(node.depth),
+                      drawStyles.blockChild,
+                    ),
+                  },
                 },
                 renderMarkdownChildren(node.children ?? [], String(index)),
               )
@@ -138,14 +140,14 @@ function renderFootnotes(
   return (
     <section
       data-footnotes=""
-      {...withClass("footnotes", drawStyles.blockChild)}
+      className={cn("footnotes", drawStyles.blockChild)}
     >
       <ol>
         {footnotes.map((definition, index) => (
           <li
             key={`${keyPrefix}:fn:${index}`}
             id={`fn-${definition.label ?? definition.identifier ?? index}`}
-            {...stylex.props(doc.item)}
+            className={doc.item}
           >
             {renderMarkdownChildren(
               definition.children ?? [],
@@ -168,7 +170,7 @@ export const markdownHasTitle = (source: string) =>
 function renderMarkdownChildren(
   children: MarkdownNode[],
   keyPrefix: string,
-  paragraph?: stylex.StyleXStyles,
+  paragraph?: ClassValue,
 ): ReactNode {
   return children.map((child, index) =>
     renderMarkdownNode(child, `${keyPrefix}:${index}`, paragraph),
@@ -178,7 +180,7 @@ function renderMarkdownChildren(
 function renderMarkdownNode(
   node: MarkdownNode,
   key: string,
-  paragraph?: stylex.StyleXStyles,
+  paragraph?: ClassValue,
 ): ReactNode {
   switch (node.type) {
     case "root":
@@ -191,7 +193,7 @@ function renderMarkdownNode(
       return (
         <p
           key={key}
-          {...stylex.props([doc.paragraph, drawStyles.blockChild], paragraph)}
+          className={cn([doc.paragraph, drawStyles.blockChild], paragraph)}
         >
           {renderMarkdownChildren(node.children ?? [], key)}
         </p>
@@ -214,7 +216,7 @@ function renderMarkdownNode(
       );
     case "inlineCode":
       return (
-        <code key={key} {...stylex.props(doc.code)}>
+        <code key={key} className={doc.code}>
           {node.value ?? ""}
         </code>
       );
@@ -237,13 +239,15 @@ function renderMarkdownNode(
     case "break":
       return <br key={key} />;
     case "thematicBreak":
-      return <hr key={key} {...stylex.props(drawStyles.blockChild)} />;
+      return <hr key={key} className={drawStyles.blockChild} />;
     case "heading":
       return createElement(
         headingTag(node.depth),
         {
           key,
-          ...stylex.props([headingStyle(node.depth), drawStyles.blockChild]),
+          ...{
+            className: cn([headingStyle(node.depth), drawStyles.blockChild]),
+          },
         },
         renderMarkdownChildren(node.children ?? [], key),
       );
@@ -251,7 +255,7 @@ function renderMarkdownNode(
       return (
         <blockquote
           key={key}
-          {...stylex.props([doc.body, doc.column, drawStyles.blockChild])}
+          className={cn([doc.body, doc.column, drawStyles.blockChild])}
         >
           {renderMarkdownChildren(node.children ?? [], key)}
         </blockquote>
@@ -264,7 +268,7 @@ function renderMarkdownNode(
         {
           key,
           start: node.ordered ? (node.start ?? undefined) : undefined,
-          ...stylex.props([doc.column, drawStyles.blockChild]),
+          ...{ className: cn([doc.column, drawStyles.blockChild]) },
         },
         renderMarkdownChildren(node.children ?? [], key),
       );
@@ -272,7 +276,7 @@ function renderMarkdownNode(
 
     case "listItem":
       return node.checked === null || node.checked === undefined ? (
-        <li key={key} {...stylex.props(doc.item)}>
+        <li key={key} className={doc.item}>
           {renderMarkdownChildren(node.children ?? [], key, doc.itemParagraph)}
         </li>
       ) : (
@@ -308,7 +312,7 @@ function renderMarkdownNode(
       return renderTableRow(node, key, false, null);
     case "tableCell":
       return (
-        <td key={key} {...stylex.props(doc.cell)}>
+        <td key={key} className={doc.cell}>
           {renderMarkdownChildren(node.children ?? [], key)}
         </td>
       );
@@ -321,7 +325,7 @@ function renderMarkdownNode(
             data-footnote-ref=""
             href={`#fn-${label}`}
             id={`fnref-${label}`}
-            {...stylex.props(doc.link)}
+            className={doc.link}
           >
             {label}
           </a>
@@ -367,7 +371,7 @@ function renderTable(node: MarkdownNode, key: string): ReactElement {
   const align = node.align ?? null;
 
   return (
-    <table key={key} {...stylex.props([doc.table, drawStyles.blockChild])}>
+    <table key={key} className={cn([doc.table, drawStyles.blockChild])}>
       {header && (
         <thead>{renderTableRow(header, `${key}:head`, true, align)}</thead>
       )}
@@ -397,7 +401,7 @@ function renderTableRow(
           Cell,
           {
             key: `${key}:cell:${index}`,
-            ...stylex.props(doc.cell, isHeader && doc.headerCell),
+            ...{ className: cn(doc.cell, isHeader && doc.headerCell) },
             style: textAlign ? { textAlign } : undefined,
           },
           renderMarkdownChildren(cell.children ?? [], `${key}:cell:${index}`),
@@ -430,15 +434,15 @@ function TaskItem({
   const toggle = useContext(TaskToggle);
 
   return (
-    <li {...stylex.props(doc.item, styles.task)}>
+    <li className={cn(doc.item, styles.task)}>
       <input
         type="checkbox"
         checked={node.checked === true}
         disabled={!toggle}
         onChange={() => toggle?.(node)}
-        {...stylex.props(styles.taskBox)}
+        className={styles.taskBox}
       />
-      <div {...stylex.props(styles.taskBody)}>{children}</div>
+      <div className={styles.taskBody}>{children}</div>
     </li>
   );
 }
@@ -447,9 +451,7 @@ function MarkdownImage({ url, alt }: { url: string; alt: string }): ReactNode {
   // Phrasing content, so an <img> (a <figure> inside <p> is invalid HTML)
   // laid out like an image block.
   if (useContext(RemoteImages) && urlProtocol(url) === "https:")
-    return (
-      <img src={url} alt={alt} loading="lazy" {...stylex.props(doc.image)} />
-    );
+    return <img src={url} alt={alt} loading="lazy" className={doc.image} />;
 
   // Images that cannot be safely loaded display their alt text.
   return alt ? <em>{alt}</em> : null;
@@ -471,7 +473,7 @@ function MarkdownLink({
 
   if (isLocalFilesystemHref(href))
     return (
-      <code {...withClass("agent-markdown-code-reference", doc.code)}>
+      <code className={cn("agent-markdown-code-reference", doc.code)}>
         {textFromChildren(children) ?? "local file"}
       </code>
     );
@@ -480,7 +482,7 @@ function MarkdownLink({
   const linkProps = newTabLinkProps(href);
 
   return (
-    <a href={href} title={title} {...linkProps} {...stylex.props(doc.link)}>
+    <a href={href} title={title} {...linkProps} className={doc.link}>
       {children}
     </a>
   );
@@ -541,28 +543,12 @@ function textFromChildren(children: ReactNode): string | null {
   return null;
 }
 
-const styles = stylex.create({
+const styles = {
   // The checkbox replaces the bullet, beside the item's first line.
-  task: {
-    display: "flex",
-    gap: "0.5em",
-    listStyle: "none",
-  },
+  task: "tw:flex tw:gap-[0.5em] tw:[list-style:none]",
   // Centered on the first line of text.
-  taskBox: {
-    flex: "none",
-    width: "1em",
-    height: "1em",
-    margin: "calc((1lh - 1em) / 2) 0 0",
-    font: "inherit",
-    lineHeight: "inherit",
-    cursor: { default: null, ":enabled": "pointer" },
-  },
-  taskBody: {
-    minWidth: 0,
-  },
-  taskParagraph: {
-    marginTop: { default: null, ":first-child": 0 },
-    marginBottom: { default: null, ":last-child": 0 },
-  },
-});
+  taskBox:
+    "tw:flex-[none] tw:size-[1em] tw:m-[calc((1lh_-_1em)_/_2)_0_0] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:leading-[inherit] tw:[&:enabled]:cursor-pointer",
+  taskBody: "tw:min-w-0",
+  taskParagraph: "tw:[&:first-child]:mt-0 tw:[&:last-child]:mb-0",
+};

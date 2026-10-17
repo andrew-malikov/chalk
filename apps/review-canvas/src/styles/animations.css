@@ -1,0 +1,401 @@
+@keyframes -diff-view-relabel {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes -diff-view-land-slot {
+  0% {
+    outline: 1px dashed var(--rule-soft);
+    outline-offset: -1px;
+    background-color: var(--transparent);
+  }
+  38% {
+    outline: 1px solid var(--accent);
+    outline-offset: -1px;
+    background-color: var(--marker-tint);
+  }
+  70% {
+    outline: 1px solid var(--accent);
+    background-color: var(--marker-tint);
+  }
+  100% {
+    outline: 1px solid var(--transparent);
+    outline-offset: -1px;
+    background-color: var(--transparent);
+  }
+}
+
+@keyframes -diff-view-attention {
+  from {
+    outline-color: var(--transparent);
+    background-color: var(--transparent);
+  }
+}
+
+@keyframes -diff-view-collapse {
+  from {
+    height: auto;
+    margin-block: 0;
+  }
+  to {
+    height: 0;
+    margin-block: 0;
+  }
+}
+
+@keyframes courier-figure-march-left {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes courier-figure-march-right {
+  0%,
+  100% {
+    transform: translateY(-4px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes courier-figure-doze {
+  0%,
+  80% {
+    transform: translateY(0);
+  }
+  81%,
+  100% {
+    transform: translateY(1.5px);
+  }
+}
+
+@keyframes courier-figure-ponder {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-2px, 0);
+  }
+  50% {
+    transform: translate(2px, 0);
+  }
+  75% {
+    transform: translate(1px, -2px);
+  }
+}
+
+@keyframes courier-figure-happy {
+  0%,
+  10% {
+    opacity: 0;
+  }
+  12%,
+  70% {
+    opacity: 1;
+  }
+  72%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes courier-march-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-1.5px) rotate(2deg);
+  }
+}
+
+@keyframes draw-styles-wipe {
+  from {
+    --wb-wipe: 0%;
+  }
+  to {
+    --wb-wipe: 108%;
+  }
+}
+
+@keyframes draw-styles-erase {
+  from {
+    --wb-sweep: -20%;
+    opacity: 1;
+    -webkit-mask-image: linear-gradient(
+      115deg,
+      transparent calc(var(--wb-sweep) - 12%),
+      #000 var(--wb-sweep)
+    );
+    mask-image: linear-gradient(
+      115deg,
+      transparent calc(var(--wb-sweep) - 12%),
+      #000 var(--wb-sweep)
+    );
+  }
+  to {
+    --wb-sweep: 130%;
+    opacity: 1;
+    -webkit-mask-image: linear-gradient(
+      115deg,
+      transparent calc(var(--wb-sweep) - 12%),
+      #000 var(--wb-sweep)
+    );
+    mask-image: linear-gradient(
+      115deg,
+      transparent calc(var(--wb-sweep) - 12%),
+      #000 var(--wb-sweep)
+    );
+  }
+}
+
+@keyframes draw-styles-rewrite {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes draw-styles-dot-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes draw-styles-eraser-in {
+  from {
+    opacity: 0;
+    transform: translateX(-60px) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(-6deg);
+  }
+}
+
+@keyframes draw-styles-eraser-sweeps {
+  0% {
+    transform: translate(0, 0) rotate(-6deg);
+  }
+  33% {
+    transform: translate(520px, 22px) rotate(-8deg);
+  }
+  34% {
+    transform: translate(30px, 26px) rotate(-6deg);
+  }
+  66% {
+    transform: translate(540px, 50px) rotate(-8deg);
+  }
+  67% {
+    transform: translate(60px, 54px) rotate(-6deg);
+  }
+  100% {
+    transform: translate(560px, 78px) rotate(-8deg);
+  }
+}
+
+@keyframes draw-styles-eraser-out {
+  to {
+    opacity: 0;
+    transform: translate(600px, 88px) rotate(-8deg);
+  }
+}
+
+@keyframes draw-styles-land-slot {
+  0% {
+    outline: 1px dashed var(--rule-soft);
+    outline-offset: -1px;
+    background-color: var(--transparent);
+  }
+  38% {
+    outline: 1px solid var(--accent);
+    outline-offset: -1px;
+    background-color: var(--marker-tint);
+  }
+  70% {
+    outline: 1px solid var(--accent);
+    background-color: var(--marker-tint);
+  }
+  100% {
+    outline: 1px solid var(--transparent);
+    outline-offset: -1px;
+    background-color: var(--transparent);
+  }
+}
+
+@keyframes draw-styles-collapse {
+  from {
+    height: auto;
+    margin-block: 0;
+  }
+  to {
+    height: 0;
+    margin-block: 0;
+  }
+}
+
+@keyframes draw-styles-region-pulse {
+  50% {
+    outline-color: color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+}
+
+@keyframes draw-styles-region-pulse-border {
+  50% {
+    border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+}
+
+@keyframes draw-styles-label {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes draw-styles-trace {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes draw-styles-node-fill {
+  0% {
+    fill: var(--marker-tint);
+    stroke: var(--accent);
+    stroke-width: 1.6;
+  }
+  60% {
+    fill: var(--marker-tint);
+    stroke: var(--accent);
+  }
+  100% {
+    stroke-width: 1;
+  }
+}
+
+@keyframes draw-styles-step-pop {
+  0% {
+    border-color: var(--accent);
+    background-color: var(--accent);
+    box-shadow: 0 0 0 0 var(--marker-glow);
+  }
+  40% {
+    box-shadow: 0 0 0 8px var(--marker-glow);
+  }
+  100% {
+    border-color: var(--accent);
+    background-color: var(--accent);
+    box-shadow: 0 0 0 0 var(--transparent);
+  }
+}
+
+@keyframes authoring-activity-courier-arrive {
+  0% {
+    transform: translateY(-16px);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(2px) scale(1.1, 0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes authoring-activity-shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@keyframes side-panel-styles-slide-in {
+  from {
+    opacity: 0.3;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes -software-map-card-bloom {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes -software-map-group-bloom {
+  from {
+    opacity: 0.72;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes loading-sweep {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes tutorial-experience-target-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px var(--tutorial-ring-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 8px
+      color-mix(in srgb, var(--tutorial-ring-glow) 45%, transparent);
+  }
+}
+
+@keyframes tutorial-experience-link-pulse {
+  0%,
+  100% {
+    background-color: var(--tutorial-ring-glow);
+  }
+  50% {
+    background-color: color-mix(in srgb, var(--tutorial-ring) 22%, transparent);
+  }
+}

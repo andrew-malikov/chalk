@@ -1,5 +1,6 @@
+import { cn } from "@canvas/lib/utils";
 import { Chip } from "@canvas/ui/chip";
-import * as stylex from "@stylexjs/stylex";
+import type { ClassValue } from "clsx";
 import type { ReactNode } from "react";
 
 import { diagramStyles } from "./diagram-styles";
@@ -9,27 +10,27 @@ export function DiagramHeader({
   title,
   meta,
   action,
-  xstyle,
-  metaStyle,
+  className,
+  metaClassName,
 }: {
   kind: string;
   title?: string;
   meta?: string;
   action?: ReactNode;
-  xstyle?: stylex.StaticStyles;
-  metaStyle?: stylex.StaticStyles;
+  className?: ClassValue;
+  metaClassName?: ClassValue;
 }) {
   return (
-    <figcaption {...stylex.props(diagramStyles.header, xstyle)}>
-      <div {...stylex.props(diagramStyles.headerMain)}>
+    <figcaption className={cn(diagramStyles.header, className)}>
+      <div className={diagramStyles.headerMain}>
         <Chip>{kind}</Chip>
         {title && (
-          <span {...stylex.props(diagramStyles.title)} data-review-copy-prose>
+          <span className={diagramStyles.title} data-review-copy-prose>
             {title}
           </span>
         )}
         {meta && (
-          <em {...stylex.props(diagramStyles.meta, metaStyle)}>{meta}</em>
+          <em className={cn(diagramStyles.meta, metaClassName)}>{meta}</em>
         )}
       </div>
       {action}

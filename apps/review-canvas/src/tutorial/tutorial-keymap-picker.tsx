@@ -1,9 +1,8 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import { cn } from "@canvas/lib/utils";
 import { controlStyles } from "@canvas/styles/controls-styles";
-import { withClass } from "@canvas/styles/stylex-props";
 import type { ReviewKeymapChoice } from "@chalk/review-contracts";
 import type { ReviewComponentProps } from "@review/documents/authoring";
-import * as stylex from "@stylexjs/stylex";
 import { useState } from "react";
 
 import { useTutorial } from "./tutorial-context";
@@ -24,7 +23,7 @@ export function TutorialKeymapPicker(
   return (
     // The class is the tutorial's target.
     <div
-      {...withClass(
+      className={cn(
         "tutorial-keymap-picker",
         controlStyles.segmented,
         styles.group,
@@ -44,7 +43,7 @@ export function TutorialKeymapPicker(
             type="button"
             aria-pressed={pressed}
             disabled={disabled}
-            {...stylex.props(
+            className={cn(
               controlStyles.segment,
               controlStyles.segmentLarge,
               pressed && controlStyles.segmentActive,
@@ -66,9 +65,6 @@ export function TutorialKeymapPicker(
 }
 
 // Inline-flex so the tutorial ring hugs the group.
-const styles = stylex.create({
-  group: {
-    display: "inline-flex",
-    margin: "6px 0 12px",
-  },
-});
+const styles = {
+  group: "tw:inline-flex tw:m-[6px_0_12px]",
+};

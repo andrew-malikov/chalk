@@ -1,0 +1,3 @@
+export const loadingStyles = {
+  text: "tw:[background-image:linear-gradient(90deg,_var(--ink-muted)_40%,_var(--ink)_50%,_var(--ink-muted)_60%)] tw:[@media_(prefers-reduced-motion:_reduce)]:[background-image:none] tw:[background-size:250%_100%] tw:[background-clip:text] tw:[@media_(prefers-reduced-motion:_reduce)]:[background-clip:border-box] tw:text-[color:var(--transparent)] tw:[@media_(prefers-reduced-motion:_reduce)]:text-[color:var(--ink-muted)] tw:[animation-name:loading-sweep] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:1.6s] tw:[animation-timing-function:linear] tw:[animation-iteration-count:infinite]",
+};

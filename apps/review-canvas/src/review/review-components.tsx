@@ -2,7 +2,6 @@ import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { CodePeekCard } from "@canvas/diff/CodePeek";
 import { AuthoredCodeSurface } from "@canvas/documents/authored-code-surface";
 import { documentStyles } from "@canvas/documents/document-styles";
-import { documentType } from "@canvas/documents/document-type.stylex";
 import { newTabLinkProps } from "@canvas/documents/link-props";
 import type { ReviewSectionSummary } from "@canvas/documents/review-section-summary";
 import { drawStyles } from "@canvas/drawing/draw-styles";
@@ -10,12 +9,10 @@ import {
   activeTargetForScroll,
   scrollTailHeight,
 } from "@canvas/lib/scroll-active-tracking";
+import { cn } from "@canvas/lib/utils";
 import { controlStyles } from "@canvas/styles/controls-styles";
-import { chevronMarker, documentMarker } from "@canvas/styles/markers.stylex";
-import { fontSize, fontWeight } from "@canvas/styles/scale.stylex";
+import { chevronMarker } from "@canvas/styles/markers";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { useTutorialSection } from "@canvas/tutorial/tutorial-section-context";
 import { IconButton } from "@canvas/ui/button";
 import {
@@ -26,7 +23,7 @@ import {
 } from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
 import type { ReviewComponentProps } from "@review/documents/authoring";
-import * as stylex from "@stylexjs/stylex";
+import type { ClassValue } from "clsx";
 import type {
   CSSProperties,
   ComponentPropsWithoutRef,
@@ -34,7 +31,7 @@ import type {
   ReactNode,
   Ref,
 } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useReviewActions } from "./review-context";
 import {
@@ -123,26 +120,24 @@ export function ReviewPanelFrame({
 
   return (
     <aside
-      {...withClass(
+      className={cn(
         "side-panel",
         panelStyles.panel,
+        !docked && panelStyles.sheet,
         panelMotion === "restored" && panelStyles.restored,
-        tour && panelStyles.tour,
+        tour && !docked && panelStyles.tour,
         docked && panelStyles.docked,
         tray && panelStyles.tray,
       )}
       aria-label={title ?? label}
       style={panelStyle}
     >
-      <div
-        {...stylex.props(shellStyles.sheetResizer)}
-        {...sheet.separatorProps}
-      />
-      <header {...stylex.props(panelStyles.header, tray && panelStyles.tray)}>
-        <div {...stylex.props(panelStyles.title)}>
+      <div className={shellStyles.sheetResizer} {...sheet.separatorProps} />
+      <header className={cn(panelStyles.header, tray && panelStyles.tray)}>
+        <div className={panelStyles.title}>
           {label && (
             <span
-              {...stylex.props(
+              className={cn(
                 textStyles.eyebrow,
                 panelStyles.kicker,
                 tray && panelStyles.trayKicker,
@@ -151,24 +146,24 @@ export function ReviewPanelFrame({
               {label}
             </span>
           )}
-          {title && <h2 {...stylex.props(panelStyles.heading)}>{title}</h2>}
+          {title && <h2 className={panelStyles.heading}>{title}</h2>}
           {titleAccessory}
         </div>
-        <div {...stylex.props(panelStyles.actions)}>
+        <div className={panelStyles.actions}>
           {headerActions}
           <IconButton
             size="large"
-            xstyle={panelStyles.close}
+            className={panelStyles.close}
             onClick={onClose}
             aria-label={closeLabel}
           >
-            <CloseIcon xstyle={controlStyles.inertIcon} />
+            <CloseIcon className={controlStyles.inertIcon} />
           </IconButton>
         </div>
       </header>
       <div
         ref={bodyRef}
-        {...stylex.props(panelStyles.body, tray && panelStyles.trayBody)}
+        className={cn(panelStyles.body, tray && panelStyles.trayBody)}
         onScroll={onBodyScroll}
       >
         {children}
@@ -237,7 +232,7 @@ export function ReviewSection({
   // for a (collapsed) section, and the tutorial targets a section's body.
   return (
     <section
-      {...withClass(
+      className={cn(
         collapsed
           ? "review-section review-section--collapsed"
           : "review-section",
@@ -248,21 +243,21 @@ export function ReviewSection({
       data-review-section={title}
       data-tutorial-chapter-state={tutorialSection.state ?? undefined}
     >
-      <div {...stylex.props(sectionStyles.header)}>
+      <div className={sectionStyles.header}>
         <IconButton
           size="small"
-          xstyle={[chevronMarker, sectionStyles.toggle]}
+          className={[chevronMarker, sectionStyles.toggle]}
           aria-expanded={!collapsed}
           aria-label={collapsed ? `Expand ${title}` : `Collapse ${title}`}
           onClick={toggleCollapsed}
         >
           <DisclosureChevron expanded={!collapsed} />
         </IconButton>
-        <div {...withClass("review-section-heading", sectionStyles.heading)}>
+        <div className={cn("review-section-heading", sectionStyles.heading)}>
           <h2
             id={id}
             data-review-copy-prose
-            {...stylex.props(
+            className={cn(
               sectionStyles.title,
               tutorialSection.state === "active" && sectionStyles.titleActive,
               collapsed && sectionStyles.titleCollapsed,
@@ -273,13 +268,13 @@ export function ReviewSection({
           </h2>
         </div>
         {collapsed && summary && (
-          <span {...stylex.props(sectionStyles.meta)}>
+          <span className={sectionStyles.meta}>
             {reviewSectionSummaryLabel(summary)}
           </span>
         )}
         {tutorialSection.state === "complete" && (
-          <span {...stylex.props(sectionStyles.complete)}>
-            Complete <CheckIcon xstyle={sectionStyles.completeIcon} />
+          <span className={sectionStyles.complete}>
+            Complete <CheckIcon className={sectionStyles.completeIcon} />
           </span>
         )}
       </div>
@@ -325,7 +320,7 @@ interface ProsePeekAnchorProps {
   isOpen: boolean;
   onOpen: (text: string) => void;
   onAlreadyOpen?: () => void;
-  xstyle?: stylex.StyleXStyles;
+  className?: ClassValue;
   anchorId?: string;
   inertFallback?: ReactNode;
   children: ReactNode;
@@ -340,7 +335,7 @@ export function ProsePeekAnchor({
   isOpen,
   onOpen,
   onAlreadyOpen,
-  xstyle,
+  className,
   anchorId,
   inertFallback,
   children,
@@ -354,7 +349,7 @@ export function ProsePeekAnchor({
   return (
     <a
       href={href}
-      {...stylex.props(documentStyles.link, xstyle)}
+      className={cn(documentStyles.link, className)}
       data-review-anchor-id={anchorId}
       data-review-anchor-open={isOpen ? "true" : undefined}
       onClick={(event) => {
@@ -500,9 +495,9 @@ function CodeReviewPeekPanel({
       onClose={onClose}
       closeLabel="Close side peek"
     >
-      <div {...stylex.props(panelStyles.peekBody)}>
+      <div className={panelStyles.peekBody}>
         {softwareMapEnabled && anchor.softwareMapPath ? (
-          <div {...stylex.props(panelStyles.peekActions)}>
+          <div className={panelStyles.peekActions}>
             <IconButton
               size="large"
               onClick={() => {
@@ -511,12 +506,12 @@ function CodeReviewPeekPanel({
               }}
               aria-label={`Show ${anchor.title} in software map`}
             >
-              <MapPinIcon xstyle={controlStyles.inertIcon} />
+              <MapPinIcon className={controlStyles.inertIcon} />
             </IconButton>
           </div>
         ) : null}
 
-        <div {...stylex.props(panelStyles.peekContent)}>
+        <div className={panelStyles.peekContent}>
           <ReviewPeekContentView anchor={anchor} content={content} />
         </div>
       </div>
@@ -673,34 +668,31 @@ export function GuidedTourPanel({
       closeLabel="Close guided tour"
       floatingFooter={
         tour.stops.length > 0 ? (
-          <div {...stylex.props(tourStyles.floatingFooter)}>
+          <div className={tourStyles.floatingFooter}>
             {showIntroPill ? (
               <ButtonPrimitive
                 variant="ghost"
                 size="xs"
                 type="button"
-                {...stylex.props(tourStyles.pill, tourStyles.pillIntro)}
+                className={cn(tourStyles.pill, tourStyles.pillIntro)}
                 onClick={() => {
                   setHasScrolled(true);
                   stepTo(1);
                 }}
               >
                 <span>{tour.stops.length - 1} more steps</span>
-                <span
-                  {...stylex.props(tourStyles.pillChevron)}
-                  aria-hidden="true"
-                >
+                <span className={tourStyles.pillChevron} aria-hidden="true">
                   ↓
                 </span>
               </ButtonPrimitive>
             ) : (
               <div
-                {...stylex.props(tourStyles.pill)}
+                className={tourStyles.pill}
                 role="group"
                 aria-label="Tour steps"
               >
                 <IconButton
-                  xstyle={tourStyles.pillButton}
+                  className={tourStyles.pillButton}
                   aria-label="Previous step"
                   disabled={displayIndex === 0}
                   onClick={() => stepTo(displayIndex - 1)}
@@ -711,7 +703,7 @@ export function GuidedTourPanel({
                   {displayIndex + 1}/{tour.stops.length}
                 </span>
                 <IconButton
-                  xstyle={tourStyles.pillButton}
+                  className={tourStyles.pillButton}
                   aria-label="Next step"
                   disabled={displayIndex === lastIndex}
                   onClick={() => stepTo(displayIndex + 1)}
@@ -726,8 +718,8 @@ export function GuidedTourPanel({
       bodyRef={scrollerRef}
       onBodyScroll={syncActiveStopToScroll}
     >
-      <div {...stylex.props(tourStyles.feedShell)}>
-        <div {...stylex.props(panelStyles.peekBody, tourStyles.feed)}>
+      <div className={tourStyles.feedShell}>
+        <div className={cn(panelStyles.peekBody, tourStyles.feed)}>
           {tour.stops.map((stop, index) => {
             const isActive = stop.anchor.id === activeAnchor;
 
@@ -738,12 +730,12 @@ export function GuidedTourPanel({
                   if (node) sectionRefs.current.set(stop.anchor.id, node);
                   else sectionRefs.current.delete(stop.anchor.id);
                 }}
-                {...stylex.props(tourStyles.stop)}
+                className={tourStyles.stop}
                 data-review-anchor-id={stop.anchor.id}
               >
-                <div {...stylex.props(tourStyles.rail)}>
+                <div className={tourStyles.rail}>
                   <div
-                    {...stylex.props(
+                    className={cn(
                       tourStyles.railNumber,
                       isActive && tourStyles.railNumberActive,
                     )}
@@ -767,13 +759,13 @@ export function GuidedTourPanel({
           })}
           {tour.stops.length > 0 && (
             <>
-              <div {...stylex.props(tourStyles.endCap)}>
+              <div className={tourStyles.endCap}>
                 <span>End of tour</span>
                 <ButtonPrimitive
                   variant="ghost"
                   size="xs"
                   type="button"
-                  {...stylex.props(tourStyles.endCapButton)}
+                  className={tourStyles.endCapButton}
                   onClick={() => stepTo(0)}
                 >
                   ↑ Back to step 1
@@ -781,7 +773,7 @@ export function GuidedTourPanel({
               </div>
               <div
                 ref={tailRef}
-                {...stylex.props(tourStyles.scrollTail)}
+                className={tourStyles.scrollTail}
                 style={{ height: tailHeight }}
                 aria-hidden="true"
               />
@@ -811,28 +803,23 @@ function GuidedTourStopMain({
   const { softwareMapEnabled, openSoftwareMapElement } = useReviewActions();
 
   return (
-    <div {...stylex.props(tourStyles.main, active && tourStyles.mainActive)}>
-      <header {...stylex.props(tourStyles.header)}>
+    <div className={cn(tourStyles.main, active && tourStyles.mainActive)}>
+      <header className={tourStyles.header}>
         <div>
-          <div {...stylex.props(textStyles.eyebrow, textStyles.count)}>
+          <div className={cn(textStyles.eyebrow, textStyles.count)}>
             Step {index + 1} of {total}
           </div>
-          <div {...stylex.props(tourStyles.titleRow)}>
+          <div className={tourStyles.titleRow}>
             <h3
-              {...stylex.props(
-                tourStyles.title,
-                active && tourStyles.titleActive,
-              )}
+              className={cn(tourStyles.title, active && tourStyles.titleActive)}
             >
               {stop.label}
             </h3>
           </div>
-          {stop.detail && (
-            <p {...stylex.props(tourStyles.detail)}>{stop.detail}</p>
-          )}
+          {stop.detail && <p className={tourStyles.detail}>{stop.detail}</p>}
         </div>
         {softwareMapEnabled && stop.anchor.softwareMapPath ? (
-          <div {...stylex.props(panelStyles.peekActions)}>
+          <div className={panelStyles.peekActions}>
             <IconButton
               size="large"
               aria-label={`Show ${stop.anchor.title} in software map`}
@@ -841,13 +828,13 @@ function GuidedTourStopMain({
                 onClose();
               }}
             >
-              <MapPinIcon xstyle={controlStyles.inertIcon} />
+              <MapPinIcon className={controlStyles.inertIcon} />
             </IconButton>
           </div>
         ) : null}
       </header>
 
-      <div {...stylex.props(panelStyles.peekContent, tourStyles.content)}>
+      <div className={cn(panelStyles.peekContent, tourStyles.content)}>
         <ReviewPeekContentView
           anchor={stop.anchor}
           content={stop.content}
@@ -896,66 +883,21 @@ function ReviewPeekContentView({
   return null;
 }
 
-const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
-
-const sectionStyles = stylex.create({
-  section: {
-    position: "relative",
-    width: "100%",
-  },
-  header: {
-    position: "relative",
-    display: "flex",
-    alignItems: "baseline",
-    gap: "12px",
-    width: `min(100%, ${tokens.reviewProseMaxWidth})`,
-    maxWidth: `calc(100cqi - 2 * ${tokens.reviewDocumentPaddingInline})`,
-    marginBlock: "40px 12px",
-    marginInline: "auto",
-  },
+const sectionStyles = {
+  section: "tw:relative tw:w-full",
+  header:
+    "tw:relative tw:flex tw:items-baseline tw:gap-[12px] tw:w-[min(100%,_var(--review-prose-max-width))] tw:max-w-[calc(100cqi_-_2_*_var(--review-document-padding-inline))] tw:my-[40px_12px] tw:mx-[auto]",
   // A finished tutorial chapter says so at the end of its heading row.
-  complete: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "4px",
-    marginLeft: "auto",
-    color: tokens.tutorialRing,
-    font: `${fontSize.micro}/16px ${tokens.fontSans}`,
-  },
-  completeIcon: {
-    width: "12px",
-    height: "12px",
-  },
+  complete:
+    "tw:inline-flex tw:items-center tw:gap-[4px] tw:ml-[auto] tw:text-[color:var(--tutorial-ring)] tw:font-[family-name:var(--font-sans)] tw:text-[length:10px] tw:font-normal tw:leading-[16px]",
+  completeIcon: "tw:size-[12px]",
   // Expanded sections keep a faint chevron so "this collapses" is legible
   // without hovering the header first.
-  toggle: {
-    position: "absolute",
-    top: "4px",
-    left: "-29px",
-  },
-  heading: {
-    minWidth: 0,
-  },
-  title: {
-    scrollMarginTop: { default: null, [inDocument()]: "24px" },
-    margin: 0,
-    color: { default: null, [inDocument()]: tokens.ink },
-    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
-    fontSize: { default: null, [inDocument()]: documentType.h2 },
-    fontWeight: { default: null, [inDocument()]: fontWeight.medium },
-    lineHeight: { default: null, [inDocument()]: "32px" },
-  },
-  titleActive: {
-    color: tokens.ink,
-  },
-  titleCollapsed: {
-    color: tokens.ghost,
-  },
-  meta: {
-    flex: "0 0 auto",
-    color: tokens.inkFaint,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    whiteSpace: "nowrap",
-  },
-});
+  toggle: "tw:absolute tw:top-[4px] tw:left-[-29px]",
+  heading: "tw:min-w-0",
+  title:
+    "tw:[&:is(.canvas-document:is(*)_*)]:scroll-mt-[24px] tw:m-0 tw:[&:is(.canvas-document:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*)]:font-[family-name:var(--font-sans)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:26px] tw:[&:is(.canvas-document:is(*)_*)]:font-medium tw:[&:is(.canvas-document:is(*)_*)]:leading-[32px]",
+  titleActive: "tw:text-[color:var(--ink)]",
+  titleCollapsed: "tw:text-[color:var(--ghost)]",
+  meta: "tw:flex-[0_0_auto] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:whitespace-nowrap",
+};

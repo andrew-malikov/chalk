@@ -6,13 +6,13 @@ import {
 import { Switch } from "@canvas/components/ui/switch";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useTooltip } from "@canvas/lib/use-tooltip";
+import { cn } from "@canvas/lib/utils";
 import { Choice } from "@canvas/settings/settings-choice";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { shellStyles } from "@canvas/styles/shell-styles";
 import { IconButton } from "@canvas/ui/button";
 import { SlidersIcon } from "@canvas/ui/icons";
 import type { ReviewDiffPreferences } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { BracesIcon, Columns2Icon, WrapTextIcon } from "lucide-react";
 import {
   type ReactElement,
@@ -69,11 +69,11 @@ export function DiffSettingsControl(): ReactElement {
   const [wrap, setWrap] = useDiffPreference("wrap");
 
   return (
-    <div {...stylex.props(shellStyles.topbarItem, styles.settings)}>
+    <div className={cn(shellStyles.topbarItem, styles.settings)}>
       <Popover>
         <PopoverTrigger asChild>
           <IconButton aria-label="Diff settings" ref={tooltip}>
-            <SlidersIcon xstyle={controlStyles.chromeIcon} />
+            <SlidersIcon className={controlStyles.chromeIcon} />
           </IconButton>
         </PopoverTrigger>
         <PopoverContent
@@ -144,8 +144,6 @@ function SettingRow({
   );
 }
 
-const styles = stylex.create({
-  settings: {
-    position: "relative",
-  },
-});
+const styles = {
+  settings: "tw:relative",
+};

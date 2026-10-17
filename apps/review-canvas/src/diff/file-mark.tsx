@@ -1,32 +1,19 @@
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { cn } from "@canvas/lib/utils";
 import type { ReviewDiffFileWire } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, CircleSmall, File, Minus, Plus } from "lucide-react";
 import type { ReactElement } from "react";
 
 // Added and deleted take the two change colors, modified the warn amber the
 // diagrams use, renamed ink-muted, referenced context a ghost file outline.
-const styles = stylex.create({
-  mark: {
-    flex: "none",
-    width: "16px",
-    height: "16px",
-    fill: "none",
-    stroke: "currentcolor",
-    strokeWidth: "1.5",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  },
-  dot: {
-    fill: "currentcolor",
-    stroke: "none",
-  },
-  added: { color: tokens.changeAdded },
-  deleted: { color: tokens.changeRemoved },
-  modified: { color: tokens.changeModified },
-  renamed: { color: tokens.inkMuted },
-  unchanged: { color: tokens.ghost },
-});
+const styles = {
+  mark: "tw:flex-[none] tw:size-[16px] tw:fill-[none] tw:stroke-[currentcolor] tw:stroke-[1.5] tw:[stroke-linecap:round] tw:[stroke-linejoin:round]",
+  dot: "tw:fill-[currentcolor] tw:stroke-[none]",
+  added: "tw:text-[color:var(--change-added)]",
+  deleted: "tw:text-[color:var(--change-removed)]",
+  modified: "tw:text-[color:var(--change-modified)]",
+  renamed: "tw:text-[color:var(--ink-muted)]",
+  unchanged: "tw:text-[color:var(--ghost)]",
+};
 
 const MARK_ICONS = {
   added: Plus,
@@ -46,7 +33,7 @@ export function FileMark({
 
   return (
     <Icon
-      {...stylex.props(
+      className={cn(
         styles.mark,
         styles[status],
         status === "modified" && styles.dot,

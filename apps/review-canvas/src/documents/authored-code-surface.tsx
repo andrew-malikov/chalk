@@ -1,7 +1,4 @@
 import type { PeekAnchor } from "@canvas/review/review-panel-model";
-import { fontSize } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
 import type { ReactElement } from "react";
 
 /**
@@ -20,18 +17,15 @@ export function AuthoredCodeSurface({
   const firstLine = anchor.peek?.start.line ?? 1;
 
   return (
-    <div {...stylex.props(styles.block)}>
-      <pre {...stylex.props(styles.surface)} data-language={language}>
+    <div className={styles.block}>
+      <pre className={styles.surface} data-language={language}>
         {code
           .replace(/\r\n?/g, "\n")
           .split("\n")
           .map((text, index) => (
-            <span
-              {...stylex.props(styles.line)}
-              key={`line:${firstLine + index}`}
-            >
-              <span {...stylex.props(styles.gutter)}>{firstLine + index}</span>
-              <span {...stylex.props(styles.marker)} aria-hidden="true">
+            <span className={styles.line} key={`line:${firstLine + index}`}>
+              <span className={styles.gutter}>{firstLine + index}</span>
+              <span className={styles.marker} aria-hidden="true">
                 {" "}
               </span>
               <code>{text || " "}</code>
@@ -42,40 +36,12 @@ export function AuthoredCodeSurface({
   );
 }
 
-const styles = stylex.create({
-  block: {
-    position: "relative",
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1fr)",
-    minWidth: 0,
-    backgroundColor: tokens.bg,
-  },
-  surface: {
-    position: "relative",
-    display: "block",
-    minWidth: 0,
-    margin: 0,
-    overflow: "auto",
-    backgroundColor: tokens.tray,
-    color: tokens.ink,
-    fontFamily: tokens.fontMono,
-    fontSize: fontSize.body,
-    lineHeight: "19px",
-  },
-  line: {
-    display: "grid",
-    minWidth: 0,
-    gridTemplateColumns: "42px 14px minmax(0, 1fr)",
-    minHeight: "19px",
-    whiteSpace: "pre",
-  },
-  gutter: {
-    padding: "0 5px 0 16px",
-    color: tokens.inkFaint,
-    textAlign: "right",
-  },
-  marker: {
-    color: tokens.inkFaint,
-    textAlign: "center",
-  },
-});
+const styles = {
+  block:
+    "tw:relative tw:grid tw:grid-cols-[minmax(0,_1fr)] tw:min-w-0 tw:bg-[color:var(--bg)]",
+  surface:
+    "tw:relative tw:block tw:min-w-0 tw:m-0 tw:overflow-auto tw:bg-[color:var(--tray)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)] tw:text-[length:12px] tw:leading-[19px]",
+  line: "tw:grid tw:min-w-0 tw:grid-cols-[42px_14px_minmax(0,_1fr)] tw:min-h-[19px] tw:whitespace-pre",
+  gutter: "tw:p-[0_5px_0_16px] tw:text-[color:var(--ink-faint)] tw:text-right",
+  marker: "tw:text-[color:var(--ink-faint)] tw:text-center",
+};

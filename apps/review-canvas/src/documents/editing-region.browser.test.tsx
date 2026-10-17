@@ -1,10 +1,11 @@
 import { AuthoringCursorContext } from "@canvas/drawing/courier";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import { AuthoringActivityContext } from "@canvas/review/authoring-activity-context";
 import type { AuthoringCursor } from "@canvas/review/authoring-cursor";
 import type { ReviewRoots } from "@canvas/review/review-root-context";
 import { ReviewRootsProvider } from "@canvas/review/review-root-context";
-import { documentMarker } from "@canvas/styles/markers.stylex";
+import { documentMarker } from "@canvas/styles/markers";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
 import {
   testApiDocumentData,
@@ -12,7 +13,6 @@ import {
 } from "@canvas/test/review-session-test-utils";
 import type { Block } from "@review/documents/document";
 import type { ActivitySnapshot } from "@review/node/review-api/activity";
-import * as stylex from "@stylexjs/stylex";
 import { act, createRef } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -56,7 +56,7 @@ let container: HTMLElement, article: HTMLElement, root: Root;
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   article = document.createElement("article");
-  article.className = `review-document ${stylex.props(documentStyles.article, documentMarker).className}`;
+  article.className = `review-document ${cn(documentStyles.article, documentMarker)}`;
   container = document.createElement("div");
   article.append(container);
   document.body.append(article);

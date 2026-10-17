@@ -1,313 +1,36 @@
-import { documentType } from "@canvas/documents/document-type.stylex";
-import {
-  appMarker,
-  documentMarker,
-  proseMarker,
-} from "@canvas/styles/markers.stylex";
-import {
-  fontSize,
-  fontWeight,
-  radius,
-  tracking,
-} from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
-
-// The review document: the article column and the prose it renders. Prose
-// styles hold only inside a document, so a renderer used elsewhere keeps the
-// browser's defaults. The article carries documentMarker, a block its
-// `data-review-node-id` and a Markdown block proseMarker.
-
-const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
-
-// A block's own element: it sits in the prose column.
-const inDocumentBlock = () => `${inDocument()}:is([data-review-node-id] > *)`;
-
-// Inside a Markdown block.
-const inProse = () =>
-  `${inDocument()}${stylex.when.ancestor(":is(*)", proseMarker)}`;
-
-const inDocumentLink = () => `${inDocument()}:is(a *)`;
-
-const inOpenDocumentLink = () =>
-  `${inDocument()}:is(a[data-review-anchor-open] *)`;
-
-const inHoveredDocumentLink = () => `${inDocument()}:is(a:hover *)`;
-
-const afterProseItem = () => `${inProse()}:is(li + *)`;
-
-// The scratchpad has no title, so its opening heading sits at the top.
-const scratchpadOpening = () =>
-  `${inDocument()}:is([data-kind="scratchpad"] > [data-review-node-id]:first-child *):first-child`;
-
-const narrow = "@media (max-width: 720px)";
-
-const compact = "@container review-content (max-width: 1080px)";
-
-// Not :has(): it restyled the whole document on every node insertion.
-const withHeader = () =>
-  stylex.when.ancestor(":is([data-document-header])", appMarker);
-
-const withLens = () =>
-  stylex.when.ancestor(":is([data-database-lens])", appMarker);
-
-// Wide and full keep prose at a reading measure but let code, diagrams and
-// lenses fill the article. A shell too narrow for 900px prose keeps the
-// standard layout.
-const widened = () =>
-  stylex.when.ancestor(
-    ':is([data-document-width="wide"], [data-document-width="full"])',
-    appMarker,
-  );
-
-const wide = () =>
-  stylex.when.ancestor(':is([data-document-width="wide"])', appMarker);
-
-const full = () =>
-  stylex.when.ancestor(':is([data-document-width="full"])', appMarker);
-
-const roomy = "@container review-content (min-width: 1181px)";
-
-const proseColumn = `min(100%, ${tokens.reviewProseMaxWidth})`;
-
-const proseMaxWidth = `calc(100cqi - 2 * ${tokens.reviewDocumentPaddingInline})`;
-
-export const documentStyles = stylex.create({
-  article: {
-    position: "relative",
-    "--review-inline-diagram-max-width": {
-      default: "1120px",
-      [widened()]: { default: null, [roomy]: "100%" },
-    },
-    "--review-document-padding-inline": {
-      default: "clamp(20px, calc((100cqi - 720px) * 0.122 + 20px), 64px)",
-      [narrow]: "clamp(12px, 4vw, 20px)",
-    },
-    "--review-document-padding-block-start": "28px",
-    "--review-document-padding-block-end": {
-      default: "72px",
-      [narrow]: "48px",
-    },
-    "--review-prose-max-width": {
-      default: "720px",
-      [withHeader()]: "760px",
-      [widened()]: { default: null, [roomy]: "900px" },
-    },
-    "--review-block-max-width": {
-      default: tokens.reviewProseMaxWidth,
-      [widened()]: { default: null, [roomy]: "100%" },
-    },
-    flex: { default: "1 1 860px", [compact]: "0 1 auto" },
-    width: {
-      default: "100%",
-      [withLens()]: "min(1360px, calc(100% - 32px))",
-      [full()]: { default: null, [roomy]: "100%" },
-      [narrow]: "100%",
-    },
-    maxWidth: {
-      default: "860px",
-      [withHeader()]: "900px",
-      [wide()]: { default: null, [roomy]: "1360px" },
-      [full()]: { default: null, [roomy]: "1800px" },
-      [narrow]: { default: "none", [withHeader()]: "900px" },
-    },
-    minWidth: 0,
-    margin: {
-      default: "0 auto 96px",
-      [compact]: { default: "0 auto", [narrow]: 0 },
-      [narrow]: 0,
-    },
-    padding: {
-      default: `${tokens.reviewDocumentPaddingBlockStart} ${tokens.reviewDocumentPaddingInline} ${tokens.reviewDocumentPaddingBlockEnd}`,
-      [compact]: `28px ${tokens.reviewDocumentPaddingInline}`,
-    },
-    backgroundColor: tokens.transparent,
-    color: tokens.ink,
-    fontFamily: tokens.fontSans,
-    fontSize: documentType.body,
-    lineHeight: 1.6,
-  },
+export const documentStyles = {
+  article:
+    "tw:relative tw:[--review-inline-diagram-max-width:1120px] tw:[@container_review-content_(min-width:_1181px)]:[&:is(.canvas-app:is([data-document-width=wide],_[data-document-width=full])_*)]:[--review-inline-diagram-max-width:100%] tw:[--review-document-padding-inline:clamp(20px,_calc((100cqi_-_720px)_*_0.122_+_20px),_64px)] tw:[@media_(max-width:_720px)]:[--review-document-padding-inline:clamp(12px,_4vw,_20px)] tw:[--review-document-padding-block-start:28px] tw:[--review-document-padding-block-end:72px] tw:[@media_(max-width:_720px)]:[--review-document-padding-block-end:48px] tw:[--review-prose-max-width:720px] tw:[&:is(.canvas-app:is([data-document-header])_*)]:[--review-prose-max-width:760px] tw:[@container_review-content_(min-width:_1181px)]:[&:is(.canvas-app:is([data-document-width=wide],_[data-document-width=full])_*)]:[--review-prose-max-width:900px] tw:[--review-block-max-width:var(--review-prose-max-width)] tw:[@container_review-content_(min-width:_1181px)]:[&:is(.canvas-app:is([data-document-width=wide],_[data-document-width=full])_*)]:[--review-block-max-width:100%] tw:flex-[1_1_860px] tw:[@container_review-content_(max-width:_1080px)]:flex-[0_1_auto] tw:w-full tw:[&:is(.canvas-app:is([data-database-lens])_*)]:w-[min(1360px,_calc(100%_-_32px))] tw:[@container_review-content_(min-width:_1181px)]:[&:is(.canvas-app:is([data-document-width=full])_*)]:w-full tw:[@media_(max-width:_720px)]:w-full tw:max-w-[860px] tw:[&:is(.canvas-app:is([data-document-header])_*)]:max-w-[900px] tw:[@container_review-content_(min-width:_1181px)]:[&:is(.canvas-app:is([data-document-width=wide])_*)]:max-w-[1360px] tw:[@container_review-content_(min-width:_1181px)]:[&:is(.canvas-app:is([data-document-width=full])_*)]:max-w-[1800px] tw:[@media_(max-width:_720px)]:max-w-none tw:[@media_(max-width:_720px)]:[&:is(.canvas-app:is([data-document-header])_*)]:max-w-[900px] tw:min-w-0 tw:m-[0_auto_96px] tw:[@container_review-content_(max-width:_1080px)]:m-[0_auto] tw:[@container_review-content_(max-width:_1080px)]:[@media_(max-width:_720px)]:m-0 tw:[@media_(max-width:_720px)]:m-0 tw:p-[var(--review-document-padding-block-start)_var(--review-document-padding-inline)_var(--review-document-padding-block-end)] tw:[@container_review-content_(max-width:_1080px)]:p-[28px_var(--review-document-padding-inline)] tw:bg-[color:var(--transparent)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:17px] tw:leading-[1.6]",
   // Beside an open side peek the column narrows its inline diagrams, and a
   // database lens keeps a smaller gutter.
-  articlePeekOpen: {
-    "--review-inline-diagram-max-width": {
-      default: "1000px",
-      [widened()]: { default: null, [roomy]: "100%" },
-    },
-    width: {
-      default: "100%",
-      [withLens()]: "calc(100% - 24px)",
-      [narrow]: "100%",
-    },
-    maxWidth: {
-      default: "860px",
-      [withHeader()]: "900px",
-      [wide()]: { default: null, [roomy]: "1360px" },
-      [full()]: { default: null, [roomy]: "1800px" },
-      [narrow]: {
-        default: "none",
-        [withHeader()]: { default: "900px", [withLens()]: "none" },
-      },
-    },
-  },
-  h1: {
-    width: { default: null, [inDocument()]: proseColumn },
-    margin: { default: null, [inDocument()]: "28px auto 18px" },
-    marginTop: { default: null, [scratchpadOpening()]: 0 },
-    color: { default: null, [inDocument()]: tokens.ink },
-    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
-    fontSize: { default: null, [inDocument()]: documentType.h1 },
-    fontWeight: { default: null, [inDocument()]: fontWeight.medium },
-    lineHeight: { default: null, [inDocument()]: "40px" },
-    letterSpacing: { default: null, [inDocument()]: tracking.tight },
-    textAlign: { default: null, [inDocument()]: "left" },
-  },
-  h2: {
-    // A heading jumped to from the contents lands this far below the scroll
-    // edge: clear of the edge for scroll-synced highlighting, and the same
-    // slack the contents rail leaves under the last heading.
-    scrollMarginTop: { default: null, [inDocument()]: "24px" },
-    width: { default: null, [inDocumentBlock()]: proseColumn },
-    maxWidth: { default: null, [inDocumentBlock()]: proseMaxWidth },
-    margin: { default: null, [inDocument()]: "40px auto 12px" },
-    marginTop: { default: null, [scratchpadOpening()]: 0 },
-    color: { default: null, [inDocument()]: tokens.ink },
-    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
-    fontSize: { default: null, [inDocument()]: documentType.h2 },
-    fontWeight: { default: null, [inDocument()]: fontWeight.medium },
-    lineHeight: { default: null, [inDocument()]: "32px" },
-  },
-  h3: {
-    scrollMarginTop: { default: null, [inDocument()]: "24px" },
-    width: { default: null, [inDocumentBlock()]: proseColumn },
-    maxWidth: { default: null, [inDocumentBlock()]: proseMaxWidth },
-    margin: { default: null, [inDocument()]: "30px auto 10px" },
-    marginTop: { default: null, [scratchpadOpening()]: 0 },
-    color: { default: null, [inDocument()]: tokens.ink },
-    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
-    fontSize: { default: null, [inDocument()]: documentType.h3 },
-    fontWeight: { default: null, [inDocument()]: fontWeight.medium },
-    lineHeight: { default: null, [inDocument()]: "23px" },
-  },
+  articlePeekOpen:
+    "tw:[--review-inline-diagram-max-width:1000px] tw:[@container_review-content_(min-width:_1181px)]:[&:is(.canvas-app:is([data-document-width=wide],_[data-document-width=full])_*)]:[--review-inline-diagram-max-width:100%] tw:w-full tw:[&:is(.canvas-app:is([data-database-lens])_*)]:w-[calc(100%_-_24px)] tw:[@media_(max-width:_720px)]:w-full tw:max-w-[860px] tw:[&:is(.canvas-app:is([data-document-header])_*)]:max-w-[900px] tw:[@container_review-content_(min-width:_1181px)]:[&:is(.canvas-app:is([data-document-width=wide])_*)]:max-w-[1360px] tw:[@container_review-content_(min-width:_1181px)]:[&:is(.canvas-app:is([data-document-width=full])_*)]:max-w-[1800px] tw:[@media_(max-width:_720px)]:max-w-none tw:[@media_(max-width:_720px)]:[&:is(.canvas-app:is([data-document-header])_*)]:max-w-[900px] tw:[@media_(max-width:_720px)]:[&:is(.canvas-app:is([data-document-header])_*):is(.canvas-app:is([data-database-lens])_*)]:max-w-none",
+  h1: "tw:[&:is(.canvas-document:is(*)_*)]:w-[min(100%,_var(--review-prose-max-width))] tw:[&:is(.canvas-document:is(*)_*)]:m-[28px_auto_18px] tw:[&:is(.canvas-document:is(*)_*):is([data-kind=scratchpad]_>_[data-review-node-id]:first-child_*):first-child]:mt-0 tw:[&:is(.canvas-document:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*)]:font-[family-name:var(--font-sans)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:34px] tw:[&:is(.canvas-document:is(*)_*)]:font-medium tw:[&:is(.canvas-document:is(*)_*)]:leading-[40px] tw:[&:is(.canvas-document:is(*)_*)]:tracking-[-0.015em] tw:[&:is(.canvas-document:is(*)_*)]:text-left",
+  h2: "tw:[&:is(.canvas-document:is(*)_*)]:scroll-mt-[24px] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:w-[min(100%,_var(--review-prose-max-width))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:max-w-[calc(100cqi_-_2_*_var(--review-document-padding-inline))] tw:[&:is(.canvas-document:is(*)_*)]:m-[40px_auto_12px] tw:[&:is(.canvas-document:is(*)_*):is([data-kind=scratchpad]_>_[data-review-node-id]:first-child_*):first-child]:mt-0 tw:[&:is(.canvas-document:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*)]:font-[family-name:var(--font-sans)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:26px] tw:[&:is(.canvas-document:is(*)_*)]:font-medium tw:[&:is(.canvas-document:is(*)_*)]:leading-[32px]",
+  h3: "tw:[&:is(.canvas-document:is(*)_*)]:scroll-mt-[24px] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:w-[min(100%,_var(--review-prose-max-width))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:max-w-[calc(100cqi_-_2_*_var(--review-document-padding-inline))] tw:[&:is(.canvas-document:is(*)_*)]:m-[30px_auto_10px] tw:[&:is(.canvas-document:is(*)_*):is([data-kind=scratchpad]_>_[data-review-node-id]:first-child_*):first-child]:mt-0 tw:[&:is(.canvas-document:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*)]:font-[family-name:var(--font-sans)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:20px] tw:[&:is(.canvas-document:is(*)_*)]:font-medium tw:[&:is(.canvas-document:is(*)_*)]:leading-[23px]",
   // A block in the prose column: lists, quotes, images, tutorial controls.
-  column: {
-    width: { default: null, [inDocumentBlock()]: proseColumn },
-    maxWidth: { default: null, [inDocumentBlock()]: proseMaxWidth },
-    marginInline: { default: null, [inDocumentBlock()]: "auto" },
-  },
-  body: {
-    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
-  },
-  paragraph: {
-    width: { default: null, [inDocumentBlock()]: proseColumn },
-    maxWidth: { default: null, [inDocumentBlock()]: proseMaxWidth },
-    margin: { default: null, [inProse()]: "14px 0" },
-    marginInline: { default: null, [inDocumentBlock()]: "auto" },
-    color: { default: null, [inProse()]: tokens.ink },
-    fontFamily: { default: null, [inProse()]: tokens.fontSans },
-    fontSize: { default: null, [inProse()]: fontSize.reading },
-    lineHeight: { default: null, [inProse()]: 1.72 },
-    textAlign: { default: null, [inProse()]: "left" },
-  },
+  column:
+    "tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:w-[min(100%,_var(--review-prose-max-width))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:max-w-[calc(100cqi_-_2_*_var(--review-document-padding-inline))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:mx-[auto]",
+  body: "tw:[&:is(.canvas-document:is(*)_*)]:font-[family-name:var(--font-sans)]",
+  paragraph:
+    "tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:w-[min(100%,_var(--review-prose-max-width))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:max-w-[calc(100cqi_-_2_*_var(--review-document-padding-inline))] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:m-[14px_0] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:mx-[auto] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:font-[family-name:var(--font-sans)] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:text-[length:15px] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:leading-[1.72] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:text-left",
   // A list item's paragraphs sit flush with the item.
-  itemParagraph: {
-    marginTop: {
-      default: null,
-      ":first-child": { default: null, [inProse()]: 0 },
-    },
-    marginBottom: {
-      default: null,
-      ":last-child": { default: null, [inProse()]: 0 },
-    },
-  },
-  item: {
-    marginTop: { default: null, [afterProseItem()]: "8px" },
-    color: { default: null, [inProse()]: tokens.ink },
-    fontFamily: { default: null, [inProse()]: tokens.fontSans },
-    fontSize: { default: null, [inProse()]: fontSize.reading },
-    lineHeight: { default: null, [inProse()]: 1.72 },
-    textAlign: { default: null, [inProse()]: "left" },
-  },
+  itemParagraph:
+    "tw:[&:first-child:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:mt-0 tw:[&:last-child:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:mb-0",
+  item: "tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*):is(li_+_*)]:mt-[8px] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:font-[family-name:var(--font-sans)] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:text-[length:15px] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:leading-[1.72] tw:[&:is(.canvas-document:is(*)_*):is(.canvas-prose:is(*)_*)]:text-left",
   // Document copy outside a Markdown block, read as its paragraphs: the
   // stale block's notice, the fallback message.
-  note: {
-    margin: { default: null, [inDocument()]: "14px 0" },
-    color: { default: null, [inDocument()]: tokens.ink },
-    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
-    fontSize: { default: null, [inDocument()]: fontSize.reading },
-    lineHeight: { default: null, [inDocument()]: 1.72 },
-    textAlign: { default: null, [inDocument()]: "left" },
-  },
+  note: "tw:[&:is(.canvas-document:is(*)_*)]:m-[14px_0] tw:[&:is(.canvas-document:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*)]:font-[family-name:var(--font-sans)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:15px] tw:[&:is(.canvas-document:is(*)_*)]:leading-[1.72] tw:[&:is(.canvas-document:is(*)_*)]:text-left",
   // Links are underlined text in the link color, prose and code chips alike,
   // with no visited distinction. Hover brightens to ink over the wash, and the
   // link whose peek is open drops the underline for the wash alone.
-  link: {
-    color: {
-      default: null,
-      [inDocument()]: { default: tokens.accent, ":hover": tokens.ink },
-    },
-    textDecoration: {
-      default: null,
-      [inDocument()]: {
-        default: "underline",
-        ":is([data-review-anchor-open])": "none",
-      },
-    },
-    backgroundColor: {
-      default: null,
-      [inDocument()]: {
-        default: null,
-        ":hover": tokens.linkOpenWash,
-        ":is([data-review-anchor-open])": tokens.linkOpenWash,
-      },
-    },
-  },
-  code: {
-    padding: { default: null, [inDocument()]: "2px 5px" },
-    borderRadius: { default: null, [inDocument()]: radius.small },
-    backgroundColor: {
-      default: null,
-      [inDocument()]: tokens.well,
-      [inOpenDocumentLink()]: tokens.linkOpenWash,
-      [inHoveredDocumentLink()]: tokens.linkOpenWash,
-    },
-    color: {
-      default: null,
-      [inDocument()]: tokens.ink,
-      [inDocumentLink()]: tokens.accent,
-      [inHoveredDocumentLink()]: tokens.ink,
-    },
-    fontFamily: { default: null, [inDocument()]: tokens.fontMono },
-    fontSize: { default: null, [inDocument()]: "0.85em" },
-  },
-  table: {
-    width: { default: null, [inDocument()]: "min(100%, 600px)" },
-    margin: { default: null, [inDocument()]: "24px auto" },
-    borderCollapse: { default: null, [inDocument()]: "collapse" },
-    color: { default: null, [inDocument()]: tokens.ink },
-    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
-    fontSize: { default: null, [inDocument()]: fontSize.ui },
-    lineHeight: { default: null, [inDocument()]: 1.55 },
-    tableLayout: { default: null, [inDocument()]: "fixed" },
-  },
-  cell: {
-    padding: { default: null, [inDocument()]: "8px 10px" },
-    borderWidth: { default: null, [inDocument()]: "1px" },
-    borderStyle: { default: null, [inDocument()]: "solid" },
-    borderColor: { default: null, [inDocument()]: tokens.rule },
-    overflowWrap: { default: null, [inDocument()]: "anywhere" },
-    textAlign: { default: null, [inDocument()]: "left" },
-    verticalAlign: { default: null, [inDocument()]: "top" },
-  },
-  headerCell: {
-    backgroundColor: { default: null, [inDocument()]: tokens.tray },
-    color: { default: null, [inDocument()]: tokens.ink },
-    fontWeight: { default: null, [inDocument()]: fontWeight.semibold },
-  },
+  link: "tw:[&:is(.canvas-document:is(*)_*)]:text-[color:var(--accent)] tw:[&:is(.canvas-document:is(*)_*):hover]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*)]:[text-decoration:underline] tw:[&:is(.canvas-document:is(*)_*):is([data-review-anchor-open])]:[text-decoration:none] tw:[&:is(.canvas-document:is(*)_*):hover]:bg-[color:var(--link-open-wash)] tw:[&:is(.canvas-document:is(*)_*):is([data-review-anchor-open])]:bg-[color:var(--link-open-wash)]",
+  code: "tw:[&:is(.canvas-document:is(*)_*)]:p-[2px_5px] tw:[&:is(.canvas-document:is(*)_*)]:rounded-[4px] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--well)] tw:[&:is(.canvas-document:is(*)_*):is(a[data-review-anchor-open]_*)]:bg-[color:var(--link-open-wash)] tw:[&:is(.canvas-document:is(*)_*):is(a:hover_*)]:bg-[color:var(--link-open-wash)] tw:[&:is(.canvas-document:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*):is(a_*)]:text-[color:var(--accent)] tw:[&:is(.canvas-document:is(*)_*):is(a:hover_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*)]:font-[family-name:var(--font-mono)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:0.85em]",
+  table:
+    "tw:[&:is(.canvas-document:is(*)_*)]:w-[min(100%,_600px)] tw:[&:is(.canvas-document:is(*)_*)]:m-[24px_auto] tw:[&:is(.canvas-document:is(*)_*)]:border-collapse tw:[&:is(.canvas-document:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*)]:font-[family-name:var(--font-sans)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:13px] tw:[&:is(.canvas-document:is(*)_*)]:leading-[1.55] tw:[&:is(.canvas-document:is(*)_*)]:table-fixed",
+  cell: "tw:[&:is(.canvas-document:is(*)_*)]:p-[8px_10px] tw:[&:is(.canvas-document:is(*)_*)]:border-[1px] tw:[&:is(.canvas-document:is(*)_*)]:border-solid tw:[&:is(.canvas-document:is(*)_*)]:border-[color:var(--rule)] tw:[&:is(.canvas-document:is(*)_*)]:[overflow-wrap:anywhere] tw:[&:is(.canvas-document:is(*)_*)]:text-left tw:[&:is(.canvas-document:is(*)_*)]:[vertical-align:top]",
+  headerCell:
+    "tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--tray)] tw:[&:is(.canvas-document:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*)]:font-semibold",
   // Phrasing content, so an <img> laid out like an image block.
-  image: {
-    display: "block",
-    maxWidth: "100%",
-    height: "auto",
-  },
-});
+  image: "tw:block tw:max-w-full tw:h-auto",
+};

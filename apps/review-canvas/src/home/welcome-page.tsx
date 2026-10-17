@@ -1,10 +1,7 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
-import { welcomeType } from "@canvas/home/welcome-page.stylex";
+import { cn } from "@canvas/lib/utils";
 import { cliInstallReady } from "@canvas/settings/cli-install-status";
-import { chevronMarker } from "@canvas/styles/markers.stylex";
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { chevronMarker } from "@canvas/styles/markers";
 import { Button } from "@canvas/ui/button";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { CheckIcon, DisclosureChevron } from "@canvas/ui/icons";
@@ -14,7 +11,6 @@ import {
   type ReviewCanvasSetupActions,
   type ReviewCliInstallStatus,
 } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { Check } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 
@@ -141,13 +137,13 @@ export function WelcomePage({
     done: installed,
     body: (
       <>
-        <p {...stylex.props(styles.hint)}>
+        <p className={styles.hint}>
           {installed ? (
             `Installed at ${status?.shim.path ?? "~/.local/bin/chalk"}.`
           ) : cliBuildMissing ? (
             <>
               CLI build missing. If you’re running from source, run{" "}
-              <code {...stylex.props(styles.hintCode)}>
+              <code className={styles.hintCode}>
                 bun run --filter @chalk/cli build
               </code>{" "}
               from the repository root, then restart Chalk. Otherwise, reinstall
@@ -157,8 +153,8 @@ export function WelcomePage({
             pathHint(status.shim.path)
           ) : (
             <>
-              The <code {...stylex.props(styles.hintCode)}>chalk</code> CLI lets
-              your agents talk to Chalk
+              The <code className={styles.hintCode}>chalk</code> CLI lets your
+              agents talk to Chalk
             </>
           )}
         </p>
@@ -167,7 +163,10 @@ export function WelcomePage({
           <Button
             variant="primary"
             size="large"
-            xstyle={[styles.stepButton, installDone && styles.stepButtonNext]}
+            className={[
+              styles.stepButton,
+              installDone && styles.stepButtonNext,
+            ]}
             disabled={setupBusy}
             onClick={() =>
               void runSetup(async () => {
@@ -185,7 +184,7 @@ export function WelcomePage({
           (status?.shim.installed && !installed)) ? (
           <Button
             size="large"
-            xstyle={[
+            className={[
               styles.stepButton,
               (installDone || installOffered) && styles.stepButtonNext,
             ]}
@@ -196,7 +195,7 @@ export function WelcomePage({
           </Button>
         ) : null}
         {setupError ? (
-          <p role="alert" {...stylex.props(promptStyles.error)}>
+          <p role="alert" className={promptStyles.error}>
             {setupError}
           </p>
         ) : null}
@@ -241,7 +240,7 @@ export function WelcomePage({
         <Button
           variant="primary"
           size="large"
-          xstyle={styles.dismiss}
+          className={styles.dismiss}
           disabled={setupBusy || !canDismiss}
           onClick={dismissUpdate}
         >
@@ -261,13 +260,13 @@ export function WelcomePage({
           : "a three-minute sample session",
         body: (
           <>
-            <p {...stylex.props(styles.hint)}>
+            <p className={styles.hint}>
               Explore a sample session in three minutes.
             </p>
             {onOpenTutorial ? (
               <Button
                 size="large"
-                xstyle={styles.stepButton}
+                className={styles.stepButton}
                 onClick={onOpenTutorial}
               >
                 {tourChecked > 0 ? "Reopen the tutorial" : "Open the tutorial"}
@@ -299,23 +298,23 @@ export function WelcomePage({
     setConnectOpened(true);
 
   return (
-    <main {...withClass("review-home", homeStyles.page)}>
-      <div {...stylex.props(homeStyles.scroll)}>
-        <div {...stylex.props(homeStyles.content, styles.page)}>
-          <div {...stylex.props(styles.columns)}>
+    <main className={cn("review-home", homeStyles.page)}>
+      <div className={homeStyles.scroll}>
+        <div className={cn(homeStyles.content, styles.page)}>
+          <div className={styles.columns}>
             {updating || onClose ? (
-              <div {...stylex.props(styles.intro)}>
+              <div className={styles.intro}>
                 {updating ? (
                   <>
                     <h1
-                      {...withClass(
+                      className={cn(
                         "review-onboarding-headline",
                         styles.headline,
                       )}
                     >
                       Chalk now connects to your agents over MCP
                     </h1>
-                    <p {...stylex.props(styles.sub)}>
+                    <p className={styles.sub}>
                       Install the Chalk plugin or add its MCP server to each
                       agent you use.
                     </p>
@@ -323,7 +322,7 @@ export function WelcomePage({
                 ) : null}
                 {updating && install ? (
                   <Button
-                    xstyle={styles.dismiss}
+                    className={styles.dismiss}
                     disabled={setupBusy || !canDismiss}
                     onClick={dismissUpdate}
                   >
@@ -331,7 +330,7 @@ export function WelcomePage({
                   </Button>
                 ) : onClose ? (
                   <Button
-                    xstyle={styles.dismiss}
+                    className={styles.dismiss}
                     disabled={setupBusy || !canDismiss}
                     onClick={onClose}
                   >
@@ -340,14 +339,14 @@ export function WelcomePage({
                 ) : null}
               </div>
             ) : null}
-            <ol {...stylex.props(styles.steps)}>
+            <ol className={styles.steps}>
               {steps.map((step, index) => {
                 const open = openStep === step.title && !step.disabled;
 
                 return (
                   <li
                     key={step.title}
-                    {...stylex.props(styles.step, open && styles.stepOpen)}
+                    className={cn(styles.step, open && styles.stepOpen)}
                     data-state={step.done ? "done" : "todo"}
                     data-open={open}
                   >
@@ -355,7 +354,7 @@ export function WelcomePage({
                       variant="ghost"
                       size="xs"
                       type="button"
-                      {...withClass(
+                      className={cn(
                         "tw:h-auto tw:whitespace-normal tw:font-normal",
                         chevronMarker,
                         styles.stepHeader,
@@ -371,7 +370,7 @@ export function WelcomePage({
                         label={String(index + 1)}
                       />
                       <span
-                        {...stylex.props(
+                        className={cn(
                           styles.stepTitle,
                           step.done && !open && styles.stepTitleDone,
                         )}
@@ -379,17 +378,15 @@ export function WelcomePage({
                         {step.label ?? step.title}
                       </span>
                       {step.note ? (
-                        <span {...stylex.props(styles.stepNote)}>
-                          {step.note}
-                        </span>
+                        <span className={styles.stepNote}>{step.note}</span>
                       ) : null}
                       <DisclosureChevron
                         expanded={open}
-                        xstyle={styles.stepChevron}
+                        className={styles.stepChevron}
                       />
                     </ButtonPrimitive>
                     {open ? (
-                      <div {...stylex.props(styles.stepBody)}>{step.body}</div>
+                      <div className={styles.stepBody}>{step.body}</div>
                     ) : null}
                   </li>
                 );
@@ -434,7 +431,7 @@ function StepDoneButton({
     <Button
       variant={primary ? "primary" : "secondary"}
       size="large"
-      xstyle={[styles.stepButton, styles.stepDone]}
+      className={[styles.stepButton, styles.stepDone]}
       disabled
     >
       <CheckIcon />
@@ -454,7 +451,7 @@ function StepBadge({
 }) {
   return (
     <span
-      {...stylex.props(
+      className={cn(
         styles.badge,
         done && styles.badgeDone,
         open && styles.badgeOpen,
@@ -462,7 +459,7 @@ function StepBadge({
       data-done={done}
     >
       {done ? (
-        <Check {...stylex.props(styles.badgeCheck)} aria-hidden="true" />
+        <Check className={styles.badgeCheck} aria-hidden="true" />
       ) : (
         label
       )}
@@ -479,180 +476,48 @@ function pathHint(shimPath: string): string {
   return `Add ${directory || "~/.local/bin"} to PATH, then refresh.`;
 }
 
-// Below this the fixed intro column would squeeze the steps until the agent
-// rows overflow; stack the intro above them instead. Measured on the page, not
-// the viewport, because the setup dialog hosts it narrower than the window.
-const stacked = "@container review-welcome (max-width: 880px)";
-
 // An intro column beside the step rail that owns the whole first-run flow.
-const styles = stylex.create({
-  page: {
-    minHeight: "100%",
-    containerName: "review-welcome",
-    containerType: "inline-size",
-  },
-  columns: {
-    display: "flex",
-    flexDirection: { default: null, [stacked]: "column" },
-    gap: { default: "72px", [stacked]: "32px" },
-    alignItems: "flex-start",
-    paddingTop: { default: "48px", [stacked]: "8px" },
-  },
-  intro: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "20px",
-    width: { default: "380px", [stacked]: "auto" },
-    flexShrink: 0,
-  },
-  headline: {
-    margin: 0,
-    color: tokens.ink,
-    font: {
-      default: `${fontWeight.medium} ${welcomeType.headline}/46px ${tokens.fontSans}`,
-      [stacked]: `${fontWeight.medium} 28px/34px ${tokens.fontSans}`,
-    },
-  },
-  sub: {
-    margin: 0,
-    color: tokens.reviewHomeMeta,
-    fontSize: fontSize.ui,
-    lineHeight: "21px",
-  },
-  dismiss: {
-    alignSelf: "flex-start",
-    marginTop: "4px",
-  },
-  steps: {
-    display: "flex",
-    flex: 1,
-    flexDirection: "column",
-    alignSelf: { default: null, [stacked]: "stretch" },
-    gap: "12px",
-    minWidth: 0,
-    margin: 0,
-    padding: 0,
-    listStyle: "none",
-  },
+const styles = {
+  page: "tw:min-h-full tw:[container-name:review-welcome] tw:[container-type:inline-size]",
+  columns:
+    "tw:flex tw:[@container_review-welcome_(max-width:_880px)]:flex-col tw:gap-[72px] tw:[@container_review-welcome_(max-width:_880px)]:gap-[32px] tw:items-start tw:pt-[48px] tw:[@container_review-welcome_(max-width:_880px)]:pt-[8px]",
+  intro:
+    "tw:flex tw:flex-col tw:gap-[20px] tw:w-[380px] tw:[@container_review-welcome_(max-width:_880px)]:w-auto tw:shrink-0",
+  headline:
+    "tw:m-0 tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:38px] tw:font-medium tw:leading-[46px] tw:[@container_review-welcome_(max-width:_880px)]:font-[family-name:var(--font-sans)] tw:[@container_review-welcome_(max-width:_880px)]:text-[length:28px] tw:[@container_review-welcome_(max-width:_880px)]:font-medium tw:[@container_review-welcome_(max-width:_880px)]:leading-[34px]",
+  sub: "tw:m-0 tw:text-[color:var(--review-home-meta)] tw:text-[length:13px] tw:leading-[21px]",
+  dismiss: "tw:self-start tw:mt-[4px]",
+  steps:
+    "tw:flex tw:flex-[1] tw:flex-col tw:[@container_review-welcome_(max-width:_880px)]:self-stretch tw:gap-[12px] tw:min-w-0 tw:m-0 tw:p-0 tw:[list-style:none]",
   // One accordion item per step. The header is always visible; only the open
   // step renders a body, so a single step asks for attention at a time.
-  step: {
-    display: "flex",
-    flexDirection: "column",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.reviewHomeRule,
-    borderRadius: radius.surface,
-  },
-  stepOpen: {
-    borderColor: tokens.reviewHomeRuleSoft,
-    backgroundColor: tokens.tray,
-  },
-  stepHeader: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    width: "100%",
-    padding: "16px 20px",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: { default: null, ":focus-visible": radius.surface },
-    color: "inherit",
-    backgroundColor: tokens.transparent,
-    cursor: { default: "pointer", ":disabled": "not-allowed" },
-    opacity: { default: null, ":disabled": 0.5 },
-    textAlign: "left",
-    font: "inherit",
-    outline: { default: null, ":focus-visible": `1px solid ${tokens.accent}` },
-    outlineOffset: { default: null, ":focus-visible": "-2px" },
-  },
+  step: "tw:flex tw:flex-col tw:border-[1px] tw:border-solid tw:border-[color:var(--review-home-rule)] tw:rounded-[8px]",
+  stepOpen:
+    "tw:border-[color:var(--review-home-rule-soft)] tw:bg-[color:var(--tray)]",
+  stepHeader:
+    "tw:flex tw:items-center tw:gap-[12px] tw:w-full tw:p-[16px_20px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[&:focus-visible]:rounded-[8px] tw:text-[color:inherit] tw:bg-[color:var(--transparent)] tw:cursor-pointer tw:[&:disabled]:[cursor:not-allowed] tw:[&:disabled]:opacity-[0.5] tw:text-left tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[-2px]",
   // The chevron closes the row: it sits in the trailing lane, after the note.
-  stepChevron: {
-    margin: "2px 2px 2px auto",
-    stroke: tokens.reviewHomeMeta,
-  },
-  badge: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "22px",
-    height: "22px",
-    flexShrink: 0,
-    borderRadius: radius.round,
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.reviewHomeRuleSoft,
-    color: tokens.reviewHomeMeta,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.medium,
-  },
-  badgeDone: {
-    borderColor: tokens.transparent,
-    backgroundColor: `color-mix(in srgb, ${tokens.changeAdded} 18%, ${tokens.transparent})`,
-  },
-  badgeOpen: {
-    borderColor: tokens.transparent,
-    color: tokens.onAccent,
-    backgroundColor: tokens.accent,
-  },
-  badgeCheck: {
-    width: "10px",
-    height: "10px",
-    flexShrink: 0,
-    fill: "none",
-    stroke: tokens.changeAdded,
-    strokeWidth: "1.5px",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  },
-  stepTitle: {
-    flexShrink: 0,
-    color: tokens.ink,
-    fontSize: fontSize.ui,
-    whiteSpace: "nowrap",
-  },
-  stepTitleDone: {
-    color: tokens.reviewHomeMeta,
-  },
+  stepChevron: "tw:m-[2px_2px_2px_auto] tw:stroke-[var(--review-home-meta)]",
+  badge:
+    "tw:flex tw:items-center tw:justify-center tw:size-[22px] tw:shrink-0 tw:rounded-[50%] tw:border-[1px] tw:border-solid tw:border-[color:var(--review-home-rule-soft)] tw:text-[color:var(--review-home-meta)] tw:text-[length:11px] tw:font-medium",
+  badgeDone:
+    "tw:border-[color:var(--transparent)] tw:bg-[color:color-mix(in_srgb,_var(--change-added)_18%,_var(--transparent))]",
+  badgeOpen:
+    "tw:border-[color:var(--transparent)] tw:text-[color:var(--on-accent)] tw:bg-[color:var(--accent)]",
+  badgeCheck:
+    "tw:size-[10px] tw:shrink-0 tw:fill-[none] tw:stroke-[var(--change-added)] tw:stroke-[1.5px] tw:[stroke-linecap:round] tw:[stroke-linejoin:round]",
+  stepTitle:
+    "tw:shrink-0 tw:text-[color:var(--ink)] tw:text-[length:13px] tw:whitespace-nowrap",
+  stepTitleDone: "tw:text-[color:var(--review-home-meta)]",
   // The note gives way first so the title stays on one line.
-  stepNote: {
-    minWidth: 0,
-    overflow: "hidden",
-    color: tokens.reviewHomeMeta,
-    fontSize: fontSize.body,
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  stepBody: {
-    display: "flex",
-    flexDirection: "column",
-    padding: "0 20px 18px",
-  },
-  stepButton: {
-    alignSelf: "flex-start",
-  },
-  stepButtonNext: {
-    marginLeft: "8px",
-  },
+  stepNote:
+    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--review-home-meta)] tw:text-[length:12px] tw:text-ellipsis tw:whitespace-nowrap",
+  stepBody: "tw:flex tw:flex-col tw:p-[0_20px_18px]",
+  stepButton: "tw:self-start",
+  stepButtonNext: "tw:ml-[8px]",
   // A finished step's button stays at full strength.
-  stepDone: {
-    opacity: 1,
-  },
-  hint: {
-    margin: "0 0 14px",
-    maxWidth: "560px",
-    color: tokens.inkMuted,
-    font: `${fontSize.ui}/20px ${tokens.fontSans}`,
-  },
-  hintCode: {
-    padding: "1px 5px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.reviewHomeRuleSoft,
-    borderRadius: radius.small,
-    color: tokens.ink,
-    backgroundColor: tokens.controlBg,
-    fontFamily: tokens.fontMono,
-  },
-});
+  stepDone: "tw:opacity-[1]",
+  hint: "tw:m-[0_0_14px] tw:max-w-[560px] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:13px] tw:font-normal tw:leading-[20px]",
+  hintCode:
+    "tw:p-[1px_5px] tw:border-[1px] tw:border-solid tw:border-[color:var(--review-home-rule-soft)] tw:rounded-[4px] tw:text-[color:var(--ink)] tw:bg-[color:var(--control-bg)] tw:font-[family-name:var(--font-mono)]",
+};

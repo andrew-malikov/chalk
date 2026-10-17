@@ -1,7 +1,5 @@
-import { chevronMarker, segmentMarker } from "@canvas/styles/markers.stylex";
-import { motion } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
+import { cn } from "@canvas/lib/utils";
+import type { ClassValue } from "clsx";
 import {
   ArrowBigUp,
   ArrowUp,
@@ -34,94 +32,94 @@ import {
 import type { ReactElement } from "react";
 
 /** Styles a parent adds to an icon for its context. */
-export type IconProps = { xstyle?: stylex.StyleXStyles };
+export type IconProps = { className?: ClassValue };
 
-export function CloseIcon({ xstyle }: IconProps = {}): ReactElement {
+export function CloseIcon({ className }: IconProps = {}): ReactElement {
   return (
     <X
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function SlidersIcon({ xstyle }: IconProps = {}): ReactElement {
+export function SlidersIcon({ className }: IconProps = {}): ReactElement {
   return (
     <SlidersHorizontal
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function StackIcon({ xstyle }: IconProps = {}): ReactElement {
+export function StackIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Layers
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function BugIcon({ xstyle }: IconProps = {}): ReactElement {
+export function BugIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Bug
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function ContentsIcon({ xstyle }: IconProps = {}): ReactElement {
+export function ContentsIcon({ className }: IconProps = {}): ReactElement {
   return (
     <List
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function TutorialIcon({ xstyle }: IconProps = {}): ReactElement {
+export function TutorialIcon({ className }: IconProps = {}): ReactElement {
   return (
     <BookOpen
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function PlusIcon({ xstyle }: IconProps = {}): ReactElement {
+export function PlusIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Plus
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function MinusIcon({ xstyle }: IconProps = {}): ReactElement {
+export function MinusIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Minus
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function RefreshIcon({ xstyle }: IconProps = {}): ReactElement {
+export function RefreshIcon({ className }: IconProps = {}): ReactElement {
   return (
     <RefreshCw
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
@@ -131,17 +129,17 @@ export function SettingsSlidersIcon(): ReactElement {
     <SlidersHorizontal
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.settingsSliders)}
+      className={styles.settingsSliders}
     />
   );
 }
 
-export function MapPinIcon({ xstyle }: IconProps = {}): ReactElement {
+export function MapPinIcon({ className }: IconProps = {}): ReactElement {
   return (
     <MapPin
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
@@ -153,13 +151,13 @@ export function MapPinIcon({ xstyle }: IconProps = {}): ReactElement {
 export function MarkerUnderline({ active }: { active: boolean }): ReactElement {
   return (
     <svg
-      {...stylex.props(styles.underline, active && styles.underlineActive)}
+      className={cn(styles.underline, active && styles.underlineActive)}
       viewBox="0 0 48 3"
       preserveAspectRatio="none"
       aria-hidden="true"
     >
       <path
-        {...stylex.props(styles.underlineStroke)}
+        className={styles.underlineStroke}
         d="M1 1.6 C 12 0.5, 30 2.5, 47 1.2"
       />
     </svg>
@@ -173,13 +171,13 @@ export function MarkerUnderline({ active }: { active: boolean }): ReactElement {
  */
 export function DisclosureChevron({
   expanded,
-  xstyle,
+  className,
 }: IconProps & {
   expanded: boolean;
 }): ReactElement {
   return (
     <ChevronRight
-      {...stylex.props(styles.chevron, expanded && styles.chevronOpen, xstyle)}
+      className={cn(styles.chevron, expanded && styles.chevronOpen, className)}
       aria-hidden="true"
       focusable="false"
       data-open={expanded || undefined}
@@ -187,276 +185,190 @@ export function DisclosureChevron({
   );
 }
 
-export function CopyIcon({ xstyle }: IconProps = {}): ReactElement {
+export function CopyIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Copy
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function CodeIcon({ xstyle }: IconProps = {}): ReactElement {
+export function CodeIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Code
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function CheckIcon({ xstyle }: IconProps = {}): ReactElement {
+export function CheckIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Check
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function ChatIcon({ xstyle }: IconProps = {}): ReactElement {
+export function ChatIcon({ className }: IconProps = {}): ReactElement {
   return (
     <MessageSquare
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function LockIcon({ xstyle }: IconProps = {}): ReactElement {
+export function LockIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Lock
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function ArrowUpIcon({ xstyle }: IconProps = {}): ReactElement {
+export function ArrowUpIcon({ className }: IconProps = {}): ReactElement {
   return (
     <ArrowUp
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function HistoryIcon({ xstyle }: IconProps = {}): ReactElement {
+export function HistoryIcon({ className }: IconProps = {}): ReactElement {
   return (
     <History
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function ImageIcon({ xstyle }: IconProps = {}): ReactElement {
+export function ImageIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Image
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function TrashIcon({ xstyle }: IconProps = {}): ReactElement {
+export function TrashIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Trash2
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function SearchIcon({ xstyle }: IconProps = {}): ReactElement {
+export function SearchIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Search
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
-export function PopOutIcon({ xstyle }: IconProps = {}): ReactElement {
+export function PopOutIcon({ className }: IconProps = {}): ReactElement {
   return (
     <ExternalLink
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
 /** A side panel, for docking a floating window back into it. */
-export function DockIcon({ xstyle }: IconProps = {}): ReactElement {
+export function DockIcon({ className }: IconProps = {}): ReactElement {
   return (
     <PanelRight
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, xstyle)}
+      className={cn(styles.icon, className)}
     />
   );
 }
 
 /** Keep keyboard symbols independent of font glyph coverage. */
-export function CommandKeyIcon({ xstyle }: IconProps = {}): ReactElement {
+export function CommandKeyIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Command
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, styles.key, xstyle)}
+      className={cn(styles.icon, styles.key, className)}
     />
   );
 }
 
-export function ShiftKeyIcon({ xstyle }: IconProps = {}): ReactElement {
+export function ShiftKeyIcon({ className }: IconProps = {}): ReactElement {
   return (
     <ArrowBigUp
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.icon, styles.key, xstyle)}
+      className={cn(styles.icon, styles.key, className)}
     />
   );
 }
 
 /** A select's closed-state chevron, the same glyph as `tokens.chevronDown`. */
-export function ChevronDownIcon({ xstyle }: IconProps = {}): ReactElement {
+export function ChevronDownIcon({ className }: IconProps = {}): ReactElement {
   return (
     <ChevronDown
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.chevronDown, xstyle)}
+      className={cn(styles.chevronDown, className)}
     />
   );
 }
 
 /** Where a floating window is dragged from. */
-export function GripIcon({ xstyle }: IconProps = {}): ReactElement {
+export function GripIcon({ className }: IconProps = {}): ReactElement {
   return (
     <GripVertical
       aria-hidden="true"
       focusable="false"
-      {...stylex.props(styles.grip, xstyle)}
+      className={cn(styles.grip, className)}
     />
   );
 }
 
-const reducedMotion = "@media (prefers-reduced-motion: reduce)";
-
-const styles = stylex.create({
-  icon: {
-    width: "15px",
-    height: "15px",
-    fill: "none",
-    stroke: "currentColor",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    strokeWidth: "1.7px",
-  },
-  settingsSliders: {
-    width: "16px",
-    height: "16px",
-    fill: "none",
-    stroke: "currentColor",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    strokeWidth: "1.5px",
-  },
+const styles = {
+  icon: "tw:size-[15px] tw:fill-[none] tw:stroke-[currentColor] tw:[stroke-linecap:round] tw:[stroke-linejoin:round] tw:stroke-[1.7px]",
+  settingsSliders:
+    "tw:size-[16px] tw:fill-[none] tw:stroke-[currentColor] tw:[stroke-linecap:round] tw:[stroke-linejoin:round] tw:stroke-[1.5px]",
   // As tall as a shortcut's letter.
-  key: {
-    width: "10px",
-    height: "10px",
-    strokeWidth: "2.2px",
-  },
-  chevronDown: {
-    flex: "none",
-    width: "12px",
-    height: "12px",
-    fill: "none",
-    stroke: "currentcolor",
-    strokeWidth: "2",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  },
-  grip: {
-    flex: "none",
-    width: "10px",
-    height: "14px",
-    fill: "none",
-  },
+  key: "tw:size-[10px] tw:stroke-[2.2px]",
+  chevronDown:
+    "tw:flex-[none] tw:size-[12px] tw:fill-[none] tw:stroke-[currentcolor] tw:stroke-[2] tw:[stroke-linecap:round] tw:[stroke-linejoin:round]",
+  grip: "tw:flex-[none] tw:w-[10px] tw:h-[14px] tw:fill-[none]",
   // The marker is drawn, not painted: a clip slides open, so the pen's
   // progress is the same whatever the tab's width (a dash offset would not
   // be under non-scaling-stroke). Hover draws a lighter stroke; leaving fades
   // the ink and only then closes the clip, so the pen never runs backwards.
-  underline: {
-    position: "absolute",
-    bottom: "6px",
-    left: 0,
-    width: "100%",
-    height: "3px",
-    overflow: "visible",
-    clipPath: {
-      default: "inset(-2px 100% -2px 0)",
-      [stylex.when.ancestor(":hover", segmentMarker)]: "inset(-2px 0 -2px 0)",
-    },
-    opacity: {
-      default: 0,
-      [stylex.when.ancestor(":hover", segmentMarker)]: 0.7,
-    },
-    pointerEvents: "none",
-    transition: {
-      default: `opacity ${motion.fast} ${motion.ease}, clip-path ${motion.instant} linear ${motion.fast}`,
-      [stylex.when.ancestor(":hover", segmentMarker)]:
-        `opacity ${motion.instant}, clip-path ${motion.slow} cubic-bezier(0.2, 0.7, 0.2, 1)`,
-      [reducedMotion]: `opacity ${motion.fast} ${motion.ease}`,
-    },
-  },
-  underlineActive: {
-    clipPath: "inset(-2px 0 -2px 0)",
-    opacity: {
-      default: 1,
-      [stylex.when.ancestor(":hover", segmentMarker)]: 0.7,
-    },
-    transition: {
-      default: `opacity ${motion.instant}, clip-path ${motion.slow} cubic-bezier(0.2, 0.7, 0.2, 1)`,
-      [reducedMotion]: `opacity ${motion.fast} ${motion.ease}`,
-    },
-  },
-  underlineStroke: {
-    fill: "none",
-    stroke: tokens.accent,
-    strokeWidth: "2",
-    strokeLinecap: "round",
-    vectorEffect: "non-scaling-stroke",
-  },
-  chevron: {
-    flex: "none",
-    width: "12px",
-    height: "12px",
-    margin: "2px",
-    color: {
-      default: tokens.inkFaint,
-      [stylex.when.ancestor(":hover", chevronMarker)]: tokens.ink,
-      [stylex.when.ancestor(":focus-visible", chevronMarker)]: tokens.ink,
-    },
-    fill: "none",
-    stroke: "currentcolor",
-    strokeWidth: "2",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    transition: `transform ${motion.fast} ${motion.ease}, color ${motion.fast} ${motion.ease}`,
-  },
-  chevronOpen: {
-    transform: "rotate(90deg)",
-  },
-});
+  underline:
+    "tw:absolute tw:bottom-[6px] tw:left-0 tw:w-full tw:h-[3px] tw:overflow-visible tw:[clip-path:inset(-2px_100%_-2px_0)] tw:[&:is(.canvas-segment:hover_*)]:[clip-path:inset(-2px_0_-2px_0)] tw:opacity-0 tw:[&:is(.canvas-segment:hover_*)]:opacity-[0.7] tw:pointer-events-none tw:[transition:opacity_120ms_ease,_clip-path_0s_linear_120ms] tw:[&:is(.canvas-segment:hover_*)]:[transition:opacity_0s,_clip-path_300ms_cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:opacity_120ms_ease]",
+  underlineActive:
+    "tw:[clip-path:inset(-2px_0_-2px_0)] tw:opacity-[1] tw:[&:is(.canvas-segment:hover_*)]:opacity-[0.7] tw:[transition:opacity_0s,_clip-path_300ms_cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:opacity_120ms_ease]",
+  underlineStroke:
+    "tw:fill-[none] tw:stroke-[var(--accent)] tw:stroke-[2] tw:[stroke-linecap:round] tw:[vector-effect:non-scaling-stroke]",
+  chevron:
+    "tw:flex-[none] tw:size-[12px] tw:m-[2px] tw:text-[color:var(--ink-faint)] tw:[&:is(.canvas-chevron:hover_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-chevron:focus-visible_*)]:text-[color:var(--ink)] tw:fill-[none] tw:stroke-[currentcolor] tw:stroke-[2] tw:[stroke-linecap:round] tw:[stroke-linejoin:round] tw:[transition:transform_120ms_ease,_color_120ms_ease]",
+  chevronOpen: "tw:[transform:rotate(90deg)]",
+};

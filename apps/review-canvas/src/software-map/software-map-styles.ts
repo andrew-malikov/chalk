@@ -1,59 +1,24 @@
 import { drawStyles } from "@canvas/drawing/draw-styles";
-import { documentMarker } from "@canvas/styles/markers.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
-
-const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
-
-const narrow = "@media (max-width: 720px)";
-
-const documentWidth = `calc(100cqi - ${tokens.reviewDocumentPaddingInline} - ${tokens.reviewDocumentPaddingInline})`;
+import { cn } from "@canvas/lib/utils";
 
 /**
  * The map's section, shared by the map and its unavailable notice. The
  * `software-map` class stays as the e2e journeys' and tests' hook.
  */
 export function softwareMapRootProps(className?: string, variant?: "view") {
-  return withClass(
-    ["software-map", className].filter(Boolean).join(" "),
-    styles.root,
-    variant === "view" && styles.view,
-    drawStyles.blockChild,
-  );
+  return {
+    className: cn(
+      "software-map",
+      className,
+      styles.root,
+      variant === "view" && styles.view,
+      drawStyles.blockChild,
+    ),
+  };
 }
 
-const styles = stylex.create({
-  root: {
-    margin: "24px 0",
-    fontFamily: tokens.fontSans,
-    // In a document the map centers on the prose column, never narrower than
-    // the prose measure.
-    width: {
-      default: null,
-      [inDocument()]: {
-        default: "fit-content",
-        [narrow]: "calc(100cqi - 16px)",
-      },
-    },
-    maxWidth: {
-      default: null,
-      [inDocument()]: {
-        default: `min(${tokens.reviewInlineDiagramMaxWidth}, ${documentWidth})`,
-        [narrow]: "none",
-      },
-    },
-    minWidth: {
-      default: null,
-      [inDocument()]: `min(${tokens.reviewProseMaxWidth}, ${documentWidth})`,
-    },
-    marginInline: { default: null, [inDocument()]: "auto" },
-  },
+const styles = {
+  root: "tw:m-[24px_0] tw:font-[family-name:var(--font-sans)] tw:[&:is(.canvas-document:is(*)_*)]:w-fit tw:[@media_(max-width:_720px)]:[&:is(.canvas-document:is(*)_*)]:w-[calc(100cqi_-_16px)] tw:[&:is(.canvas-document:is(*)_*)]:max-w-[min(var(--review-inline-diagram-max-width),_calc(100cqi_-_var(--review-document-padding-inline)_-_var(--review-document-padding-inline)))] tw:[@media_(max-width:_720px)]:[&:is(.canvas-document:is(*)_*)]:max-w-none tw:[&:is(.canvas-document:is(*)_*)]:min-w-[min(var(--review-prose-max-width),_calc(100cqi_-_var(--review-document-padding-inline)_-_var(--review-document-padding-inline)))] tw:[&:is(.canvas-document:is(*)_*)]:mx-[auto]",
   // The map view fills its canvas shell.
-  view: {
-    flex: 1,
-    minHeight: 0,
-    height: "100%",
-    margin: 0,
-  },
-});
+  view: "tw:flex-[1] tw:min-h-0 tw:h-full tw:m-0",
+};

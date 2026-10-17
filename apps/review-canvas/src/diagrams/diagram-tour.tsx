@@ -1,14 +1,12 @@
 import { useCanvasScrollLock } from "@canvas/lib/use-canvas-scroll-lock";
+import { cn } from "@canvas/lib/utils";
 import { GuidedTourPanel } from "@canvas/review/review-components";
 import type { GuidedTour } from "@canvas/review/review-panel-model";
 import { useReviewContainer } from "@canvas/review/review-root-context";
 import { useRightPanelResize } from "@canvas/review/side-panel-resizer";
 import { useReviewDebugSettings } from "@canvas/settings/debug-settings";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import { withClass } from "@canvas/styles/stylex-props";
 import { themeStyles } from "@canvas/styles/theme-styles";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
@@ -68,7 +66,7 @@ export function DiagramTourOverlay({
   return (
     <div
       ref={overlayRef}
-      {...withClass(
+      className={cn(
         `diagram-tour-overlay review-app--theme-${theme}`,
         theme === "light" && themeStyles.light,
         styles.overlay,
@@ -79,18 +77,18 @@ export function DiagramTourOverlay({
       aria-label={`${tour.title ?? "Guided"} tour`}
       style={overlayStyle}
     >
-      <div {...stylex.props(styles.stage, flow && styles.flowStage)}>
+      <div className={cn(styles.stage, flow && styles.flowStage)}>
         {children}
       </div>
       <div
-        {...stylex.props(
+        className={cn(
           shellStyles.resizer,
           shellStyles.resizerGrabPanel,
           styles.resizer,
         )}
         {...paneResize.separatorProps}
       />
-      <div {...stylex.props(styles.panel)}>
+      <div className={styles.panel}>
         <GuidedTourPanel
           tour={tour}
           activeAnchor={activeAnchor}
@@ -130,52 +128,17 @@ export function useDiagramTourShell(open: boolean, onClose: () => void) {
   return { portalTarget };
 }
 
-// A terminal split can leave the canvas too narrow for both tour columns: the
-// diagram collapses before the tour panel becomes unreadable.
-const narrow = "@container review-canvas (max-width: 1080px)";
-
 // Portals inside .review-canvas-root but outside .review-app, where
 // --review-debug-layer lives, hence the literal fallback.
-const styles = stylex.create({
-  overlay: {
-    position: "fixed",
-    inset: 0,
-    zIndex: "var(--review-debug-layer, 2147483000)",
-    boxSizing: "border-box",
-    display: "grid",
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr) 10px var(--diagram-tour-pane-width, 424px)",
-      [narrow]: "minmax(0, 1fr)",
-    },
-    minWidth: 0,
-    minHeight: 0,
-    overflow: "hidden",
-    backgroundColor: tokens.bg,
-  },
-  flowOverlay: {
-    gridTemplateRows: {
-      default: null,
-      [narrow]: "minmax(180px, 40%) minmax(0, 1fr)",
-    },
-  },
-  stage: {
-    display: { default: "flex", [narrow]: "none" },
-    flexDirection: "column",
-    minWidth: 0,
-    minHeight: 0,
-  },
-  flowStage: {
-    display: "flex",
-  },
-  resizer: {
-    display: { default: null, [narrow]: "none" },
-  },
+const styles = {
+  overlay:
+    "tw:fixed tw:inset-0 tw:z-[var(--review-debug-layer,_2147483000)] tw:box-border tw:grid tw:grid-cols-[minmax(0,_1fr)_10px_var(--diagram-tour-pane-width,_424px)] tw:[@container_review-canvas_(max-width:_1080px)]:grid-cols-[minmax(0,_1fr)] tw:min-w-0 tw:min-h-0 tw:overflow-hidden tw:bg-[color:var(--bg)]",
+  flowOverlay:
+    "tw:[@container_review-canvas_(max-width:_1080px)]:grid-rows-[minmax(180px,_40%)_minmax(0,_1fr)]",
+  stage:
+    "tw:flex tw:[@container_review-canvas_(max-width:_1080px)]:hidden tw:flex-col tw:min-w-0 tw:min-h-0",
+  flowStage: "tw:flex",
+  resizer: "tw:[@container_review-canvas_(max-width:_1080px)]:hidden",
   // Positioned so the panel's floating pager centers on this column.
-  panel: {
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    minWidth: 0,
-    minHeight: 0,
-  },
-});
+  panel: "tw:relative tw:flex tw:flex-col tw:min-w-0 tw:min-h-0",
+};

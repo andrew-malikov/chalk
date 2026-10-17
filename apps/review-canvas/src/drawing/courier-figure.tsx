@@ -1,7 +1,5 @@
-import { courierMotion } from "@canvas/drawing/courier-motion.stylex";
-import { motion } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
+import { cn } from "@canvas/lib/utils";
+import type { ClassValue } from "clsx";
 
 /** What the board courier is doing, which his figure draws. */
 export interface CourierPose {
@@ -16,12 +14,12 @@ export interface CourierPose {
  * do not show through.
  */
 export function CourierFigure({
-  xstyle,
+  className,
   pose,
   marching = false,
   thinking = false,
 }: {
-  xstyle?: stylex.StyleXStyles;
+  className?: ClassValue;
   /** The board courier's pose; the badge's mini courier has none. */
   pose?: CourierPose;
   /** The badge's mini courier marches while an agent works. */
@@ -35,17 +33,17 @@ export function CourierFigure({
 
   return (
     <svg
-      {...stylex.props(xstyle)}
+      className={cn(className)}
       viewBox="0 0 28 34"
       aria-hidden="true"
       focusable="false"
     >
       <path
-        {...stylex.props(styles.whoosh, march && styles.whooshMarching)}
+        className={cn(styles.whoosh, march && styles.whooshMarching)}
         d="M-6 27h6M-9 31h5"
       />
       <path
-        {...stylex.props(
+        className={cn(
           styles.line,
           board && styles.still,
           (march || marching) && styles.marchLeft,
@@ -54,7 +52,7 @@ export function CourierFigure({
         d="M9 24v7h-4"
       />
       <path
-        {...stylex.props(
+        className={cn(
           styles.line,
           board && styles.still,
           (march || marching) && styles.marchRight,
@@ -63,7 +61,7 @@ export function CourierFigure({
         d="M19 24v7h4"
       />
       <rect
-        {...stylex.props(styles.shell)}
+        className={styles.shell}
         x="4"
         y="8"
         width="20"
@@ -71,16 +69,16 @@ export function CourierFigure({
         rx="6"
       />
       <g
-        {...stylex.props(
+        className={cn(
           board && styles.still,
           sit && styles.dozing,
           thinking && styles.pondering,
         )}
       >
-        <circle {...stylex.props(styles.eye)} cx="11" cy="15" r="1.3" />
-        <circle {...stylex.props(styles.eye)} cx="18" cy="15" r="1.3" />
+        <circle className={styles.eye} cx="11" cy="15" r="1.3" />
+        <circle className={styles.eye} cx="18" cy="15" r="1.3" />
         <path
-          {...stylex.props(
+          className={cn(
             styles.line,
             styles.lids,
             board && styles.still,
@@ -93,128 +91,33 @@ export function CourierFigure({
   );
 }
 
-const REDUCED = "@media (prefers-reduced-motion: reduce)";
-
-const marchLeft = stylex.keyframes({
-  "0%, 100%": { transform: "translateY(0)" },
-  "50%": { transform: "translateY(-4px)" },
-});
-
-const marchRight = stylex.keyframes({
-  "0%, 100%": { transform: "translateY(-4px)" },
-  "50%": { transform: "translateY(0)" },
-});
-
-const doze = stylex.keyframes({
-  "0%, 80%": { transform: "translateY(0)" },
-  "81%, 100%": { transform: "translateY(1.5px)" },
-});
-
-// Looks one way, then the other, then up, as if working it out.
-const ponder = stylex.keyframes({
-  "0%, 100%": { transform: "translate(0, 0)" },
-  "25%": { transform: "translate(-2px, 0)" },
-  "50%": { transform: "translate(2px, 0)" },
-  "75%": { transform: "translate(1px, -2px)" },
-});
-
-const happy = stylex.keyframes({
-  "0%, 10%": { opacity: 0 },
-  "12%, 70%": { opacity: 1 },
-  "72%, 100%": { opacity: 0 },
-});
-
-const styles = stylex.create({
-  shell: {
-    fill: tokens.surface,
-    stroke: "currentColor",
-    strokeWidth: 1.6,
-    strokeLinejoin: "round",
-  },
-  eye: {
-    fill: "currentColor",
-  },
+const styles = {
+  shell:
+    "tw:fill-[var(--surface)] tw:stroke-[currentColor] tw:stroke-[1.6] tw:[stroke-linejoin:round]",
+  eye: "tw:fill-[currentColor]",
   // The legs and the eyelids.
-  line: {
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.6,
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  },
-  lids: {
-    strokeWidth: 1.4,
-    opacity: 0,
-  },
-  whoosh: {
-    stroke: "currentColor",
-    strokeWidth: 1.2,
-    strokeLinecap: "round",
-    opacity: 0,
-  },
-  whooshMarching: {
-    opacity: 0.5,
-  },
+  line: "tw:fill-[none] tw:stroke-[currentColor] tw:stroke-[1.6] tw:[stroke-linecap:round] tw:[stroke-linejoin:round]",
+  lids: "tw:stroke-[1.4] tw:opacity-0",
+  whoosh:
+    "tw:stroke-[currentColor] tw:stroke-[1.2] tw:[stroke-linecap:round] tw:opacity-0",
+  whooshMarching: "tw:opacity-[0.5]",
   // On the board, reduced motion keeps him still.
-  still: {
-    transition: { default: null, [REDUCED]: "none" },
-  },
+  still: "tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:none]",
   // Idle: march in place, then sit.
-  marchLeft: {
-    animationName: { default: marchLeft, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.march,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "ease-in-out", [REDUCED]: "ease" },
-    animationIterationCount: { default: "infinite", [REDUCED]: 1 },
-  },
-  marchRight: {
-    animationName: { default: marchRight, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.march,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "ease-in-out", [REDUCED]: "ease" },
-    animationIterationCount: { default: "infinite", [REDUCED]: 1 },
-  },
+  marchLeft:
+    "tw:[animation-name:courier-figure-march-left] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:480ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:ease-in-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-iteration-count:infinite] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-iteration-count:1]",
+  marchRight:
+    "tw:[animation-name:courier-figure-march-right] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:480ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:ease-in-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-iteration-count:infinite] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-iteration-count:1]",
   // Sitting eases in, reduced motion included.
-  sitLeft: {
-    transform: "rotate(-80deg)",
-    transformOrigin: "9px 24px",
-    transition: `transform ${motion.slow} ${motion.ease}`,
-  },
-  sitRight: {
-    transform: "rotate(80deg)",
-    transformOrigin: "19px 24px",
-    transition: `transform ${motion.slow} ${motion.ease}`,
-  },
-  dozing: {
-    animationName: { default: doze, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.doze,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "steps(1)", [REDUCED]: "ease" },
-    animationIterationCount: { default: "infinite", [REDUCED]: 1 },
-  },
-  pondering: {
-    animationName: { default: ponder, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.ponder,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "steps(1)", [REDUCED]: "ease" },
-    animationIterationCount: { default: "infinite", [REDUCED]: 1 },
-  },
+  sitLeft:
+    "tw:[transform:rotate(-80deg)] tw:[transform-origin:9px_24px] tw:[transition:transform_300ms_ease]",
+  sitRight:
+    "tw:[transform:rotate(80deg)] tw:[transform-origin:19px_24px] tw:[transition:transform_300ms_ease]",
+  dozing:
+    "tw:[animation-name:courier-figure-doze] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:5s] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-iteration-count:infinite] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-iteration-count:1]",
+  pondering:
+    "tw:[animation-name:courier-figure-ponder] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:2.4s] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-iteration-count:infinite] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-iteration-count:1]",
   // Happy eyes on a jump.
-  happy: {
-    animationName: { default: happy, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.bounce,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "steps(1)", [REDUCED]: "ease" },
-    animationFillMode: { default: "forwards", [REDUCED]: "none" },
-  },
-});
+  happy:
+    "tw:[animation-name:courier-figure-happy] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:520ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:forwards] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
+};

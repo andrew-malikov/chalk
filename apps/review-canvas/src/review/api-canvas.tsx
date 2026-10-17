@@ -16,8 +16,6 @@ import {
   createReviewSession,
   useReviewSession,
 } from "@canvas/host/review-session";
-import { fontSize } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { TutorialProvider } from "@canvas/tutorial/tutorial-context";
 import {
   type ReviewCanvasContent,
@@ -28,7 +26,6 @@ import { ReviewApiClient, ReviewApiError } from "@chalk/review-contracts";
 import { elements } from "@review/documents/document";
 import type { ActivitySnapshot } from "@review/node/review-api/activity";
 import type { Snapshot } from "@review/node/review-api/store";
-import * as stylex from "@stylexjs/stylex";
 import {
   createContext,
   memo,
@@ -350,7 +347,7 @@ export function ApiCanvas({
       <CanvasQueryProvider client={client} reviewId={content.reviewId}>
         {error !== undefined && (
           <>
-            <p {...stylex.props(styles.error)} role="status">
+            <p className={styles.error} role="status">
               {error}
             </p>
             {version !== undefined && (
@@ -394,7 +391,7 @@ export function ApiCanvas({
             >
               <TutorialProvider tutorial={content.tutorial}>
                 {error && (
-                  <p {...stylex.props(styles.error)} role="status">
+                  <p className={styles.error} role="status">
                     {error}
                   </p>
                 )}
@@ -501,11 +498,7 @@ const CanvasDocument = memo(function CanvasDocument({
   );
 });
 
-const styles = stylex.create({
-  error: {
-    maxWidth: "72ch",
-    margin: "32px auto",
-    padding: "0 24px",
-    font: `${fontSize.reading}/1.6 ${tokens.fontDisplay}`,
-  },
-});
+const styles = {
+  error:
+    "tw:max-w-[72ch] tw:m-[32px_auto] tw:p-[0_24px] tw:font-[family-name:var(--font-display)] tw:text-[length:15px] tw:font-normal tw:leading-[1.6]",
+};

@@ -1,88 +1,17 @@
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
-
 // The header every diagram figure shares: a kind badge, the title and a quiet
 // count, then its 24px hairline controls (the tour button, the use-case
 // select).
-export const diagramStyles = stylex.create({
-  header: {
-    position: "relative",
-    top: "auto",
-    left: "auto",
-    zIndex: 6,
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    minWidth: 0,
-    minHeight: "36px",
-    padding: "0 12px 0 14px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.rule,
-    backgroundColor: tokens.surface,
-    color: tokens.ink,
-    fontFamily: tokens.fontSans,
-    letterSpacing: 0,
-  },
-  headerMain: {
-    display: "inline-flex",
-    flex: "1 1 auto",
-    alignItems: "center",
-    gap: "10px",
-    minWidth: 0,
-  },
-  title: {
-    minWidth: 0,
-    overflow: "hidden",
-    color: tokens.ink,
-    fontSize: fontSize.body,
-    fontStyle: "normal",
-    fontWeight: fontWeight.semibold,
-    lineHeight: "18px",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
+export const diagramStyles = {
+  header:
+    "tw:relative tw:top-[auto] tw:left-[auto] tw:z-[6] tw:flex tw:items-center tw:gap-[10px] tw:min-w-0 tw:min-h-[36px] tw:p-[0_12px_0_14px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--surface)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:tracking-[0]",
+  headerMain:
+    "tw:inline-flex tw:flex-[1_1_auto] tw:items-center tw:gap-[10px] tw:min-w-0",
+  title:
+    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:text-[length:12px] tw:not-italic tw:font-semibold tw:leading-[18px] tw:text-ellipsis tw:whitespace-nowrap",
   // A quiet count ("5 stops", "4 nodes"), not a chip.
-  meta: {
-    flex: "0 0 auto",
-    marginLeft: "auto",
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderRadius: 0,
-    backgroundColor: tokens.transparent,
-    color: tokens.inkFaint,
-    font: `${fontWeight.regular} ${fontSize.small} ${tokens.fontSans}`,
-    fontStyle: "normal",
-    letterSpacing: 0,
-    textTransform: "none",
-  },
-  control: {
-    flex: "0 0 auto",
-    height: "24px",
-    padding: "0 10px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: { default: tokens.ruleSoft, ":focus-visible": tokens.accent },
-    borderRadius: radius.control,
-    backgroundColor: { default: tokens.surface, ":hover": tokens.well },
-    color: tokens.ink,
-    font: `${fontWeight.medium} ${fontSize.small} ${tokens.fontSans}`,
-    lineHeight: "22px",
-    cursor: "pointer",
-    outline: { default: null, ":focus-visible": "none" },
-  },
-  select: {
-    width: "100%",
-    minWidth: 0,
-    paddingRight: "26px",
-    overflow: "hidden",
-    appearance: "none",
-    backgroundImage: tokens.chevronDown,
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 8px center",
-    backgroundSize: "12px 12px",
-    textOverflow: "ellipsis",
-  },
-});
+  meta: "tw:flex-[0_0_auto] tw:ml-[auto] tw:p-0 tw:border-[0] tw:border-none tw:rounded-none tw:bg-[color:var(--transparent)] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[normal] tw:not-italic tw:tracking-[0] tw:normal-case",
+  control:
+    "tw:flex-[0_0_auto] tw:h-[24px] tw:p-[0_10px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:[&:focus-visible]:border-[color:var(--accent)] tw:rounded-[6px] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-medium tw:leading-[normal] tw:leading-[22px] tw:cursor-pointer tw:[&:focus-visible]:[outline:none]",
+  select:
+    "tw:w-full tw:min-w-0 tw:pr-[26px] tw:overflow-hidden tw:appearance-none tw:[background-image:var(--chevron-down)] tw:[background-repeat:no-repeat] tw:[background-position:right_8px_center] tw:[background-size:12px_12px] tw:text-ellipsis",
+};

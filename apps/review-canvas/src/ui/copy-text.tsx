@@ -1,6 +1,6 @@
 import { useTooltip } from "@canvas/lib/use-tooltip";
 import { IconButton } from "@canvas/ui/button";
-import * as stylex from "@stylexjs/stylex";
+import type { ClassValue } from "clsx";
 import { type ReactElement, useEffect, useState } from "react";
 
 import { CheckIcon, CopyIcon as CopyGlyph } from "./icons";
@@ -52,7 +52,7 @@ export async function copyText(text: string): Promise<boolean> {
 
 /** The prompt cards' copy glyph. */
 export function CopyIcon() {
-  return <CopyGlyph xstyle={styles.icon} />;
+  return <CopyGlyph className={styles.icon} />;
 }
 
 const COPIED_FOR_MS = 1200;
@@ -62,14 +62,13 @@ export function CopyButton({
   text,
   label,
   className,
-  xstyle,
-  iconStyle,
+  iconClassName,
 }: {
   text: string;
   label: string;
-  className?: string;
-  xstyle?: stylex.StyleXStyles;
-  iconStyle: stylex.StyleXStyles;
+  className?: ClassValue;
+
+  iconClassName: ClassValue;
 }): ReactElement {
   const [copied, setCopied] = useState(false);
   const tooltip = useTooltip(label);
@@ -85,7 +84,7 @@ export function CopyButton({
     <IconButton
       ref={tooltip}
       className={className}
-      xstyle={xstyle}
+
       aria-label={label}
       data-copied={copied ? "" : undefined}
       onClick={() => {
@@ -97,17 +96,14 @@ export function CopyButton({
       }}
     >
       {copied ? (
-        <CheckIcon xstyle={iconStyle} />
+        <CheckIcon className={iconClassName} />
       ) : (
-        <CopyGlyph xstyle={iconStyle} />
+        <CopyGlyph className={iconClassName} />
       )}
     </IconButton>
   );
 }
 
-const styles = stylex.create({
-  icon: {
-    width: "12px",
-    height: "12px",
-  },
-});
+const styles = {
+  icon: "tw:size-[12px]",
+};

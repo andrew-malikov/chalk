@@ -128,10 +128,6 @@ export default defineConfig({
         name: "anti-slop",
         specifier: "./tools/oxlint/anti-slop/index.ts",
       },
-      {
-        name: "canvas-styles",
-        specifier: "./tools/oxlint/canvas-styles/index.ts",
-      },
     ],
     overrides: [
       {
@@ -185,15 +181,6 @@ export default defineConfig({
               patterns: ["@chalk/review/*", "**/review/**"],
             },
           ],
-        },
-      },
-      {
-        files: [
-          "apps/review-canvas/src/**/*.ts",
-          "apps/review-canvas/src/**/*.tsx",
-        ],
-        rules: {
-          "canvas-styles/scale-literals": "error",
         },
       },
       {

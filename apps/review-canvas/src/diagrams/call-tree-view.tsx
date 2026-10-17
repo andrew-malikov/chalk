@@ -5,16 +5,13 @@ import {
   diffCountStyles,
 } from "@canvas/diff/diff-count";
 import { drawStyles } from "@canvas/drawing/draw-styles";
+import { cn } from "@canvas/lib/utils";
 import { useReviewLenses } from "@canvas/review/review-lenses";
 import { useReviewPanelActor } from "@canvas/review/review-panel";
-import { callEdgeMarker } from "@canvas/styles/markers.stylex";
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { callEdgeMarker } from "@canvas/styles/markers";
 import { CheckIcon } from "@canvas/ui/icons";
 import type { CallStackDiffBlock } from "@review/blocks/call_stack_diff";
 import type { DiffSelection } from "@review/documents/lens-selection";
-import * as stylex from "@stylexjs/stylex";
 import { useState } from "react";
 
 import { type CallTreeStop, callTreeStops } from "./call-tree";
@@ -39,7 +36,7 @@ export function CallTree({
 
   return (
     <nav aria-label="Call tree">
-      <div {...stylex.props(styles.tree)}>
+      <div className={styles.tree}>
         {stops.map((stop, index) => {
           const availability = requireReady
             ? lenses?.availability(stop.sources)
@@ -58,7 +55,7 @@ export function CallTree({
                   : "unchanged";
 
           return (
-            <div {...stylex.props(styles.entry)} key={stop.id}>
+            <div className={styles.entry} key={stop.id}>
               <TreeConnectors
                 stop={stop}
                 parentDistance={
@@ -83,7 +80,7 @@ export function CallTree({
                   paddingLeft: 14 + (stop.depth + 1) * 16,
                   opacity: unavailable ? 0.45 : undefined,
                 }}
-                {...withClass(
+                className={cn(
                   "tw:h-auto tw:whitespace-normal tw:font-normal",
                   styles.row,
                   stop.id === active && styles.rowCurrent,
@@ -104,7 +101,7 @@ export function CallTree({
                 }}
               >
                 <span
-                  {...stylex.props(
+                  className={cn(
                     styles.name,
                     change !== "unchanged" && styles[change],
                   )}
@@ -112,13 +109,13 @@ export function CallTree({
                   {stop.label}
                 </span>
                 {unavailable && (
-                  <span {...stylex.props(styles.stats)}>
+                  <span className={styles.stats}>
                     {availability === "pending" ? "…" : "Unavailable"}
                   </span>
                 )}
                 {!unavailable && stats && change !== "unchanged" && (
                   <span
-                    {...stylex.props(styles.stats)}
+                    className={styles.stats}
                     title={`Remaining +${stats.remaining.additions} −${stats.remaining.deletions} · Total +${stats.total.additions} −${stats.total.deletions}`}
                   >
                     {stats.state === "viewed" ? (
@@ -129,10 +126,10 @@ export function CallTree({
                       "Folded"
                     ) : (
                       <>
-                        <span {...stylex.props(diffCountStyles.added)}>
+                        <span className={diffCountStyles.added}>
                           +{compact(stats.remaining.additions)}
                         </span>
-                        <span {...stylex.props(diffCountStyles.removed)}>
+                        <span className={diffCountStyles.removed}>
                           −{compact(stats.remaining.deletions)}
                         </span>
                       </>
@@ -163,7 +160,7 @@ function TreeConnectors({
 
   return (
     <svg
-      {...stylex.props(styles.connectors)}
+      className={styles.connectors}
       width={width}
       height="26"
       viewBox={`0 0 ${width} 26`}
@@ -172,13 +169,13 @@ function TreeConnectors({
         continues ? (
           <path
             key={index}
-            {...stylex.props(styles.path)}
+            className={styles.path}
             d={`M ${index === 0 ? 0.5 : index * 16 + 6} 0 V 26`}
           />
         ) : null,
       )}
       {!stop.last ? (
-        <path {...stylex.props(styles.path)} d={`M ${branchX} 13 V 26`} />
+        <path className={styles.path} d={`M ${branchX} 13 V 26`} />
       ) : null}
       <g
         role={stop.callSite ? "button" : undefined}
@@ -187,7 +184,7 @@ function TreeConnectors({
           stop.callSite ? `Go to call site of ${stop.label}` : undefined
         }
         {...(stop.callSite
-          ? stylex.props(callEdgeMarker, styles.edge)
+          ? { className: cn(callEdgeMarker, styles.edge) }
           : undefined)}
         onClick={stop.callSite ? onCallSite : undefined}
         onKeyDown={
@@ -206,18 +203,15 @@ function TreeConnectors({
             ? `Go to call site of ${stop.label}`
             : "No call-site location recorded"}
         </title>
-        <path
-          {...stylex.props(styles.path)}
-          d={`M ${branchX} 0 V 13 H ${width}`}
-        />
+        <path className={styles.path} d={`M ${branchX} 0 V 13 H ${width}`} />
         {stop.callSite ? (
           <>
             <path
-              {...stylex.props(styles.path, styles.edgeHighlight)}
+              className={cn(styles.path, styles.edgeHighlight)}
               d={`M ${branchX} ${-(parentDistance - 1) * 26} V 13 H ${width}`}
             />
             <path
-              {...stylex.props(styles.path, styles.edgeHit)}
+              className={cn(styles.path, styles.edgeHit)}
               d={`M ${branchX} 0 V 13 H ${width}`}
             />
           </>
@@ -233,7 +227,7 @@ export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
 
   return (
     <figure
-      {...stylex.props(styles.figure, drawStyles.blockChild)}
+      className={cn(styles.figure, drawStyles.blockChild)}
       data-review-call-stack="ready"
     >
       <DiagramHeader kind="Call tree" title={block.title ?? "Call tree"} />
@@ -262,117 +256,27 @@ export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
   );
 }
 
-const styles = stylex.create({
-  figure: {
-    margin: "14px 0",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.surface,
-    overflow: "hidden",
-    backgroundColor: tokens.surface,
-  },
-  tree: {
-    minWidth: "100%",
-    width: "100%",
-    padding: "6px 0 12px",
-  },
+const styles = {
+  figure:
+    "tw:m-[14px_0] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:overflow-hidden tw:bg-[color:var(--surface)]",
+  tree: "tw:min-w-full tw:w-full tw:p-[6px_0_12px]",
   // A hovered or focused call-site edge paints over the rows below it.
-  entry: {
-    position: "relative",
-    zIndex: {
-      default: null,
-      [stylex.when.descendant(":hover", callEdgeMarker)]: 1,
-      [stylex.when.descendant(":focus-visible", callEdgeMarker)]: 1,
-    },
-  },
-  row: {
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    width: "100%",
-    height: "26px",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    padding: "0 12px 0 14px",
-    backgroundColor: {
-      default: "transparent",
-      ":hover:not(:disabled)": `color-mix(in srgb, ${tokens.ink} 3%, transparent)`,
-    },
-    font: `${fontSize.body}/26px ${tokens.fontMono}`,
-    textAlign: "left",
-    whiteSpace: "nowrap",
-  },
-  rowCurrent: {
-    backgroundColor: tokens.markerTint,
-    fontWeight: fontWeight.semibold,
-  },
-  name: {
-    flex: "0 1 auto",
-    minWidth: "32px",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  added: {
-    color: tokens.changeAdded,
-  },
-  removed: {
-    color: tokens.changeRemoved,
-    textDecorationLine: "line-through",
-    textDecorationColor: `color-mix(in srgb, ${tokens.changeRemoved} 50%, transparent)`,
-  },
-  modified: {
-    color: tokens.changeModified,
-  },
-  stats: {
-    display: "inline-flex",
-    gap: "5px",
-    fontVariantNumeric: "tabular-nums",
-    flexShrink: 0,
-    marginLeft: "auto",
-    paddingLeft: "12px",
-    fontSize: fontSize.micro,
-  },
-  connectors: {
-    flexShrink: 0,
-    alignSelf: "stretch",
-    position: "absolute",
-    left: "14px",
-    top: 0,
-    zIndex: 1,
-    pointerEvents: "none",
-    overflow: "visible",
-  },
-  path: {
-    stroke: tokens.ruleSoft,
-    fill: "none",
-    strokeWidth: "1",
-  },
-  edge: {
-    pointerEvents: "auto",
-    cursor: "pointer",
-  },
-  edgeHit: {
-    stroke: "transparent",
-    strokeWidth: "10px",
-  },
-  edgeHighlight: {
-    visibility: {
-      default: "hidden",
-      [stylex.when.ancestor(":hover", callEdgeMarker)]: "visible",
-      [stylex.when.ancestor(":focus-visible", callEdgeMarker)]: "visible",
-    },
-    pointerEvents: "none",
-    stroke: {
-      default: tokens.ruleSoft,
-      [stylex.when.ancestor(":hover", callEdgeMarker)]: tokens.ink,
-      [stylex.when.ancestor(":focus-visible", callEdgeMarker)]: tokens.ink,
-    },
-    strokeWidth: {
-      default: "1",
-      [stylex.when.ancestor(":hover", callEdgeMarker)]: "2px",
-      [stylex.when.ancestor(":focus-visible", callEdgeMarker)]: "2px",
-    },
-  },
-});
+  entry:
+    "tw:relative tw:[&:has(.canvas-call-edge:hover)]:z-[1] tw:[&:has(.canvas-call-edge:focus-visible)]:z-[1]",
+  row: "tw:relative tw:flex tw:items-center tw:w-full tw:h-[26px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:p-[0_12px_0_14px] tw:bg-[color:transparent] tw:[&:hover:not(:disabled)]:bg-[color:color-mix(in_srgb,_var(--ink)_3%,_transparent)] tw:font-[family-name:var(--font-mono)] tw:text-[length:12px] tw:font-normal tw:leading-[26px] tw:text-left tw:whitespace-nowrap",
+  rowCurrent: "tw:bg-[color:var(--marker-tint)] tw:font-semibold",
+  name: "tw:flex-[0_1_auto] tw:min-w-[32px] tw:overflow-hidden tw:text-ellipsis",
+  added: "tw:text-[color:var(--change-added)]",
+  removed:
+    "tw:text-[color:var(--change-removed)] tw:[text-decoration-line:line-through] tw:[text-decoration-color:color-mix(in_srgb,_var(--change-removed)_50%,_transparent)]",
+  modified: "tw:text-[color:var(--change-modified)]",
+  stats:
+    "tw:inline-flex tw:gap-[5px] tw:tabular-nums tw:shrink-0 tw:ml-[auto] tw:pl-[12px] tw:text-[length:10px]",
+  connectors:
+    "tw:shrink-0 tw:self-stretch tw:absolute tw:left-[14px] tw:top-0 tw:z-[1] tw:pointer-events-none tw:overflow-visible",
+  path: "tw:stroke-[var(--rule-soft)] tw:fill-[none] tw:stroke-[1]",
+  edge: "tw:pointer-events-auto tw:cursor-pointer",
+  edgeHit: "tw:stroke-[transparent] tw:stroke-[10px]",
+  edgeHighlight:
+    "tw:invisible tw:[&:is(.canvas-call-edge:hover_*)]:visible tw:[&:is(.canvas-call-edge:focus-visible_*)]:visible tw:pointer-events-none tw:stroke-[var(--rule-soft)] tw:[&:is(.canvas-call-edge:hover_*)]:stroke-[var(--ink)] tw:[&:is(.canvas-call-edge:focus-visible_*)]:stroke-[var(--ink)] tw:stroke-[1] tw:[&:is(.canvas-call-edge:hover_*)]:stroke-[2px] tw:[&:is(.canvas-call-edge:focus-visible_*)]:stroke-[2px]",
+};

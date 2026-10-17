@@ -1,16 +1,13 @@
 import { DiagramHeader } from "@canvas/diagrams/diagram-header";
 import { drawStyles } from "@canvas/drawing/draw-styles";
-import { documentMarker } from "@canvas/styles/markers.stylex";
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { cn } from "@canvas/lib/utils";
 import { CopyButton } from "@canvas/ui/copy-text";
 import {
   type ShjLanguage,
   type ShjToken,
   tokenize,
 } from "@speed-highlight/core";
-import * as stylex from "@stylexjs/stylex";
+import type { ClassValue } from "clsx";
 import {
   type ComponentProps,
   type ReactElement,
@@ -76,28 +73,28 @@ export function RenderedCodeBlock({
   return (
     <figure
       {...(className
-        ? withClass(className, styles.block, drawStyles.blockChild)
-        : stylex.props(styles.block, drawStyles.blockChild))}
+        ? { className: cn(className, styles.block, drawStyles.blockChild) }
+        : { className: cn(styles.block, drawStyles.blockChild) })}
       data-language={displayLanguage}
     >
       <DiagramHeader
         kind={displayLanguage || "code"}
         title={caption}
         meta={`${lineCount} ${lineCount === 1 ? "line" : "lines"}`}
-        xstyle={styles.header}
-        metaStyle={styles.meta}
+        className={styles.header}
+        metaClassName={styles.meta}
         action={
           <CopyButton
             text={code}
             label="Copy"
-            xstyle={styles.copy}
-            iconStyle={styles.copyIcon}
+            className={styles.copy}
+            iconClassName={styles.copyIcon}
           />
         }
       />
-      <pre {...props} {...stylex.props(styles.body)}>
+      <pre {...props} className={styles.body}>
         {lineNumbers && (
-          <span aria-hidden="true" {...stylex.props(styles.gutter)}>
+          <span aria-hidden="true" className={styles.gutter}>
             {Array.from({ length: lineCount }, (_, index) => index + 1).join(
               "\n",
             )}
@@ -105,14 +102,14 @@ export function RenderedCodeBlock({
         )}
         <code
           {...codeAttributes}
-          {...stylex.props(styles.code)}
+          className={styles.code}
           data-review-copy-prose
         >
           {normalizedLanguage && highlightedTokens
             ? highlightedTokens.map((item, index) =>
                 item.token ? (
                   <span
-                    {...stylex.props(syntaxByToken.get(item.token))}
+                    className={cn(syntaxByToken.get(item.token))}
                     key={index}
                   >
                     {item.text}
@@ -207,121 +204,42 @@ function normalizeMarkdownCodeLanguage(language: string): ShjLanguage | null {
   }
 }
 
-const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
-
-// A block's own element: a child of the block's node.
-const inDocumentBlock = () => `${inDocument()}:is([data-review-node-id] > *)`;
-
 // The same figure as a diagram: hairline frame, tray header with the language
 // as its kind, the caption as its title, a line count and an icon-only copy
 // button; then the code, scrolling sideways, never wrapping.
-const styles = stylex.create({
-  block: {
-    minWidth: 0,
-    maxWidth: {
-      default: "100%",
-      // A document block sits in the prose column.
-      [inDocumentBlock()]: `calc(100cqi - 2 * ${tokens.reviewDocumentPaddingInline})`,
-    },
-    width: {
-      default: null,
-      [inDocumentBlock()]: `min(100%, ${tokens.reviewBlockMaxWidth})`,
-    },
-    marginInline: {
-      default: null,
-      [inDocumentBlock()]: "auto",
-    },
-    marginBlock: "24px",
-    overflow: "hidden",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.surface,
-    backgroundColor: tokens.surface,
-  },
-  header: {
-    paddingRight: "8px",
-  },
-  meta: {
-    marginLeft: 0,
-  },
-  copy: {
-    marginLeft: "auto",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.ruleSoft,
-    backgroundColor: {
-      default: tokens.surface,
-      ":hover": tokens.well,
-      ":is([data-copied])": tokens.well,
-    },
-  },
-  copyIcon: {
-    width: "14px",
-    height: "14px",
-    strokeWidth: "1.5px",
-  },
-  body: {
-    display: "flex",
-    margin: 0,
-    overflowX: "auto",
-    color: tokens.ink,
-    font: `${fontSize.ui}/20px ${tokens.fontMono}`,
-    textAlign: "left",
-  },
-  code: {
-    display: "block",
-    flex: "1 0 auto",
-    padding: "12px 14px",
-    borderRadius: 0,
-    backgroundColor: tokens.transparent,
-    color: "inherit",
-    font: "inherit",
-    whiteSpace: "pre",
-    // As the editor shows tabs; the browser's eight push indented code
-    // off the block.
-    tabSize: 4,
-  },
-  gutter: {
-    position: "sticky",
-    left: 0,
-    flex: "0 0 auto",
-    minWidth: "50px",
-    padding: "12px 14px",
-    backgroundColor: tokens.surface,
-    color: tokens.ghost,
-    textAlign: "right",
-    whiteSpace: "pre",
-    userSelect: "none",
-  },
-});
+const styles = {
+  block:
+    "tw:min-w-0 tw:max-w-full tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:max-w-[calc(100cqi_-_2_*_var(--review-document-padding-inline))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:w-[min(100%,_var(--review-block-max-width))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:mx-[auto] tw:my-[24px] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--surface)]",
+  header: "tw:pr-[8px]",
+  meta: "tw:ml-0",
+  copy: "tw:ml-[auto] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--well)] tw:[&:is([data-copied])]:bg-[color:var(--well)]",
+  copyIcon: "tw:size-[14px] tw:stroke-[1.5px]",
+  body: "tw:flex tw:m-0 tw:overflow-x-auto tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)] tw:text-[length:13px] tw:font-normal tw:leading-[20px] tw:text-left",
+  code: "tw:block tw:flex-[1_0_auto] tw:p-[12px_14px] tw:rounded-none tw:bg-[color:var(--transparent)] tw:text-[color:inherit] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:whitespace-pre tw:[tab-size:4]",
+  gutter:
+    "tw:sticky tw:left-0 tw:flex-[0_0_auto] tw:min-w-[50px] tw:p-[12px_14px] tw:bg-[color:var(--surface)] tw:text-[color:var(--ghost)] tw:text-right tw:whitespace-pre tw:select-none",
+};
 
 // Syntax tokens (@speed-highlight/core). The Chalk palette: ink at three
 // strengths, the marker for keywords, two more blues for types and functions,
 // one warm pencil for strings and one plum for numbers. Comments are quiet and
 // italic. Diff green and red are reserved for the diff language. The editor
 // themes carry the same values.
-const syntaxStyles = stylex.create({
-  kwd: { color: tokens.accent },
-  type: { color: tokens.syntaxType },
-  class: { color: tokens.syntaxType, fontWeight: fontWeight.medium },
-  func: { color: tokens.syntaxFunction },
-  section: { color: tokens.syntaxFunction, fontWeight: fontWeight.semibold },
-  var: { color: tokens.ink },
-  str: { color: tokens.syntaxString },
-  num: { color: tokens.syntaxNumber },
-  bool: { color: tokens.syntaxNumber, fontWeight: fontWeight.medium },
-  cmnt: { color: tokens.syntaxComment, fontStyle: "italic" },
-  oper: { color: tokens.syntaxOperator },
-  insert: { color: tokens.syntaxInserted },
-  deleted: { color: tokens.syntaxDeleted },
-  err: {
-    color: tokens.syntaxDeleted,
-    textDecorationLine: "underline",
-    textDecorationStyle: "wavy",
-  },
-});
+const syntaxStyles = {
+  kwd: "tw:text-[color:var(--accent)]",
+  type: "tw:text-[color:var(--syntax-type)]",
+  class: "tw:text-[color:var(--syntax-type)] tw:font-medium",
+  func: "tw:text-[color:var(--syntax-function)]",
+  section: "tw:text-[color:var(--syntax-function)] tw:font-semibold",
+  var: "tw:text-[color:var(--ink)]",
+  str: "tw:text-[color:var(--syntax-string)]",
+  num: "tw:text-[color:var(--syntax-number)]",
+  bool: "tw:text-[color:var(--syntax-number)] tw:font-medium",
+  cmnt: "tw:text-[color:var(--syntax-comment)] tw:italic",
+  oper: "tw:text-[color:var(--syntax-operator)]",
+  insert: "tw:text-[color:var(--syntax-inserted)]",
+  deleted: "tw:text-[color:var(--syntax-deleted)]",
+  err: "tw:text-[color:var(--syntax-deleted)] tw:[text-decoration-line:underline] tw:[text-decoration-style:wavy]",
+};
 
-const syntaxByToken = new Map<string, stylex.StyleXStyles>(
-  Object.entries(syntaxStyles),
-);
+const syntaxByToken = new Map<string, ClassValue>(Object.entries(syntaxStyles));

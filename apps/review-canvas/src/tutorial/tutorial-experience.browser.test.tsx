@@ -2,6 +2,7 @@ import {
   type ReviewSession,
   ReviewSessionProvider,
 } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import { ReviewSection } from "@canvas/review/review-components";
 import { ReviewProvider } from "@canvas/review/review-context";
 import {
@@ -11,7 +12,6 @@ import {
 import type { ReviewPanelActor } from "@canvas/review/review-panel-machine";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import { withClass } from "@canvas/styles/stylex-props";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import {
   type JsonObject,
@@ -75,7 +75,7 @@ function Shell({
   return (
     <main
       ref={shellRef}
-      {...withClass("review-document-shell", shellStyles.documentShell)}
+      className={cn("review-document-shell", shellStyles.documentShell)}
     >
       <TutorialExperienceProvider
         shellRef={shellRef}
@@ -83,7 +83,7 @@ function Shell({
       >
         <button
           type="button"
-          {...withClass("review-segment", controlStyles.segment)}
+          className={cn("review-segment", controlStyles.segment)}
           aria-label="Commits"
         >
           Commits
@@ -97,10 +97,10 @@ function Shell({
         </button>
         <section
           ref={regionRef}
-          {...withClass("review-view-region", shellStyles.viewRegion)}
+          className={cn("review-view-region", shellStyles.viewRegion)}
         >
           <div
-            {...withClass(
+            className={cn(
               "review-document-view",
               shellStyles.documentView,
               activeView !== "review" && shellStyles.hidden,

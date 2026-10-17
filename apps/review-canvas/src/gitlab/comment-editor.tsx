@@ -168,7 +168,7 @@ export function CommentEditor({
   labelledBy,
   inline,
 }: {
-  /** Read once on mount; the editor owns the text afterwards. */
+  /** Followed when it changes elsewhere, e.g. the same draft open in two places. */
   value: string;
   onChange(markdown: string): void;
   onSubmit(): void;
@@ -192,7 +192,23 @@ export function CommentEditor({
   submit.current = onSubmit;
 
   // Registered before focusing and other extensions; registered after them it missed edits under jsdom.
-  useDocChange((doc) => onChange(doc.textContent), { editor });
+  useDocChange(
+    (doc) => {
+      if (doc.textContent !== value) onChange(doc.textContent);
+    },
+    { editor },
+  );
+  useEffect(() => {
+    const { state } = editor.view;
+
+    if (state.doc.textContent === value) return;
+    // Out of undo history: undo only reverts this editor's own typing.
+    editor.view.dispatch(
+      state.tr
+        .insertText(value, 1, state.doc.content.size - 1)
+        .setMeta("addToHistory", false),
+    );
+  }, [editor, value]);
   useEffect(() => {
     if (focused) editor.focus();
   }, [editor, focused]);

@@ -5,11 +5,9 @@ import { FlowDiagram } from "@canvas/diagrams/flow-diagram";
 import { CodePeekCard } from "@canvas/diff/CodePeek";
 import { useMotionPhase } from "@canvas/drawing/draw-queue-provider";
 import { drawStyles } from "@canvas/drawing/draw-styles";
+import { cn } from "@canvas/lib/utils";
 import { AnchorLink, ReviewSection } from "@canvas/review/review-components";
 import { SoftwareMap } from "@canvas/software-map/SoftwareMap";
-import { documentMarker } from "@canvas/styles/markers.stylex";
-import { fontSize, radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { TutorialAuthoringConversation } from "@canvas/tutorial/tutorial-authoring-conversation";
 import {
   TutorialFeature,
@@ -17,7 +15,6 @@ import {
 } from "@canvas/tutorial/tutorial-dynamic-content";
 import { TutorialKeymapPicker } from "@canvas/tutorial/tutorial-keymap-picker";
 import { type Block, type BlockType } from "@review/documents/document";
-import * as stylex from "@stylexjs/stylex";
 import {
   Component,
   type ReactNode,
@@ -104,7 +101,7 @@ function CodeBlock({ node }: BlockProps<"code">) {
 }
 
 function DividerBlock() {
-  return <hr {...stylex.props(drawStyles.blockChild)} />;
+  return <hr className={drawStyles.blockChild} />;
 }
 
 function SectionBlock({ node, data, children }: BlockProps<"section">) {
@@ -127,7 +124,7 @@ function CalloutBlock({ node, children }: BlockProps<"callout">) {
   return (
     <blockquote
       data-tone={node.tone}
-      {...stylex.props(
+      className={cn(
         documentStyles.body,
         styles.callout,
         styles[node.tone],
@@ -138,7 +135,7 @@ function CalloutBlock({ node, children }: BlockProps<"callout">) {
       {node.title && (
         <strong
           data-review-copy-prose
-          {...stylex.props(retitled && drawStyles.retitle)}
+          className={cn(retitled && drawStyles.retitle)}
         >
           {node.title}
         </strong>
@@ -181,11 +178,11 @@ function DatabaseLensBlock({ node }: BlockProps<"database_lens">) {
 
 function ImageBlock({ node, data }: BlockProps<"image">) {
   return (
-    <figure {...stylex.props(documentStyles.column, drawStyles.blockChild)}>
+    <figure className={cn(documentStyles.column, drawStyles.blockChild)}>
       <img
         src={data.images.get(node.assetId)}
         alt={node.alt}
-        {...stylex.props(documentStyles.image)}
+        className={documentStyles.image}
       />
       {node.caption && <figcaption>{node.caption}</figcaption>}
     </figure>
@@ -210,19 +207,19 @@ function TutorialBlock({ node, children }: BlockProps<"tutorial">) {
   switch (node.kind) {
     case "keymap":
       return (
-        <div {...stylex.props(documentStyles.column, drawStyles.blockChild)}>
+        <div className={cn(documentStyles.column, drawStyles.blockChild)}>
           <TutorialKeymapPicker />
         </div>
       );
     case "conversation":
       return (
-        <div {...stylex.props(documentStyles.column, drawStyles.blockChild)}>
+        <div className={cn(documentStyles.column, drawStyles.blockChild)}>
           <TutorialAuthoringConversation conversation={node.conversation} />
         </div>
       );
     case "view":
       return (
-        <div {...stylex.props(documentStyles.column, drawStyles.blockChild)}>
+        <div className={cn(documentStyles.column, drawStyles.blockChild)}>
           <TutorialViewButton view={node.view}>{node.label}</TutorialViewButton>
         </div>
       );
@@ -321,7 +318,7 @@ export class BlockErrorBoundary extends Component<
         <div
           role="alert"
           data-block-error={type}
-          {...stylex.props(drawStyles.blockChild)}
+          className={drawStyles.blockChild}
         >
           This {type.replaceAll("_", " ")} block could not be rendered:{" "}
           {error.message}
@@ -332,37 +329,14 @@ export class BlockErrorBoundary extends Component<
   }
 }
 
-const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
-
-const styles = stylex.create({
-  callout: {
-    margin: { default: null, [inDocument()]: "18px 0" },
-    padding: { default: null, [inDocument()]: "12px 16px" },
-    borderLeftWidth: { default: null, [inDocument()]: "2px" },
-    borderLeftStyle: { default: null, [inDocument()]: "solid" },
-    borderLeftColor: { default: null, [inDocument()]: tokens.inkFaint },
-    borderRadius: {
-      default: null,
-      [inDocument()]: `0 ${radius.control} ${radius.control} 0`,
-    },
-    backgroundColor: { default: null, [inDocument()]: tokens.tray },
-    fontSize: { default: null, [inDocument()]: fontSize.reading },
-    lineHeight: { default: null, [inDocument()]: "22px" },
-  },
-  info: {
-    borderLeftColor: { default: null, [inDocument()]: tokens.accent },
-    backgroundColor: { default: null, [inDocument()]: tokens.markerTint },
-  },
-  warning: {
-    borderLeftColor: { default: null, [inDocument()]: tokens.changeModified },
-    backgroundColor: { default: null, [inDocument()]: tokens.diffModifiedBg },
-  },
-  danger: {
-    borderLeftColor: { default: null, [inDocument()]: tokens.changeRemoved },
-    backgroundColor: { default: null, [inDocument()]: tokens.diffRemovedBg },
-  },
-  success: {
-    borderLeftColor: { default: null, [inDocument()]: tokens.changeAdded },
-    backgroundColor: { default: null, [inDocument()]: tokens.diffAddedBg },
-  },
-});
+const styles = {
+  callout:
+    "tw:[&:is(.canvas-document:is(*)_*)]:m-[18px_0] tw:[&:is(.canvas-document:is(*)_*)]:p-[12px_16px] tw:[&:is(.canvas-document:is(*)_*)]:[border-left-width:2px] tw:[&:is(.canvas-document:is(*)_*)]:[border-left-style:solid] tw:[&:is(.canvas-document:is(*)_*)]:[border-left-color:var(--ink-faint)] tw:[&:is(.canvas-document:is(*)_*)]:rounded-[0_6px_6px_0] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--tray)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:15px] tw:[&:is(.canvas-document:is(*)_*)]:leading-[22px]",
+  info: "tw:[&:is(.canvas-document:is(*)_*)]:[border-left-color:var(--accent)] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--marker-tint)]",
+  warning:
+    "tw:[&:is(.canvas-document:is(*)_*)]:[border-left-color:var(--change-modified)] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--diff-modified-bg)]",
+  danger:
+    "tw:[&:is(.canvas-document:is(*)_*)]:[border-left-color:var(--change-removed)] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--diff-removed-bg)]",
+  success:
+    "tw:[&:is(.canvas-document:is(*)_*)]:[border-left-color:var(--change-added)] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--diff-added-bg)]",
+};

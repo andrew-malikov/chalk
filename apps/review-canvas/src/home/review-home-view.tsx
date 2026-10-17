@@ -1,17 +1,8 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { Input } from "@canvas/components/ui/input";
-import { documentType } from "@canvas/documents/document-type.stylex";
 import { CanvasUiContext, useCanvasMenu } from "@canvas/host/canvas-ui";
+import { cn } from "@canvas/lib/utils";
 import { ArchiveIcon } from "@canvas/review/review-corner-action";
-import {
-  fontSize,
-  fontWeight,
-  motion,
-  radius,
-  tracking,
-} from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button, IconButton } from "@canvas/ui/button";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { OptionMenu } from "@canvas/ui/option-menu";
@@ -23,7 +14,6 @@ import type {
   ReviewCanvasSetupActions,
 } from "@chalk/review-contracts";
 import { fuzzyMatches, fuzzySegments } from "@review/lib/fuzzy-match";
-import * as stylex from "@stylexjs/stylex";
 import {
   ArrowDownUp,
   Ellipsis,
@@ -94,7 +84,7 @@ function MatchedText({ text }: { text: string }) {
         segment.matched ? (
           // Segments are positional, so the index is the only stable key.
           // eslint-disable-next-line react/no-array-index-key
-          <mark key={index} {...stylex.props(styles.mark)}>
+          <mark key={index} className={styles.mark}>
             {segment.text}
           </mark>
         ) : (
@@ -251,12 +241,12 @@ export function ReviewHome({
   }
 
   return (
-    <main {...withClass("review-home", homeStyles.page)}>
-      <div {...stylex.props(homeStyles.scroll)}>
-        <div {...stylex.props(homeStyles.content)}>
-          <div {...stylex.props(homeStyles.header)}>
-            <h1 {...stylex.props(homeStyles.heading)}>Sessions</h1>
-            <div {...stylex.props(styles.headerTools)}>
+    <main className={cn("review-home", homeStyles.page)}>
+      <div className={homeStyles.scroll}>
+        <div className={homeStyles.content}>
+          <div className={homeStyles.header}>
+            <h1 className={homeStyles.heading}>Sessions</h1>
+            <div className={styles.headerTools}>
               <SearchBox query={query} onChange={setQuery} />
             </div>
           </div>
@@ -336,12 +326,14 @@ function SearchBox({
   }, []);
 
   return (
-    <div {...stylex.props(styles.search)}>
+    <div className={styles.search}>
       <SearchIcon />
       <Input
-        className="tw:h-auto tw:border-0 tw:p-0 tw:shadow-none tw:focus-visible:ring-0"
         ref={input}
-        {...stylex.props(styles.searchInput)}
+        className={cn(
+          "tw:h-auto tw:border-0 tw:p-0 tw:shadow-none tw:focus-visible:ring-0",
+          styles.searchInput,
+        )}
         type="search"
         value={query}
         placeholder="Search sessions"
@@ -360,7 +352,7 @@ function SearchBox({
           variant="ghost"
           size="xs"
           type="button"
-          {...withClass(
+          className={cn(
             "tw:h-auto tw:whitespace-normal tw:font-normal",
             styles.searchClear,
           )}
@@ -397,15 +389,12 @@ function DismissedSection({
   onDelete?(review: ReviewApiSummary): Promise<void>;
 }) {
   return (
-    <section
-      {...stylex.props(styles.dismissed)}
-      aria-label="Settled sessions"
-    >
+    <section className={styles.dismissed} aria-label="Settled sessions">
       <ButtonPrimitive
         variant="ghost"
         size="xs"
         type="button"
-        {...withClass(
+        className={cn(
           "tw:h-auto tw:whitespace-normal tw:font-normal",
           textStyles.eyebrow,
           styles.dismissedToggle,
@@ -414,17 +403,17 @@ function DismissedSection({
         onClick={onToggle}
       >
         <span>Settled</span>
-        <span {...stylex.props(styles.dismissedCount)}>{reviews.length}</span>
+        <span className={styles.dismissedCount}>{reviews.length}</span>
       </ButtonPrimitive>
       {expanded ? (
-        <div {...stylex.props(styles.dismissedRows)}>
+        <div className={styles.dismissedRows}>
           {reviews.map((review) => (
-            <div key={review.reviewId} {...stylex.props(styles.dismissedRow)}>
+            <div key={review.reviewId} className={styles.dismissedRow}>
               <ButtonPrimitive
                 variant="ghost"
                 size="xs"
                 type="button"
-                {...withClass(
+                className={cn(
                   "tw:h-auto tw:whitespace-normal tw:font-normal",
                   styles.dismissedOpen,
                 )}
@@ -432,7 +421,7 @@ function DismissedSection({
               >
                 <MatchedText text={reviewTitle(review)} />
               </ButtonPrimitive>
-              <span {...stylex.props(styles.dismissedClock)}>kept</span>
+              <span className={styles.dismissedClock}>kept</span>
               <RestoreReviewButton review={review} />
               {onDelete ? (
                 <DeleteReviewButton review={review} onDelete={onDelete} />
@@ -454,7 +443,7 @@ function RestoreReviewButton({ review }: { review: ReviewApiSummary }) {
 
   return (
     <Button
-      xstyle={styles.restore}
+      className={styles.restore}
       loading={busy}
       disabled={busy}
       onClick={(event) => {
@@ -504,10 +493,10 @@ function ReviewTable({
   });
 
   return (
-    <section {...stylex.props(styles.tableSection)} aria-label="Sessions">
-      <div {...stylex.props(styles.toolbar)}>
+    <section className={styles.tableSection} aria-label="Sessions">
+      <div className={styles.toolbar}>
         <span>{countLabel(filtered.length, "review")}</span>
-        <div {...stylex.props(styles.controls)}>
+        <div className={styles.controls}>
           <TableMenu
             label="Filter"
             ariaLabel="Filter by repository"
@@ -532,31 +521,31 @@ function ReviewTable({
           />
         </div>
       </div>
-      <div {...stylex.props(styles.tableScroll)}>
-        <table {...stylex.props(styles.table)}>
+      <div className={styles.tableScroll}>
+        <table className={styles.table}>
           <colgroup>
             <col />
-            <col {...stylex.props(styles.colBranch)} />
-            <col {...stylex.props(styles.colDate)} />
-            <col {...stylex.props(styles.colDate)} />
-            <col {...stylex.props(styles.colAction)} />
+            <col className={styles.colBranch} />
+            <col className={styles.colDate} />
+            <col className={styles.colDate} />
+            <col className={styles.colAction} />
           </colgroup>
           <thead>
             <tr>
-              <th scope="col" {...stylex.props(styles.th, styles.firstCell)}>
+              <th scope="col" className={cn(styles.th, styles.firstCell)}>
                 Title
               </th>
-              <th scope="col" {...stylex.props(styles.th)}>
+              <th scope="col" className={styles.th}>
                 Head branch
               </th>
-              <th scope="col" {...stylex.props(styles.th)}>
+              <th scope="col" className={styles.th}>
                 Created
               </th>
-              <th scope="col" {...stylex.props(styles.th)}>
+              <th scope="col" className={styles.th}>
                 Updated
               </th>
-              <th scope="col" {...stylex.props(styles.th)}>
-                <span {...stylex.props(styles.visuallyHidden)}>Actions</span>
+              <th scope="col" className={styles.th}>
+                <span className={styles.visuallyHidden}>Actions</span>
               </th>
             </tr>
           </thead>
@@ -567,11 +556,12 @@ function ReviewTable({
               return (
                 <tr
                   key={review.reviewId}
-                  {...stylex.props(stylex.defaultMarker(), styles.row)}
+                  className={cn("canvas-row", styles.row)}
                   onClick={() => onOpen(review)}
                 >
                   <td
-                    {...stylex.props(
+                    aria-label={reviewTitle(review)}
+                    className={cn(
                       styles.td,
                       styles.firstCell,
                       last && styles.lastRowCell,
@@ -580,7 +570,7 @@ function ReviewTable({
                     <ButtonPrimitive
                       variant="ghost"
                       size="xs"
-                      {...withClass(
+                      className={cn(
                         "tw:h-auto tw:whitespace-normal tw:font-normal",
                         styles.tableOpen,
                       )}
@@ -590,11 +580,11 @@ function ReviewTable({
                       }}
                       title={reviewTitle(review)}
                     >
-                      <span {...stylex.props(styles.title, styles.tableTitle)}>
+                      <span className={cn(styles.title, styles.tableTitle)}>
                         <MatchedText text={reviewTitle(review)} />
                       </span>
                       <span
-                        {...stylex.props(styles.repository)}
+                        className={styles.repository}
                         title={review.repositoryPath ?? undefined}
                       >
                         <RepositoryName review={review} />
@@ -602,7 +592,7 @@ function ReviewTable({
                     </ButtonPrimitive>
                   </td>
                   <td
-                    {...stylex.props(styles.td, last && styles.lastRowCell)}
+                    className={cn(styles.td, last && styles.lastRowCell)}
                     title={review.origin?.branch}
                   >
                     <MatchedText
@@ -610,7 +600,7 @@ function ReviewTable({
                     />
                   </td>
                   <td
-                    {...stylex.props(
+                    className={cn(
                       styles.td,
                       styles.dateCell,
                       last && styles.lastRowCell,
@@ -620,7 +610,7 @@ function ReviewTable({
                     {formatCreatedTime(review.firstCreatedAt)}
                   </td>
                   <td
-                    {...stylex.props(
+                    className={cn(
                       styles.td,
                       styles.inkCell,
                       styles.dateCell,
@@ -630,17 +620,17 @@ function ReviewTable({
                   >
                     {formatRelativeTime(reviewUpdatedAt(review))}
                   </td>
-                  <td {...stylex.props(styles.td, last && styles.lastRowCell)}>
+                  <td className={cn(styles.td, last && styles.lastRowCell)}>
                     <ReviewRowActions review={review} />
                   </td>
                 </tr>
               );
             })}
             {sorted.length === 0 ? (
-              <tr {...stylex.props(styles.row)}>
+              <tr className={styles.row}>
                 <td
                   colSpan={5}
-                  {...stylex.props(
+                  className={cn(
                     styles.td,
                     styles.firstCell,
                     styles.strongCell,
@@ -671,18 +661,18 @@ function ReviewRowActions({ review }: { review: ReviewApiSummary }) {
 
   return (
     <div
-      {...stylex.props(styles.rowActions)}
+      className={styles.rowActions}
       onClick={(event) => event.stopPropagation()}
       onKeyDown={(event) => event.stopPropagation()}
     >
       <IconButton
         size="large"
-        xstyle={[rowMenuStyles.trigger, menu.open && rowMenuStyles.expanded]}
+        className={[rowMenuStyles.trigger, menu.open && rowMenuStyles.expanded]}
         aria-label={`Actions for ${reviewTitle(review)}`}
         {...menu.triggerProps}
         disabled={!ui?.confirmDelete}
       >
-        <Ellipsis {...stylex.props(rowMenuStyles.icon)} aria-hidden="true" />
+        <Ellipsis className={rowMenuStyles.icon} aria-hidden="true" />
       </IconButton>
     </div>
   );
@@ -709,15 +699,15 @@ function TableMenu<T extends string>({
       onChange={onChange}
       variant="outline"
       size="sm"
-      triggerStyle={styles.menuTrigger}
+      triggerClassName={styles.menuTrigger}
     >
       {label === "Filter" ? (
-        <ListFilter {...stylex.props(styles.menuIcon)} aria-hidden="true" />
+        <ListFilter className={styles.menuIcon} aria-hidden="true" />
       ) : (
-        <ArrowDownUp {...stylex.props(styles.menuIcon)} aria-hidden="true" />
+        <ArrowDownUp className={styles.menuIcon} aria-hidden="true" />
       )}
       <span>{label}</span>
-      <strong {...stylex.props(styles.menuValue)}>
+      <strong className={styles.menuValue}>
         {options.find((option) => option.value === value)?.label ?? value}
       </strong>
     </OptionMenu>
@@ -751,34 +741,34 @@ function ScratchpadGroup({
   const contents = review.contents;
 
   return (
-    <section {...stylex.props(styles.scratchpad)} aria-label="Scratchpad">
-      <div {...stylex.props(styles.cards)}>
-        <div {...stylex.props(styles.cardShell)}>
+    <section className={styles.scratchpad} aria-label="Scratchpad">
+      <div className={styles.cards}>
+        <div className={styles.cardShell}>
           <ButtonPrimitive
             variant="ghost"
             size="xs"
             type="button"
-            {...withClass(
+            className={cn(
               "tw:h-auto tw:whitespace-normal tw:font-normal",
               styles.card,
             )}
             onClick={() => onOpen(review)}
           >
-            <span {...stylex.props(styles.cardMain)}>
-              <span {...stylex.props(styles.title, styles.cardTitle)}>
+            <span className={styles.cardMain}>
+              <span className={cn(styles.title, styles.cardTitle)}>
                 <PencilIcon />
                 <MatchedText text={reviewTitle(review)} />
               </span>
-              <span {...stylex.props(styles.cardMeta)}>
+              <span className={styles.cardMeta}>
                 {contents ? (
                   <>
                     <span>{countLabel(contents.blocks, "block")}</span>
-                    <span {...stylex.props(styles.cardMetaNext)}>
+                    <span className={styles.cardMetaNext}>
                       {countLabel(contents.diagrams, "diagram")}
                     </span>
                   </>
                 ) : null}
-                <span {...stylex.props(contents && styles.cardMetaNext)}>
+                <span className={cn(contents && styles.cardMetaNext)}>
                   updated {formatRelativeTime(reviewUpdatedAt(review))}
                 </span>
               </span>
@@ -791,9 +781,7 @@ function ScratchpadGroup({
 }
 
 function PencilIcon() {
-  return (
-    <Pencil {...stylex.props(styles.scratchpadGlyph)} aria-hidden="true" />
-  );
+  return <Pencil className={styles.scratchpadGlyph} aria-hidden="true" />;
 }
 
 /**
@@ -811,7 +799,7 @@ function DismissReviewButton({ review }: { review: ReviewApiSummary }) {
   return (
     <IconButton
       size="small"
-      xstyle={styles.dismiss}
+      className={styles.dismiss}
       aria-label={`Settle ${title}`}
       title="Settle session"
       loading={busy}
@@ -825,7 +813,7 @@ function DismissReviewButton({ review }: { review: ReviewApiSummary }) {
           .finally(() => setBusy(false));
       }}
     >
-      <ArchiveIcon xstyle={styles.dismissIcon} />
+      <ArchiveIcon className={styles.dismissIcon} />
     </IconButton>
   );
 }
@@ -843,7 +831,7 @@ function DeleteReviewButton({
   return (
     <IconButton
       size="small"
-      xstyle={styles.delete}
+      className={styles.delete}
       aria-label={`Delete ${reviewTitle(review)}`}
       title="Delete session"
       loading={busy}
@@ -867,7 +855,7 @@ function RepositoryName({ review }: { review: ReviewApiSummary }) {
   const separator = label.lastIndexOf("/");
 
   return separator < 0 ? (
-    <strong {...stylex.props(styles.repositoryName)}>
+    <strong className={styles.repositoryName}>
       <MatchedText text={label} />
     </strong>
   ) : (
@@ -875,10 +863,10 @@ function RepositoryName({ review }: { review: ReviewApiSummary }) {
       <span>
         <MatchedText text={label.slice(0, separator)} />
       </span>
-      <span aria-hidden="true" {...stylex.props(styles.repositorySeparator)}>
+      <span aria-hidden="true" className={styles.repositorySeparator}>
         /
       </span>
-      <strong {...stylex.props(styles.repositoryName)}>
+      <strong className={styles.repositoryName}>
         <MatchedText text={label.slice(separator + 1)} />
       </strong>
     </>
@@ -967,7 +955,7 @@ export function countLabel(count: number, singular: string): string {
 function SearchIcon() {
   return (
     <Search
-      {...stylex.props(styles.searchIcon, styles.searchStroke)}
+      className={cn(styles.searchIcon, styles.searchStroke)}
       aria-hidden="true"
     />
   );
@@ -976,7 +964,7 @@ function SearchIcon() {
 function ClearIcon() {
   return (
     <X
-      {...stylex.props(styles.clearIcon, styles.searchStroke)}
+      className={cn(styles.clearIcon, styles.searchStroke)}
       aria-hidden="true"
     />
   );
@@ -985,498 +973,117 @@ function ClearIcon() {
 function TrashIcon() {
   return (
     <Trash2
-      {...stylex.props(styles.deleteIcon, styles.deleteStroke)}
+      className={cn(styles.deleteIcon, styles.deleteStroke)}
       aria-hidden="true"
     />
   );
 }
 
-const rowMenuStyles = stylex.create({
+const rowMenuStyles = {
   // Waits for its row's hover or focus.
-  trigger: {
-    opacity: {
-      default: 0,
-      [stylex.when.ancestor(":hover")]: 1,
-      [stylex.when.ancestor(":focus-within")]: 1,
-    },
-  },
-  expanded: {
-    opacity: 1,
-  },
-  icon: {
-    width: "16px",
-    height: "16px",
-    fill: "none",
-  },
-});
+  trigger:
+    "tw:opacity-0 tw:[&:is(.canvas-row:hover_*)]:opacity-[1] tw:[&:is(.canvas-row:focus-within_*)]:opacity-[1]",
+  expanded: "tw:opacity-[1]",
+  icon: "tw:size-[16px] tw:fill-[none]",
+};
 
-const narrow = "@container review-canvas (max-width: 660px)";
-
-const styles = stylex.create({
-  headerTools: {
-    display: "flex",
-    minWidth: 0,
-    alignItems: "center",
-    gap: "8px",
-  },
+const styles = {
+  headerTools: "tw:flex tw:min-w-0 tw:items-center tw:gap-[8px]",
   // Fixed width, so the clear button appearing does not resize the field.
-  search: {
-    display: "flex",
-    minWidth: 0,
-    alignItems: "center",
-    width: "256px",
-    height: "38px",
-    padding: "0 14px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: { default: tokens.rule, ":focus-within": tokens.accent },
-    borderRadius: radius.control,
-    backgroundColor: tokens.surface,
-    boxShadow: {
-      default: null,
-      ":focus-within": `0 0 0 3px ${tokens.markerTint}`,
-    },
-    color: { default: tokens.inkFaint, ":focus-within": tokens.inkMuted },
-    fontSize: fontSize.reading,
-    gap: "12px",
-  },
-  searchIcon: {
-    width: "18px",
-    height: "18px",
-    flex: "0 0 auto",
-  },
-  searchStroke: {
-    fill: "none",
-    stroke: "currentColor",
-    strokeLinecap: "round",
-    strokeWidth: "1.5",
-  },
-  searchInput: {
-    minWidth: 0,
-    flex: 1,
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    color: tokens.ink,
-    backgroundColor: tokens.transparent,
-    font: "inherit",
-    outline: "none",
-    "::placeholder": {
-      color: tokens.reviewHomeMeta,
-    },
-    // The user agent draws its own clear button in a colour the page cannot
-    // reach, so the page draws its own.
-    "::-webkit-search-cancel-button": {
-      appearance: "none",
-    },
-    "::-webkit-search-decoration": {
-      appearance: "none",
-    },
-  },
-  searchClear: {
-    display: "grid",
-    width: "16px",
-    height: "16px",
-    flex: "0 0 auto",
-    padding: 0,
-    placeItems: "center",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: radius.small,
-    color: { default: tokens.reviewHomeMeta, ":hover": tokens.ink },
-    backgroundColor: tokens.transparent,
-    outline: { default: null, ":focus-visible": `1px solid ${tokens.accent}` },
-    outlineOffset: { default: null, ":focus-visible": "1px" },
-  },
-  clearIcon: {
-    width: "11px",
-    height: "11px",
-    flex: "0 0 auto",
-  },
+  search:
+    "tw:flex tw:min-w-0 tw:items-center tw:w-[256px] tw:h-[38px] tw:p-[0_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:focus-within]:border-[color:var(--accent)] tw:rounded-[6px] tw:bg-[color:var(--surface)] tw:[&:focus-within]:[box-shadow:0_0_0_3px_var(--marker-tint)] tw:text-[color:var(--ink-faint)] tw:[&:focus-within]:text-[color:var(--ink-muted)] tw:text-[length:15px] tw:gap-[12px]",
+  searchIcon: "tw:size-[18px] tw:flex-[0_0_auto]",
+  searchStroke:
+    "tw:fill-[none] tw:stroke-[currentColor] tw:[stroke-linecap:round] tw:stroke-[1.5]",
+  searchInput:
+    "tw:min-w-0 tw:flex-[1] tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:text-[color:var(--ink)] tw:bg-[color:var(--transparent)] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:[outline:none] tw:[&::placeholder]:text-[color:var(--review-home-meta)] tw:[&::-webkit-search-cancel-button]:appearance-none tw:[&::-webkit-search-decoration]:appearance-none",
+  searchClear:
+    "tw:grid tw:size-[16px] tw:flex-[0_0_auto] tw:p-0 tw:place-items-center tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-[4px] tw:text-[color:var(--review-home-meta)] tw:[&:hover]:text-[color:var(--ink)] tw:bg-[color:var(--transparent)] tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[1px]",
+  clearIcon: "tw:size-[11px] tw:flex-[0_0_auto]",
   // The user agent paints <mark> black on yellow, which is unreadable on the
   // canvas. Carry the mark on the background and inherit the text colour: on
   // a dark theme, recolouring the glyphs to the accent makes the matched word
   // dimmer than the words around it, which is the opposite of a highlight.
   // Inherit the weight too, so marking a run does not reflow its line.
-  mark: {
-    padding: "0 1px",
-    borderRadius: radius.small,
-    backgroundColor: `color-mix(in srgb, ${tokens.accent} 30%, ${tokens.transparent})`,
-    color: "inherit",
-    fontWeight: "inherit",
-  },
-
+  mark: "tw:p-[0_1px] tw:rounded-[4px] tw:bg-[color:color-mix(in_srgb,_var(--accent)_30%,_var(--transparent))] tw:text-[color:inherit] tw:font-[number:inherit]",
   // The scratchpad's group sits first, above the sessions table.
-  scratchpad: {
-    paddingTop: "14px",
-    marginBottom: "16px",
-  },
-  cards: {
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 336px)",
-    gridAutoRows: "1fr",
-    gap: "18px",
-    justifyContent: "start",
-    marginTop: "24px",
-  },
-  cardShell: {
-    position: "relative",
-    minWidth: 0,
-  },
-  card: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    gap: "12px",
-    width: "100%",
-    minWidth: 0,
-    height: "100%",
-    minHeight: "128px",
-    padding: "16px 16px 14px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: {
-      default: tokens.rule,
-      ":focus-visible": tokens.accent,
-      ":hover:not(:disabled)": tokens.ruleSoft,
-    },
-    borderRadius: radius.surface,
-    color: "inherit",
-    backgroundColor: tokens.surface,
-    textAlign: "left",
-    transition: `border-color ${motion.fast} ${motion.ease}, box-shadow ${motion.fast} ${motion.ease}`,
-    boxShadow: {
-      default: null,
-      ":focus-visible": `0 0 0 3px ${tokens.markerTint}`,
-    },
-    outline: { default: null, ":focus-visible": "none" },
-    cursor: { default: null, ":disabled": "not-allowed" },
-    opacity: { default: null, ":disabled": 0.5 },
-  },
-  cardMain: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "7px",
-    minWidth: 0,
-  },
-  title: {
-    minWidth: 0,
-    overflow: "hidden",
-    color: tokens.ink,
-    font: `${fontWeight.medium} ${documentType.body}/22px ${tokens.fontSans}`,
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  cardTitle: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-    whiteSpace: "normal",
-    WebkitBoxOrient: "vertical",
-    WebkitLineClamp: 2,
-  },
-  tableTitle: {
-    display: "block",
-    width: "100%",
-  },
-  cardMeta: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "baseline",
-    columnGap: "10px",
-    rowGap: "3px",
-    color: tokens.reviewHomeMeta,
-    font: `${fontSize.small} ${tokens.fontSans}`,
-  },
+  scratchpad: "tw:pt-[14px] tw:mb-[16px]",
+  cards:
+    "tw:grid tw:grid-cols-[minmax(0,_336px)] tw:[grid-auto-rows:1fr] tw:gap-[18px] tw:[justify-content:start] tw:mt-[24px]",
+  cardShell: "tw:relative tw:min-w-0",
+  card: "tw:flex tw:flex-col tw:justify-between tw:gap-[12px] tw:w-full tw:min-w-0 tw:h-full tw:min-h-[128px] tw:p-[16px_16px_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:focus-visible]:border-[color:var(--accent)] tw:[&:hover:not(:disabled)]:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:text-[color:inherit] tw:bg-[color:var(--surface)] tw:text-left tw:[transition:border-color_120ms_ease,_box-shadow_120ms_ease] tw:[&:focus-visible]:[box-shadow:0_0_0_3px_var(--marker-tint)] tw:[&:focus-visible]:[outline:none] tw:[&:disabled]:[cursor:not-allowed] tw:[&:disabled]:opacity-[0.5]",
+  cardMain: "tw:flex tw:flex-col tw:gap-[7px] tw:min-w-0",
+  title:
+    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:17px] tw:font-medium tw:leading-[22px] tw:text-ellipsis tw:whitespace-nowrap",
+  cardTitle:
+    "tw:inline-flex tw:items-center tw:gap-[8px] tw:whitespace-normal tw:[-webkit-box-orient:vertical] tw:[-webkit-line-clamp:2]",
+  tableTitle: "tw:block tw:w-full",
+  cardMeta:
+    "tw:flex tw:flex-wrap tw:items-baseline tw:gap-x-[10px] tw:gap-y-[3px] tw:text-[color:var(--review-home-meta)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[normal]",
   // Meta lines are one sentence of facts joined by a middle dot.
-  cardMetaNext: {
-    "::before": {
-      content: '"· "',
-      color: tokens.inkFaint,
-      whiteSpace: "pre",
-    },
-  },
-  scratchpadGlyph: {
-    width: "14px",
-    height: "14px",
-    fill: "none",
-    stroke: tokens.inkFaint,
-    strokeWidth: "1.2",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  },
-
+  cardMetaNext:
+    'tw:[&::before]:[content:"·_"] tw:[&::before]:text-[color:var(--ink-faint)] tw:[&::before]:whitespace-pre',
+  scratchpadGlyph:
+    "tw:size-[14px] tw:fill-[none] tw:stroke-[var(--ink-faint)] tw:stroke-[1.2] tw:[stroke-linecap:round] tw:[stroke-linejoin:round]",
   // Dismissed reviews sit below the active list, collapsed.
-  dismissed: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    marginTop: "26px",
-  },
-  dismissedToggle: {
-    display: "inline-flex",
-    alignSelf: "flex-start",
-    alignItems: "center",
-    gap: "8px",
-    padding: "4px 0",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: tokens.transparent,
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontSans,
-  },
-  dismissedCount: {
-    fontWeight: fontWeight.medium,
-    letterSpacing: 0,
-  },
-  dismissedRows: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-  },
-  dismissedRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "14px",
-    padding: "10px 14px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.surface,
-  },
-  dismissedOpen: {
-    overflow: "hidden",
-    flex: "1 1 auto",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: tokens.transparent,
-    color: tokens.inkMuted,
-    fontSize: fontSize.ui,
-    textAlign: "left",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  dismissedClock: {
-    flex: "0 0 auto",
-    color: tokens.inkMuted,
-    font: `${fontWeight.regular} ${fontSize.small} ${tokens.fontSans}`,
-    opacity: 0.75,
-  },
-  restore: {
-    color: tokens.accent,
-  },
-  delete: {
-    color: {
-      default: tokens.chromeIconFg,
-      ":hover:not(:disabled)": tokens.changeRemoved,
-      ":focus-visible": tokens.changeRemoved,
-    },
-  },
-  deleteIcon: {
-    width: "13px",
-    height: "13px",
-  },
-  deleteStroke: {
-    fill: "none",
-    stroke: "currentColor",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    strokeWidth: "1.2",
-  },
+  dismissed: "tw:flex tw:flex-col tw:gap-[10px] tw:mt-[26px]",
+  dismissedToggle:
+    "tw:inline-flex tw:self-start tw:items-center tw:gap-[8px] tw:p-[4px_0] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:var(--transparent)] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)]",
+  dismissedCount: "tw:font-medium tw:tracking-[0]",
+  dismissedRows: "tw:flex tw:flex-col tw:gap-[6px]",
+  dismissedRow:
+    "tw:flex tw:items-center tw:gap-[14px] tw:p-[10px_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[8px]",
+  dismissedOpen:
+    "tw:overflow-hidden tw:flex-[1_1_auto] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:var(--transparent)] tw:text-[color:var(--ink-muted)] tw:text-[length:13px] tw:text-left tw:text-ellipsis tw:whitespace-nowrap",
+  dismissedClock:
+    "tw:flex-[0_0_auto] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[normal] tw:opacity-[0.75]",
+  restore: "tw:text-[color:var(--accent)]",
+  delete:
+    "tw:text-[color:var(--chrome-icon-fg)] tw:[&:hover:not(:disabled)]:text-[color:var(--change-removed)] tw:[&:focus-visible]:text-[color:var(--change-removed)]",
+  deleteIcon: "tw:size-[13px]",
+  deleteStroke:
+    "tw:fill-[none] tw:stroke-[currentColor] tw:[stroke-linecap:round] tw:[stroke-linejoin:round] tw:stroke-[1.2]",
   // In the table it waits for its row's hover or focus.
-  dismiss: {
-    opacity: {
-      default: 0,
-      [stylex.when.ancestor(":hover")]: 1,
-      [stylex.when.ancestor(":focus-within")]: 1,
-    },
-  },
-  dismissIcon: {
-    width: "13px",
-    height: "13px",
-    fill: "none",
-    stroke: "currentColor",
-    strokeLinejoin: "round",
-    strokeWidth: "1.2",
-  },
-
+  dismiss:
+    "tw:opacity-0 tw:[&:is(.canvas-row:hover_*)]:opacity-[1] tw:[&:is(.canvas-row:focus-within_*)]:opacity-[1]",
+  dismissIcon:
+    "tw:size-[13px] tw:fill-[none] tw:stroke-[currentColor] tw:[stroke-linejoin:round] tw:stroke-[1.2]",
   // Paper desktop table: fixed metadata lanes and a flexible title column.
-  tableSection: {
-    marginTop: "24px",
-  },
-  toolbar: {
-    display: "flex",
-    flexDirection: { default: null, [narrow]: "column" },
-    alignItems: { default: "center", [narrow]: "flex-start" },
-    justifyContent: "space-between",
-    gap: "8px",
-    padding: "8px 0 12px",
-    marginBottom: "24px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.rule,
-    color: tokens.inkMuted,
-    font: `${fontSize.reading}/24px ${tokens.fontSans}`,
-  },
-  controls: {
-    display: "flex",
-    flexWrap: { default: null, [narrow]: "wrap" },
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "8px",
-  },
+  tableSection: "tw:mt-[24px]",
+  toolbar:
+    "tw:flex tw:[@container_review-canvas_(max-width:_660px)]:flex-col tw:items-center tw:[@container_review-canvas_(max-width:_660px)]:items-start tw:justify-between tw:gap-[8px] tw:p-[8px_0_12px] tw:mb-[24px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:15px] tw:font-normal tw:leading-[24px]",
+  controls:
+    "tw:flex tw:[@container_review-canvas_(max-width:_660px)]:flex-wrap tw:items-center tw:justify-between tw:gap-[8px]",
   // A secondary Button held down while its menu is open.
-  menuTrigger: {
-    borderColor: {
-      default: tokens.rule,
-      ':is([aria-expanded="true"])': tokens.inkFaint,
-    },
-    backgroundColor: {
-      default: tokens.surface,
-      ":hover": tokens.tray,
-      ':is([aria-expanded="true"])': tokens.tray,
-    },
-    color: tokens.inkMuted,
-  },
-  menuValue: {
-    color: tokens.ink,
-    fontWeight: fontWeight.medium,
-  },
-  menuIcon: {
-    width: "14px",
-    height: "14px",
-    flexShrink: 0,
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: "1.8",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  },
-  tableScroll: {
-    overflowX: "auto",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.surface,
-  },
-  table: {
-    width: "100%",
-    minWidth: "840px",
-    borderCollapse: "collapse",
-    tableLayout: "fixed",
-    font: `${fontSize.body}/18px ${tokens.fontSans}`,
-  },
-  colBranch: {
-    width: {
-      default: "296px",
-      "@container review-canvas (max-width: 1100px)": "200px",
-    },
-  },
-  colDate: {
-    width: "136px",
-  },
-  colAction: {
-    width: "56px",
-  },
-  th: {
-    height: "36px",
-    padding: "0 8px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.rule,
-    backgroundColor: tokens.tray,
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.semibold,
-    lineHeight: "16px",
-    letterSpacing: tracking.chrome,
-    textTransform: "uppercase",
-    textAlign: "left",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  row: {
-    cursor: "pointer",
-    backgroundColor: {
-      default: null,
-      ":hover": tokens.tray,
-      ":focus-within": tokens.tray,
-    },
-  },
-  td: {
-    height: "60px",
-    padding: "0 8px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.rule,
-    color: tokens.inkMuted,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  firstCell: {
-    paddingLeft: "16px",
-  },
-  strongCell: {
-    color: tokens.ink,
-    fontSize: fontSize.ui,
-    fontWeight: fontWeight.medium,
-  },
-  inkCell: {
-    color: tokens.ink,
-  },
-  dateCell: {
-    fontSize: fontSize.ui,
-  },
-  lastRowCell: {
-    borderBottomWidth: 0,
-    borderBottomStyle: "none",
-    borderBottomColor: "currentcolor",
-  },
-  tableOpen: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2px",
-    width: "100%",
-    minWidth: 0,
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    color: "inherit",
-    textAlign: "left",
-    backgroundColor: "transparent",
-    cursor: "pointer",
-  },
-  repository: {
-    display: "block",
-    maxWidth: "100%",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    color: tokens.inkFaint,
-    font: `${fontSize.small}/14px ${tokens.fontSans}`,
-  },
-  repositoryName: {
-    fontWeight: fontWeight.regular,
-  },
-  repositorySeparator: {
-    paddingInline: "5px",
-  },
-  visuallyHidden: {
-    position: "absolute",
-    width: "1px",
-    height: "1px",
-    overflow: "hidden",
-    clipPath: "inset(50%)",
-  },
-  rowActions: {
-    display: "flex",
-    justifyContent: "center",
-  },
-});
+  menuTrigger:
+    "tw:border-[color:var(--rule)] tw:[&:is([aria-expanded=true])]:border-[color:var(--ink-faint)] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--tray)] tw:[&:is([aria-expanded=true])]:bg-[color:var(--tray)] tw:text-[color:var(--ink-muted)]",
+  menuValue: "tw:text-[color:var(--ink)] tw:font-medium",
+  menuIcon:
+    "tw:size-[14px] tw:shrink-0 tw:fill-[none] tw:stroke-[currentColor] tw:stroke-[1.8] tw:[stroke-linecap:round] tw:[stroke-linejoin:round]",
+  tableScroll:
+    "tw:overflow-x-auto tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px]",
+  table:
+    "tw:w-full tw:min-w-[840px] tw:border-collapse tw:table-fixed tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[18px]",
+  colBranch:
+    "tw:w-[296px] tw:[@container_review-canvas_(max-width:_1100px)]:w-[200px]",
+  colDate: "tw:w-[136px]",
+  colAction: "tw:w-[56px]",
+  th: "tw:h-[36px] tw:p-[0_8px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-semibold tw:leading-[16px] tw:tracking-[0.04em] tw:uppercase tw:text-left tw:overflow-hidden tw:text-ellipsis tw:whitespace-nowrap",
+  row: "tw:cursor-pointer tw:[&:hover]:bg-[color:var(--tray)] tw:[&:focus-within]:bg-[color:var(--tray)]",
+  td: "tw:h-[60px] tw:p-[0_8px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:text-[color:var(--ink-muted)] tw:overflow-hidden tw:text-ellipsis tw:whitespace-nowrap",
+  firstCell: "tw:pl-[16px]",
+  strongCell: "tw:text-[color:var(--ink)] tw:text-[length:13px] tw:font-medium",
+  inkCell: "tw:text-[color:var(--ink)]",
+  dateCell: "tw:text-[length:13px]",
+  lastRowCell:
+    "tw:[border-bottom-width:0] tw:[border-bottom-style:none] tw:[border-bottom-color:currentcolor]",
+  tableOpen:
+    "tw:flex tw:flex-col tw:gap-[2px] tw:w-full tw:min-w-0 tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:text-[color:inherit] tw:text-left tw:bg-[color:transparent] tw:cursor-pointer",
+  repository:
+    "tw:block tw:max-w-full tw:overflow-hidden tw:text-ellipsis tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[14px]",
+  repositoryName: "tw:font-normal",
+  repositorySeparator: "tw:px-[5px]",
+  visuallyHidden:
+    "tw:absolute tw:size-[1px] tw:overflow-hidden tw:[clip-path:inset(50%)]",
+  rowActions: "tw:flex tw:justify-center",
+};

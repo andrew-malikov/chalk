@@ -472,7 +472,7 @@ export function softwareMapOverlayClassName({
     "software-map-overlay",
     // The overlay portals into the canvas container, outside .review-app, so
     // it carries its own scope root (the dark tokens) and theme classes;
-    // softwareMapOverlayProps adds the matching StyleX theme and appMarker.
+    // softwareMapOverlayProps adds the matching theme and appMarker.
     "review-canvas-root",
     "review-app",
     `review-app--theme-${theme}`,

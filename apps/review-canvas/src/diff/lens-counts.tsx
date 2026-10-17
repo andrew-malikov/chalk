@@ -1,7 +1,6 @@
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { cn } from "@canvas/lib/utils";
 import { CheckIcon } from "@canvas/ui/icons";
 import type { CoverageProgress } from "@review/documents/viewed-coverage";
-import * as stylex from "@stylexjs/stylex";
 
 import { compactDiffCount as compact, diffCountStyles } from "./diff-count";
 
@@ -19,10 +18,10 @@ export function ElementCountsText({
     <span>Folded</span>
   ) : (
     <>
-      <span {...stylex.props(diffCountStyles.added, styles.added)}>
+      <span className={cn(diffCountStyles.added, styles.added)}>
         +{compact(progress.remaining.additions)}
       </span>{" "}
-      <span {...stylex.props(diffCountStyles.removed, styles.removed)}>
+      <span className={cn(diffCountStyles.removed, styles.removed)}>
         −{compact(progress.remaining.deletions)}
       </span>
     </>
@@ -30,11 +29,7 @@ export function ElementCountsText({
 }
 
 // Flow node captions.
-const styles = stylex.create({
-  added: {
-    fill: tokens.changeAdded,
-  },
-  removed: {
-    fill: tokens.changeRemoved,
-  },
-});
+const styles = {
+  added: "tw:fill-[var(--change-added)]",
+  removed: "tw:fill-[var(--change-removed)]",
+};

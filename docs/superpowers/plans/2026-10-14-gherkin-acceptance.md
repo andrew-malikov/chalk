@@ -92,8 +92,8 @@ Use the existing canvas config builder for Vite plugins, overriding the root to
 current source without requiring compiled `dist` output. Serve on
 `127.0.0.1:4175` with a strict port. Let Playwright manage Vite startup and shutdown;
 set `webServer.cwd` to the repository root explicitly and do not reuse an unrelated
-server. The harness loads `/virtual:stylex.css` after its canvas imports are
-transformed. It mounts through `mountReviewCanvas` with a pinned content version.
+server. The harness loads the canvas stylesheet through `mountReviewCanvas` and mounts
+with a pinned content version.
 
 Use one review identity, a markdown document marker, and pinned base/head refs.
 Provide the sample commit `Add the API`, with distinct 40-character base/head
@@ -250,7 +250,7 @@ slice does not establish native desktop or real backend end-to-end coverage.
   extend `test` from Playwright-BDD and bind step functions with `createBdd(test)`.
 - [Playwright web server](https://playwright.dev/docs/test-webserver):
   runner-managed server readiness and teardown.
-- `apps/review-canvas/vitest.config.ts:25`: StyleX dev CSS handling.
+- `apps/review-canvas/src/browser-test-setup.ts`: shared canvas stylesheet loading.
 - `scripts/test-config.ts:25`: source aliases for test workspace imports.
 - `apps/review-canvas/src/test/fixture-review-bridge.ts:59`: current empty commits fixture.
 - `apps/review-canvas/src/host/electrobun-shell.browser.test.tsx:281`: cancellable watch fixture.

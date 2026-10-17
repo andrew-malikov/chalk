@@ -6,11 +6,12 @@ import {
 } from "@canvas/drawing/draw-queue-provider";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { useReviewSession } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import { AuthoringActivityContext } from "@canvas/review/authoring-activity-context";
 import { scopeLive } from "@canvas/review/authoring-cursor";
 import { useReviewRoots } from "@canvas/review/review-root-context";
 import type { SoftwareMapResolvedDataPayload } from "@canvas/software-map/software-map-snapshot";
-import { documentNodeMarker, proseMarker } from "@canvas/styles/markers.stylex";
+import { documentNodeMarker, proseMarker } from "@canvas/styles/markers";
 import type { ReviewCommitSummary } from "@chalk/review-contracts";
 import type { ReviewApiClient } from "@chalk/review-contracts";
 import type { PeekableAnchorRef as DocumentPeekableAnchor } from "@review/documents/authoring";
@@ -24,17 +25,11 @@ import { type DiffSelection } from "@review/documents/lens-selection";
 import type { LocalReviewData } from "@review/node/review-api/local-data";
 import type { Snapshot } from "@review/node/review-api/store";
 import type { NormalizedSoftwareModel } from "@review/software-map/software-map-model";
-import * as stylex from "@stylexjs/stylex";
 import { memo, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { markdownHasTitle } from "./agent-markdown";
 import { type ApiHeadingIds, apiHeadingIds } from "./api-document-headings";
-import {
-  BlockErrorBoundary,
-  type StoredBlock,
-  renderBlock,
-  stored,
-} from "./blocks";
+import { BlockErrorBoundary, renderBlock, stored } from "./blocks";
 import { documentStyles } from "./document-styles";
 import { reportReviewDocumentRenderError } from "./review-document-error-report";
 import { ReviewDocumentTitle } from "./review-document-surface";
@@ -384,7 +379,7 @@ export const DocumentNode = memo(function DocumentNode({
   // data-review-node-id, and its prose by proseMarker.
   return (
     <div
-      {...stylex.props(
+      className={cn(
         documentNodeMarker,
         prose && proseMarker,
         drawStyles.blockChild,
@@ -412,7 +407,7 @@ export const DocumentNode = memo(function DocumentNode({
         {stale ? (
           <p
             role="status"
-            {...stylex.props(
+            className={cn(
               documentStyles.note,
               documentStyles.column,
               drawStyles.blockChild,

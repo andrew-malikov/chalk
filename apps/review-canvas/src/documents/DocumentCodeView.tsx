@@ -6,8 +6,6 @@ import {
   type ReviewLensView,
   useReviewLenses,
 } from "@canvas/review/review-lenses";
-import { fontSize, radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import type {
   ReviewDiffProgress,
   ReviewDiffSide,
@@ -21,7 +19,6 @@ import {
   coverageProgress,
   coverageSources,
 } from "@review/documents/viewed-coverage";
-import * as stylex from "@stylexjs/stylex";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 const LINE_HEIGHT = 20;
@@ -321,13 +318,13 @@ export function DocumentCodeView({
     <>
       <div
         ref={setContainer}
-        {...stylex.props(styles.editor)}
+        className={styles.editor}
         data-review-inline-editor={path}
         data-review-inline-editor-active={active ? "true" : "false"}
         style={{ height }}
       />
       {error ? (
-        <div {...stylex.props(styles.error)} title={error}>
+        <div className={styles.error} title={error}>
           Inline preview unavailable
         </div>
       ) : null}
@@ -353,26 +350,9 @@ function estimatedHeight(
   return Math.max(1, lines) * LINE_HEIGHT + INLINE_HEADER_HEIGHT;
 }
 
-const styles = stylex.create({
-  editor: {
-    position: "relative",
-    width: "100%",
-    minWidth: 0,
-    overflow: "hidden",
-    contentVisibility: "auto",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.control,
-    backgroundColor: tokens.bg,
-  },
-  error: {
-    display: "flex",
-    alignItems: "center",
-    padding: "0 10px",
-    borderColor: tokens.ruleSoft,
-    backgroundColor: tokens.surface,
-    color: tokens.inkFaint,
-    font: `${fontSize.small}/1 ${tokens.fontSans}`,
-  },
-});
+const styles = {
+  editor:
+    "tw:relative tw:w-full tw:min-w-0 tw:overflow-hidden tw:[content-visibility:auto] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--bg)]",
+  error:
+    "tw:flex tw:items-center tw:p-[0_10px] tw:border-[color:var(--rule-soft)] tw:bg-[color:var(--surface)] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[1]",
+};

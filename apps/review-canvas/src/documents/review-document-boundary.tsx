@@ -1,5 +1,5 @@
+import { cn } from "@canvas/lib/utils";
 import { EmptyState } from "@canvas/ui/empty-state";
-import * as stylex from "@stylexjs/stylex";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 import { documentStyles } from "./document-styles";
@@ -59,8 +59,8 @@ export class ReviewDocumentBoundary extends Component<
               Your coding agent is writing the canvas now…
               <br />
               Edit the review through the Chalk MCP tools or{" "}
-              <code {...stylex.props(documentStyles.code)}>chalk api</code> to
-              replace the failing block.
+              <code className={documentStyles.code}>chalk api</code> to replace
+              the failing block.
             </>
           }
         />

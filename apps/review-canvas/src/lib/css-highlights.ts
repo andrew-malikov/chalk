@@ -1,17 +1,9 @@
-import { create, props } from "@stylexjs/stylex";
-
-const styles = create({
-  "review-find-match": {
-    "::highlight(review-find-match)": {
-      backgroundColor: "var(--review-find-match-background)",
-    },
-  },
-  "review-find-match-active": {
-    "::highlight(review-find-match-active)": {
-      backgroundColor: "var(--review-find-match-active-background)",
-    },
-  },
-});
+const styles = {
+  "review-find-match":
+    "tw:[&::highlight(review-find-match)]:bg-[var(--review-find-match-background)]",
+  "review-find-match-active":
+    "tw:[&::highlight(review-find-match-active)]:bg-[var(--review-find-match-active-background)]",
+};
 
 export function setCssHighlight(
   root: HTMLElement | null | undefined,
@@ -38,5 +30,5 @@ export function setCssHighlight(
     registry.set(name, highlight);
   } else registry.delete(name);
 
-  root.classList.toggle(props(styles[name]).className!, ranges.length > 0);
+  root.classList.toggle(styles[name], ranges.length > 0);
 }

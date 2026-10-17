@@ -1,7 +1,6 @@
 import { createRequire } from "node:module";
 import path from "node:path";
 
-import stylex from "@stylexjs/unplugin";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { type UserConfig, defineConfig, mergeConfig } from "vite-plus";
@@ -13,7 +12,6 @@ import {
   isLibavoidBrowserModule,
   pierreTrustedTypesPlugin,
 } from "./desktop-trusted-types";
-import { stylexOptions } from "./stylex-options";
 
 const require = createRequire(import.meta.url);
 
@@ -29,9 +27,6 @@ export function createReviewCanvasConfig(overrides: UserConfig = {}) {
       plugins: [
         tailwindcss(),
         pierreTrustedTypesPlugin(),
-        // Appends the collected StyleX rules to the canvas CSS asset in its own
-        // generateBundle, which runs before the scoping plugin below.
-        stylex.vite(stylexOptions),
         {
           name: "harden-libavoid-trusted-types",
           enforce: "pre",

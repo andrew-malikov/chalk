@@ -1,15 +1,13 @@
 import { useGitLab } from "@canvas/gitlab/gitlab-context";
 import { useReviewSession } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import { controlStyles } from "@canvas/styles/controls-styles";
-import { fontSize, layer } from "@canvas/styles/scale.stylex";
 import { themeStyles } from "@canvas/styles/theme-styles";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button } from "@canvas/ui/button";
 import { CommandKeyIcon, CopyIcon, ShiftKeyIcon } from "@canvas/ui/icons";
 import { surfaceStyles } from "@canvas/ui/surface";
 import { useToast } from "@canvas/ui/toast";
 import type { AgentSelection } from "@review/node/review-api/agent-selection";
-import * as stylex from "@stylexjs/stylex";
 import { PlusIcon } from "lucide-react";
 import {
   type ReactNode,
@@ -244,7 +242,7 @@ export function AgentSelectionProvider({
                 // The toolbar starts at the selection, after a lead that
                 // gives way so it never runs past the container's edge.
                 <div
-                  {...stylex.props(
+                  className={cn(
                     themeStyles.vars,
                     styles.lane,
                     selection.target.kind === "code" &&
@@ -254,11 +252,11 @@ export function AgentSelectionProvider({
                   style={{ top: selection.anchor?.y }}
                 >
                   <span
-                    {...stylex.props(styles.lead)}
+                    className={styles.lead}
                     style={{ flexBasis: selection.anchor?.x }}
                   />
                   <div
-                    {...stylex.props(surfaceStyles.popover, styles.actions)}
+                    className={cn(surfaceStyles.popover, styles.actions)}
                     onMouseDown={(event) => event.preventDefault()}
                   >
                     {gitlab?.editable &&
@@ -328,9 +326,9 @@ export function AgentSelectionProvider({
                       aria-label="Copy ref"
                       onClick={() => void copy()}
                     >
-                      <CopyIcon xstyle={controlStyles.inlineIcon} />
+                      <CopyIcon className={controlStyles.inlineIcon} />
                       <span>Copy ref</span>
-                      <kbd aria-hidden="true" {...stylex.props(styles.key)}>
+                      <kbd aria-hidden="true" className={styles.key}>
                         <ShiftKeyIcon />
                         <CommandKeyIcon />C
                       </kbd>
@@ -347,40 +345,13 @@ export function AgentSelectionProvider({
   );
 }
 
-const styles = stylex.create({
+const styles = {
   // Spans its container, short of the right edge; only the toolbar takes
   // the pointer. Outside .review-app it brings the chrome tokens.
-  lane: {
-    position: "absolute",
-    left: 0,
-    right: "8px",
-    zIndex: layer.agentSelection,
-    display: "flex",
-    pointerEvents: "none",
-  },
-  beside: { transform: "translateY(-50%)" },
-  lead: {
-    flexGrow: 0,
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  actions: {
-    position: "relative",
-    flex: "none",
-    pointerEvents: "auto",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "2px",
-    padding: "4px",
-    whiteSpace: "nowrap",
-  },
-  key: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "1px",
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.micro,
-    lineHeight: "14px",
-    opacity: 0.65,
-  },
-});
+  lane: "tw:absolute tw:left-0 tw:right-[8px] tw:z-[10002] tw:flex tw:pointer-events-none",
+  beside: "tw:[transform:translateY(-50%)]",
+  lead: "tw:grow-0 tw:shrink-[1] tw:min-w-0",
+  actions:
+    "tw:relative tw:flex-[none] tw:pointer-events-auto tw:inline-flex tw:items-center tw:gap-[2px] tw:p-[4px] tw:whitespace-nowrap",
+  key: "tw:inline-flex tw:items-center tw:gap-[1px] tw:font-[family-name:var(--font-sans)] tw:text-[length:10px] tw:leading-[14px] tw:opacity-[0.65]",
+};

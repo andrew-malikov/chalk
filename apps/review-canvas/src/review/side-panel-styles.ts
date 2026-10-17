@@ -1,364 +1,69 @@
-import { detailHostMarker } from "@canvas/styles/markers.stylex";
-import {
-  elevation,
-  fontSize,
-  fontWeight,
-  layer,
-  motion,
-  radius,
-} from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
-
-const narrowCanvas = "@container review-canvas (max-width: 929px)";
-
-const narrow = "@media (max-width: 720px)";
-
-const short = "@media (max-height: 560px)";
-
-const reducedMotion = "@media (prefers-reduced-motion: reduce)";
-
-// The panel's own grid cell in App's detail host.
-const inDetailHost = () => stylex.when.ancestor(":is(*)", detailHostMarker);
-
-// Narrow layouts dock the panel to the bottom of the canvas as a sheet; a
-// short canvas gives the sheet its whole height.
-const sheetHeight = "calc(var(--side-panel-bottom-fraction, 0.5) * 100%)";
-
-const slideIn = stylex.keyframes({
-  from: { opacity: 0.3, transform: "translateX(28px)" },
-  to: { opacity: 1, transform: "translateX(0)" },
-});
-
-export const panelStyles = stylex.create({
-  panel: {
-    display: "flex",
-    flexDirection: "column",
-    minWidth: 0,
-    position: {
-      default: null,
-      [narrowCanvas]: "absolute",
-      [narrow]: "absolute",
-    },
-    inset: {
-      default: null,
-      [narrowCanvas]: { default: "auto 0 0 0", [short]: 0 },
-      [narrow]: { default: "auto 0 0 0", [short]: 0 },
-      [short]: 0,
-    },
-    zIndex: {
-      default: null,
-      [narrowCanvas]: layer.sheet,
-      [narrow]: layer.sheet,
-    },
-    height: {
-      default: "100%",
-      [narrowCanvas]: { default: sheetHeight, [short]: "100%" },
-      [narrow]: { default: sheetHeight, [short]: "100%" },
-    },
-    maxHeight: {
-      default: null,
-      [narrowCanvas]: { default: "100%", [short]: "none" },
-      [narrow]: { default: "100%", [short]: "none" },
-      [short]: "none",
-    },
-    gridArea: { default: null, [inDetailHost()]: "1 / 1" },
-    overflow: "hidden",
-    backgroundColor: tokens.bg,
-    animationName: { default: slideIn, [reducedMotion]: "none" },
-    animationDuration: {
-      default: motion.medium,
-      [reducedMotion]: motion.instant,
-    },
-    animationTimingFunction: { default: "ease-out", [reducedMotion]: "ease" },
-  },
-  restored: {
-    animationName: "none",
-    animationDuration: motion.instant,
-    animationTimingFunction: "ease",
-  },
-  tour: {
-    position: {
-      default: "relative",
-      [narrowCanvas]: "absolute",
-      [narrow]: "absolute",
-    },
-  },
+export const panelStyles = {
+  panel:
+    "tw:flex tw:flex-col tw:min-w-0 tw:h-full tw:[&:is(.canvas-detail-host:is(*)_*)]:[grid-area:1_/_1] tw:overflow-hidden tw:bg-[color:var(--bg)] tw:[animation-name:side-panel-styles-slide-in] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:200ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:ease-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease]",
+  sheet:
+    "tw:[@container_review-canvas_(max-width:_929px)]:absolute tw:[@media_(max-width:_720px)]:absolute tw:[@container_review-canvas_(max-width:_929px)]:inset-[auto_0_0_0] tw:[@container_review-canvas_(max-width:_929px)]:[@media_(max-height:_560px)]:inset-0 tw:[@media_(max-width:_720px)]:inset-[auto_0_0_0] tw:[@media_(max-width:_720px)]:[@media_(max-height:_560px)]:inset-0 tw:[@media_(max-height:_560px)]:inset-0 tw:[@container_review-canvas_(max-width:_929px)]:z-[50] tw:[@media_(max-width:_720px)]:z-[50] tw:[@container_review-canvas_(max-width:_929px)]:h-[calc(var(--side-panel-bottom-fraction,_0.5)_*_100%)] tw:[@container_review-canvas_(max-width:_929px)]:[@media_(max-height:_560px)]:h-full tw:[@media_(max-width:_720px)]:h-[calc(var(--side-panel-bottom-fraction,_0.5)_*_100%)] tw:[@media_(max-width:_720px)]:[@media_(max-height:_560px)]:h-full tw:[@container_review-canvas_(max-width:_929px)]:max-h-full tw:[@container_review-canvas_(max-width:_929px)]:[@media_(max-height:_560px)]:max-h-none tw:[@media_(max-width:_720px)]:max-h-full tw:[@media_(max-width:_720px)]:[@media_(max-height:_560px)]:max-h-none tw:[@media_(max-height:_560px)]:max-h-none",
+  restored:
+    "tw:[animation-name:none] tw:[animation-duration:0s] tw:[animation-timing-function:ease]",
+  tour: "tw:relative tw:[@container_review-canvas_(max-width:_929px)]:absolute tw:[@media_(max-width:_720px)]:absolute",
   // Inside a diagram tour the panel keeps its column at every width.
-  docked: {
-    position: "static",
-    inset: "auto",
-    width: "100%",
-    height: "100%",
-    maxHeight: "none",
-  },
-  header: {
-    display: "flex",
-    flex: "0 0 auto",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "12px",
-    minHeight: tokens.reviewHeaderHeight,
-    padding: "0 10px 0 16px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.rule,
-    backgroundColor: tokens.surface,
-  },
-  title: {
-    display: "flex",
-    alignItems: "center",
-    gap: "9px",
-    minWidth: 0,
-  },
-  kicker: {
-    flex: "0 0 auto",
-    fontFamily: tokens.fontSans,
-  },
-  heading: {
-    overflow: "hidden",
-    margin: 0,
-    color: tokens.ink,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.ui,
-    fontWeight: fontWeight.semibold,
-    lineHeight: 1.3,
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
-  },
-  close: {
-    flex: "0 0 auto",
-  },
-  actions: {
-    display: "flex",
-    flex: "0 0 auto",
-    alignItems: "center",
-    gap: "2px",
-  },
+  docked: "tw:static tw:inset-[auto] tw:w-full tw:h-full tw:max-h-none",
+  header:
+    "tw:flex tw:flex-[0_0_auto] tw:items-center tw:justify-between tw:gap-[12px] tw:min-h-[var(--review-header-height)] tw:p-[0_10px_0_16px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--surface)]",
+  title: "tw:flex tw:items-center tw:gap-[9px] tw:min-w-0",
+  kicker: "tw:flex-[0_0_auto] tw:font-[family-name:var(--font-sans)]",
+  heading:
+    "tw:overflow-hidden tw:m-0 tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:13px] tw:font-semibold tw:leading-[1.3] tw:whitespace-nowrap tw:text-ellipsis",
+  close: "tw:flex-[0_0_auto]",
+  actions: "tw:flex tw:flex-[0_0_auto] tw:items-center tw:gap-[2px]",
   // A conversation sits on the tray, header and all.
-  tray: {
-    backgroundColor: tokens.tray,
-  },
-  trayKicker: {
-    color: tokens.inkMuted,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.regular,
-  },
+  tray: "tw:bg-[color:var(--tray)]",
+  trayKicker:
+    "tw:text-[color:var(--ink-muted)] tw:text-[length:11px] tw:font-normal",
   // The conversation scrolls its own thread; the composer stays put.
-  trayBody: {
-    display: "flex",
-    flexDirection: "column",
-    paddingBottom: 0,
-    overflow: "hidden",
-  },
-  body: {
-    paddingBottom: "var(--review-bottom-scroll-padding, 0px)",
-    flex: "1 1 auto",
-    minWidth: 0,
-    minHeight: 0,
-    overflowX: "hidden",
-    overflowY: "auto",
-    overscrollBehavior: "contain",
-  },
-  peekBody: {
-    minWidth: 0,
-    padding: { default: "12px", [narrow]: "8px" },
-  },
-  peekActions: {
-    display: "flex",
-    justifyContent: "flex-end",
-    marginBottom: "12px",
-  },
-  peekContent: {
-    minWidth: 0,
-  },
-});
+  trayBody: "tw:flex tw:flex-col tw:pb-0 tw:overflow-hidden",
+  body: "tw:pb-[var(--review-bottom-scroll-padding,_0px)] tw:flex-[1_1_auto] tw:min-w-0 tw:min-h-0 tw:overflow-x-hidden tw:overflow-y-auto tw:[overscroll-behavior:contain]",
+  peekBody: "tw:min-w-0 tw:p-[12px] tw:[@media_(max-width:_720px)]:p-[8px]",
+  peekActions: "tw:flex tw:justify-end tw:mb-[12px]",
+  peekContent: "tw:min-w-0",
+};
 
 // The guided tour: a numbered rail of stops in the panel body, and a pager
 // pill floating over its foot.
-export const tourStyles = stylex.create({
-  feedShell: {
-    display: "flex",
-    flex: "1 1 auto",
-    flexDirection: "column",
-    minHeight: 0,
-    borderTopWidth: "1px",
-    borderTopStyle: "solid",
-    borderTopColor: tokens.rule,
-  },
-  feed: {
-    padding: "0 0 72px",
-    scrollPaddingTop: "18px",
-    scrollPaddingBottom: "72px",
-  },
-  floatingFooter: {
-    position: "absolute",
-    right: 0,
-    bottom: { default: "12px", [narrow]: "8px" },
-    left: 0,
-    zIndex: 4,
-    display: "flex",
-    justifyContent: "center",
-    padding: { default: "0 12px", [narrow]: "0 8px" },
-    pointerEvents: "none",
-  },
-  pill: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "4px 10px",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: radius.pill,
-    backgroundColor: tokens.accent,
-    boxShadow: elevation.popover,
-    color: tokens.onAccent,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
-    pointerEvents: "auto",
-  },
-  pillIntro: {
-    gap: "7px",
-    padding: "7px 14px",
-    cursor: "pointer",
-  },
-  pillChevron: {
-    color: tokens.onAccent,
-  },
+export const tourStyles = {
+  feedShell:
+    "tw:flex tw:flex-[1_1_auto] tw:flex-col tw:min-h-0 tw:[border-top-width:1px] tw:[border-top-style:solid] tw:[border-top-color:var(--rule)]",
+  feed: "tw:p-[0_0_72px] tw:scroll-pt-[18px] tw:scroll-pb-[72px]",
+  floatingFooter:
+    "tw:absolute tw:right-0 tw:bottom-[12px] tw:[@media_(max-width:_720px)]:bottom-[8px] tw:left-0 tw:z-[4] tw:flex tw:justify-center tw:p-[0_12px] tw:[@media_(max-width:_720px)]:p-[0_8px] tw:pointer-events-none",
+  pill: "tw:flex tw:items-center tw:gap-[8px] tw:p-[4px_10px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-[999px] tw:bg-[color:var(--accent)] tw:[box-shadow:0_8px_24px_var(--shadow-color-strong)] tw:text-[color:var(--on-accent)] tw:text-[length:11px] tw:font-bold tw:pointer-events-auto",
+  pillIntro: "tw:gap-[7px] tw:p-[7px_14px] tw:cursor-pointer",
+  pillChevron: "tw:text-[color:var(--on-accent)]",
   // An IconButton on the accent pill.
-  pillButton: {
-    borderRadius: radius.round,
-    backgroundColor: {
-      default: tokens.transparent,
-      ":hover:not(:disabled)": `color-mix(in srgb, ${tokens.onAccent} 16%, ${tokens.transparent})`,
-      ":focus-visible": `color-mix(in srgb, ${tokens.onAccent} 16%, ${tokens.transparent})`,
-    },
-    color: tokens.onAccent,
-    fontSize: "inherit",
-    fontWeight: "inherit",
-  },
-  endCap: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "12px",
-    margin: { default: "8px 16px 16px 52px", [narrow]: "8px 8px 16px 38px" },
-    padding: "12px 16px",
-    borderWidth: "1px",
-    borderStyle: "dashed",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.surface,
-    color: tokens.inkMuted,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
-  },
-  endCapButton: {
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: tokens.transparent,
-    boxShadow: "none",
-    color: tokens.accent,
-    font: "inherit",
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-  },
-  scrollTail: {
-    flexShrink: 0,
-  },
-  stop: {
-    display: "grid",
-    gridTemplateColumns: {
-      default: "56px minmax(0, 1fr)",
-      [narrow]: "38px minmax(0, 1fr)",
-    },
-    paddingRight: { default: "16px", [narrow]: "8px" },
-  },
-  rail: {
-    position: "relative",
-    display: "flex",
-    justifyContent: "center",
-    "::before": {
-      position: "absolute",
-      top: 0,
-      bottom: 0,
-      left: { default: "29px", [narrow]: "19px" },
-      width: "2px",
-      backgroundColor: tokens.ruleSoft,
-      content: "''",
-    },
-  },
-  railNumber: {
-    zIndex: 1,
-    display: "grid",
-    placeItems: "center",
-    width: "26px",
-    height: "26px",
-    marginTop: "18px",
-    borderWidth: "2px",
-    borderStyle: "solid",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.round,
-    backgroundColor: tokens.bg,
-    boxShadow: `0 0 0 4px ${tokens.bg}`,
-    color: tokens.inkFaint,
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
-  },
-  railNumberActive: {
-    borderColor: tokens.accent,
-    backgroundColor: tokens.accent,
-    color: tokens.onAccent,
-  },
-  main: {
-    minWidth: 0,
-    paddingTop: "16px",
-    paddingRight: 0,
-    paddingBottom: "22px",
-    paddingLeft: { default: "4px", [narrow]: 0 },
-  },
-  mainActive: {
-    borderRadius: radius.surface,
-  },
+  pillButton:
+    "tw:rounded-[50%] tw:bg-[color:var(--transparent)] tw:[&:hover:not(:disabled)]:bg-[color:color-mix(in_srgb,_var(--on-accent)_16%,_var(--transparent))] tw:[&:focus-visible]:bg-[color:color-mix(in_srgb,_var(--on-accent)_16%,_var(--transparent))] tw:text-[color:var(--on-accent)] tw:text-[length:inherit] tw:font-[number:inherit]",
+  endCap:
+    "tw:flex tw:items-center tw:justify-between tw:gap-[12px] tw:m-[8px_16px_16px_52px] tw:[@media_(max-width:_720px)]:m-[8px_8px_16px_38px] tw:p-[12px_16px] tw:border-[1px] tw:border-dashed tw:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:text-[color:var(--ink-muted)] tw:text-[length:11px] tw:font-bold",
+  endCapButton:
+    "tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:text-[color:var(--accent)] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:cursor-pointer tw:whitespace-nowrap",
+  scrollTail: "tw:shrink-0",
+  stop: "tw:grid tw:grid-cols-[56px_minmax(0,_1fr)] tw:[@media_(max-width:_720px)]:grid-cols-[38px_minmax(0,_1fr)] tw:pr-[16px] tw:[@media_(max-width:_720px)]:pr-[8px]",
+  rail: "tw:relative tw:flex tw:justify-center tw:[&::before]:absolute tw:[&::before]:top-0 tw:[&::before]:bottom-0 tw:[&::before]:left-[29px] tw:[@media_(max-width:_720px)]:[&::before]:left-[19px] tw:[&::before]:w-[2px] tw:[&::before]:bg-[color:var(--rule-soft)] tw:[&::before]:[content:'']",
+  railNumber:
+    "tw:z-[1] tw:grid tw:place-items-center tw:size-[26px] tw:mt-[18px] tw:border-[2px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[50%] tw:bg-[color:var(--bg)] tw:[box-shadow:0_0_0_4px_var(--bg)] tw:text-[color:var(--ink-faint)] tw:text-[length:12px] tw:font-bold",
+  railNumberActive:
+    "tw:border-[color:var(--accent)] tw:bg-[color:var(--accent)] tw:text-[color:var(--on-accent)]",
+  main: "tw:min-w-0 tw:pt-[16px] tw:pr-0 tw:pb-[22px] tw:pl-[4px] tw:[@media_(max-width:_720px)]:pl-0",
+  mainActive: "tw:rounded-[8px]",
   // The stop's content breaks out over the rail to the panel's inner edge.
-  content: {
-    position: "relative",
-    zIndex: 2,
-    width: { default: "calc(100% + 50px)", [narrow]: "calc(100% + 30px)" },
-    marginLeft: {
-      default: "calc(-1 * 50px)",
-      [narrow]: "calc(-1 * 30px)",
-    },
-    backgroundColor: tokens.bg,
-  },
-  header: {
-    display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: "14px",
-    marginBottom: "12px",
-  },
-  titleRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-  title: {
-    margin: "3px 0 0",
-    color: tokens.ink,
-    fontSize: fontSize.heading,
-    lineHeight: "24px",
-  },
-  titleActive: {
-    color: tokens.accent,
-  },
-  detail: {
-    margin: "6px 0 0",
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    lineHeight: "15px",
-  },
-});
+  content:
+    "tw:relative tw:z-[2] tw:w-[calc(100%_+_50px)] tw:[@media_(max-width:_720px)]:w-[calc(100%_+_30px)] tw:ml-[calc(-1_*_50px)] tw:[@media_(max-width:_720px)]:ml-[calc(-1_*_30px)] tw:bg-[color:var(--bg)]",
+  header:
+    "tw:flex tw:items-start tw:justify-between tw:gap-[14px] tw:mb-[12px]",
+  titleRow: "tw:flex tw:items-center tw:gap-[8px]",
+  title:
+    "tw:m-[3px_0_0] tw:text-[color:var(--ink)] tw:text-[length:18px] tw:leading-[24px]",
+  titleActive: "tw:text-[color:var(--accent)]",
+  detail:
+    "tw:m-[6px_0_0] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:leading-[15px]",
+};

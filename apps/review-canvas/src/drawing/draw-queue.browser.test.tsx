@@ -1,20 +1,20 @@
 import { ApiDocument } from "@canvas/documents/api-document";
 import { documentStyles } from "@canvas/documents/document-styles";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import { AuthoringActivityContext } from "@canvas/review/authoring-activity-context";
 import type { AuthoringCursor } from "@canvas/review/authoring-cursor";
 import { ReviewPanelProvider } from "@canvas/review/review-panel";
 import type { ReviewRoots } from "@canvas/review/review-root-context";
 import { ReviewRootsProvider } from "@canvas/review/review-root-context";
 import { ReviewDebugSettingsProvider } from "@canvas/settings/debug-settings";
-import { documentMarker } from "@canvas/styles/markers.stylex";
+import { documentMarker } from "@canvas/styles/markers";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
 import {
   testApiDocumentData,
   testReviewSession,
 } from "@canvas/test/review-session-test-utils";
 import type { Block } from "@review/documents/document";
-import * as stylex from "@stylexjs/stylex";
 import { act, createRef } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -112,7 +112,7 @@ let manualClock: ReturnType<typeof createManualClock>;
 
 beforeEach(() => {
   article = document.createElement("article");
-  article.className = `review-document ${stylex.props(documentStyles.article, documentMarker).className}`;
+  article.className = `review-document ${cn(documentStyles.article, documentMarker)}`;
   article.style.position = "relative";
   article.style.width = "900px";
   container = document.createElement("div");

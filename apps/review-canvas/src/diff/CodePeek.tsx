@@ -1,16 +1,11 @@
 import { DocumentCodeView } from "@canvas/documents/DocumentCodeView";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { useReviewSession } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import {
   type ReviewLensView,
   useReviewLenses,
 } from "@canvas/review/review-lenses";
-import {
-  codeInspectorMarker,
-  documentMarker,
-} from "@canvas/styles/markers.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import type {
   ReviewDiffSide,
   ReviewInlineEditorHeightMode,
@@ -23,7 +18,6 @@ import {
   sourceAnchor,
 } from "@review/documents/lens-selection";
 import { type FileLineRange, codePeekSource } from "@review/documents/source";
-import * as stylex from "@stylexjs/stylex";
 import { useMemo, useRef } from "react";
 
 /** The software-map inspector's peek input: a range on one diff side. */
@@ -89,7 +83,7 @@ export function CodePeekGroup({
         return (
           <section
             key={group.key}
-            {...withClass("code-peek", styles.peek)}
+            className={cn("code-peek", styles.peek)}
             data-code-rendering="inline-editor"
           >
             <DocumentCodeView
@@ -161,7 +155,7 @@ export function CodePeekCard({
   if (!ranges.length)
     return (
       <section
-        {...withClass("code-peek", styles.peek, drawStyles.blockChild)}
+        className={cn("code-peek", styles.peek, drawStyles.blockChild)}
         role="status"
       >
         {unavailable ? "Diff selection unavailable" : "Loading diff selection…"}
@@ -170,7 +164,7 @@ export function CodePeekCard({
 
   return (
     <section
-      {...withClass("code-peek", styles.peek, drawStyles.blockChild)}
+      className={cn("code-peek", styles.peek, drawStyles.blockChild)}
       data-code-rendering="inline-editor"
     >
       <DocumentCodeView
@@ -226,7 +220,7 @@ function FileSnippetCard({
 
   return (
     <section
-      {...withClass("code-peek", styles.peek, drawStyles.blockChild)}
+      className={cn("code-peek", styles.peek, drawStyles.blockChild)}
       data-code-rendering="inline-editor"
     >
       <DocumentCodeView
@@ -351,40 +345,7 @@ function mergedCodePeekRanges(
   return merged;
 }
 
-const narrow = "@media (max-width: 720px)";
-
-const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
-
-// A block in a Review document shares the prose column.
-const inDocumentBlock = () => `${inDocument()}:is([data-review-node-id] > *)`;
-
-const inMapInspector = () =>
-  stylex.when.ancestor(":is(*)", codeInspectorMarker);
-
 // Peeks keep the `code-peek` class: document-embed-scroll.ts finds embeds by it.
-const styles = stylex.create({
-  peek: {
-    width: {
-      default: null,
-      [inDocumentBlock()]: `min(100%, ${tokens.reviewBlockMaxWidth})`,
-    },
-    minWidth: 0,
-    maxWidth: {
-      default: "100%",
-      [inDocumentBlock()]: `calc(100cqi - 2 * ${tokens.reviewDocumentPaddingInline})`,
-    },
-    marginInline: { default: null, [inDocumentBlock()]: "auto" },
-    marginBlock: { default: "24px", [inMapInspector()]: 0 },
-    overflow: { default: null, [inMapInspector()]: "visible" },
-    padding: {
-      default: null,
-      [inMapInspector()]: { default: 0, [narrow]: "0 8px 8px" },
-    },
-    overscrollBehavior: {
-      default: null,
-      [inMapInspector()]: { default: null, [narrow]: "contain" },
-    },
-    color: tokens.ink,
-    fontFamily: tokens.fontMono,
-  },
-});
+const styles = {
+  peek: "tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:w-[min(100%,_var(--review-block-max-width))] tw:min-w-0 tw:max-w-full tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:max-w-[calc(100cqi_-_2_*_var(--review-document-padding-inline))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:mx-[auto] tw:my-[24px] tw:[&:is(.canvas-code-inspector:is(*)_*)]:my-0 tw:[&:is(.canvas-code-inspector:is(*)_*)]:overflow-visible tw:[&:is(.canvas-code-inspector:is(*)_*)]:p-0 tw:[@media_(max-width:_720px)]:[&:is(.canvas-code-inspector:is(*)_*)]:p-[0_8px_8px] tw:[@media_(max-width:_720px)]:[&:is(.canvas-code-inspector:is(*)_*)]:[overscroll-behavior:contain] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)]",
+};

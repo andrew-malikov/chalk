@@ -1,8 +1,8 @@
 import { reviewPreferenceKey } from "@canvas/host/review-client";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import { shellStyles } from "@canvas/styles/shell-styles";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
-import * as stylex from "@stylexjs/stylex";
 import { act, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -44,7 +44,7 @@ function Panel({
 
   return (
     <section ref={containerRef} style={cramped ? { width: 0 } : undefined}>
-      <div {...stylex.props(shellStyles.resizer)} {...resize.separatorProps} />
+      <div className={shellStyles.resizer} {...resize.separatorProps} />
     </section>
   );
 }
@@ -271,7 +271,7 @@ function HalfPanel({ containerWidth }: { containerWidth: number }) {
 
   return (
     <section ref={containerRef} style={{ width: containerWidth }}>
-      <div {...stylex.props(shellStyles.resizer)} {...resize.separatorProps} />
+      <div className={shellStyles.resizer} {...resize.separatorProps} />
     </section>
   );
 }
@@ -315,7 +315,8 @@ it("grabs past the separator into the panel, never over the scrollbar beside it"
         </div>
         <div
           role="separator"
-          {...stylex.props(shellStyles.resizer, shellStyles.resizerGrabPanel)}
+          aria-label="Panel width"
+          className={cn(shellStyles.resizer, shellStyles.resizerGrabPanel)}
         />
         <div style={{ flex: "1 1 0" }}>panel</div>
       </div>,

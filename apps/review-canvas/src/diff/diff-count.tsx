@@ -1,6 +1,4 @@
-import { fontSize } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
+import { cn } from "@canvas/lib/utils";
 import type { ReactElement } from "react";
 
 export const compactDiffCount = (count: number) =>
@@ -24,37 +22,24 @@ export function DiffCount({
   large?: boolean;
 }): ReactElement {
   return (
-    <span {...stylex.props(diffCountStyles.counts, large && styles.large)}>
-      <span {...stylex.props(diffCountStyles.added)}>
+    <span className={cn(diffCountStyles.counts, large && styles.large)}>
+      <span className={diffCountStyles.added}>
         +{compactDiffCount(additions)}
       </span>
-      <span {...stylex.props(diffCountStyles.removed)}>
+      <span className={diffCountStyles.removed}>
         −{compactDiffCount(deletions)}
       </span>
     </span>
   );
 }
 
-export const diffCountStyles = stylex.create({
-  counts: {
-    display: "inline-flex",
-    gap: "6px",
-    font: `${fontSize.small} ${tokens.fontSans}`,
-    fontVariantNumeric: "tabular-nums",
-    whiteSpace: "nowrap",
-    fontSize: fontSize.small,
-  },
-  added: {
-    color: tokens.changeAdded,
-  },
-  removed: {
-    color: tokens.changeRemoved,
-  },
-});
+export const diffCountStyles = {
+  counts:
+    "tw:inline-flex tw:gap-[6px] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[normal] tw:tabular-nums tw:whitespace-nowrap tw:text-[length:11px]",
+  added: "tw:text-[color:var(--change-added)]",
+  removed: "tw:text-[color:var(--change-removed)]",
+};
 
-const styles = stylex.create({
-  large: {
-    fontSize: fontSize.ui,
-    gap: "10px",
-  },
-});
+const styles = {
+  large: "tw:text-[length:13px] tw:gap-[10px]",
+};

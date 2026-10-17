@@ -1,8 +1,6 @@
 import { documentStyles } from "@canvas/documents/document-styles";
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
-import { type StyleArg, withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
+import { cn } from "@canvas/lib/utils";
+import type { ClassValue } from "clsx";
 import type { ComponentProps, ReactElement, ReactNode } from "react";
 
 type EmptyStateProps = Omit<
@@ -17,8 +15,7 @@ type EmptyStateProps = Omit<
   // Defaults to alert in a document, status elsewhere.
   role?: "alert" | "status";
   action?: ReactNode;
-  className?: string;
-  xstyle?: StyleArg;
+  className?: ClassValue;
 };
 
 export function EmptyState({
@@ -28,14 +25,13 @@ export function EmptyState({
   role = variant === "document" ? "alert" : "status",
   action,
   className,
-  xstyle,
   ...props
 }: EmptyStateProps): ReactElement {
   if (variant === "document") {
     return (
-      <div role={role} {...props} {...withClass(className, xstyle)}>
-        {title ? <h2 {...stylex.props(documentStyles.h2)}>{title}</h2> : null}
-        <p {...stylex.props(documentStyles.note)}>{message}</p>
+      <div role={role} {...props} className={cn(className)}>
+        {title ? <h2 className={documentStyles.h2}>{title}</h2> : null}
+        <p className={documentStyles.note}>{message}</p>
         {action}
       </div>
     );
@@ -45,17 +41,13 @@ export function EmptyState({
   const Title = boxed ? "h3" : "p";
 
   return (
-    <div
-      role={role}
-      {...props}
-      {...withClass(className, styles[variant], xstyle)}
-    >
+    <div role={role} {...props} className={cn(styles[variant], className)}>
       {title ? (
-        <Title {...stylex.props(styles.title, boxed && styles.boxedTitle)}>
+        <Title className={cn(styles.title, boxed && styles.boxedTitle)}>
           {title}
         </Title>
       ) : null}
-      <p {...stylex.props(styles.message, boxed && styles.boxedMessage)}>
+      <p className={cn(styles.message, boxed && styles.boxedMessage)}>
         {message}
       </p>
       {action}
@@ -63,47 +55,13 @@ export function EmptyState({
   );
 }
 
-const styles = stylex.create({
-  inline: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-    // Aligned to the pane's own content edge.
-    paddingBlock: "16px",
-    color: tokens.inkMuted,
-    fontSize: fontSize.ui,
-    lineHeight: 1.55,
-  },
-  boxed: {
-    boxSizing: "border-box",
-    display: "grid",
-    placeContent: "center",
-    justifyItems: "center",
-    padding: "32px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.surface,
-    backgroundColor: tokens.tray,
-    color: tokens.inkMuted,
-    textAlign: "center",
-  },
-  title: {
-    margin: 0,
-    color: tokens.ink,
-    fontWeight: fontWeight.medium,
-  },
-  message: {
-    margin: 0,
-  },
-  boxedTitle: {
-    marginBottom: "8px",
-    fontSize: fontSize.reading,
-    lineHeight: 1.3,
-  },
-  boxedMessage: {
-    maxWidth: "540px",
-    fontSize: fontSize.ui,
-    lineHeight: 1.55,
-  },
-});
+const styles = {
+  inline:
+    "tw:flex tw:flex-col tw:gap-[4px] tw:py-[16px] tw:text-[color:var(--ink-muted)] tw:text-[length:13px] tw:leading-[1.55]",
+  boxed:
+    "tw:box-border tw:grid tw:place-content-center tw:justify-items-center tw:p-[32px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink-muted)] tw:text-center",
+  title: "tw:m-0 tw:text-[color:var(--ink)] tw:font-medium",
+  message: "tw:m-0",
+  boxedTitle: "tw:mb-[8px] tw:text-[length:15px] tw:leading-[1.3]",
+  boxedMessage: "tw:max-w-[540px] tw:text-[length:13px] tw:leading-[1.55]",
+};

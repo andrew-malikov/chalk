@@ -1,5 +1,4 @@
-/* The canvas CSS that StyleX cannot express. Everything else is StyleX,
-   written next to the component that renders it. */
+/* Canvas palette, element resets, and styles for third-party DOM. */
 
 /* The scope root: the canvas container the workbench mounts into. Inside
    @scope only :scope reaches it, so its box and the dark palette live here.
@@ -198,8 +197,7 @@ button {
   font-size: 1.04em;
 }
 
-/* A pin row past a narrow document's edge moves inside it. StyleX has no
-   @position-try. */
+/* A pin row past a narrow document's edge moves inside it. */
 @position-try --ask-pin-inside {
   right: 4px;
   left: auto;
@@ -241,8 +239,7 @@ button {
   background: var(--transparent);
 }
 
-/* The drawing's wipe and eraser sweep (draw-styles.ts) animate these. StyleX
-   typed variables (stylex.types) always register as inheriting. */
+/* The drawing's wipe and eraser sweep animate these without inheritance. */
 
 @property --wb-wipe {
   syntax: "<percentage>";

@@ -1,103 +1,29 @@
-import * as stylex from "@stylexjs/stylex";
-
-import { fontSize, fontWeight, radius } from "./scale.stylex";
-import { tokens } from "./tokens.stylex";
-
 // Controls shared across the canvas.
-export const controlStyles = stylex.create({
+export const controlStyles = {
   // Segmented choice controls: a tray-colored track, the chosen side raised
   // on a hairline. One part for every "pick one of a few" setting. The
   // surface tabs on the left of the top bar are the exception: words on the
   // tray with the marker under the current one.
-  segmented: {
-    display: "flex",
-    flex: "0 0 auto",
-    alignItems: "center",
-    gap: 0,
-    padding: "2px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.control,
-    backgroundColor: tokens.tray,
-  },
-  segmentedTopbar: {
-    gap: "18px",
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: 0,
-    backgroundColor: tokens.transparent,
-  },
-  segment: {
-    display: "inline-flex",
-    alignItems: "center",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: tokens.transparent,
-    fontFamily: tokens.chromeFont,
-    whiteSpace: "nowrap",
-    position: "relative",
-    gap: "6px",
-    height: "20px",
-    padding: "0 10px",
-    borderRadius: radius.small,
-    color: { default: tokens.inkMuted, ":hover": tokens.ink },
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.medium,
-    opacity: { default: null, ":disabled": 0.5 },
-    cursor: { default: null, ":disabled": "default" },
-    outline: { default: null, ":focus-visible": `1px solid ${tokens.accent}` },
-    outlineOffset: { default: null, ":focus-visible": "-1px" },
-  },
+  segmented:
+    "tw:flex tw:flex-[0_0_auto] tw:items-center tw:gap-0 tw:p-[2px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--tray)]",
+  segmentedTopbar:
+    "tw:gap-[18px] tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-none tw:bg-[color:var(--transparent)]",
+  segment:
+    "tw:inline-flex tw:items-center tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:var(--transparent)] tw:font-[family-name:var(--chrome-font)] tw:whitespace-nowrap tw:relative tw:gap-[6px] tw:h-[20px] tw:p-[0_10px] tw:rounded-[4px] tw:text-[color:var(--ink-muted)] tw:[&:hover]:text-[color:var(--ink)] tw:text-[length:11px] tw:font-medium tw:[&:disabled]:opacity-[0.5] tw:[&:disabled]:cursor-default tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[-1px]",
   // Segments set in prose (the welcome and tutorial pages) grow a step.
-  segmentLarge: {
-    height: "26px",
-    padding: "0 12px",
-    fontSize: fontSize.ui,
-  },
-  segmentTopbar: {
-    height: tokens.reviewHeaderHeight,
-    padding: 0,
-    borderRadius: { default: 0, ":focus-visible": radius.small },
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.regular,
-  },
-  segmentActive: {
-    backgroundColor: tokens.raised,
-    boxShadow: `0 0 0 1px ${tokens.ruleSoft}`,
-    color: tokens.ink,
-    fontWeight: fontWeight.semibold,
-  },
-  segmentTopbarActive: {
-    backgroundColor: tokens.transparent,
-    boxShadow: "none",
-  },
-  segmentCount: {
-    flex: "0 0 auto",
-    fontVariantNumeric: "tabular-nums",
-    color: tokens.inkFaint,
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.regular,
-  },
-  segmentCountActive: {
-    color: tokens.accent,
-  },
-
+  segmentLarge: "tw:h-[26px] tw:p-[0_12px] tw:text-[length:13px]",
+  segmentTopbar:
+    "tw:h-[var(--review-header-height)] tw:p-0 tw:rounded-none tw:[&:focus-visible]:rounded-[4px] tw:text-[length:12px] tw:font-normal",
+  segmentActive:
+    "tw:bg-[color:var(--raised)] tw:[box-shadow:0_0_0_1px_var(--rule-soft)] tw:text-[color:var(--ink)] tw:font-semibold",
+  segmentTopbarActive: "tw:bg-[color:var(--transparent)] tw:[box-shadow:none]",
+  segmentCount:
+    "tw:flex-[0_0_auto] tw:tabular-nums tw:text-[color:var(--ink-faint)] tw:text-[length:12px] tw:font-normal",
+  segmentCountActive: "tw:text-[color:var(--accent)]",
   // The icon never takes the pointer from its button.
-  inertIcon: {
-    pointerEvents: "none",
-  },
+  inertIcon: "tw:pointer-events-none",
   // Icons in top bar chrome buttons.
-  chromeIcon: {
-    width: tokens.chromeIconSize,
-    height: tokens.chromeIconSize,
-  },
+  chromeIcon: "tw:size-[var(--chrome-icon-size)]",
   // Icons beside a label, in a button or chip.
-  inlineIcon: {
-    width: "12px",
-    height: "12px",
-  },
-});
+  inlineIcon: "tw:size-[12px]",
+};

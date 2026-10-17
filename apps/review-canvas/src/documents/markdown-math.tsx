@@ -1,4 +1,4 @@
-import * as stylex from "@stylexjs/stylex";
+import { cn } from "@canvas/lib/utils";
 import katex from "katex";
 
 import "katex/dist/katex.css";
@@ -22,9 +22,9 @@ export function MarkdownMath({
     });
   }, [tex, display]);
 
-  return <span ref={ref} {...stylex.props(display && styles.display)} />;
+  return <span ref={ref} className={cn(display && styles.display)} />;
 }
 
-const styles = stylex.create({
-  display: { display: "block", overflowX: "auto", overflowY: "hidden" },
-});
+const styles = {
+  display: "tw:block tw:overflow-x-auto tw:overflow-y-hidden",
+};

@@ -1,8 +1,8 @@
+import { cn } from "@canvas/lib/utils";
 import { themeStyles } from "@canvas/styles/theme-styles";
 import type { ReviewMenuRequest } from "@chalk/review-contracts";
 // oxlint-disable no-restricted-imports -- Exercise the desktop host adapter through its public UI API.
 import { createCanvasUi } from "@shell/canvas-ui";
-import * as stylex from "@stylexjs/stylex";
 import { act } from "react";
 import { afterEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
@@ -23,7 +23,7 @@ function setup() {
   canvas.className = "review-canvas-root";
   canvas.style.height = "600px";
   const container = document.createElement("div");
-  container.className = stylex.props(themeStyles.vars).className ?? "";
+  container.className = themeStyles.vars ?? "";
   const trigger = document.createElement("button");
   trigger.textContent = "Actions";
   container.append(trigger);

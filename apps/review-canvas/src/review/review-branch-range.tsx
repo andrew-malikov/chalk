@@ -1,9 +1,7 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { useTooltip } from "@canvas/lib/use-tooltip";
-import { fontSize, radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { cn } from "@canvas/lib/utils";
 import { copyText } from "@canvas/ui/copy-text";
-import * as stylex from "@stylexjs/stylex";
 import { type ReactElement, useEffect, useRef, useState } from "react";
 
 const fullHash = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/i;
@@ -45,7 +43,7 @@ export function ReviewBranchRange({
 
   return (
     <div
-      {...stylex.props(styles.range)}
+      className={styles.range}
       role="group"
       aria-label={`Session commits: base ${shortRef(baseRef)}, head ${
         headRef === WORKING_TREE ? "working tree" : shortRef(headRef)
@@ -57,7 +55,7 @@ export function ReviewBranchRange({
         copied={copied === "base"}
         onCopy={() => void copy("base", baseRef)}
       />
-      <span {...stylex.props(styles.arrow)} aria-hidden="true">
+      <span className={styles.arrow} aria-hidden="true">
         ←
       </span>
       {headRef === WORKING_TREE ? (
@@ -92,7 +90,7 @@ function BranchRef({
       variant="ghost"
       size="xs"
       type="button"
-      {...stylex.props(
+      className={cn(
         styles.chip,
         styles.copy,
         label === "base" && styles.copyBase,
@@ -103,10 +101,10 @@ function BranchRef({
       ref={tooltip}
       onClick={onCopy}
     >
-      <span {...stylex.props(styles.name, copied && styles.nameCopied)}>
+      <span className={cn(styles.name, copied && styles.nameCopied)}>
         {shortRef(name)}
       </span>
-      <span {...stylex.props(styles.feedback)} role="status">
+      <span className={styles.feedback} role="status">
         {copied ? "Copied" : ""}
       </span>
     </ButtonPrimitive>
@@ -120,7 +118,7 @@ function WorkingTreeRef(): ReactElement {
 
   return (
     <span
-      {...stylex.props(styles.chip, styles.worktree)}
+      className={cn(styles.chip, styles.worktree)}
       data-side="head"
       ref={tooltip}
     >
@@ -129,67 +127,18 @@ function WorkingTreeRef(): ReactElement {
   );
 }
 
-const styles = stylex.create({
-  range: {
-    display: "flex",
-    minWidth: 0,
-    alignItems: "center",
-    gap: "6px",
-    color: "inherit",
-    whiteSpace: "nowrap",
-  },
+const styles = {
+  range:
+    "tw:flex tw:min-w-0 tw:items-center tw:gap-[6px] tw:text-[color:inherit] tw:whitespace-nowrap",
   // Each pinned commit is a small mono chip that copies its full hash; a
   // working-tree head wears the same chip but has nothing to copy.
-  chip: {
-    position: "relative",
-    display: "inline-flex",
-    minWidth: 0,
-    alignItems: "center",
-    margin: 0,
-    padding: "0 6px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.small,
-    backgroundColor: tokens.tray,
-    color: tokens.ink,
-    font: `${fontSize.body}/18px ${tokens.fontSans}`,
-    cursor: "pointer",
-  },
-  copy: {
-    backgroundColor: {
-      default: tokens.tray,
-      ":hover": tokens.chromeHoverBg,
-      ":focus-visible": tokens.chromeHoverBg,
-    },
-    outline: { default: null, ":hover": "none", ":focus-visible": "none" },
-    borderColor: { default: tokens.rule, ":focus-visible": tokens.accent },
-  },
-  copyBase: {
-    color: {
-      default: tokens.inkMuted,
-      ":hover": tokens.ink,
-      ":focus-visible": tokens.ink,
-    },
-  },
-  worktree: {
-    cursor: "default",
-  },
-  name: {
-    maxWidth: "150px",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  nameCopied: {
-    visibility: "hidden",
-  },
-  feedback: {
-    position: "absolute",
-    inset: 0,
-    display: "grid",
-    placeItems: "center",
-  },
-  arrow: {
-    color: tokens.inkFaint,
-  },
-});
+  chip: "tw:relative tw:inline-flex tw:min-w-0 tw:items-center tw:m-0 tw:p-[0_6px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[4px] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[18px] tw:cursor-pointer",
+  copy: "tw:bg-[color:var(--tray)] tw:[&:hover]:bg-[color:var(--chrome-hover-bg)] tw:[&:focus-visible]:bg-[color:var(--chrome-hover-bg)] tw:[&:hover]:[outline:none] tw:[&:focus-visible]:[outline:none] tw:border-[color:var(--rule)] tw:[&:focus-visible]:border-[color:var(--accent)]",
+  copyBase:
+    "tw:text-[color:var(--ink-muted)] tw:[&:hover]:text-[color:var(--ink)] tw:[&:focus-visible]:text-[color:var(--ink)]",
+  worktree: "tw:cursor-default",
+  name: "tw:max-w-[150px] tw:overflow-hidden tw:text-ellipsis",
+  nameCopied: "tw:invisible",
+  feedback: "tw:absolute tw:inset-0 tw:grid tw:place-items-center",
+  arrow: "tw:text-[color:var(--ink-faint)]",
+};

@@ -1,8 +1,7 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import { cn } from "@canvas/lib/utils";
 import { controlStyles } from "@canvas/styles/controls-styles";
-import { withClass } from "@canvas/styles/stylex-props";
 import { CopyIcon, copyText } from "@canvas/ui/copy-text";
-import * as stylex from "@stylexjs/stylex";
 import { useEffect, useRef, useState } from "react";
 
 import { promptStyles } from "./prompt-styles";
@@ -75,9 +74,9 @@ export function PromptCard() {
   };
 
   return (
-    <section {...stylex.props(styles.card)} aria-label="Chalk prompt">
+    <section className={styles.card} aria-label="Chalk prompt">
       <div
-        {...stylex.props(controlStyles.segmented, promptStyles.tabs)}
+        className={cn(controlStyles.segmented, promptStyles.tabs)}
         role="group"
         aria-label="What to review"
       >
@@ -87,7 +86,7 @@ export function PromptCard() {
             size="xs"
             key={tab}
             type="button"
-            {...withClass(
+            className={cn(
               "tw:h-auto tw:whitespace-normal tw:font-normal",
               controlStyles.segment,
               controlStyles.segmentLarge,
@@ -100,13 +99,13 @@ export function PromptCard() {
           </ButtonPrimitive>
         ))}
       </div>
-      <pre {...stylex.props(promptStyles.body)}>{PROMPTS[kind]}</pre>
-      <div {...stylex.props(promptStyles.actions)}>
+      <pre className={promptStyles.body}>{PROMPTS[kind]}</pre>
+      <div className={promptStyles.actions}>
         <ButtonPrimitive
           variant="ghost"
           size="xs"
           type="button"
-          {...withClass(
+          className={cn(
             "tw:h-auto tw:whitespace-normal tw:font-normal",
             promptStyles.copy,
           )}
@@ -138,13 +137,8 @@ function readStoredPromptKind(): PromptKind {
   return "change";
 }
 
-const styles = stylex.create({
+const styles = {
   // It sits inside an accordion step, which already draws the surface, so it
   // adds no frame of its own.
-  card: {
-    display: "flex",
-    flexDirection: "column",
-    width: "min(720px, 100%)",
-    margin: 0,
-  },
-});
+  card: "tw:flex tw:flex-col tw:w-[min(720px,_100%)] tw:m-0",
+};

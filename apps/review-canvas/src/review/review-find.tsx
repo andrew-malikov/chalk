@@ -2,9 +2,7 @@ import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { Input } from "@canvas/components/ui/input";
 import { useOptionalReviewSession } from "@canvas/host/review-session";
 import { setCssHighlight } from "@canvas/lib/css-highlights";
-import { fontSize, layer } from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { cn } from "@canvas/lib/utils";
 import { IconButton } from "@canvas/ui/button";
 import { surfaceStyles } from "@canvas/ui/surface";
 import { fieldStyles } from "@canvas/ui/text-field";
@@ -12,8 +10,8 @@ import type {
   ReviewFindQuery,
   ReviewInlineEditorHandle,
 } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { useActorRef, useSelector } from "@xstate/react";
+import type { ClassValue } from "clsx";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import {
   type ReactNode,
@@ -407,12 +405,12 @@ function ReviewFindWidget({
 
   return createPortal(
     <div
-      {...withClass("review-find-widget", surfaceStyles.popover, styles.widget)}
+      className={cn("review-find-widget", surfaceStyles.popover, styles.widget)}
       role="search"
       aria-label="Find in session"
     >
       <div
-        {...stylex.props(
+        className={cn(
           fieldStyles.box,
           fieldStyles.shell,
           styles.inputShell,
@@ -421,7 +419,7 @@ function ReviewFindWidget({
       >
         <Input
           ref={inputRef}
-          {...stylex.props(styles.input)}
+          className={styles.input}
           aria-label="Find"
           aria-invalid={invalid ? "true" : undefined}
           title={invalid ?? undefined}
@@ -439,7 +437,7 @@ function ReviewFindWidget({
             }
           }}
         />
-        <div {...stylex.props(styles.options)} aria-label="Search options">
+        <div className={styles.options} aria-label="Search options">
           <FindToggle
             label="Match Case"
             description="Match Case: use the same uppercase and lowercase letters."
@@ -453,7 +451,7 @@ function ReviewFindWidget({
           <FindToggle
             label="Match Whole Word"
             description="Match Whole Word: find complete words only."
-            xstyle={styles.wholeWord}
+            className={styles.wholeWord}
             active={query.wholeWord}
             onClick={() =>
               actor.send({ type: "toggleOption", option: "wholeWord" })
@@ -464,7 +462,7 @@ function ReviewFindWidget({
           <FindToggle
             label="Use Regular Expression"
             description="Use Regular Expression: search with a regular expression."
-            xstyle={styles.regex}
+            className={styles.regex}
             active={query.isRegex}
             onClick={() =>
               actor.send({ type: "toggleOption", option: "isRegex" })
@@ -474,7 +472,7 @@ function ReviewFindWidget({
           </FindToggle>
         </div>
       </div>
-      <span {...stylex.props(styles.count)} aria-live="polite">
+      <span className={styles.count} aria-live="polite">
         {invalid
           ? "Invalid expression"
           : searching
@@ -511,14 +509,14 @@ function ReviewFindWidget({
 function FindToggle({
   label,
   description,
-  xstyle,
+  className,
   active,
   onClick,
   children,
 }: {
   label: string;
   description: string;
-  xstyle?: stylex.StyleXStyles;
+  className?: ClassValue;
   active: boolean;
   onClick(): void;
   children: ReactNode;
@@ -528,7 +526,7 @@ function FindToggle({
       variant="ghost"
       size="xs"
       type="button"
-      {...stylex.props(styles.toggle, active && styles.togglePressed, xstyle)}
+      className={cn(styles.toggle, active && styles.togglePressed, className)}
       aria-label={label}
       aria-pressed={active}
       title={description}
@@ -569,7 +567,7 @@ function FindActionButton({
 function FindActionIcon({ icon }: { icon: "previous" | "next" | "close" }) {
   const Icon = icon === "previous" ? ArrowUp : icon === "next" ? ArrowDown : X;
 
-  return <Icon {...stylex.props(styles.actionIcon)} aria-hidden="true" />;
+  return <Icon className={styles.actionIcon} aria-hidden="true" />;
 }
 
 function selectedMdxText(article: HTMLElement | null): string | undefined {
@@ -603,126 +601,24 @@ function compareDocumentOrder(left: Node, right: Node): number {
   return position & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
 }
 
-const compact = "@media (max-width: 620px)";
-
-const hoverBackground = "var(--vscode-toolbar-hoverBackground, var(--tray))";
-
-const button = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderRadius: "3px",
-  cursor: "pointer",
-  outline: {
-    default: null,
-    ":focus-visible": `1px solid ${tokens.accent}`,
-  },
-  outlineOffset: { default: null, ":focus-visible": "1px" },
-} as const;
-
-const styles = stylex.create({
-  widget: {
-    position: "absolute",
-    zIndex: layer.popover,
-    top: "48px",
-    right: { default: "16px", [compact]: "8px" },
-    left: { default: null, [compact]: "8px" },
-    display: "flex",
-    alignItems: "center",
-    minWidth: { default: "490px", [compact]: 0 },
-    maxWidth: { default: "calc(100vw - 32px)", [compact]: "none" },
-    height: "34px",
-    gap: "3px",
-    padding: "3px 4px 3px 6px",
-  },
-  inputShell: {
-    display: "flex",
-    alignItems: "center",
-    flex: 1,
-    minWidth: "160px",
-    gap: "1px",
-    padding: "0 2px 0 6px",
-  },
-  inputShellInvalid: {
-    borderColor: tokens.changeRemoved,
-  },
-  input: {
-    flex: 1,
-    minWidth: 0,
-    height: "100%",
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: "transparent",
-    color: tokens.ink,
-    fontFamily: tokens.chromeFont,
-    fontSize: fontSize.body,
-    outline: "none",
-  },
-  options: {
-    display: "flex",
-    alignItems: "center",
-    flex: "0 0 auto",
-    gap: "1px",
-  },
-  count: {
-    flexGrow: 0,
-    flexShrink: 0,
-    flexBasis: { default: "auto", [compact]: "56px" },
-    minWidth: "64px",
-    marginLeft: "4px",
-    padding: "0 3px",
-    color: tokens.inkMuted,
-    fontFamily: tokens.chromeFont,
-    fontSize: fontSize.body,
-    lineHeight: "16px",
-    textAlign: "center",
-    whiteSpace: "nowrap",
-  },
-  toggle: {
-    ...button,
-    flex: "0 0 22px",
-    width: "22px",
-    height: "20px",
-    padding: 0,
-    borderColor: "transparent",
-    backgroundColor: {
-      default: "transparent",
-      ":hover:not(:disabled)": hoverBackground,
-    },
-    color: { default: tokens.inkMuted, ":hover:not(:disabled)": tokens.ink },
-    fontFamily: tokens.chromeFont,
-    fontSize: fontSize.body,
-    lineHeight: "16px",
-  },
-  togglePressed: {
-    borderColor: tokens.accent,
-    backgroundColor: {
-      default: "var(--vscode-inputOption-activeBackground, var(--tray))",
-      ":hover:not(:disabled)": hoverBackground,
-    },
-    color: {
-      default: "var(--vscode-inputOption-activeForeground, var(--ink))",
-      ":hover:not(:disabled)": tokens.ink,
-    },
-  },
-  wholeWord: {
-    textDecorationLine: "underline",
-    textUnderlineOffset: "2px",
-  },
-  regex: {
-    fontFamily: tokens.fontMono,
-  },
-  actionIcon: {
-    width: "14px",
-    height: "14px",
-    fill: "none",
-    stroke: "currentcolor",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    strokeWidth: "2",
-  },
-});
+const styles = {
+  widget:
+    "tw:absolute tw:z-[120] tw:top-[48px] tw:right-[16px] tw:[@media_(max-width:_620px)]:right-[8px] tw:[@media_(max-width:_620px)]:left-[8px] tw:flex tw:items-center tw:min-w-[490px] tw:[@media_(max-width:_620px)]:min-w-0 tw:max-w-[calc(100vw_-_32px)] tw:[@media_(max-width:_620px)]:max-w-none tw:h-[34px] tw:gap-[3px] tw:p-[3px_4px_3px_6px]",
+  inputShell:
+    "tw:flex tw:items-center tw:flex-[1] tw:min-w-[160px] tw:gap-[1px] tw:p-[0_2px_0_6px]",
+  inputShellInvalid: "tw:border-[color:var(--change-removed)]",
+  input:
+    "tw:flex-[1] tw:min-w-0 tw:h-full tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:text-[color:var(--ink)] tw:font-[family-name:var(--chrome-font)] tw:text-[length:12px] tw:[outline:none]",
+  options: "tw:flex tw:items-center tw:flex-[0_0_auto] tw:gap-[1px]",
+  count:
+    "tw:grow-0 tw:shrink-0 tw:basis-[auto] tw:[@media_(max-width:_620px)]:basis-[56px] tw:min-w-[64px] tw:ml-[4px] tw:p-[0_3px] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--chrome-font)] tw:text-[length:12px] tw:leading-[16px] tw:text-center tw:whitespace-nowrap",
+  toggle:
+    "tw:flex tw:items-center tw:justify-center tw:border-[1px] tw:border-solid tw:rounded-[3px] tw:cursor-pointer tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[1px] tw:flex-[0_0_22px] tw:w-[22px] tw:h-[20px] tw:p-0 tw:border-[color:transparent] tw:bg-[color:transparent] tw:[&:hover:not(:disabled)]:bg-[color:var(--vscode-toolbar-hoverBackground,_var(--tray))] tw:text-[color:var(--ink-muted)] tw:[&:hover:not(:disabled)]:text-[color:var(--ink)] tw:font-[family-name:var(--chrome-font)] tw:text-[length:12px] tw:leading-[16px]",
+  togglePressed:
+    "tw:border-[color:var(--accent)] tw:bg-[color:var(--vscode-inputOption-activeBackground,_var(--tray))] tw:[&:hover:not(:disabled)]:bg-[color:var(--vscode-toolbar-hoverBackground,_var(--tray))] tw:text-[color:var(--vscode-inputOption-activeForeground,_var(--ink))] tw:[&:hover:not(:disabled)]:text-[color:var(--ink)]",
+  wholeWord:
+    "tw:[text-decoration-line:underline] tw:[text-underline-offset:2px]",
+  regex: "tw:font-[family-name:var(--font-mono)]",
+  actionIcon:
+    "tw:size-[14px] tw:fill-[none] tw:stroke-[currentcolor] tw:[stroke-linecap:round] tw:[stroke-linejoin:round] tw:stroke-[2]",
+};

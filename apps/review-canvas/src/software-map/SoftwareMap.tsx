@@ -1,10 +1,10 @@
 import { useDiagramNavigation } from "@canvas/diagrams/diagram-navigation-machine";
 import { diagramStyles } from "@canvas/diagrams/diagram-styles";
 import { hasTextSelectionWithin } from "@canvas/diagrams/diagram-text-selection";
-import { flowLayer } from "@canvas/diagrams/flow-layers.stylex";
 import { CodePeekGroup } from "@canvas/diff/CodePeek";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useCanvasScrollLock } from "@canvas/lib/use-canvas-scroll-lock";
+import { cn } from "@canvas/lib/utils";
 import { useReviewContainer } from "@canvas/review/review-root-context";
 import { useRightPanelResize } from "@canvas/review/side-panel-resizer";
 import {
@@ -15,20 +15,10 @@ import {
 import {
   appMarker,
   codeInspectorMarker,
-  documentMarker,
   mapFrameMarker,
-} from "@canvas/styles/markers.stylex";
-import {
-  fontSize,
-  fontWeight,
-  motion,
-  radius,
-  tracking,
-} from "@canvas/styles/scale.stylex";
+} from "@canvas/styles/markers";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import { withClass } from "@canvas/styles/stylex-props";
 import { themeStyles } from "@canvas/styles/theme-styles";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { IconButton } from "@canvas/ui/button";
 import { Chip } from "@canvas/ui/chip";
 import { EmptyState } from "@canvas/ui/empty-state";
@@ -36,7 +26,6 @@ import { CloseIcon, RefreshIcon } from "@canvas/ui/icons";
 import { surfaceStyles } from "@canvas/ui/surface";
 import { textStyles } from "@canvas/ui/text";
 import { codePeekSource } from "@review/documents/source";
-import * as stylex from "@stylexjs/stylex";
 import { useSelector } from "@xstate/react";
 import {
   Background,
@@ -922,20 +911,22 @@ export function SoftwareMapFrame({
       style={style}
     >
       {showChrome && (
-        <header {...stylex.props(styles.header)}>
-          <div {...stylex.props(diagramStyles.headerMain, styles.titleBlock)}>
-            <Chip xstyle={styles.kindBadge}>{VIEW_TYPE_LABELS[viewType]}</Chip>
+        <header className={styles.header}>
+          <div className={cn(diagramStyles.headerMain, styles.titleBlock)}>
+            <Chip className={styles.kindBadge}>
+              {VIEW_TYPE_LABELS[viewType]}
+            </Chip>
             <figcaption
-              {...stylex.props(diagramStyles.title, styles.title)}
+              className={cn(diagramStyles.title, styles.title)}
               data-review-copy-prose
             >
               {title}
             </figcaption>
           </div>
-          <div {...stylex.props(styles.actions)}>
+          <div className={styles.actions}>
             {onRefresh ? (
               <IconButton
-                xstyle={refreshing && styles.refreshing}
+                className={refreshing && styles.refreshing}
                 onClick={onRefresh}
                 aria-label="Refresh software map"
                 title="Refresh software map"
@@ -952,20 +943,20 @@ export function SoftwareMapFrame({
               </IconButton>
             ) : (
               <IconButton
-                xstyle={styles.expandButton}
+                className={styles.expandButton}
                 onClick={onExpand}
                 aria-label="Expand software map"
               >
-                <span {...stylex.props(styles.expandIcon)} aria-hidden="true" />
+                <span className={styles.expandIcon} aria-hidden="true" />
               </IconButton>
             )}
           </div>
         </header>
       )}
       {showMapFloatingActions && onRefresh ? (
-        <div {...stylex.props(surfaceStyles.popover, styles.floatingActions)}>
+        <div className={cn(surfaceStyles.popover, styles.floatingActions)}>
           <IconButton
-            xstyle={refreshing && styles.refreshing}
+            className={refreshing && styles.refreshing}
             onClick={onRefresh}
             aria-label="Refresh software map"
             title="Refresh software map"
@@ -976,7 +967,7 @@ export function SoftwareMapFrame({
       ) : null}
 
       <div
-        {...stylex.props(
+        className={cn(
           styles.body,
           inspectedNode && styles.bodyWithInspector,
           codeInspectorResize.isResizing && styles.bodyResizing,
@@ -984,10 +975,10 @@ export function SoftwareMapFrame({
         style={bodyStyle}
       >
         {/* The class is the block tests' hook for a drawn map. */}
-        <div {...withClass("software-map-canvas", styles.canvas)}>
+        <div className={cn("software-map-canvas", styles.canvas)}>
           {(status || error || !hasResolvedSnapshot) && (
             <div
-              {...stylex.props(
+              className={cn(
                 styles.status,
                 Boolean(error) && styles.statusError,
               )}
@@ -1018,12 +1009,12 @@ export function SoftwareMapFrame({
           <>
             <button
               type="button"
-              {...stylex.props(styles.inspectorBackdrop)}
+              className={styles.inspectorBackdrop}
               aria-label="Close code inspector"
               onClick={onCloseCodeInspector}
             />
             <div
-              {...stylex.props(shellStyles.resizer, styles.inspectorResizer)}
+              className={cn(shellStyles.resizer, styles.inspectorResizer)}
               {...codeInspectorResize.separatorProps}
             />
             <SoftwareMapCodeInspector
@@ -1061,19 +1052,19 @@ function SoftwareMapCodeInspector({
   return (
     // The marker is the hook code peeks restyle themselves by in the inspector.
     <aside
-      {...stylex.props(styles.inspector, codeInspectorMarker)}
+      className={cn(styles.inspector, codeInspectorMarker)}
       aria-label={`${node.label} diff`}
     >
-      <header {...stylex.props(styles.inspectorHeader)}>
-        <div {...stylex.props(styles.inspectorTitle)}>
-          <span {...stylex.props(textStyles.eyebrow, styles.inspectorKind)}>
+      <header className={styles.inspectorHeader}>
+        <div className={styles.inspectorTitle}>
+          <span className={cn(textStyles.eyebrow, styles.inspectorKind)}>
             {softwareMapNodeTypeLabel(node)}
           </span>
-          <strong {...stylex.props(styles.inspectorLabel)} title={node.label}>
+          <strong className={styles.inspectorLabel} title={node.label}>
             {node.label}
           </strong>
         </div>
-        <div {...stylex.props(styles.inspectorActions)}>
+        <div className={styles.inspectorActions}>
           {diffPeeks.length > 0 ? (
             <IconButton
               onClick={() => setDiffsCollapsed((current) => !current)}
@@ -1082,7 +1073,7 @@ function SoftwareMapCodeInspector({
               title={collapseActionLabel}
             >
               <span
-                {...withClass(
+                className={cn(
                   `codicon ${diffsCollapsed ? "codicon-unfold" : "codicon-fold"}`,
                   styles.codicon,
                 )}
@@ -1099,12 +1090,12 @@ function SoftwareMapCodeInspector({
           </IconButton>
         </div>
       </header>
-      <div {...stylex.props(styles.inspectorDiffs)}>
+      <div className={styles.inspectorDiffs}>
         {diffPeeks.length > 0 ? (
           <CodePeekGroup peeks={diffPeekSources} collapsed={diffsCollapsed} />
         ) : (
           <EmptyState
-            xstyle={styles.inspectorEmpty}
+            className={styles.inspectorEmpty}
             message="No changed code is mapped to this node."
           />
         )}
@@ -1118,14 +1109,16 @@ export function softwareMapOverlayProps(settings: {
   theme: ReviewTheme;
   nodeTint: ReviewNodeTint;
 }) {
-  return withClass(
-    softwareMapOverlayClassName(settings),
-    appMarker,
-    themeStyles.vars,
-    themeStyles.app,
-    settings.theme === "light" && themeStyles.light,
-    styles.overlay,
-  );
+  return {
+    className: cn(
+      softwareMapOverlayClassName(settings),
+      appMarker,
+      themeStyles.vars,
+      themeStyles.app,
+      settings.theme === "light" && themeStyles.light,
+      styles.overlay,
+    ),
+  };
 }
 
 /** A map frame's style props. */
@@ -1134,14 +1127,16 @@ export function softwareMapFrameProps({
   showChrome,
   variant,
 }: Pick<SoftwareMapFrameProps, "expanded" | "showChrome" | "variant">) {
-  return stylex.props(
-    mapFrameMarker,
-    styles.frame,
-    expanded && styles.frameExpanded,
-    !showChrome && styles.frameChromeHidden,
-    variant === "view" && styles.frameView,
-    variant === "lens" && styles.frameLens,
-  );
+  return {
+    className: cn(
+      mapFrameMarker,
+      styles.frame,
+      expanded && styles.frameExpanded,
+      !showChrome && styles.frameChromeHidden,
+      variant === "view" && styles.frameView,
+      variant === "lens" && styles.frameLens,
+    ),
+  };
 }
 
 function C4MapCanvas({
@@ -1610,16 +1605,15 @@ function C4MapCanvas({
   );
 
   // The class is the block tests' hook for a map still laying out.
-  const codeStatusProps = withClass(
-    "software-map-code-status",
-    styles.codeStatus,
-  );
+  const codeStatusProps = {
+    className: cn("software-map-code-status", styles.codeStatus),
+  };
 
   return (
     // The class scopes the React Flow internals in global.css.
     <div
       ref={keyboardTargetRef}
-      {...withClass(
+      className={cn(
         "software-map-c4-canvas",
         styles.c4Canvas,
         lens && styles.c4CanvasLens,
@@ -1644,7 +1638,7 @@ function C4MapCanvas({
             <>
               <C4HoveredNodeContext.Provider value={hoveredNodeId}>
                 <ReactFlow
-                  {...stylex.props(styles.flow)}
+                  className={styles.flow}
                   colorMode={theme}
                   proOptions={{ hideAttribution: true }}
                   nodes={flow.nodes}
@@ -1678,7 +1672,7 @@ function C4MapCanvas({
                   }
                 >
                   <Background
-                    {...stylex.props(styles.background)}
+                    className={styles.background}
                     gap={24}
                     color="var(--canvas-grid)"
                   />
@@ -1816,7 +1810,7 @@ function C4NodeMeasurementLayer({
   }, [measurementKey, onMeasure]);
 
   return (
-    <div {...stylex.props(styles.measureLayer)} aria-hidden="true">
+    <div className={styles.measureLayer} aria-hidden="true">
       {nodes.map((node) => (
         <div
           key={node.id}
@@ -1827,7 +1821,7 @@ function C4NodeMeasurementLayer({
               refs.current.delete(node.id);
             }
           }}
-          {...stylex.props(
+          className={cn(
             styles.measureNode,
             node.type === "dataStore" && styles.measureNodeStore,
             node.type === "codeElement" && styles.measureNodeCode,
@@ -1888,7 +1882,7 @@ function SoftwareMapC4Edge(
       {data?.operationState && data.operationState !== "inactive" ? (
         <path
           d={path}
-          {...stylex.props(
+          className={cn(
             styles.edgeHighlight,
             data.operationState === "active" && styles.edgeHighlightActive,
           )}
@@ -1903,7 +1897,7 @@ function SoftwareMapC4Edge(
       />
       <path
         d={path}
-        {...stylex.props(styles.edgeHitArea)}
+        className={styles.edgeHitArea}
         onClick={openRelationship}
       />
       <EdgeLabelRenderer>
@@ -1911,7 +1905,7 @@ function SoftwareMapC4Edge(
           <span
             key={bubble.endpoint}
             aria-hidden="true"
-            {...stylex.props(
+            className={cn(
               styles.edgeEndpoint,
               bubble.hovered && styles.edgeEndpointHovered,
             )}
@@ -1922,7 +1916,7 @@ function SoftwareMapC4Edge(
           />
         ))}
         <div
-          {...withClass("nodrag nopan", styles.edgeLabelAnchor)}
+          className={cn("nodrag nopan", styles.edgeLabelAnchor)}
           style={{
             transform: `translate(-50%, -50%) translate(${labelPoint.x}px, ${labelPoint.y}px)`,
           }}
@@ -1932,7 +1926,7 @@ function SoftwareMapC4Edge(
               <span
                 role="button"
                 tabIndex={0}
-                {...stylex.props(
+                className={cn(
                   styles.edgeLabel,
                   styles.edgeLabelButton,
                   data.selectedNodeAttached && styles.edgeLabelSelectedNode,
@@ -1948,7 +1942,7 @@ function SoftwareMapC4Edge(
               </span>
             ) : (
               <span
-                {...stylex.props(
+                className={cn(
                   styles.edgeLabel,
                   data?.selectedNodeAttached && styles.edgeLabelSelectedNode,
                 )}
@@ -1980,7 +1974,7 @@ function SoftwareMapC4GroupNode({
   return (
     <div
       data-selected={data.selected ? "true" : undefined}
-      {...stylex.props(
+      className={cn(
         styles.groupShell,
         data.node.changeStatus === "added" && styles.groupAdded,
         data.node.changeStatus === "removed" && styles.groupRemoved,
@@ -2008,37 +2002,37 @@ function SoftwareMapC4GroupNode({
         id="target-left"
         type="target"
         position={Position.Left}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="source-left"
         type="source"
         position={Position.Left}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="target-top"
         type="target"
         position={Position.Top}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="source-top"
         type="source"
         position={Position.Top}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <div
-        {...stylex.props(
+        className={cn(
           styles.groupTitle,
           data.node.type === "softwareSystem" && styles.groupTitleSystem,
         )}
       >
-        <span {...stylex.props(textStyles.eyebrow, styles.groupKind)}>
+        <span className={cn(textStyles.eyebrow, styles.groupKind)}>
           {softwareMapNodeTypeLabel(data.node)}
         </span>
         <strong
-          {...stylex.props(
+          className={cn(
             styles.groupLabel,
             data.node.type === "softwareSystem" && styles.groupLabelSystem,
             data.node.changeStatus === "removed" && styles.struck,
@@ -2057,25 +2051,25 @@ function SoftwareMapC4GroupNode({
         id="source-right"
         type="source"
         position={Position.Right}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="target-right"
         type="target"
         position={Position.Right}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="source-bottom"
         type="source"
         position={Position.Bottom}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="target-bottom"
         type="target"
         position={Position.Bottom}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
     </div>
   );
@@ -2084,7 +2078,7 @@ function SoftwareMapC4GroupNode({
 function SoftwareMapC4Node({ data }: ReactFlowNodeProps<C4MapFlowNode>) {
   return (
     <div
-      {...withClass("nodrag nopan", styles.nodeShell)}
+      className={cn("nodrag nopan", styles.nodeShell)}
       onDoubleClickCapture={(event) => {
         if (hasTextSelectionWithin(event.currentTarget)) {
           event.stopPropagation();
@@ -2106,25 +2100,25 @@ function SoftwareMapC4Node({ data }: ReactFlowNodeProps<C4MapFlowNode>) {
         id="target-left"
         type="target"
         position={Position.Left}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="source-left"
         type="source"
         position={Position.Left}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="target-top"
         type="target"
         position={Position.Top}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="source-top"
         type="source"
         position={Position.Top}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <SoftwareMapNodeCard
         node={data.node}
@@ -2136,25 +2130,25 @@ function SoftwareMapC4Node({ data }: ReactFlowNodeProps<C4MapFlowNode>) {
         id="source-right"
         type="source"
         position={Position.Right}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="target-right"
         type="target"
         position={Position.Right}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="source-bottom"
         type="source"
         position={Position.Bottom}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
       <Handle
         id="target-bottom"
         type="target"
         position={Position.Bottom}
-        {...stylex.props(styles.handle)}
+        className={styles.handle}
       />
     </div>
   );
@@ -2172,16 +2166,16 @@ function SoftwareMapDataStoreOutline({
 }) {
   if (outline === "folder") {
     return (
-      <span aria-hidden="true" {...stylex.props(styles.storageFolder)}>
+      <span aria-hidden="true" className={styles.storageFolder}>
         <span
-          {...stylex.props(
+          className={cn(
             styles.storageFolderBody,
             removed && styles.storageDashed,
             selected && styles.storageGlow,
           )}
         />
         <svg
-          {...stylex.props(
+          className={cn(
             styles.storageFolderTab,
             selected && styles.storageGlow,
           )}
@@ -2190,12 +2184,12 @@ function SoftwareMapDataStoreOutline({
           viewBox="0 0 190 48"
         >
           <path
-            {...stylex.props(styles.storageFill)}
+            className={styles.storageFill}
             d="M2 46 V14 Q2 2 14 2 H148 L188 46 Z"
             vectorEffect="non-scaling-stroke"
           />
           <path
-            {...stylex.props(
+            className={cn(
               styles.storageBorder,
               removed && styles.storageDashed,
             )}
@@ -2212,25 +2206,25 @@ function SoftwareMapDataStoreOutline({
   return (
     <svg
       aria-hidden="true"
-      {...stylex.props(styles.storageOutline)}
+      className={styles.storageOutline}
       focusable="false"
       preserveAspectRatio="none"
       viewBox="0 0 280 140"
     >
       <path
-        {...stylex.props(styles.storageFill)}
+        className={styles.storageFill}
         d={geometry.fillPath}
         vectorEffect="non-scaling-stroke"
       />
       {geometry.fillDetailPath ? (
         <path
-          {...stylex.props(styles.storageFillDetail)}
+          className={styles.storageFillDetail}
           d={geometry.fillDetailPath}
           vectorEffect="non-scaling-stroke"
         />
       ) : null}
       <path
-        {...stylex.props(
+        className={cn(
           styles.storageSelection,
           selected && styles.storageSelectionSelected,
         )}
@@ -2238,13 +2232,13 @@ function SoftwareMapDataStoreOutline({
         vectorEffect="non-scaling-stroke"
       />
       <path
-        {...stylex.props(styles.storageBorder, removed && styles.storageDashed)}
+        className={cn(styles.storageBorder, removed && styles.storageDashed)}
         d={geometry.outlinePath}
         vectorEffect="non-scaling-stroke"
       />
       {geometry.detailPaths.map((path) => (
         <path
-          {...stylex.props(styles.storageDetail)}
+          className={styles.storageDetail}
           d={path}
           key={path}
           vectorEffect="non-scaling-stroke"
@@ -2321,27 +2315,27 @@ function SoftwareMapNodeFrame({
 
   const props = {
     "data-selected": selected ? "true" : undefined,
-    ...withClass(
-      "nodrag nopan",
-      styles.node,
-      isCollection && styles.nodeTight,
-      isCodeElement && styles.nodeCode,
-      isDataStore && styles.nodeStore,
-      isDataStore && measured && !status && styles.nodeStoreHoverable,
-      measured && styles.nodeMeasured,
-      measured && isDataStore && styles.nodeMeasuredStore,
-      measured && isCodeElement && styles.nodeMeasuredCode,
-      status && nodeStatusStyles[status],
-      selected && styles.nodeSelected,
-      // On the canvas a changed or selected store drops its card for the
-      // storage shape's colors.
-      isDataStore &&
-        !measured &&
-        (status || selected) &&
-        styles.nodeStoreMarked,
-      isDataStore && selected && storeSelectedStyles[status ?? "unchanged"],
-      isCodeElement && codeRing && codeRingStyles[codeRing],
-    ),
+    ...{
+      className: cn(
+        "nodrag nopan",
+        styles.node,
+        isCollection && styles.nodeTight,
+        isCodeElement && styles.nodeCode,
+        isDataStore && styles.nodeStore,
+        isDataStore && measured && !status && styles.nodeStoreHoverable,
+        measured && styles.nodeMeasured,
+        measured && isDataStore && styles.nodeMeasuredStore,
+        measured && isCodeElement && styles.nodeMeasuredCode,
+        status && nodeStatusStyles[status],
+        selected && styles.nodeSelected,
+        isDataStore &&
+          !measured &&
+          (status || selected) &&
+          styles.nodeStoreMarked,
+        isDataStore && selected && storeSelectedStyles[status ?? "unchanged"],
+        isCodeElement && codeRing && codeRingStyles[codeRing],
+      ),
+    },
     onClick: (event: ReactMouseEvent<HTMLElement>) => {
       if (hasTextSelectionWithin(event.currentTarget)) {
         event.stopPropagation();
@@ -2387,9 +2381,9 @@ function SoftwareMapNodeFrame({
         />
       ) : null}
       {isCodeElement ? (
-        <div {...stylex.props(styles.codeHead)}>
+        <div className={styles.codeHead}>
           <code
-            {...stylex.props(
+            className={cn(
               styles.codeLabel,
               status === "removed" && styles.struck,
             )}
@@ -2405,13 +2399,9 @@ function SoftwareMapNodeFrame({
       ) : (
         <>
           <div
-            {...stylex.props(
-              styles.kicker,
-              layer,
-              isCollection && styles.hidden,
-            )}
+            className={cn(styles.kicker, layer, isCollection && styles.hidden)}
           >
-            <div {...stylex.props(textStyles.eyebrow, styles.nodeType)}>
+            <div className={cn(textStyles.eyebrow, styles.nodeType)}>
               {softwareMapNodeTypeLabel(node)}
             </div>
             <SoftwareMapChangeBadge
@@ -2421,7 +2411,7 @@ function SoftwareMapNodeFrame({
             />
           </div>
           <h4
-            {...stylex.props(
+            className={cn(
               styles.label,
               hasExpandedDataStoreSchema && styles.labelWithSchema,
               status === "removed" && styles.struck,
@@ -2435,7 +2425,7 @@ function SoftwareMapNodeFrame({
       )}
       {!isCodeElement && node.description && (
         <p
-          {...stylex.props(
+          className={cn(
             styles.description,
             layer,
             (isCollection || hasExpandedDataStoreSchema) && styles.hidden,
@@ -2446,26 +2436,22 @@ function SoftwareMapNodeFrame({
       )}
       {!isCodeElement && (
         <div
-          {...stylex.props(
+          className={cn(
             styles.meta,
             layer,
             (isCollection || hasExpandedDataStoreSchema) && styles.hidden,
           )}
         >
           {node.file && (
-            <span {...stylex.props(styles.metaItem)}>
+            <span className={styles.metaItem}>
               {node.file}
               {node.line === undefined ? "" : `:L${node.line}`}
             </span>
           )}
           {node.childCount !== undefined && node.childCount > 0 && (
-            <span {...stylex.props(styles.metaItem)}>
-              {node.childCount} children
-            </span>
+            <span className={styles.metaItem}>{node.childCount} children</span>
           )}
-          {node.boundary && (
-            <span {...stylex.props(styles.metaItem)}>boundary</span>
-          )}
+          {node.boundary && <span className={styles.metaItem}>boundary</span>}
         </div>
       )}
       {children}
@@ -2490,29 +2476,25 @@ function SoftwareMapDataStoreSchema({
   selected: boolean;
 }) {
   return (
-    <div {...stylex.props(styles.schema, collection && styles.schemaFlush)}>
+    <div className={cn(styles.schema, collection && styles.schemaFlush)}>
       {sections.map((section) => (
         <section
           key={section.id}
-          {...stylex.props(
+          className={cn(
             styles.schemaSection,
             collection && selected && styles.schemaSectionSelected,
           )}
         >
-          <header {...stylex.props(styles.schemaHeader)}>
-            <span {...stylex.props(styles.schemaKind)}>{section.kind}</span>
-            <strong {...stylex.props(styles.schemaLabel)}>
-              {section.label}
-            </strong>
+          <header className={styles.schemaHeader}>
+            <span className={styles.schemaKind}>{section.kind}</span>
+            <strong className={styles.schemaLabel}>{section.label}</strong>
           </header>
-          {section.key && (
-            <div {...stylex.props(styles.schemaKey)}>{section.key}</div>
-          )}
+          {section.key && <div className={styles.schemaKey}>{section.key}</div>}
           <div>
             {section.rows.map((row) => (
               <div
                 key={row.id}
-                {...stylex.props(
+                className={cn(
                   styles.schemaRow,
                   row.primaryKey && styles.schemaRowPrimary,
                   row.state === "active" && styles.schemaRowActive,
@@ -2526,13 +2508,13 @@ function SoftwareMapDataStoreSchema({
                   } as CSSProperties
                 }
               >
-                <span {...stylex.props(styles.schemaRowName)}>
+                <span className={styles.schemaRowName}>
                   {row.primaryKey && (
-                    <Chip xstyle={styles.schemaKeyFlag}>PK</Chip>
+                    <Chip className={styles.schemaKeyFlag}>PK</Chip>
                   )}
                   {row.foreignKey && (
                     <Chip
-                      xstyle={[
+                      className={[
                         styles.schemaKeyFlag,
                         styles.schemaKeyFlagForeign,
                       ]}
@@ -2542,7 +2524,7 @@ function SoftwareMapDataStoreSchema({
                   )}
                   {row.label}
                 </span>
-                <span {...stylex.props(styles.schemaRowType)}>
+                <span className={styles.schemaRowType}>
                   {row.type ?? row.example ?? "object"}
                 </span>
               </div>
@@ -2600,7 +2582,7 @@ function SoftwareMapChangeBadge({
   if (!hasCounts) {
     return (
       <span
-        {...stylex.props(
+        className={cn(
           styles.badge,
           inGroupTitle && styles.badgeInGroup,
           styles.badgeEmpty,
@@ -2611,10 +2593,10 @@ function SoftwareMapChangeBadge({
   }
 
   return (
-    <span {...stylex.props(styles.badge, inGroupTitle && styles.badgeInGroup)}>
+    <span className={cn(styles.badge, inGroupTitle && styles.badgeInGroup)}>
       {visibleAdditions ? (
         <span
-          {...stylex.props(
+          className={cn(
             styles.count,
             styles.countAdded,
             inGroupTitle && styles.countInGroup,
@@ -2625,7 +2607,7 @@ function SoftwareMapChangeBadge({
       ) : null}
       {visibleDeletions ? (
         <span
-          {...stylex.props(
+          className={cn(
             styles.count,
             styles.countRemoved,
             inGroupTitle && styles.countInGroup,
@@ -2696,1051 +2678,242 @@ function createPlaceholderSnapshot(
   };
 }
 
-const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
-
-const peekOpen = () => stylex.when.ancestor("[data-peek-open]", appMarker);
-
-const stacked = "@media (max-width: 900px)";
-
-const narrow = "@media (max-width: 720px)";
-
-const settle = "cubic-bezier(0.2, 0.8, 0.2, 1)";
-
-const groupBloom = stylex.keyframes({
-  from: { opacity: 0.72, transform: "scale(0.88)" },
-  to: { opacity: 1, transform: "scale(1)" },
-});
-
-const cardBloom = stylex.keyframes({
-  from: { opacity: 0, transform: "scale(0.86)" },
-  to: { opacity: 1, transform: "scale(1)" },
-});
-
-const noBorder = {
-  borderWidth: 0,
-  borderStyle: "none",
-  borderColor: "currentcolor",
-} as const;
-
-const styles = stylex.create({
+const styles = {
   // The expanded map: a fixed layer over the canvas. The layer variable lives
   // on .review-app, outside this portal, so the fallback keeps it above the
   // sticky topbar.
-  overlay: {
-    position: "fixed",
-    inset: 0,
-    zIndex: "var(--review-debug-layer, 2147483000)",
-    display: "grid",
-    boxSizing: "border-box",
-    minWidth: 0,
-    minHeight: 0,
-    overflow: "hidden",
-    padding: 0,
-    backgroundColor: tokens.bg,
-  },
-  frame: {
-    position: "relative",
-    display: "grid",
-    gridTemplateRows: "auto minmax(0, 1fr)",
-    height: "var(--software-map-height, 520px)",
-    minHeight: "340px",
-    margin: 0,
-    overflow: "hidden",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.control,
-    backgroundColor: tokens.surface,
-    boxShadow: "none",
-    fontFamily: tokens.fontSans,
-  },
-  frameExpanded: {
-    ...noBorder,
-    boxSizing: "border-box",
-    width: "100%",
-    height: "100%",
-    minWidth: 0,
-    minHeight: 0,
-  },
-  frameChromeHidden: {
-    ...noBorder,
-    gridTemplateRows: "minmax(0, 1fr)",
-    borderRadius: 0,
-  },
-  frameView: {
-    height: "100%",
-    backgroundColor: tokens.bg,
-  },
-  frameLens: {
-    height: "100%",
-    minHeight: 0,
-    backgroundColor: tokens.transparent,
-  },
-  header: {
-    ...noBorder,
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "16px",
-    minWidth: 0,
-    alignItems: "center",
-    minHeight: "36px",
-    padding: "0 12px",
-    backgroundColor: tokens.transparent,
-    boxShadow: "none",
-    fontFamily: tokens.fontSans,
-  },
-  titleBlock: {
-    position: "relative",
-  },
-  kindBadge: {
-    minWidth: 0,
-  },
-  title: {
-    margin: 0,
-    fontSize: fontSize.ui,
-    fontWeight: fontWeight.semibold,
-  },
-  actions: {
-    display: "flex",
-    flex: "0 0 auto",
-    alignItems: "center",
-    minWidth: 0,
-    gap: "4px",
-  },
-  floatingActions: {
-    position: "absolute",
-    top: "10px",
-    right: "10px",
-    zIndex: flowLayer.actions,
-    display: { default: "flex", [peekOpen()]: "none" },
-    gap: "8px",
-    padding: "2px",
-    // A toolbar: its corners follow the buttons inside.
-    borderRadius: radius.control,
-  },
-  refreshing: {
-    color: tokens.accent,
-  },
+  overlay:
+    "tw:fixed tw:inset-0 tw:z-[var(--review-debug-layer,_2147483000)] tw:grid tw:box-border tw:min-w-0 tw:min-h-0 tw:overflow-hidden tw:p-0 tw:bg-[color:var(--bg)]",
+  frame:
+    "tw:relative tw:grid tw:grid-rows-[auto_minmax(0,_1fr)] tw:h-[var(--software-map-height,_520px)] tw:min-h-[340px] tw:m-0 tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--surface)] tw:[box-shadow:none] tw:font-[family-name:var(--font-sans)]",
+  frameExpanded:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:box-border tw:w-full tw:h-full tw:min-w-0 tw:min-h-0",
+  frameChromeHidden:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:grid-rows-[minmax(0,_1fr)] tw:rounded-none",
+  frameView: "tw:h-full tw:bg-[color:var(--bg)]",
+  frameLens: "tw:h-full tw:min-h-0 tw:bg-[color:var(--transparent)]",
+  header:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:flex tw:justify-between tw:gap-[16px] tw:min-w-0 tw:items-center tw:min-h-[36px] tw:p-[0_12px] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:font-[family-name:var(--font-sans)]",
+  titleBlock: "tw:relative",
+  kindBadge: "tw:min-w-0",
+  title: "tw:m-0 tw:text-[length:13px] tw:font-semibold",
+  actions: "tw:flex tw:flex-[0_0_auto] tw:items-center tw:min-w-0 tw:gap-[4px]",
+  floatingActions:
+    "tw:absolute tw:top-[10px] tw:right-[10px] tw:z-[20] tw:flex tw:[&:is(.canvas-app[data-peek-open]_*)]:hidden tw:gap-[8px] tw:p-[2px] tw:rounded-[6px]",
+  refreshing: "tw:text-[color:var(--accent)]",
   // Shows while the pointer is over the map.
-  expandButton: {
-    opacity: {
-      default: 0,
-      ":focus-visible": 1,
-      [stylex.when.ancestor(":hover", mapFrameMarker)]: 1,
-    },
-    transition: `opacity ${motion.fast} ${motion.ease}, color ${motion.fast} ${motion.ease}`,
-  },
+  expandButton:
+    "tw:opacity-0 tw:[&:focus-visible]:opacity-[1] tw:[&:is(.canvas-map-frame:hover_*)]:opacity-[1] tw:[transition:opacity_120ms_ease,_color_120ms_ease]",
   // Two corner brackets.
-  expandIcon: {
-    position: "relative",
-    display: "block",
-    width: "14px",
-    height: "14px",
-    "::before": {
-      position: "absolute",
-      top: 0,
-      right: 0,
-      width: "7px",
-      height: "7px",
-      borderTopWidth: "2px",
-      borderTopStyle: "solid",
-      borderTopColor: "currentColor",
-      borderRightWidth: "2px",
-      borderRightStyle: "solid",
-      borderRightColor: "currentColor",
-      content: "''",
-    },
-    "::after": {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      width: "7px",
-      height: "7px",
-      borderBottomWidth: "2px",
-      borderBottomStyle: "solid",
-      borderBottomColor: "currentColor",
-      borderLeftWidth: "2px",
-      borderLeftStyle: "solid",
-      borderLeftColor: "currentColor",
-      content: "''",
-    },
-  },
-  body: {
-    display: "grid",
-    minWidth: 0,
-    minHeight: 0,
-    overflow: "hidden",
-  },
+  expandIcon:
+    "tw:relative tw:block tw:size-[14px] tw:[&::before]:absolute tw:[&::before]:top-0 tw:[&::before]:right-0 tw:[&::before]:w-[7px] tw:[&::before]:h-[7px] tw:[&::before]:[border-top-width:2px] tw:[&::before]:[border-top-style:solid] tw:[&::before]:[border-top-color:currentColor] tw:[&::before]:[border-right-width:2px] tw:[&::before]:[border-right-style:solid] tw:[&::before]:[border-right-color:currentColor] tw:[&::before]:[content:''] tw:[&::after]:absolute tw:[&::after]:bottom-0 tw:[&::after]:left-0 tw:[&::after]:w-[7px] tw:[&::after]:h-[7px] tw:[&::after]:[border-bottom-width:2px] tw:[&::after]:[border-bottom-style:solid] tw:[&::after]:[border-bottom-color:currentColor] tw:[&::after]:[border-left-width:2px] tw:[&::after]:[border-left-style:solid] tw:[&::after]:[border-left-color:currentColor] tw:[&::after]:[content:'']",
+  body: "tw:grid tw:min-w-0 tw:min-h-0 tw:overflow-hidden",
   // Narrow layouts stack the inspector under the map, then float it over.
-  bodyWithInspector: {
-    position: { default: null, [narrow]: "relative" },
-    gridTemplateRows: {
-      default: null,
-      [stacked]: "minmax(0, 1fr) minmax(220px, 42%)",
-      [narrow]: "minmax(0, 1fr)",
-    },
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr) 10px var(--software-map-inspector-width, 420px)",
-      [stacked]: "minmax(0, 1fr)",
-      [narrow]: "minmax(0, 1fr)",
-    },
-  },
-  bodyResizing: {
-    cursor: "col-resize",
-    userSelect: "none",
-  },
-  canvas: {
-    position: "relative",
-    display: "grid",
-    minWidth: 0,
-    minHeight: 0,
-    overflow: "hidden",
-    padding: 0,
-    backgroundColor: tokens.bg,
-    fontFamily: tokens.fontSans,
-  },
-  status: {
-    ...noBorder,
-    position: "absolute",
-    top: "14px",
-    left: "14px",
-    zIndex: 8,
-    width: "max-content",
-    maxWidth: "min(420px, calc(100% - 28px))",
-    margin: 0,
-    padding: "8px 10px",
-    borderRadius: radius.control,
-    backgroundColor: tokens.transparent,
-    boxShadow: "none",
-    color: tokens.inkMuted,
-    fontSize: fontSize.body,
-    lineHeight: "17px",
-  },
-  statusError: {
-    borderColor: tokens.diffRemoved,
-    backgroundColor: tokens.diffRemovedBg,
-    color: tokens.diffRemoved,
-  },
-  inspectorResizer: {
-    zIndex: 8,
-    minHeight: 0,
-    // Also hidden with the shell's divider when the side peek is open on a
-    // narrow canvas.
-    display: {
-      default: null,
-      [stacked]: "none",
-      [peekOpen()]: {
-        default: null,
-        "@container review-canvas (max-width: 929px)": "none",
-        [narrow]: "none",
-      },
-    },
-  },
-  inspectorBackdrop: {
-    display: { default: "none", [narrow]: "block" },
-    position: { default: null, [narrow]: "absolute" },
-    inset: { default: null, [narrow]: 0 },
-    zIndex: { default: null, [narrow]: flowLayer.inspectorBackdrop },
-    padding: { default: null, [narrow]: 0 },
-    borderWidth: { default: null, [narrow]: 0 },
-    borderStyle: { default: null, [narrow]: "none" },
-    borderColor: { default: null, [narrow]: "currentcolor" },
-    backgroundColor: { default: null, [narrow]: tokens.backdrop },
-  },
-  inspector: {
-    ...noBorder,
-    position: { default: null, [narrow]: "absolute" },
-    right: { default: null, [narrow]: "8px" },
-    bottom: { default: null, [narrow]: "8px" },
-    left: { default: null, [narrow]: "8px" },
-    zIndex: { default: null, [narrow]: flowLayer.inspector },
-    display: "grid",
-    gridTemplateRows: "auto minmax(0, 1fr)",
-    minWidth: 0,
-    height: { default: null, [narrow]: "min(72%, 560px)" },
-    minHeight: { default: 0, [narrow]: "240px" },
-    overflow: "hidden",
-    borderRadius: { default: null, [narrow]: radius.surface },
-    backgroundColor: tokens.bg,
-    boxShadow: "none",
-  },
-  inspectorHeader: {
-    position: { default: null, [narrow]: "sticky" },
-    top: { default: null, [narrow]: 0 },
-    zIndex: { default: null, [narrow]: 2 },
-    display: "flex",
-    gap: "10px",
-    alignItems: "center",
-    justifyContent: "space-between",
-    minWidth: 0,
-    padding: { default: "7px 8px 3px", [narrow]: "8px" },
-    borderBottomWidth: { default: null, [narrow]: "1px" },
-    borderBottomStyle: { default: null, [narrow]: "solid" },
-    borderBottomColor: { default: null, [narrow]: tokens.rule },
-    backgroundColor: tokens.bg,
-  },
-  inspectorTitle: {
-    display: "flex",
-    gap: "8px",
-    alignItems: "baseline",
-    minWidth: 0,
-    paddingLeft: "4px",
-    whiteSpace: "nowrap",
-  },
-  inspectorKind: {
-    flex: "none",
-    lineHeight: "14px",
-  },
-  inspectorLabel: {
-    minWidth: 0,
-    overflow: "hidden",
-    color: tokens.ink,
-    fontSize: fontSize.ui,
-    fontWeight: fontWeight.semibold,
-    lineHeight: "18px",
-    textOverflow: "ellipsis",
-  },
-  inspectorActions: {
-    display: "flex",
-    flex: "none",
-    gap: "4px",
-    alignItems: "center",
-  },
-  codicon: {
-    fontSize: fontSize.reading,
-  },
-  inspectorDiffs: {
-    minHeight: 0,
-    overflow: "auto",
-    backgroundColor: tokens.bg,
-    scrollbarColor: `${tokens.ruleSoft} ${tokens.surface}`,
-  },
-  inspectorEmpty: {
-    paddingInline: "16px",
-  },
-  c4Canvas: {
-    ...noBorder,
-    position: "relative",
-    width: "100%",
-    height: "100%",
-    minHeight: 0,
-    overflow: "hidden",
-    borderRadius: 0,
-    backgroundColor: tokens.bg,
-    fontFamily: tokens.fontSans,
-  },
-  c4CanvasLens: {
-    minWidth: 0,
-  },
-  flow: {
-    backgroundColor: tokens.bg,
-    fontFamily: tokens.fontSans,
-  },
-  background: {
-    opacity: 0.45,
-  },
+  bodyWithInspector:
+    "tw:[@media_(max-width:_720px)]:relative tw:[@media_(max-width:_900px)]:grid-rows-[minmax(0,_1fr)_minmax(220px,_42%)] tw:[@media_(max-width:_720px)]:grid-rows-[minmax(0,_1fr)] tw:grid-cols-[minmax(0,_1fr)_10px_var(--software-map-inspector-width,_420px)] tw:[@media_(max-width:_900px)]:grid-cols-[minmax(0,_1fr)] tw:[@media_(max-width:_720px)]:grid-cols-[minmax(0,_1fr)]",
+  bodyResizing: "tw:[cursor:col-resize] tw:select-none",
+  canvas:
+    "tw:relative tw:grid tw:min-w-0 tw:min-h-0 tw:overflow-hidden tw:p-0 tw:bg-[color:var(--bg)] tw:font-[family-name:var(--font-sans)]",
+  status:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:absolute tw:top-[14px] tw:left-[14px] tw:z-[8] tw:w-max tw:max-w-[min(420px,_calc(100%_-_28px))] tw:m-0 tw:p-[8px_10px] tw:rounded-[6px] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:text-[color:var(--ink-muted)] tw:text-[length:12px] tw:leading-[17px]",
+  statusError:
+    "tw:border-[color:var(--diff-removed)] tw:bg-[color:var(--diff-removed-bg)] tw:text-[color:var(--diff-removed)]",
+  inspectorResizer:
+    "tw:z-[8] tw:min-h-0 tw:[@media_(max-width:_900px)]:hidden tw:[@container_review-canvas_(max-width:_929px)]:[&:is(.canvas-app[data-peek-open]_*)]:hidden tw:[@media_(max-width:_720px)]:[&:is(.canvas-app[data-peek-open]_*)]:hidden",
+  inspectorBackdrop:
+    "tw:hidden tw:[@media_(max-width:_720px)]:block tw:[@media_(max-width:_720px)]:absolute tw:[@media_(max-width:_720px)]:inset-0 tw:[@media_(max-width:_720px)]:z-[48] tw:[@media_(max-width:_720px)]:p-0 tw:[@media_(max-width:_720px)]:border-[0] tw:[@media_(max-width:_720px)]:border-none tw:[@media_(max-width:_720px)]:border-[color:currentcolor] tw:[@media_(max-width:_720px)]:bg-[color:var(--backdrop)]",
+  inspector:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[@media_(max-width:_720px)]:absolute tw:[@media_(max-width:_720px)]:right-[8px] tw:[@media_(max-width:_720px)]:bottom-[8px] tw:[@media_(max-width:_720px)]:left-[8px] tw:[@media_(max-width:_720px)]:z-[49] tw:grid tw:grid-rows-[auto_minmax(0,_1fr)] tw:min-w-0 tw:[@media_(max-width:_720px)]:h-[min(72%,_560px)] tw:min-h-0 tw:[@media_(max-width:_720px)]:min-h-[240px] tw:overflow-hidden tw:[@media_(max-width:_720px)]:rounded-[8px] tw:bg-[color:var(--bg)] tw:[box-shadow:none]",
+  inspectorHeader:
+    "tw:[@media_(max-width:_720px)]:sticky tw:[@media_(max-width:_720px)]:top-0 tw:[@media_(max-width:_720px)]:z-[2] tw:flex tw:gap-[10px] tw:items-center tw:justify-between tw:min-w-0 tw:p-[7px_8px_3px] tw:[@media_(max-width:_720px)]:p-[8px] tw:[@media_(max-width:_720px)]:[border-bottom-width:1px] tw:[@media_(max-width:_720px)]:[border-bottom-style:solid] tw:[@media_(max-width:_720px)]:[border-bottom-color:var(--rule)] tw:bg-[color:var(--bg)]",
+  inspectorTitle:
+    "tw:flex tw:gap-[8px] tw:items-baseline tw:min-w-0 tw:pl-[4px] tw:whitespace-nowrap",
+  inspectorKind: "tw:flex-[none] tw:leading-[14px]",
+  inspectorLabel:
+    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:text-[length:13px] tw:font-semibold tw:leading-[18px] tw:text-ellipsis",
+  inspectorActions: "tw:flex tw:flex-[none] tw:gap-[4px] tw:items-center",
+  codicon: "tw:text-[length:15px]",
+  inspectorDiffs:
+    "tw:min-h-0 tw:overflow-auto tw:bg-[color:var(--bg)] tw:[scrollbar-color:var(--rule-soft)_var(--surface)]",
+  inspectorEmpty: "tw:px-[16px]",
+  c4Canvas:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:relative tw:w-full tw:h-full tw:min-h-0 tw:overflow-hidden tw:rounded-none tw:bg-[color:var(--bg)] tw:font-[family-name:var(--font-sans)]",
+  c4CanvasLens: "tw:min-w-0",
+  flow: "tw:bg-[color:var(--bg)] tw:font-[family-name:var(--font-sans)]",
+  background: "tw:opacity-[0.45]",
   // React Flow's node wrapper. Its text reads like the prose around it.
-  flowNode: {
-    ...noBorder,
-    backgroundColor: tokens.transparent,
-    boxShadow: "none",
-    transition: `transform ${motion.medium} ${settle}, width ${motion.medium} ${settle}, height ${motion.medium} ${settle}, opacity ${motion.medium} ${motion.ease}`,
-    userSelect: "text",
-  },
-  flowEdge: {
-    zIndex: 1,
-  },
-  codeStatus: {
-    ...noBorder,
-    position: "absolute",
-    right: "14px",
-    bottom: "14px",
-    zIndex: 8,
-    maxWidth: "min(380px, calc(100% - 28px))",
-    padding: "8px 10px",
-    borderRadius: radius.control,
-    backgroundColor: tokens.transparent,
-    boxShadow: "none",
-    color: tokens.inkMuted,
-    fontSize: fontSize.body,
-    lineHeight: "17px",
-  },
-  edgeHighlight: {
-    fill: "none",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    pointerEvents: "none",
-  },
-  edgeHighlightActive: {
-    stroke: tokens.selectionShadow,
-    strokeWidth: "10px",
-  },
-  edgeHitArea: {
-    fill: "none",
-    stroke: tokens.transparent,
-    strokeWidth: "18px",
-    pointerEvents: "stroke",
-  },
-  edgeEndpoint: {
-    position: "absolute",
-    zIndex: flowLayer.edgeEndpoint,
-    boxSizing: "border-box",
-    width: "11px",
-    height: "11px",
-    borderWidth: "1.5px",
-    borderStyle: "solid",
-    borderColor: tokens.inkFaint,
-    borderRadius: radius.pill,
-    backgroundColor: tokens.surface,
-    opacity: 1,
-    pointerEvents: "none",
-  },
-  edgeEndpointHovered: {
-    borderWidth: "2px",
-    borderColor: tokens.surface,
-    backgroundColor: tokens.accent,
-  },
-  edgeLabelAnchor: {
-    position: "absolute",
-    zIndex: flowLayer.label,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: "20px",
-    minHeight: "20px",
-    pointerEvents: "all",
-  },
-  edgeLabel: {
-    boxSizing: "border-box",
-    maxWidth: "132px",
-    padding: "4px 10px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.control,
-    backgroundColor: tokens.surface,
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.medium,
-    letterSpacing: 0,
-    lineHeight: "15px",
-    textAlign: "center",
-    whiteSpace: "normal",
-    overflowWrap: "anywhere",
-  },
-  edgeLabelButton: {
-    cursor: "pointer",
-  },
-  edgeLabelSelectedNode: {
-    borderColor: tokens.accent,
-  },
+  flowNode:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:[transition:transform_200ms_cubic-bezier(0.2,_0.8,_0.2,_1),_width_200ms_cubic-bezier(0.2,_0.8,_0.2,_1),_height_200ms_cubic-bezier(0.2,_0.8,_0.2,_1),_opacity_200ms_ease] tw:select-text",
+  flowEdge: "tw:z-[1]",
+  codeStatus:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:absolute tw:right-[14px] tw:bottom-[14px] tw:z-[8] tw:max-w-[min(380px,_calc(100%_-_28px))] tw:p-[8px_10px] tw:rounded-[6px] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:text-[color:var(--ink-muted)] tw:text-[length:12px] tw:leading-[17px]",
+  edgeHighlight:
+    "tw:fill-[none] tw:[stroke-linecap:round] tw:[stroke-linejoin:round] tw:pointer-events-none",
+  edgeHighlightActive: "tw:stroke-[var(--selection-shadow)] tw:stroke-[10px]",
+  edgeHitArea:
+    "tw:fill-[none] tw:stroke-[var(--transparent)] tw:stroke-[18px] tw:[pointer-events:stroke]",
+  edgeEndpoint:
+    "tw:absolute tw:z-[39] tw:box-border tw:size-[11px] tw:border-[1.5px] tw:border-solid tw:border-[color:var(--ink-faint)] tw:rounded-[999px] tw:bg-[color:var(--surface)] tw:opacity-[1] tw:pointer-events-none",
+  edgeEndpointHovered:
+    "tw:border-[2px] tw:border-[color:var(--surface)] tw:bg-[color:var(--accent)]",
+  edgeLabelAnchor:
+    "tw:absolute tw:z-[40] tw:inline-flex tw:items-center tw:justify-center tw:min-w-[20px] tw:min-h-[20px] tw:[pointer-events:all]",
+  edgeLabel:
+    "tw:box-border tw:max-w-[132px] tw:p-[4px_10px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--surface)] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-medium tw:tracking-[0] tw:leading-[15px] tw:text-center tw:whitespace-normal tw:[overflow-wrap:anywhere]",
+  edgeLabelButton: "tw:cursor-pointer",
+  edgeLabelSelectedNode: "tw:border-[color:var(--accent)]",
   // Off screen, so the layout can size each card before placing it.
-  measureLayer: {
-    position: "absolute",
-    top: 0,
-    left: "-10000px",
-    zIndex: -1,
-    width: "280px",
-    visibility: "hidden",
-    pointerEvents: "none",
-  },
-  measureNode: {
-    width: "max-content",
-    minWidth: "188px",
-    maxWidth: "340px",
-    marginBottom: "16px",
-  },
-  measureNodeStore: {
-    width: "280px",
-    maxWidth: "280px",
-  },
-  measureNodeCode: {
-    width: "max-content",
-    minWidth: 0,
-    maxWidth: "none",
-  },
-  nodeShell: {
-    position: "relative",
-    width: "100%",
-    height: "100%",
-    animationName: cardBloom,
-    animationDuration: motion.medium,
-    animationTimingFunction: settle,
-  },
-  groupShell: {
-    position: "relative",
-    boxSizing: "border-box",
-    width: "100%",
-    height: "100%",
-    padding: "14px 16px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: {
-      default: tokens.rule,
-      ":hover": tokens.ruleSoft,
-      ":focus-visible": tokens.ruleSoft,
-    },
-    borderRadius: radius.surface,
-    backgroundColor: {
-      default: tokens.surface,
-      ":hover": tokens.markerTint,
-      ":focus-visible": tokens.markerTint,
-    },
-    boxShadow: "none",
-    outline: { default: null, ":hover": "none", ":focus-visible": "none" },
-    cursor: "pointer",
-    fontFamily: tokens.fontSans,
-    animationName: groupBloom,
-    animationDuration: motion.medium,
-    animationTimingFunction: settle,
-  },
+  measureLayer:
+    "tw:absolute tw:top-0 tw:left-[-10000px] tw:z-[-1] tw:w-[280px] tw:invisible tw:pointer-events-none",
+  measureNode: "tw:w-max tw:min-w-[188px] tw:max-w-[340px] tw:mb-[16px]",
+  measureNodeStore: "tw:w-[280px] tw:max-w-[280px]",
+  measureNodeCode: "tw:w-max tw:min-w-0 tw:max-w-none",
+  nodeShell:
+    "tw:relative tw:w-full tw:h-full tw:[animation-name:-software-map-card-bloom] tw:[animation-duration:200ms] tw:[animation-timing-function:cubic-bezier(0.2,_0.8,_0.2,_1)]",
+  groupShell:
+    "tw:relative tw:box-border tw:w-full tw:h-full tw:p-[14px_16px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:hover]:border-[color:var(--rule-soft)] tw:[&:focus-visible]:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--marker-tint)] tw:[&:focus-visible]:bg-[color:var(--marker-tint)] tw:[box-shadow:none] tw:[&:hover]:[outline:none] tw:[&:focus-visible]:[outline:none] tw:cursor-pointer tw:font-[family-name:var(--font-sans)] tw:[animation-name:-software-map-group-bloom] tw:[animation-duration:200ms] tw:[animation-timing-function:cubic-bezier(0.2,_0.8,_0.2,_1)]",
   // Hover outranks a change's border; selection outranks hover.
-  groupAdded: {
-    borderColor: {
-      default: tokens.changeAdded,
-      ":hover": tokens.ruleSoft,
-      ":focus-visible": tokens.ruleSoft,
-    },
-  },
-  groupRemoved: {
-    borderStyle: {
-      default: "dashed",
-      ":hover": "solid",
-      ":focus-visible": "solid",
-    },
-    borderColor: {
-      default: tokens.changeRemoved,
-      ":hover": tokens.ruleSoft,
-      ":focus-visible": tokens.ruleSoft,
-    },
-    opacity: 0.75,
-  },
-  groupModified: {
-    borderColor: {
-      default: tokens.changeModified,
-      ":hover": tokens.ruleSoft,
-      ":focus-visible": tokens.ruleSoft,
-    },
-  },
-  groupSelected: {
-    borderStyle: "solid",
-    borderColor: tokens.accent,
-    backgroundColor: tokens.markerTint,
-    boxShadow: `0 0 0 3px ${tokens.markerGlow}`,
-  },
-  groupTitle: {
-    position: "absolute",
-    top: "14px",
-    right: "16px",
-    left: "16px",
-    display: "flex",
-    gap: "8px",
-    alignItems: "baseline",
-    minWidth: 0,
-    color: tokens.inkMuted,
-    letterSpacing: 0,
-    pointerEvents: "auto",
-    userSelect: "text",
-  },
-  groupTitleSystem: {
-    top: "18px",
-    right: "22px",
-    left: "22px",
-  },
-  groupKind: {
-    flex: "0 0 auto",
-  },
-  groupLabel: {
-    minWidth: 0,
-    overflow: "hidden",
-    color: tokens.ink,
-    fontSize: fontSize.ui,
-    fontWeight: fontWeight.semibold,
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  groupLabelSystem: {
-    fontSize: fontSize.reading,
-  },
-  struck: {
-    textDecorationLine: "line-through",
-  },
-  hidden: {
-    display: "none",
-  },
-  handle: {
-    ...noBorder,
-    width: "1px",
-    height: "1px",
-    backgroundColor: tokens.transparent,
-    opacity: 0,
-    pointerEvents: "none",
-  },
-  node: {
-    position: "relative",
-    boxSizing: "border-box",
-    display: "grid",
-    gap: "7px",
-    width: "100%",
-    maxWidth: "none",
-    minHeight: "104px",
-    padding: "12px 14px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.surface,
-    backgroundColor: {
-      default: tokens.surface,
-      ":hover": tokens.markerTint,
-      ":focus-visible": tokens.markerTint,
-    },
-    boxShadow: "none",
-    outline: { default: null, ":hover": "none", ":focus-visible": "none" },
-    transform: {
-      default: null,
-      ":hover": "translateY(-1px)",
-      ":focus-visible": "translateY(-1px)",
-    },
-    appearance: "none",
-    color: tokens.ink,
-    cursor: "pointer",
-    font: "inherit",
-    fontFamily: tokens.fontSans,
-    textAlign: "left",
-    transition: `border-color ${motion.fast} ${motion.ease}, background ${motion.fast} ${motion.ease}, box-shadow ${motion.fast} ${motion.ease}, transform ${motion.fast} ${motion.ease}`,
-  },
-  nodeTight: {
-    gap: 0,
-  },
+  groupAdded:
+    "tw:border-[color:var(--change-added)] tw:[&:hover]:border-[color:var(--rule-soft)] tw:[&:focus-visible]:border-[color:var(--rule-soft)]",
+  groupRemoved:
+    "tw:border-dashed tw:[&:hover]:border-solid tw:[&:focus-visible]:border-solid tw:border-[color:var(--change-removed)] tw:[&:hover]:border-[color:var(--rule-soft)] tw:[&:focus-visible]:border-[color:var(--rule-soft)] tw:opacity-[0.75]",
+  groupModified:
+    "tw:border-[color:var(--change-modified)] tw:[&:hover]:border-[color:var(--rule-soft)] tw:[&:focus-visible]:border-[color:var(--rule-soft)]",
+  groupSelected:
+    "tw:border-solid tw:border-[color:var(--accent)] tw:bg-[color:var(--marker-tint)] tw:[box-shadow:0_0_0_3px_var(--marker-glow)]",
+  groupTitle:
+    "tw:absolute tw:top-[14px] tw:right-[16px] tw:left-[16px] tw:flex tw:gap-[8px] tw:items-baseline tw:min-w-0 tw:text-[color:var(--ink-muted)] tw:tracking-[0] tw:pointer-events-auto tw:select-text",
+  groupTitleSystem: "tw:top-[18px] tw:right-[22px] tw:left-[22px]",
+  groupKind: "tw:flex-[0_0_auto]",
+  groupLabel:
+    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:text-[length:13px] tw:font-semibold tw:text-ellipsis tw:whitespace-nowrap",
+  groupLabelSystem: "tw:text-[length:15px]",
+  struck: "tw:[text-decoration-line:line-through]",
+  hidden: "tw:hidden",
+  handle:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:size-[1px] tw:bg-[color:var(--transparent)] tw:opacity-0 tw:pointer-events-none",
+  node: "tw:relative tw:box-border tw:grid tw:gap-[7px] tw:w-full tw:max-w-none tw:min-h-[104px] tw:p-[12px_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--marker-tint)] tw:[&:focus-visible]:bg-[color:var(--marker-tint)] tw:[box-shadow:none] tw:[&:hover]:[outline:none] tw:[&:focus-visible]:[outline:none] tw:[&:hover]:[transform:translateY(-1px)] tw:[&:focus-visible]:[transform:translateY(-1px)] tw:appearance-none tw:text-[color:var(--ink)] tw:cursor-pointer tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:font-[family-name:var(--font-sans)] tw:text-left tw:[transition:border-color_120ms_ease,_background_120ms_ease,_box-shadow_120ms_ease,_transform_120ms_ease]",
+  nodeTight: "tw:gap-0",
   // A code card draws its ring inset, above its content.
-  nodeCode: {
-    gap: 0,
-    "::before": {
-      position: "absolute",
-      inset: 0,
-      zIndex: 2,
-      display: "none",
-      borderRadius: "inherit",
-      boxShadow: `inset 0 0 0 0.75px ${tokens.rule}`,
-      content: "''",
-      pointerEvents: "none",
-    },
-  },
-  nodeStore: {
-    isolation: "isolate",
-    "--software-map-storage-fill": tokens.surface,
-    "--software-map-storage-border": tokens.ruleSoft,
-    "--software-map-storage-detail": tokens.rule,
-    "--software-map-storage-fill-detail": tokens.transparent,
-  },
-  nodeStoreHoverable: {
-    "--software-map-storage-border": {
-      default: tokens.ruleSoft,
-      ":hover": tokens.mapStorageBorder,
-      ":focus-visible": tokens.mapStorageBorder,
-    },
-  },
-  nodeMeasured: {
-    width: "max-content",
-    minWidth: "188px",
-    maxWidth: "340px",
-    minHeight: 0,
-  },
-  nodeMeasuredStore: {
-    width: "100%",
-    maxWidth: "none",
-    minHeight: "104px",
-  },
-  nodeMeasuredCode: {
-    width: "max-content",
-    minWidth: 0,
-  },
-  nodeSelected: {
-    borderStyle: "solid",
-    borderColor: tokens.accent,
-    backgroundColor: tokens.markerTint,
-    boxShadow: `0 0 0 3px ${tokens.markerGlow}`,
-  },
-  nodeStoreMarked: {
-    borderWidth: 0,
-    borderColor: tokens.transparent,
-    backgroundColor: {
-      default: tokens.transparent,
-      ":hover": tokens.markerTint,
-      ":focus-visible": tokens.markerTint,
-    },
-    boxShadow: "none",
-  },
-  storeLayer: {
-    position: "relative",
-    zIndex: 1,
-  },
-  kicker: {
-    display: "flex",
-    gap: "8px",
-    alignItems: "center",
-    justifyContent: "space-between",
-    minWidth: 0,
-  },
-  nodeType: {
-    minWidth: 0,
-    overflow: "hidden",
-    lineHeight: "14px",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  label: {
-    margin: 0,
-    color: tokens.ink,
-    fontSize: fontSize.reading,
-    fontWeight: fontWeight.semibold,
-    lineHeight: "19px",
-  },
-  labelWithSchema: {
-    lineHeight: "16px",
-  },
+  nodeCode:
+    "tw:gap-0 tw:[&::before]:absolute tw:[&::before]:inset-0 tw:[&::before]:z-[2] tw:[&::before]:hidden tw:[&::before]:rounded-[inherit] tw:[&::before]:[box-shadow:inset_0_0_0_0.75px_var(--rule)] tw:[&::before]:[content:''] tw:[&::before]:pointer-events-none",
+  nodeStore:
+    "tw:isolate tw:[--software-map-storage-fill:var(--surface)] tw:[--software-map-storage-border:var(--rule-soft)] tw:[--software-map-storage-detail:var(--rule)] tw:[--software-map-storage-fill-detail:var(--transparent)]",
+  nodeStoreHoverable:
+    "tw:[--software-map-storage-border:var(--rule-soft)] tw:[&:hover]:[--software-map-storage-border:var(--map-storage-border)] tw:[&:focus-visible]:[--software-map-storage-border:var(--map-storage-border)]",
+  nodeMeasured: "tw:w-max tw:min-w-[188px] tw:max-w-[340px] tw:min-h-0",
+  nodeMeasuredStore: "tw:w-full tw:max-w-none tw:min-h-[104px]",
+  nodeMeasuredCode: "tw:w-max tw:min-w-0",
+  nodeSelected:
+    "tw:border-solid tw:border-[color:var(--accent)] tw:bg-[color:var(--marker-tint)] tw:[box-shadow:0_0_0_3px_var(--marker-glow)]",
+  nodeStoreMarked:
+    "tw:border-[0] tw:border-[color:var(--transparent)] tw:bg-[color:var(--transparent)] tw:[&:hover]:bg-[color:var(--marker-tint)] tw:[&:focus-visible]:bg-[color:var(--marker-tint)] tw:[box-shadow:none]",
+  storeLayer: "tw:relative tw:z-[1]",
+  kicker: "tw:flex tw:gap-[8px] tw:items-center tw:justify-between tw:min-w-0",
+  nodeType:
+    "tw:min-w-0 tw:overflow-hidden tw:leading-[14px] tw:text-ellipsis tw:whitespace-nowrap",
+  label:
+    "tw:m-0 tw:text-[color:var(--ink)] tw:text-[length:15px] tw:font-semibold tw:leading-[19px]",
+  labelWithSchema: "tw:leading-[16px]",
   // In a document the description reads as a document paragraph.
-  description: {
-    margin: { default: 0, [inDocument()]: "14px 0" },
-    color: tokens.inkMuted,
-    fontFamily: { default: null, [inDocument()]: tokens.fontSans },
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.regular,
-    lineHeight: "17px",
-  },
-  meta: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "5px",
-    alignItems: "center",
-    minWidth: 0,
-  },
-  metaItem: {
-    ...noBorder,
-    maxWidth: "100%",
-    overflow: "hidden",
-    padding: 0,
-    borderRadius: 0,
-    backgroundColor: tokens.transparent,
-    color: tokens.inkFaint,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.regular,
-    lineHeight: "15px",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  codeHead: {
-    display: "flex",
-    gap: "8px",
-    alignItems: "center",
-    width: "max-content",
-    maxWidth: "100%",
-    minWidth: 0,
-  },
+  description:
+    "tw:m-0 tw:[&:is(.canvas-document:is(*)_*)]:m-[14px_0] tw:text-[color:var(--ink-muted)] tw:[&:is(.canvas-document:is(*)_*)]:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[17px]",
+  meta: "tw:flex tw:flex-wrap tw:gap-[5px] tw:items-center tw:min-w-0",
+  metaItem:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:max-w-full tw:overflow-hidden tw:p-0 tw:rounded-none tw:bg-[color:var(--transparent)] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[15px] tw:text-ellipsis tw:whitespace-nowrap",
+  codeHead:
+    "tw:flex tw:gap-[8px] tw:items-center tw:w-max tw:max-w-full tw:min-w-0",
   // A document's code chip keeps its own padding and wash here.
-  codeLabel: {
-    display: "block",
-    flex: "0 1 auto",
-    minWidth: 0,
-    overflow: "hidden",
-    padding: { default: null, [inDocument()]: "2px 5px" },
-    borderRadius: { default: null, [inDocument()]: radius.small },
-    backgroundColor: { default: null, [inDocument()]: tokens.well },
-    color: tokens.ink,
-    fontFamily: tokens.fontMono,
-    fontSize: fontSize.reading,
-    fontWeight: fontWeight.semibold,
-    lineHeight: "18px",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
+  codeLabel:
+    "tw:block tw:flex-[0_1_auto] tw:min-w-0 tw:overflow-hidden tw:[&:is(.canvas-document:is(*)_*)]:p-[2px_5px] tw:[&:is(.canvas-document:is(*)_*)]:rounded-[4px] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)] tw:text-[length:15px] tw:font-semibold tw:leading-[18px] tw:text-ellipsis tw:whitespace-nowrap",
   // Counts sit in the title row as plain text: the one +n −n pair, no pill.
-  badge: {
-    ...noBorder,
-    display: "inline-flex",
-    flex: "0 0 auto",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: "6px",
-    width: "auto",
-    maxWidth: "140px",
-    minHeight: 0,
-    overflow: "hidden",
-    padding: 0,
-    backgroundColor: tokens.transparent,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.medium,
-    lineHeight: "15px",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  badgeEmpty: {
-    visibility: "hidden",
-  },
-  badgeInGroup: {
-    marginLeft: "auto",
-    color: tokens.inkFaint,
-    fontSize: fontSize.micro,
-    letterSpacing: tracking.caps,
-    textTransform: "uppercase",
-  },
-  count: {
-    minWidth: 0,
-    overflow: "hidden",
-    fontWeight: fontWeight.medium,
-    textOverflow: "ellipsis",
-  },
-  countAdded: {
-    color: tokens.diffAdded,
-  },
-  countRemoved: {
-    color: tokens.diffRemoved,
-  },
-  countInGroup: {
-    flex: "0 0 auto",
-    color: tokens.inkFaint,
-    fontSize: fontSize.micro,
-    letterSpacing: tracking.caps,
-    textTransform: "uppercase",
-  },
-  storageOutline: {
-    position: "absolute",
-    inset: 0,
-    zIndex: 0,
-    display: "none",
-    width: "100%",
-    height: "100%",
-    overflow: "visible",
-    pointerEvents: "none",
-  },
-  storageFill: {
-    fill: tokens.softwareMapStorageFill,
-    stroke: "none",
-  },
-  storageFillDetail: {
-    fill: tokens.softwareMapStorageFillDetail,
-    stroke: "none",
-  },
-  storageSelection: {
-    fill: "none",
-    stroke: tokens.transparent,
-    strokeLinejoin: "round",
-    strokeWidth: "7px",
-  },
-  storageSelectionSelected: {
-    stroke: tokens.selection,
-  },
-  storageBorder: {
-    fill: "none",
-    stroke: tokens.softwareMapStorageBorder,
-    strokeLinejoin: "round",
-    strokeWidth: "2px",
-  },
-  storageDetail: {
-    fill: "none",
-    stroke: tokens.softwareMapStorageDetail,
-    strokeLinejoin: "round",
-    strokeWidth: "1.25px",
-  },
-  storageDashed: {
-    strokeDasharray: "7 5",
-  },
-  storageGlow: {
-    filter: `drop-shadow(0 0 0 ${tokens.selection}) drop-shadow(0 0 3px ${tokens.selection})`,
-  },
-  storageFolder: {
-    position: "absolute",
-    inset: 0,
-    zIndex: 0,
-    display: "none",
-    pointerEvents: "none",
-    "::after": {
-      position: "absolute",
-      top: "46px",
-      right: "10px",
-      left: "min(190px, 68%)",
-      borderTopWidth: "2px",
-      borderTopStyle: "solid",
-      borderTopColor: tokens.softwareMapStorageBorder,
-      content: "''",
-    },
-  },
-  storageFolderBody: {
-    position: "absolute",
-    top: "46px",
-    right: 0,
-    bottom: 0,
-    left: 0,
-    borderWidth: "0 2px 2px",
-    borderStyle: "none solid solid",
-    borderColor: `currentcolor ${tokens.softwareMapStorageBorder} ${tokens.softwareMapStorageBorder}`,
-    borderRadius: `0 ${radius.surface} ${radius.surface} ${radius.surface}`,
-    backgroundColor: tokens.softwareMapStorageFill,
-  },
-  storageFolderTab: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "min(190px, 68%)",
-    height: "48px",
-    overflow: "visible",
-  },
-  schema: {
-    position: "relative",
-    zIndex: 1,
-    display: "grid",
-    gap: "8px",
-    margin: "12px -2px 0",
-  },
-  schemaFlush: {
-    margin: 0,
-  },
-  schemaSection: {
-    overflow: "hidden",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.small,
-    backgroundColor: tokens.surface,
-  },
-  schemaSectionSelected: {
-    borderColor: tokens.selection,
-    boxShadow: "none",
-  },
-  schemaHeader: {
-    display: "grid",
-    gridTemplateColumns: "auto minmax(0, 1fr)",
-    alignItems: "center",
-    gap: "8px",
-    padding: "7px 10px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.rule,
-    backgroundColor: tokens.tray,
-    textAlign: "left",
-  },
-  schemaKind: {
-    color: tokens.inkFaint,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.micro,
-    fontWeight: fontWeight.bold,
-    lineHeight: "12px",
-    letterSpacing: tracking.caps,
-    textTransform: "uppercase",
-  },
-  schemaLabel: {
-    minWidth: 0,
-    overflow: "hidden",
-    color: tokens.ink,
-    fontFamily: tokens.fontMono,
-    fontSize: fontSize.body,
-    lineHeight: "15px",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  schemaKey: {
-    overflow: "hidden",
-    padding: "7px 10px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.rule,
-    backgroundColor: tokens.tray,
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontMono,
-    fontSize: fontSize.small,
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  schemaRow: {
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1fr) minmax(68px, auto)",
-    alignItems: "center",
-    gap: "10px",
-    height: "30px",
-    padding:
-      "0 10px 0 calc(12px + var(--software-map-schema-row-depth, 0) * 18px)",
-    borderBottomWidth: { default: "1px", ":last-child": 0 },
-    borderBottomStyle: { default: "solid", ":last-child": "none" },
-    borderBottomColor: { default: tokens.rule, ":last-child": "currentcolor" },
-    backgroundColor: tokens.surface,
-    textAlign: "left",
-  },
-  schemaRowActive: {
-    outline: `2px solid ${tokens.selection}`,
-    outlineOffset: "-2px",
-    backgroundColor: tokens.rpcWash,
-  },
-  schemaRowPrimary: {
-    backgroundImage: `repeating-linear-gradient(135deg, ${tokens.accentStripe} 0, ${tokens.accentStripe} 7px, ${tokens.transparent} 7px, ${tokens.transparent} 14px)`,
-  },
-  schemaRowName: {
-    minWidth: 0,
-    overflow: "hidden",
-    color: tokens.ink,
-    fontFamily: tokens.fontMono,
-    fontSize: fontSize.body,
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  schemaKeyFlag: {
-    marginRight: "6px",
-    backgroundColor: tokens.diffModifiedBg,
-    color: tokens.diffModified,
-  },
-  schemaKeyFlagForeign: {
-    backgroundColor: tokens.rpcWash,
-    color: tokens.rpc,
-  },
-  schemaRowType: {
-    minWidth: 0,
-    overflow: "hidden",
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontMono,
-    fontSize: fontSize.small,
-    textAlign: "right",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-});
+  badge:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:inline-flex tw:flex-[0_0_auto] tw:items-center tw:justify-end tw:gap-[6px] tw:w-auto tw:max-w-[140px] tw:min-h-0 tw:overflow-hidden tw:p-0 tw:bg-[color:var(--transparent)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-medium tw:leading-[15px] tw:text-ellipsis tw:whitespace-nowrap",
+  badgeEmpty: "tw:invisible",
+  badgeInGroup:
+    "tw:ml-[auto] tw:text-[color:var(--ink-faint)] tw:text-[length:10px] tw:tracking-[0.08em] tw:uppercase",
+  count: "tw:min-w-0 tw:overflow-hidden tw:font-medium tw:text-ellipsis",
+  countAdded: "tw:text-[color:var(--diff-added)]",
+  countRemoved: "tw:text-[color:var(--diff-removed)]",
+  countInGroup:
+    "tw:flex-[0_0_auto] tw:text-[color:var(--ink-faint)] tw:text-[length:10px] tw:tracking-[0.08em] tw:uppercase",
+  storageOutline:
+    "tw:absolute tw:inset-0 tw:z-0 tw:hidden tw:w-full tw:h-full tw:overflow-visible tw:pointer-events-none",
+  storageFill: "tw:fill-[var(--software-map-storage-fill)] tw:stroke-[none]",
+  storageFillDetail:
+    "tw:fill-[var(--software-map-storage-fill-detail)] tw:stroke-[none]",
+  storageSelection:
+    "tw:fill-[none] tw:stroke-[var(--transparent)] tw:[stroke-linejoin:round] tw:stroke-[7px]",
+  storageSelectionSelected: "tw:stroke-[var(--selection)]",
+  storageBorder:
+    "tw:fill-[none] tw:stroke-[var(--software-map-storage-border)] tw:[stroke-linejoin:round] tw:stroke-[2px]",
+  storageDetail:
+    "tw:fill-[none] tw:stroke-[var(--software-map-storage-detail)] tw:[stroke-linejoin:round] tw:stroke-[1.25px]",
+  storageDashed: "tw:[stroke-dasharray:7_5]",
+  storageGlow:
+    "tw:[filter:drop-shadow(0_0_0_var(--selection))_drop-shadow(0_0_3px_var(--selection))]",
+  storageFolder:
+    "tw:absolute tw:inset-0 tw:z-0 tw:hidden tw:pointer-events-none tw:[&::after]:absolute tw:[&::after]:top-[46px] tw:[&::after]:right-[10px] tw:[&::after]:left-[min(190px,_68%)] tw:[&::after]:[border-top-width:2px] tw:[&::after]:[border-top-style:solid] tw:[&::after]:[border-top-color:var(--software-map-storage-border)] tw:[&::after]:[content:'']",
+  storageFolderBody:
+    "tw:absolute tw:top-[46px] tw:right-0 tw:bottom-0 tw:left-0 tw:border-[0_2px_2px] tw:[border-style:none_solid_solid] tw:border-[color:currentcolor_var(--software-map-storage-border)_var(--software-map-storage-border)] tw:rounded-[0_8px_8px_8px] tw:bg-[color:var(--software-map-storage-fill)]",
+  storageFolderTab:
+    "tw:absolute tw:top-0 tw:left-0 tw:w-[min(190px,_68%)] tw:h-[48px] tw:overflow-visible",
+  schema: "tw:relative tw:z-[1] tw:grid tw:gap-[8px] tw:m-[12px_-2px_0]",
+  schemaFlush: "tw:m-0",
+  schemaSection:
+    "tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[4px] tw:bg-[color:var(--surface)]",
+  schemaSectionSelected:
+    "tw:border-[color:var(--selection)] tw:[box-shadow:none]",
+  schemaHeader:
+    "tw:grid tw:grid-cols-[auto_minmax(0,_1fr)] tw:items-center tw:gap-[8px] tw:p-[7px_10px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--tray)] tw:text-left",
+  schemaKind:
+    "tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:10px] tw:font-bold tw:leading-[12px] tw:tracking-[0.08em] tw:uppercase",
+  schemaLabel:
+    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)] tw:text-[length:12px] tw:leading-[15px] tw:text-ellipsis tw:whitespace-nowrap",
+  schemaKey:
+    "tw:overflow-hidden tw:p-[7px_10px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-mono)] tw:text-[length:11px] tw:text-ellipsis tw:whitespace-nowrap",
+  schemaRow:
+    "tw:grid tw:grid-cols-[minmax(0,_1fr)_minmax(68px,_auto)] tw:items-center tw:gap-[10px] tw:h-[30px] tw:p-[0_10px_0_calc(12px_+_var(--software-map-schema-row-depth,_0)_*_18px)] tw:[border-bottom-width:1px] tw:[&:last-child]:[border-bottom-width:0] tw:[border-bottom-style:solid] tw:[&:last-child]:[border-bottom-style:none] tw:[border-bottom-color:var(--rule)] tw:[&:last-child]:[border-bottom-color:currentcolor] tw:bg-[color:var(--surface)] tw:text-left",
+  schemaRowActive:
+    "tw:[outline:2px_solid_var(--selection)] tw:outline-offset-[-2px] tw:bg-[color:var(--rpc-wash)]",
+  schemaRowPrimary:
+    "tw:[background-image:repeating-linear-gradient(135deg,_var(--accent-stripe)_0,_var(--accent-stripe)_7px,_var(--transparent)_7px,_var(--transparent)_14px)]",
+  schemaRowName:
+    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)] tw:text-[length:12px] tw:text-ellipsis tw:whitespace-nowrap",
+  schemaKeyFlag:
+    "tw:mr-[6px] tw:bg-[color:var(--diff-modified-bg)] tw:text-[color:var(--diff-modified)]",
+  schemaKeyFlagForeign:
+    "tw:bg-[color:var(--rpc-wash)] tw:text-[color:var(--rpc)]",
+  schemaRowType:
+    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-mono)] tw:text-[length:11px] tw:text-right tw:text-ellipsis tw:whitespace-nowrap",
+};
 
 // A change's border replaces the card's hairline.
-const nodeStatusStyles = stylex.create({
-  added: { borderColor: tokens.changeAdded },
-  removed: {
-    borderStyle: "dashed",
-    borderColor: tokens.changeRemoved,
-    opacity: 0.75,
-  },
-  modified: { borderColor: tokens.changeModified },
-});
+const nodeStatusStyles = {
+  added: "tw:border-[color:var(--change-added)]",
+  removed:
+    "tw:border-dashed tw:border-[color:var(--change-removed)] tw:opacity-[0.75]",
+  modified: "tw:border-[color:var(--change-modified)]",
+};
 
 // A selected store's shape takes the change color, or the selection's.
-const storeSelectedStyles = stylex.create({
-  unchanged: { "--software-map-storage-border": tokens.selection },
-  added: { "--software-map-storage-border": tokens.changeAdded },
-  removed: { "--software-map-storage-border": tokens.changeRemoved },
-  modified: { "--software-map-storage-border": tokens.changeModified },
-});
+const storeSelectedStyles = {
+  unchanged: "tw:[--software-map-storage-border:var(--selection)]",
+  added: "tw:[--software-map-storage-border:var(--change-added)]",
+  removed: "tw:[--software-map-storage-border:var(--change-removed)]",
+  modified: "tw:[--software-map-storage-border:var(--change-modified)]",
+};
 
-const codeRingStyles = stylex.create({
-  selected: {
-    "::before": { boxShadow: `inset 0 0 0 1.5px ${tokens.selection}` },
-  },
-  added: {
-    "::before": { boxShadow: `inset 0 0 0 1.5px ${tokens.changeAdded}` },
-  },
-  removed: {
-    "::before": { boxShadow: `inset 0 0 0 1.5px ${tokens.changeRemoved}` },
-  },
-  modified: {
-    "::before": { boxShadow: `inset 0 0 0 1.5px ${tokens.changeModified}` },
-  },
-});
+const codeRingStyles = {
+  selected: "tw:[&::before]:[box-shadow:inset_0_0_0_1.5px_var(--selection)]",
+  added: "tw:[&::before]:[box-shadow:inset_0_0_0_1.5px_var(--change-added)]",
+  removed:
+    "tw:[&::before]:[box-shadow:inset_0_0_0_1.5px_var(--change-removed)]",
+  modified:
+    "tw:[&::before]:[box-shadow:inset_0_0_0_1.5px_var(--change-modified)]",
+};
 
 // React Flow takes node and edge classes as strings.
-const FLOW_NODE_CLASS_NAME = stylex.props(styles.flowNode).className;
+const FLOW_NODE_CLASS_NAME = styles.flowNode;
 
-const FLOW_EDGE_CLASS_NAME = stylex.props(styles.flowEdge).className;
+const FLOW_EDGE_CLASS_NAME = styles.flowEdge;

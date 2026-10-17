@@ -1,9 +1,7 @@
-/* The canvas stylesheet's plain part: faces, React Flow's base styles and
-   global.css. StyleX appends every component style after it. React Flow sits
-   in a layer, so any canvas rule beats it. */
-
+/* Canvas fonts, vendor styles, global rules, and Tailwind utilities. */
 @import "./fonts/fonts.css";
 @import "@xyflow/react/dist/style.css" layer(vendor);
-@import "./global.css";
+@import "./global.css" layer(base);
+@import "./styles/animations.css";
 
 @import "./ui.css";

@@ -9,6 +9,7 @@ import {
 import { Checkbox } from "@canvas/components/ui/checkbox";
 import { Switch } from "@canvas/components/ui/switch";
 import { Textarea } from "@canvas/components/ui/textarea";
+import { cn } from "@canvas/lib/utils";
 import { Button } from "@canvas/ui/button";
 import { TextField, fieldStyles } from "@canvas/ui/text-field";
 import {
@@ -19,7 +20,6 @@ import {
   isJsonObject,
   isStringValue,
 } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Choice } from "./settings-choice";
@@ -175,17 +175,17 @@ export function DiffrConfigSection({
   const hiddenTags = config && setting(config, hideKey);
 
   return (
-    <div {...stylex.props(styles.diffr)}>
+    <div className={styles.diffr}>
       <details>
         <summary
-          {...stylex.props(styles.diffrSummary)}
+          className={styles.diffrSummary}
           onClick={() => setOpened(true)}
         >
           Diff display and AI summaries
         </summary>
         {opened && (
           <>
-            <p {...stylex.props(styles.rowDescription)}>
+            <p className={styles.rowDescription}>
               Shared with the diffr CLI. Applies to all repositories.
             </p>
             {!config && !error && <p role="status">Reading diffr settings…</p>}
@@ -220,7 +220,7 @@ export function DiffrConfigSection({
                       />
                     </SettingRow>
                     {setting(config, key) === undefined && (
-                      <p {...stylex.props(styles.unavailable)}>
+                      <p className={styles.unavailable}>
                         Not available in this configuration.
                       </p>
                     )}
@@ -246,26 +246,26 @@ export function DiffrConfigSection({
                       </SettingRow>
                     )}
                     {key === hideKey && Array.isArray(hiddenTags) && (
-                      <p {...stylex.props(styles.rowDescription)}>
+                      <p className={styles.rowDescription}>
                         Tags: {hiddenTags.join(", ")}
                       </p>
                     )}
                   </div>
                 ))}
                 <h3>AI summaries</h3>
-                <p {...stylex.props(styles.rowDescription)}>
+                <p className={styles.rowDescription}>
                   Sends source-file contents to the selected provider to
                   summarize large new functions and tests.
                 </p>
                 {unavailable && (
-                  <p {...stylex.props(styles.unavailable)}>
+                  <p className={styles.unavailable}>
                     The summarizer is not available in this configuration.
                   </p>
                 )}
                 {draft && (
                   <fieldset
                     disabled={busy || unavailable}
-                    {...stylex.props(styles.summaryFields)}
+                    className={styles.summaryFields}
                   >
                     <SettingRow label="Enable summaries">
                       <Switch
@@ -303,7 +303,7 @@ export function DiffrConfigSection({
                     )}
                     <SettingRow label="API key">
                       <TextField
-                        xstyle={styles.input}
+                        className={styles.input}
                         aria-label="API key"
                         type="password"
                         autoComplete="off"
@@ -314,7 +314,7 @@ export function DiffrConfigSection({
                         }
                       />
                     </SettingRow>
-                    <p {...stylex.props(styles.rowDescription)}>
+                    <p className={styles.rowDescription}>
                       {draft.provider !== provider(config) ||
                       draft.endpoint !== savedDraft?.endpoint
                         ? config.credentialSource !== "config"
@@ -332,7 +332,7 @@ export function DiffrConfigSection({
                     </p>
                     <SettingRow label="Model">
                       <TextField
-                        xstyle={styles.input}
+                        className={styles.input}
                         aria-label="Model"
                         value={draft.model}
                         onChange={(event) =>
@@ -342,7 +342,7 @@ export function DiffrConfigSection({
                     </SettingRow>
                     <SettingRow label="Endpoint URL">
                       <TextField
-                        xstyle={styles.input}
+                        className={styles.input}
                         aria-label="Endpoint URL"
                         placeholder={
                           described(config, draft.provider)?.endpoint
@@ -353,24 +353,21 @@ export function DiffrConfigSection({
                         }
                       />
                     </SettingRow>
-                    <p {...stylex.props(styles.rowDescription)}>
+                    <p className={styles.rowDescription}>
                       Optional. With OpenAI, point this at any compatible
                       server, such as OpenRouter or Ollama.
                     </p>
-                    <label {...stylex.props(styles.prompt)}>
-                      <span {...stylex.props(styles.rowLabel)}>
+                    <label className={styles.prompt}>
+                      <span className={styles.rowLabel}>
                         Prompt{" "}
-                        <span {...stylex.props(styles.rowDescription)}>
+                        <span className={styles.rowDescription}>
                           {draft.systemPrompt === config.defaultPrompt
                             ? "Default"
                             : "Customized"}
                         </span>
                       </span>
                       <Textarea
-                        {...stylex.props(
-                          fieldStyles.box,
-                          fieldStyles.multiline,
-                        )}
+                        className={cn(fieldStyles.box, fieldStyles.multiline)}
                         aria-label="Prompt"
                         rows={6}
                         value={draft.systemPrompt}
@@ -382,7 +379,7 @@ export function DiffrConfigSection({
                         }
                       />
                     </label>
-                    <p {...stylex.props(styles.rowDescription)}>
+                    <p className={styles.rowDescription}>
                       Sent with every request. diffr adds the file and the folds
                       to summarize, and asks for structured output where the
                       provider supports it.{" "}
@@ -410,7 +407,7 @@ export function DiffrConfigSection({
                         }
                       />
                     </SettingRow>
-                    <div {...stylex.props(styles.summaryActions)}>
+                    <div className={styles.summaryActions}>
                       <Button
                         disabled={!summaryValid}
                         onClick={() =>
@@ -437,7 +434,7 @@ export function DiffrConfigSection({
                         Save summaries
                       </Button>
                     </div>
-                    <p {...stylex.props(styles.rowDescription)}>
+                    <p className={styles.rowDescription}>
                       Test setup sends synthetic code without saving your
                       settings.
                     </p>
@@ -445,7 +442,7 @@ export function DiffrConfigSection({
                 )}
                 {summary && (
                   <pre
-                    {...stylex.props(styles.summaryResult)}
+                    className={styles.summaryResult}
                     aria-label="Sample summary"
                   >
                     {summary}
@@ -458,7 +455,7 @@ export function DiffrConfigSection({
       </details>
       {busy && <p role="status">Working…</p>}
       {error && (
-        <p role="alert" {...stylex.props(styles.error)}>
+        <p role="alert" className={styles.error}>
           {error}
         </p>
       )}
@@ -505,8 +502,8 @@ function SettingRow({
   children: ReactNode;
 }) {
   return (
-    <div {...stylex.props(styles.row)}>
-      <span {...stylex.props(styles.rowLabel)}>{label}</span>
+    <div className={styles.row}>
+      <span className={styles.rowLabel}>{label}</span>
       {children}
     </div>
   );
@@ -549,7 +546,7 @@ function ContextLines({
   return (
     <div>
       <TextField
-        xstyle={styles.input}
+        className={styles.input}
         aria-label="Context lines"
         type="number"
         min={0}

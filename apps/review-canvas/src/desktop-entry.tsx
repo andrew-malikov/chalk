@@ -1,4 +1,4 @@
-import { fontSize } from "@canvas/styles/scale.stylex";
+import { cn } from "@canvas/lib/utils";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { textStyles } from "@canvas/ui/text";
 import type {
@@ -6,7 +6,6 @@ import type {
   ReviewCanvasHandle,
   ReviewCanvasUi,
 } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { createRoot } from "react-dom/client";
 
 import { ReviewHome } from "./home/review-home-view";
@@ -21,7 +20,6 @@ import { ReviewContainerProvider } from "./review/review-root-context";
 import { SettingsPage } from "./settings/settings-page";
 import { shellStyles } from "./styles/shell-styles";
 import { themeStyles } from "./styles/theme-styles";
-import { tokens } from "./styles/tokens.stylex";
 
 import "./styles.css";
 
@@ -30,7 +28,7 @@ export { clearPersistedReviewViewState as clearReviewViewState } from "./review/
 export function reviewCanvasThemeClass(theme: "dark" | "light"): string {
   const light = theme === "light";
 
-  return stylex.props(themeStyles.vars, light && themeStyles.light).className!;
+  return cn(themeStyles.vars, light && themeStyles.light);
 }
 
 function ReviewCanvas({
@@ -42,7 +40,7 @@ function ReviewCanvas({
 }) {
   if (content.kind === "api")
     return (
-      <div data-review-api="" {...stylex.props(shellStyles.apiCanvas)}>
+      <div data-review-api="" className={shellStyles.apiCanvas}>
         <ApiCanvas
           key={content.reviewId}
           content={content}
@@ -57,7 +55,7 @@ function ReviewCanvas({
     if (content.error) {
       return (
         <EmptyState
-          xstyle={styles.sourceEmpty}
+          className={styles.sourceEmpty}
           title="Worktree unavailable"
           message={content.error}
         />
@@ -66,7 +64,7 @@ function ReviewCanvas({
 
     return (
       <EmptyState
-        xstyle={styles.sourceEmpty}
+        className={styles.sourceEmpty}
         title="Select a file in the source tree"
         message="⌘B toggles the tree"
       />
@@ -92,7 +90,7 @@ function ReviewCanvas({
   if (content.kind === "error") {
     return (
       <CanvasShell title="Session unavailable">
-        <p {...stylex.props(styles.shellText)}>{content.message}</p>
+        <p className={styles.shellText}>{content.message}</p>
       </CanvasShell>
     );
   }
@@ -138,9 +136,9 @@ function CanvasShell({
   children: React.ReactNode;
 }) {
   return (
-    <main {...stylex.props(styles.shell)}>
-      <div {...stylex.props(textStyles.eyebrow, styles.brand)}>Chalk</div>
-      <h1 {...stylex.props(styles.shellTitle)}>{title}</h1>
+    <main className={styles.shell}>
+      <div className={cn(textStyles.eyebrow, styles.brand)}>Chalk</div>
+      <h1 className={styles.shellTitle}>{title}</h1>
       {children}
     </main>
   );
@@ -177,18 +175,14 @@ export function mountReviewCanvas(
   // host element.
   const themeHost = container.ownerDocument.createElement("div");
 
-  // Recomposed on every change so StyleX settles vars against light.
+  // Apply palette overrides with the current theme.
   const applyTheme = (theme: "dark" | "light") => {
     const light = theme === "light";
 
     container.dataset.reviewTheme = theme;
     themeHost.className = [
       light && "review-app--theme-light",
-      stylex.props(
-        themeStyles.vars,
-        styles.themeHost,
-        light && themeStyles.light,
-      ).className,
+      cn(themeStyles.vars, styles.themeHost, light && themeStyles.light),
     ]
       .filter(Boolean)
       .join(" ");
@@ -271,35 +265,16 @@ function resetSessionDiagnostics(container: HTMLElement): void {
   delete container.dataset.reviewDiffSummaryIncludePatch;
 }
 
-const styles = stylex.create({
+const styles = {
   // Layout-neutral: it only carries the theme inside the scope boundary.
-  themeHost: {
-    display: "contents",
-  },
+  themeHost: "tw:[display:contents]",
   // The Source tab's VS Code-like watermark: quiet text centered in the
   // empty editor area, next to the native file tree.
-  sourceEmpty: {
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100%",
-    textAlign: "center",
-    userSelect: "none",
-  },
-  shell: {
-    width: "min(760px, 100%)",
-    margin: "0 auto",
-    padding: "32px",
-    color: tokens.ink,
-    font: `${fontSize.ui}/1.55 ${tokens.fontDisplay}`,
-  },
-  shellTitle: {
-    margin: "10px 0 6px",
-    fontSize: fontSize.display,
-  },
-  shellText: {
-    color: tokens.inkMuted,
-  },
-  brand: {
-    color: tokens.inkMuted,
-  },
-});
+  sourceEmpty:
+    "tw:items-center tw:justify-center tw:h-full tw:text-center tw:select-none",
+  shell:
+    "tw:w-[min(760px,_100%)] tw:m-[0_auto] tw:p-[32px] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-display)] tw:text-[length:13px] tw:font-normal tw:leading-[1.55]",
+  shellTitle: "tw:m-[10px_0_6px] tw:text-[length:22px]",
+  shellText: "tw:text-[color:var(--ink-muted)]",
+  brand: "tw:text-[color:var(--ink-muted)]",
+};

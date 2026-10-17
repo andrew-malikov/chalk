@@ -1,5 +1,6 @@
 import { Button as ShadcnButton } from "@canvas/components/ui/button";
-import { type StyleArg, withClass } from "@canvas/styles/stylex-props";
+import { cn } from "@canvas/lib/utils";
+import type { ClassValue } from "clsx";
 import { LoaderCircleIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 
@@ -9,25 +10,22 @@ type ButtonProps = NativeButtonProps & {
   loading?: boolean;
   variant?: "ghost" | "secondary" | "primary" | "warning";
   size?: "default" | "large";
-  className?: string;
-  xstyle?: StyleArg;
+  className?: ClassValue;
 };
 
 type IconButtonProps = NativeButtonProps & {
   loading?: boolean;
   "aria-label": string;
   size?: "small" | "default" | "large";
-  className?: string;
-  xstyle?: StyleArg;
+  className?: ClassValue;
 };
 
-// Keep the canvas's compact sizes and StyleX layout overrides while sharing
+// Keep the canvas's compact sizes and layout overrides while sharing
 // shadcn's variants, disabled states and keyboard focus with the shell.
 export function Button({
   variant = "secondary",
   size = "default",
   className,
-  xstyle,
   type = "button",
   loading = false,
   disabled,
@@ -48,18 +46,13 @@ export function Button({
       {...props}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      {...withClass(
-        [
-          "tw:relative tw:font-[family-name:var(--chrome-font)] tw:gap-1.5 tw:px-2.5 tw:has-[>svg]:px-2.5 tw:[&_svg:not([class*='size-'])]:size-[var(--chrome-icon-size)]",
-          size === "large" && "tw:h-7",
-          variant === "ghost" && "tw:text-muted-foreground",
-          variant === "warning" &&
-            "tw:bg-[var(--change-modified)] tw:text-[var(--on-warning)] tw:hover:bg-[var(--change-modified)]/90",
-          className,
-        ]
-          .filter(Boolean)
-          .join(" "),
-        xstyle,
+      className={cn(
+        "tw:relative tw:font-[family-name:var(--chrome-font)] tw:gap-1.5 tw:px-2.5 tw:has-[>svg]:px-2.5 tw:[&_svg:not([class*='size-'])]:size-[var(--chrome-icon-size)]",
+        size === "large" && "tw:h-7",
+        variant === "ghost" && "tw:text-muted-foreground",
+        variant === "warning" &&
+          "tw:bg-[var(--change-modified)] tw:text-[var(--on-warning)] tw:hover:bg-[var(--change-modified)]/90",
+        className,
       )}
     >
       {loading ? (
@@ -74,7 +67,6 @@ export function Button({
 export function IconButton({
   size = "default",
   className,
-  xstyle,
   type = "button",
   loading = false,
   disabled,
@@ -89,16 +81,11 @@ export function IconButton({
       {...props}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      {...withClass(
-        [
-          "tw:relative tw:text-muted-foreground tw:[&_svg:not([class*='size-'])]:size-[var(--chrome-icon-size)]",
-          size === "small" && "tw:size-5",
-          size === "large" && "tw:size-[30px]",
-          className,
-        ]
-          .filter(Boolean)
-          .join(" "),
-        xstyle,
+      className={cn(
+        "tw:relative tw:text-muted-foreground tw:[&_svg:not([class*='size-'])]:size-[var(--chrome-icon-size)]",
+        size === "small" && "tw:size-5",
+        size === "large" && "tw:size-[30px]",
+        className,
       )}
     >
       {loading ? (

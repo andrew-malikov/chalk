@@ -2,6 +2,7 @@ import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { NativeSelect } from "@canvas/components/ui/native-select";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { useReviewSession } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import {
   useReviewPanel,
   useReviewPanelActor,
@@ -15,10 +16,6 @@ import {
   type SoftwareMapRelationshipSnapshot,
   type SoftwareMapResolvedSnapshot,
 } from "@canvas/software-map/SoftwareMap";
-import { appMarker, documentMarker } from "@canvas/styles/markers.stylex";
-import { radius } from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { Chip } from "@canvas/ui/chip";
 import { EmptyState } from "@canvas/ui/empty-state";
 import { type JsonValue, isStringValue } from "@chalk/review-contracts";
@@ -29,7 +26,6 @@ import type {
   DatabaseStore,
 } from "@review/documents/document";
 import { type DiffSelection } from "@review/documents/lens-selection";
-import * as stylex from "@stylexjs/stylex";
 import { useSelector } from "@xstate/react";
 import {
   type ChangeEvent,
@@ -414,7 +410,7 @@ export function DatabaseLens(block: DatabaseLensProps) {
   // database-lens is a marker: the tutorial and document-embed-scroll.ts find it.
   const renderLensFigure = (stage: boolean) => (
     <figure
-      {...withClass(
+      className={cn(
         "database-lens",
         styles.figure,
         stage && styles.stage,
@@ -422,18 +418,18 @@ export function DatabaseLens(block: DatabaseLensProps) {
       )}
       style={{ height: stage ? "100%" : height }}
     >
-      <header {...stylex.props(diagramStyles.header, styles.header)}>
-        <div {...stylex.props(diagramStyles.headerMain)}>
+      <header className={cn(diagramStyles.header, styles.header)}>
+        <div className={diagramStyles.headerMain}>
           <Chip>DB</Chip>
-          <span {...stylex.props(diagramStyles.title)} data-review-copy-prose>
+          <span className={diagramStyles.title} data-review-copy-prose>
             {title ?? "Database lens"}
           </span>
         </div>
-        <div {...stylex.props(styles.actions)}>
+        <div className={styles.actions}>
           {activeUseCase && (
-            <div {...stylex.props(styles.selectTarget)}>
+            <div className={styles.selectTarget}>
               <NativeSelect
-                {...stylex.props(diagramStyles.control, diagramStyles.select)}
+                className={cn(diagramStyles.control, diagramStyles.select)}
                 aria-label="Database use case"
                 value={activeUseCase.id}
                 onChange={handleUseCaseChange}
@@ -451,7 +447,7 @@ export function DatabaseLens(block: DatabaseLensProps) {
               variant="ghost"
               size="xs"
               type="button"
-              {...withClass("diagram-tour-button", diagramStyles.control)}
+              className={cn("diagram-tour-button", diagramStyles.control)}
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -463,7 +459,7 @@ export function DatabaseLens(block: DatabaseLensProps) {
           )}
         </div>
       </header>
-      <div {...stylex.props(styles.diagram)}>
+      <div className={styles.diagram}>
         {activeUseCase ? (
           <DatabaseUseCaseDiagram
             navigation={navigation}
@@ -475,7 +471,7 @@ export function DatabaseLens(block: DatabaseLensProps) {
         ) : (
           <EmptyState
             variant="boxed"
-            xstyle={styles.empty}
+            className={styles.empty}
             message="No database use-cases declared."
           />
         )}
@@ -696,7 +692,7 @@ function DatabaseC4UseCaseDiagram({
   const relationshipStateById = highlights.operationStates;
 
   return (
-    <div {...stylex.props(styles.canvas)}>
+    <div className={styles.canvas}>
       <SoftwareMapFrame
         snapshot={frameSnapshot}
         hasResolvedSnapshot
@@ -1189,107 +1185,22 @@ function tourIdFor(lensId: string, useCaseId: string): string {
   return `${lensId}-${useCaseId}`;
 }
 
-const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
-
-// Where the theme defines --diagram-border: inside the app root.
-const inApp = () => stylex.when.ancestor(":is(*)", appMarker);
-
-const narrow = "@container review-content (max-width: 760px)";
-
-const styles = stylex.create({
+const styles = {
   // Inline it sits centered on the prose column, no narrower than the
   // block measure; the tour stage fills the overlay without card chrome.
-  figure: {
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1fr)",
-    gridTemplateRows: "auto minmax(0, 1fr)",
-    width: {
-      default: "100%",
-      [inDocument()]: "fit-content",
-      "@media (max-width: 720px)": {
-        default: "100%",
-        [inDocument()]: "calc(100cqi - 16px)",
-      },
-    },
-    minWidth: {
-      default: null,
-      [inDocument()]: `min(${tokens.reviewBlockMaxWidth}, calc(100cqi - ${tokens.reviewDocumentPaddingInline} - ${tokens.reviewDocumentPaddingInline}))`,
-    },
-    maxWidth: {
-      default: "100%",
-      [inDocument()]: `min(${tokens.reviewInlineDiagramMaxWidth}, calc(100cqi - ${tokens.reviewDocumentPaddingInline} - ${tokens.reviewDocumentPaddingInline}))`,
-      "@media (max-width: 720px)": {
-        default: "100%",
-        [inDocument()]: "none",
-      },
-    },
-    marginBlock: "24px",
-    marginInline: { default: 0, [inDocument()]: "auto" },
-    overflow: "hidden",
-    // Without --diagram-border the border drops out whole, as the shorthand
-    // it replaces did.
-    borderWidth: { default: null, [inApp()]: "1px" },
-    borderStyle: { default: null, [inApp()]: "solid" },
-    borderColor: { default: null, [inApp()]: tokens.diagramBorder },
-    borderRadius: radius.control,
-    backgroundColor: tokens.diagramSurface,
-    boxShadow: "none",
-  },
-  stage: {
-    width: "100%",
-    minWidth: 0,
-    maxWidth: "none",
-    height: "100%",
-    minHeight: 0,
-    marginBlock: 0,
-    marginInline: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: 0,
-    boxShadow: "none",
-  },
-  header: {
-    justifyContent: "space-between",
-    alignItems: { default: "center", [narrow]: "flex-start" },
-    flexDirection: { default: null, [narrow]: "column" },
-    height: { default: null, [narrow]: "auto" },
-  },
-  actions: {
-    display: { default: "inline-flex", [narrow]: "grid" },
-    flex: { default: "0 1 min(58%, 460px)", [narrow]: "0 0 auto" },
-    gridTemplateColumns: { default: null, [narrow]: "minmax(0, 1fr) auto" },
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: "8px",
-    width: { default: null, [narrow]: "100%" },
-    minWidth: 0,
-  },
-  selectTarget: {
-    position: "relative",
-    display: "inline-flex",
-    flex: { default: "1 1 320px", [narrow]: "1 1 auto" },
-    alignItems: "center",
-    width: { default: null, [narrow]: "auto" },
-    minWidth: { default: "180px", [narrow]: 0 },
-    maxWidth: { default: "360px", [narrow]: "none" },
-  },
-  diagram: {
-    position: "relative",
-    overflow: "auto",
-    minWidth: 0,
-    minHeight: 0,
-    backgroundColor: tokens.diagramCanvasBg,
-  },
-  canvas: {
-    position: "relative",
-    width: "100%",
-    height: "100%",
-    minWidth: 0,
-    minHeight: 0,
-    backgroundColor: tokens.diagramCanvasBg,
-  },
-  empty: {
-    height: "100%",
-  },
-});
+  figure:
+    "tw:grid tw:grid-cols-[minmax(0,_1fr)] tw:grid-rows-[auto_minmax(0,_1fr)] tw:w-full tw:[&:is(.canvas-document:is(*)_*)]:w-fit tw:[@media_(max-width:_720px)]:w-full tw:[@media_(max-width:_720px)]:[&:is(.canvas-document:is(*)_*)]:w-[calc(100cqi_-_16px)] tw:[&:is(.canvas-document:is(*)_*)]:min-w-[min(var(--review-block-max-width),_calc(100cqi_-_var(--review-document-padding-inline)_-_var(--review-document-padding-inline)))] tw:max-w-full tw:[&:is(.canvas-document:is(*)_*)]:max-w-[min(var(--review-inline-diagram-max-width),_calc(100cqi_-_var(--review-document-padding-inline)_-_var(--review-document-padding-inline)))] tw:[@media_(max-width:_720px)]:max-w-full tw:[@media_(max-width:_720px)]:[&:is(.canvas-document:is(*)_*)]:max-w-none tw:my-[24px] tw:mx-0 tw:[&:is(.canvas-document:is(*)_*)]:mx-[auto] tw:overflow-hidden tw:[&:is(.canvas-app:is(*)_*)]:border-[1px] tw:[&:is(.canvas-app:is(*)_*)]:border-solid tw:[&:is(.canvas-app:is(*)_*)]:border-[color:var(--diagram-border)] tw:rounded-[6px] tw:bg-[color:var(--diagram-surface)] tw:[box-shadow:none]",
+  stage:
+    "tw:w-full tw:min-w-0 tw:max-w-none tw:h-full tw:min-h-0 tw:my-0 tw:mx-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-none tw:[box-shadow:none]",
+  header:
+    "tw:justify-between tw:items-center tw:[@container_review-content_(max-width:_760px)]:items-start tw:[@container_review-content_(max-width:_760px)]:flex-col tw:[@container_review-content_(max-width:_760px)]:h-auto",
+  actions:
+    "tw:inline-flex tw:[@container_review-content_(max-width:_760px)]:grid tw:flex-[0_1_min(58%,_460px)] tw:[@container_review-content_(max-width:_760px)]:flex-[0_0_auto] tw:[@container_review-content_(max-width:_760px)]:grid-cols-[minmax(0,_1fr)_auto] tw:items-center tw:justify-end tw:gap-[8px] tw:[@container_review-content_(max-width:_760px)]:w-full tw:min-w-0",
+  selectTarget:
+    "tw:relative tw:inline-flex tw:flex-[1_1_320px] tw:[@container_review-content_(max-width:_760px)]:flex-[1_1_auto] tw:items-center tw:[@container_review-content_(max-width:_760px)]:w-auto tw:min-w-[180px] tw:[@container_review-content_(max-width:_760px)]:min-w-0 tw:max-w-[360px] tw:[@container_review-content_(max-width:_760px)]:max-w-none",
+  diagram:
+    "tw:relative tw:overflow-auto tw:min-w-0 tw:min-h-0 tw:bg-[color:var(--diagram-canvas-bg)]",
+  canvas:
+    "tw:relative tw:w-full tw:h-full tw:min-w-0 tw:min-h-0 tw:bg-[color:var(--diagram-canvas-bg)]",
+  empty: "tw:h-full",
+};

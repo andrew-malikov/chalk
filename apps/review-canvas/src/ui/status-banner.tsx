@@ -1,6 +1,3 @@
-import { fontSize } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
 import type { ReactElement, ReactNode } from "react";
 
 export function StatusBanner({
@@ -11,26 +8,14 @@ export function StatusBanner({
   action?: ReactNode;
 }): ReactElement {
   return (
-    <div {...stylex.props(styles.banner)} role="status">
+    <div className={styles.banner} role="status">
       <span>{children}</span>
       {action}
     </div>
   );
 }
 
-const styles = stylex.create({
-  banner: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "12px",
-    padding: "6px 12px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.ruleSoft,
-    backgroundColor: `color-mix(in srgb, ${tokens.accent} 12%, ${tokens.surface})`,
-    color: tokens.ink,
-    fontFamily: tokens.chromeFont,
-    fontSize: fontSize.body,
-  },
-});
+const styles = {
+  banner:
+    "tw:flex tw:items-center tw:justify-center tw:gap-[12px] tw:p-[6px_12px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule-soft)] tw:bg-[color:color-mix(in_srgb,_var(--accent)_12%,_var(--surface))] tw:text-[color:var(--ink)] tw:font-[family-name:var(--chrome-font)] tw:text-[length:12px]",
+};

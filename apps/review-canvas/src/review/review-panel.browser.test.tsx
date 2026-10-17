@@ -14,7 +14,11 @@ import {
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GuidedTourPanel, ReviewPanelHost } from "./review-components";
+import {
+  GuidedTourPanel,
+  ReviewPanelFrame,
+  ReviewPanelHost,
+} from "./review-components";
 import { ReviewProvider } from "./review-context";
 import {
   ReviewPanelProvider,
@@ -71,6 +75,34 @@ afterEach(async () => {
 });
 
 describe("Review panel host", () => {
+  it("keeps a docked tour panel at full height inside a narrow canvas", async () => {
+    const container = document.createElement("div");
+    container.style.cssText =
+      "container: review-canvas / inline-size; width: 640px; height: 500px";
+    document.body.append(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      renderWithSession(
+        <ReviewPanelProvider>
+          <ReviewPanelFrame
+            tour
+            docked
+            title="Tour"
+            closeLabel="Close tour"
+            onClose={() => {}}
+          >
+            <p>First stop</p>
+          </ReviewPanelFrame>
+        </ReviewPanelProvider>,
+      );
+    });
+
+    expect(
+      container.querySelector("aside")!.getBoundingClientRect().height,
+    ).toBe(500);
+  });
+
   it("replaces the active panel when a document peek opens", async () => {
     const addEventListener = vi.spyOn(document, "addEventListener");
     const container = document.createElement("div");

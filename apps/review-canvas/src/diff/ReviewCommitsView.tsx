@@ -2,12 +2,11 @@ import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { countLabel } from "@canvas/home/review-home-view";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useTooltip } from "@canvas/lib/use-tooltip";
+import { cn } from "@canvas/lib/utils";
 import { canvasQueryKeys } from "@canvas/review/canvas-query";
 import { shortRef } from "@canvas/review/review-branch-range";
 import { controlStyles } from "@canvas/styles/controls-styles";
-import { chevronMarker } from "@canvas/styles/markers.stylex";
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { chevronMarker } from "@canvas/styles/markers";
 import { IconButton } from "@canvas/ui/button";
 import { CopyButton } from "@canvas/ui/copy-text";
 import { CodeIcon, DisclosureChevron } from "@canvas/ui/icons";
@@ -16,7 +15,6 @@ import {
   type ReviewCommitSummary,
   type ReviewDiffFileWire,
 } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { useQuery } from "@tanstack/react-query";
 import { CircleSmall } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -38,14 +36,14 @@ export function ReviewCommitsView({
   if (range.sourceUnavailable) return null;
 
   return (
-    <div {...stylex.props(styles.view)}>
-      <div {...stylex.props(styles.column)}>
-        <header {...stylex.props(styles.range)}>
-          <strong {...stylex.props(styles.rangeCount)}>
+    <div className={styles.view}>
+      <div className={styles.column}>
+        <header className={styles.range}>
+          <strong className={styles.rangeCount}>
             {countLabel(commits.length, "commit")}
           </strong>
           <span
-            {...stylex.props(styles.rangeRefs)}
+            className={styles.rangeRefs}
             title={`${range.baseCommit}..${range.headCommit}`}
           >
             {shortRef(range.baseRef || range.baseCommit)} →{" "}
@@ -69,13 +67,13 @@ function CommitGroups({
 
   return groups.map((group, index) => (
     <section key={group.key}>
-      <div {...stylex.props(styles.date, index > 0 && styles.laterDate)}>
-        <CircleSmall {...stylex.props(styles.dateIcon)} aria-hidden="true" />
-        <h2 {...stylex.props(textStyles.eyebrow, styles.dateHeading)}>
+      <div className={cn(styles.date, index > 0 && styles.laterDate)}>
+        <CircleSmall className={styles.dateIcon} aria-hidden="true" />
+        <h2 className={cn(textStyles.eyebrow, styles.dateHeading)}>
           Commits on {group.label}
         </h2>
       </div>
-      <div {...stylex.props(styles.timeline)}>
+      <div className={styles.timeline}>
         {group.commits.map((commit) => (
           <CommitRow
             key={commit.commit}
@@ -121,26 +119,26 @@ function CommitRow({
     : 0;
 
   return (
-    <article {...stylex.props(styles.card, expanded && styles.cardExpanded)}>
-      <div {...stylex.props(styles.header, expanded && styles.headerExpanded)}>
+    <article className={cn(styles.card, expanded && styles.cardExpanded)}>
+      <div className={cn(styles.header, expanded && styles.headerExpanded)}>
         <ButtonPrimitive
           variant="ghost"
           size="xs"
           type="button"
-          {...stylex.props(chevronMarker, styles.toggle)}
+          className={cn(chevronMarker, styles.toggle)}
           aria-expanded={expanded}
           onClick={toggleExpanded}
           title={commit.subject}
         >
-          <DisclosureChevron expanded={expanded} xstyle={styles.chevron} />
-          <strong {...stylex.props(styles.subject)}>{commit.subject}</strong>
+          <DisclosureChevron expanded={expanded} className={styles.chevron} />
+          <strong className={styles.subject}>{commit.subject}</strong>
         </ButtonPrimitive>
-        <span {...stylex.props(styles.actions)}>
-          <span {...stylex.props(styles.sha)}>{commit.commit.slice(0, 8)}</span>
+        <span className={styles.actions}>
+          <span className={styles.sha}>{commit.commit.slice(0, 8)}</span>
           <CopyButton
             text={commit.commit}
             label="Copy commit SHA"
-            iconStyle={controlStyles.chromeIcon}
+            iconClassName={controlStyles.chromeIcon}
           />
           <IconButton
             ref={openTooltip}
@@ -148,10 +146,10 @@ function CommitRow({
             aria-label="Open commit diff"
             onClick={() => onOpenDiff(commit)}
           >
-            <CodeIcon xstyle={controlStyles.chromeIcon} />
+            <CodeIcon className={controlStyles.chromeIcon} />
           </IconButton>
         </span>
-        <span {...stylex.props(styles.meta)}>
+        <span className={styles.meta}>
           {commit.author} · {formatCommitTime(commit.authoredAt)} ·{" "}
           {countLabel(commit.fileCount, "file")}{" "}
           <DiffCount
@@ -161,24 +159,24 @@ function CommitRow({
         </span>
       </div>
       {expanded ? (
-        <div {...stylex.props(styles.files)}>
+        <div className={styles.files}>
           {files.isPending ? (
-            <p {...stylex.props(styles.filesNote)}>Loading files…</p>
+            <p className={styles.filesNote}>Loading files…</p>
           ) : null}
           {files.isError ? (
-            <p {...stylex.props(styles.filesNote)}>{files.error.message}</p>
+            <p className={styles.filesNote}>{files.error.message}</p>
           ) : null}
           {visibleFiles?.files.map((file) => (
             <ButtonPrimitive
               variant="ghost"
               size="xs"
               type="button"
-              {...stylex.props(styles.file)}
+              className={styles.file}
               key={file.path}
               onClick={() => onOpenDiff(commit, file.path)}
             >
               <FileMark status={file.status} />
-              <span {...stylex.props(styles.filePath)}>{file.path}</span>
+              <span className={styles.filePath}>{file.path}</span>
               <DiffCount
                 additions={file.additions}
                 deletions={file.deletions}
@@ -190,7 +188,7 @@ function CommitRow({
               variant="ghost"
               size="xs"
               type="button"
-              {...stylex.props(styles.filesFooter)}
+              className={styles.filesFooter}
               onClick={() => onOpenDiff(commit)}
             >
               {countLabel(omittedFileCount, "more file")}
@@ -276,199 +274,48 @@ function formatCommitTime(value: string): string {
   }).format(new Date(value));
 }
 
-const styles = stylex.create({
-  view: {
-    minHeight: "100%",
-    padding: { default: "32px 24px", "@media (max-width: 760px)": "24px 16px" },
-  },
-  column: {
-    width: "min(760px, 100%)",
-    margin: "0 auto",
-  },
-  range: {
-    display: "flex",
-    alignItems: "baseline",
-    gap: "12px",
-    paddingBottom: "16px",
-  },
-  rangeCount: {
-    color: tokens.ink,
-    flexShrink: 0,
-    font: `${fontWeight.semibold} ${fontSize.reading}/20px ${tokens.fontSans}`,
-    whiteSpace: "nowrap",
-  },
-  rangeRefs: {
-    minWidth: 0,
-    overflow: "hidden",
-    color: tokens.inkMuted,
-    font: `${fontSize.small} ${tokens.fontMono}`,
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  date: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    padding: "8px 0",
-  },
-  laterDate: {
-    paddingTop: "10px",
-  },
-  dateIcon: {
-    width: "14px",
-    height: "14px",
-    flex: "0 0 14px",
-    fill: "none",
-    stroke: tokens.inkFaint,
-    strokeWidth: "1.5",
-  },
-  dateHeading: {
-    margin: 0,
-  },
-  timeline: {
-    position: "relative",
-    marginLeft: "6px",
-    paddingLeft: "22px",
-    "::before": {
-      position: "absolute",
-      top: "-8px",
-      bottom: 0,
-      left: 0,
-      width: "1px",
-      backgroundColor: tokens.ruleSoft,
-      content: "''",
-    },
-  },
-  card: {
-    marginBottom: "6px",
-    overflow: "hidden",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.surface,
-    backgroundColor: tokens.surface,
-    boxShadow: "none",
-  },
-  cardExpanded: {
-    borderColor: tokens.ruleSoft,
-  },
+const styles = {
+  view: "tw:min-h-full tw:p-[32px_24px] tw:[@media_(max-width:_760px)]:p-[24px_16px]",
+  column: "tw:w-[min(760px,_100%)] tw:m-[0_auto]",
+  range: "tw:flex tw:items-baseline tw:gap-[12px] tw:pb-[16px]",
+  rangeCount:
+    "tw:text-[color:var(--ink)] tw:shrink-0 tw:font-[family-name:var(--font-sans)] tw:text-[length:15px] tw:font-semibold tw:leading-[20px] tw:whitespace-nowrap",
+  rangeRefs:
+    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-mono)] tw:text-[length:11px] tw:font-normal tw:leading-[normal] tw:text-ellipsis tw:whitespace-nowrap",
+  date: "tw:flex tw:items-center tw:gap-[10px] tw:p-[8px_0]",
+  laterDate: "tw:pt-[10px]",
+  dateIcon:
+    "tw:size-[14px] tw:flex-[0_0_14px] tw:fill-[none] tw:stroke-[var(--ink-faint)] tw:stroke-[1.5]",
+  dateHeading: "tw:m-0",
+  timeline:
+    "tw:relative tw:ml-[6px] tw:pl-[22px] tw:[&::before]:absolute tw:[&::before]:top-[-8px] tw:[&::before]:bottom-0 tw:[&::before]:left-0 tw:[&::before]:w-[1px] tw:[&::before]:bg-[color:var(--rule-soft)] tw:[&::before]:[content:'']",
+  card: "tw:mb-[6px] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[box-shadow:none]",
+  cardExpanded: "tw:border-[color:var(--rule-soft)]",
   // Subject over who, when and how much; the commit's actions centered at
   // the right. The toggle's hit area covers the whole header, under the
   // actions, so the header draws its focus ring.
-  header: {
-    position: "relative",
-    display: "grid",
-    alignItems: "center",
-    padding: "10px 12px",
-    gap: "4px 12px",
-    gridTemplateColumns: "minmax(0, 1fr) auto",
-    boxShadow: {
-      default: null,
-      [stylex.when.descendant(":focus-visible", chevronMarker)]:
-        `inset 0 0 0 1px ${tokens.accent}`,
-    },
-  },
-  headerExpanded: {
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.ruleSoft,
-  },
-  toggle: {
-    display: "flex",
-    justifyContent: "flex-start",
-    minWidth: 0,
-    alignItems: "center",
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: "transparent",
-    color: "inherit",
-    gap: "10px",
-    textAlign: "left",
-    outline: { default: null, ":focus-visible": "none" },
-    "::after": {
-      position: "absolute",
-      inset: 0,
-      content: "''",
-    },
-  },
-  subject: {
-    overflow: "hidden",
-    color: tokens.ink,
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.medium,
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  actions: {
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    gap: "2px",
-    gridColumn: 2,
-    gridRow: "1 / 3",
-  },
-  sha: {
-    marginRight: "6px",
-    color: tokens.inkFaint,
-    font: `${fontSize.small} ${tokens.fontMono}`,
-    fontVariantNumeric: "tabular-nums",
-  },
-  meta: {
-    font: `${fontSize.small} ${tokens.fontSans}`,
-    fontVariantNumeric: "tabular-nums",
-    paddingLeft: "26px",
-    color: tokens.inkMuted,
-  },
-  files: {
-    padding: "6px 0",
-  },
-  filesNote: {
-    margin: "6px 12px",
-    color: tokens.inkFaint,
-    fontSize: fontSize.small,
-  },
-  file: {
-    display: "flex",
-    width: "100%",
-    alignItems: "center",
-    gap: "10px",
-    padding: "6px 12px",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: { default: "transparent", ":hover": tokens.controlBg },
-    color: tokens.ink,
-    fontSize: fontSize.small,
-    textAlign: "left",
-  },
-  filePath: {
-    minWidth: 0,
-    flex: 1,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  filesFooter: {
-    padding: "6px 12px 4px 38px",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: "transparent",
-    color: { default: tokens.inkFaint, ":hover": tokens.accent },
-    fontSize: fontSize.micro,
-  },
+  header:
+    "tw:relative tw:grid tw:items-center tw:p-[10px_12px] tw:gap-[4px_12px] tw:grid-cols-[minmax(0,_1fr)_auto] tw:[&:has(.canvas-chevron:focus-visible)]:[box-shadow:inset_0_0_0_1px_var(--accent)]",
+  headerExpanded:
+    "tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule-soft)]",
+  toggle:
+    "tw:has-[>svg]:px-0 tw:flex tw:justify-start tw:min-w-0 tw:items-center tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:text-[color:inherit] tw:gap-[10px] tw:text-left tw:[&:focus-visible]:[outline:none] tw:[&::after]:absolute tw:[&::after]:inset-0 tw:[&::after]:[content:'']",
+  subject:
+    "tw:overflow-hidden tw:text-[color:var(--ink)] tw:text-[length:12px] tw:font-medium tw:text-ellipsis tw:whitespace-nowrap",
+  actions:
+    "tw:relative tw:flex tw:items-center tw:gap-[2px] tw:[grid-column:2] tw:[grid-row:1_/_3]",
+  sha: "tw:mr-[6px] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-mono)] tw:text-[length:11px] tw:font-normal tw:leading-[normal] tw:tabular-nums",
+  meta: "tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[normal] tw:tabular-nums tw:pl-[26px] tw:text-[color:var(--ink-muted)]",
+  files: "tw:p-[6px_0]",
+  filesNote:
+    "tw:m-[6px_12px] tw:text-[color:var(--ink-faint)] tw:text-[length:11px]",
+  file: "tw:flex tw:w-full tw:items-center tw:gap-[10px] tw:p-[6px_12px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:[&:hover]:bg-[color:var(--control-bg)] tw:text-[color:var(--ink)] tw:text-[length:11px] tw:text-left",
+  filePath:
+    "tw:min-w-0 tw:flex-[1] tw:overflow-hidden tw:text-ellipsis tw:whitespace-nowrap",
+  filesFooter:
+    "tw:p-[6px_12px_4px_38px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:text-[color:var(--ink-faint)] tw:[&:hover]:text-[color:var(--accent)] tw:text-[length:10px]",
   // The whole header is the toggle's hit area, so its chevron stays quiet on
   // hover.
-  chevron: {
-    width: "16px",
-    height: "16px",
-    margin: 0,
-    color: {
-      default: tokens.inkFaint,
-      [stylex.when.ancestor(":focus-visible:not(:hover)", chevronMarker)]:
-        tokens.ink,
-    },
-  },
-});
+  chevron:
+    "tw:size-[16px] tw:m-0 tw:text-[color:var(--ink-faint)] tw:[&:is(.canvas-chevron:focus-visible:not(:hover)_*)]:text-[color:var(--ink)]",
+};

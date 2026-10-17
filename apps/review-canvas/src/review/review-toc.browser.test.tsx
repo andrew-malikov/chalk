@@ -1,7 +1,7 @@
 import { documentStyles } from "@canvas/documents/document-styles";
-import { documentMarker } from "@canvas/styles/markers.stylex";
+import { cn } from "@canvas/lib/utils";
+import { documentMarker } from "@canvas/styles/markers";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import * as stylex from "@stylexjs/stylex";
 import { act, createRef } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -24,7 +24,7 @@ globalThis.ResizeObserver ??= NoopResizeObserver as never;
 
 function renderArticle(headings: string[]): HTMLElement {
   const article = document.createElement("article");
-  article.className = `review-document ${stylex.props(documentStyles.article, documentMarker).className}`;
+  article.className = `review-document ${cn(documentStyles.article, documentMarker)}`;
   article.innerHTML = headings
     .map(
       (heading, index) =>
@@ -52,11 +52,11 @@ describe("ReviewToc", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
     shell = document.createElement("main");
-    shell.className = stylex.props(shellStyles.documentShell).className!;
+    shell.className = shellStyles.documentShell;
     region = document.createElement("div");
-    region.className = `review-view-region--review ${stylex.props(shellStyles.reviewRegion).className}`;
+    region.className = `review-view-region--review ${shellStyles.reviewRegion}`;
     view = document.createElement("div");
-    view.className = `review-document-view ${stylex.props(shellStyles.documentView).className}`;
+    view.className = `review-document-view ${shellStyles.documentView}`;
     mount = document.createElement("div");
     view.append(mount);
     region.append(view);

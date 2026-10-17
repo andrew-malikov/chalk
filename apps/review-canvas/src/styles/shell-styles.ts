@@ -1,346 +1,75 @@
-import { motion } from "@canvas/styles/scale.stylex";
-import * as stylex from "@stylexjs/stylex";
-
-import { appMarker, topbarActionsMarker } from "./markers.stylex";
-import { tokens } from "./tokens.stylex";
-
-// The app shell: grid, side-panel dividers, top bar and view regions.
-const narrowCanvas = "@container review-canvas (max-width: 929px)";
-
-const narrowViewport = "@media (max-width: 720px)";
-
-const peekOpen = () => stylex.when.ancestor("[data-peek-open]", appMarker);
-
-const inTopbarActions = () =>
-  stylex.when.ancestor(":is(*)", topbarActionsMarker);
-
-const noBorder = {
-  borderWidth: 0,
-  borderStyle: "none",
-  borderColor: "currentcolor",
-} as const;
-
-export const shellStyles = stylex.create({
+export const shellStyles = {
   // Narrow layouts dock the panel to the bottom half of the canvas as a
   // sheet, so the peek column collapses.
-  appPeekOpen: {
-    gridTemplateColumns: {
-      default: "minmax(0, 1fr) 10px var(--side-peek-width, 560px)",
-      [narrowCanvas]: {
-        default: "minmax(0, 1fr) 0 0",
-        [narrowViewport]: "minmax(0, 1fr)",
-      },
-      [narrowViewport]: "minmax(0, 1fr)",
-    },
-  },
+  appPeekOpen:
+    "tw:grid-cols-[minmax(0,_1fr)_10px_var(--side-peek-width,_560px)] tw:[@container_review-canvas_(max-width:_929px)]:grid-cols-[minmax(0,_1fr)_0_0] tw:[@container_review-canvas_(max-width:_929px)]:[@media_(max-width:_720px)]:grid-cols-[minmax(0,_1fr)] tw:[@media_(max-width:_720px)]:grid-cols-[minmax(0,_1fr)]",
   // Lit on the separator itself: a condition on the root would restyle the
   // whole canvas as a drag starts and ends.
-  peekResizerActive: {
-    "::before": { backgroundColor: tokens.inkFaint },
-  },
+  peekResizerActive: "tw:[&::before]:bg-[color:var(--ink-faint)]",
   // No inherited cursor or user-select here, for the same reason; the
   // separator's pointer capture keeps its cursor and blocks selection.
-  appResizing: {
-    transition: "none",
-  },
-  appRestoredPanel: {
-    transition: "none",
-  },
-  apiCanvas: {
-    display: "flex",
-    flexDirection: "column",
-    height: "100%",
-    minHeight: 0,
-  },
-  documentShell: {
-    position: "relative",
-    display: "grid",
-    // The explicit minmax(0, 1fr) column lets rows shrink below their
-    // min-content width (e.g. wide diagrams) when the panel narrows the
-    // shell, instead of overflowing under the side panel.
-    gridTemplateColumns: "minmax(0, 1fr)",
-    gridTemplateRows: "auto minmax(0, 1fr)",
-    minWidth: 0,
-    height: "100%",
-    overflow: "hidden",
-    container: "review-content / inline-size",
-  },
-  documentShellBanner: {
-    gridTemplateRows: "auto auto minmax(0, 1fr)",
-  },
+  appResizing: "tw:[transition:none]",
+  appRestoredPanel: "tw:[transition:none]",
+  apiCanvas: "tw:flex tw:flex-col tw:h-full tw:min-h-0",
+  documentShell:
+    "tw:relative tw:grid tw:grid-cols-[minmax(0,_1fr)] tw:grid-rows-[auto_minmax(0,_1fr)] tw:min-w-0 tw:h-full tw:overflow-hidden tw:[container:review-content_/_inline-size]",
+  documentShellBanner: "tw:grid-rows-[auto_auto_minmax(0,_1fr)]",
   // The host's own box lives in the collapsed third grid column on narrow
   // layouts; dissolving it lets the sheet position against the app instead
   // of a 0-width, overflow-hidden ancestor.
-  detailHost: {
-    position: "relative",
-    display: {
-      default: "grid",
-      [narrowCanvas]: "contents",
-      [narrowViewport]: "contents",
-    },
-    minWidth: 0,
-    height: "100%",
-    overflow: "hidden",
-  },
-
+  detailHost:
+    "tw:relative tw:grid tw:[@container_review-canvas_(max-width:_929px)]:[display:contents] tw:[@media_(max-width:_720px)]:[display:contents] tw:min-w-0 tw:h-full tw:overflow-hidden",
   // The vertical divider between a pane and its side panel.
-  resizer: {
-    position: "relative",
-    display: {
-      default: null,
-      [peekOpen()]: {
-        default: null,
-        [narrowCanvas]: "none",
-        [narrowViewport]: "none",
-      },
-    },
-    width: "10px",
-    minWidth: "10px",
-    zIndex: 1,
-    cursor: "col-resize",
-    backgroundColor: tokens.transparent,
-    ...noBorder,
-    touchAction: "none",
-    outline: {
-      default: null,
-      ":focus-visible": `1px solid ${tokens.ruleSoft}`,
-    },
-    outlineOffset: { default: null, ":focus-visible": "-1px" },
-    "::before": {
-      position: "absolute",
-      top: 0,
-      bottom: 0,
-      left: "50%",
-      width: {
-        default: "1px",
-        ":hover": "3px",
-        ":focus-visible": "3px",
-        ":active": "3px",
-      },
-      backgroundColor: {
-        default: tokens.rule,
-        ":hover": tokens.inkFaint,
-        ":focus-visible": tokens.inkFaint,
-        ":active": tokens.inkFaint,
-      },
-      transform: "translateX(-50%)",
-      transitionProperty: "width, background-color",
-      transitionDuration: motion.fast,
-      // Passing over a divider does not flash it.
-      transitionDelay: { default: motion.instant, ":hover": motion.fast },
-      content: "''",
-    },
-  },
+  resizer:
+    "tw:relative tw:[@container_review-canvas_(max-width:_929px)]:[&:is(.canvas-app[data-peek-open]_*)]:hidden tw:[@media_(max-width:_720px)]:[&:is(.canvas-app[data-peek-open]_*)]:hidden tw:w-[10px] tw:min-w-[10px] tw:z-[1] tw:[cursor:col-resize] tw:bg-[color:var(--transparent)] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[touch-action:none] tw:[&:focus-visible]:[outline:1px_solid_var(--rule-soft)] tw:[&:focus-visible]:outline-offset-[-1px] tw:[&::before]:absolute tw:[&::before]:top-0 tw:[&::before]:bottom-0 tw:[&::before]:left-[50%] tw:[&::before]:w-[1px] tw:[&:hover::before]:w-[3px] tw:[&:focus-visible::before]:w-[3px] tw:[&:active::before]:w-[3px] tw:[&::before]:bg-[color:var(--rule)] tw:[&:hover::before]:bg-[color:var(--ink-faint)] tw:[&:focus-visible::before]:bg-[color:var(--ink-faint)] tw:[&:active::before]:bg-[color:var(--ink-faint)] tw:[&::before]:[transform:translateX(-50%)] tw:[&::before]:[transition-property:width,_background-color] tw:[&::before]:[transition-duration:120ms] tw:[&::before]:[transition-delay:0s] tw:[&:hover::before]:[transition-delay:120ms] tw:[&::before]:[content:'']",
   // Rule flush left; grabs rightward over the panel's padding, never the
   // scrollbar.
-  resizerGrabPanel: {
-    "::before": { left: 0, transform: "none" },
-    "::after": {
-      position: "absolute",
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: "-8px",
-      content: "''",
-    },
-  },
+  resizerGrabPanel:
+    "tw:[&::before]:left-0 tw:[&::before]:[transform:none] tw:[&::after]:absolute tw:[&::after]:top-0 tw:[&::after]:bottom-0 tw:[&::after]:left-0 tw:[&::after]:right-[-8px] tw:[&::after]:[content:'']",
   // The column continues the panel and its header.
-  peekResizer: {
-    height: "100%",
-    borderColor: tokens.transparent,
-    backgroundImage: `linear-gradient(${tokens.surface} calc(${tokens.reviewHeaderHeight} - 1px), ${tokens.rule} 0 ${tokens.reviewHeaderHeight}, ${tokens.transparent} 0)`,
-  },
+  peekResizer:
+    "tw:h-full tw:border-[color:var(--transparent)] tw:[background-image:linear-gradient(var(--surface)_calc(var(--review-header-height)_-_1px),_var(--rule)_0_var(--review-header-height),_var(--transparent)_0)]",
   // Horizontal twin of the divider for the narrow-layout bottom sheet: it
   // drags the sheet height. Hidden on wide layouts, where the vertical
   // divider owns resizing.
-  sheetResizer: {
-    position: "relative",
-    display: {
-      default: "none",
-      [narrowCanvas]: "block",
-      [narrowViewport]: "block",
-    },
-    flex: "0 0 auto",
-    height: "10px",
-    minHeight: "10px",
-    cursor: "row-resize",
-    backgroundColor: tokens.transparent,
-    ...noBorder,
-    touchAction: "none",
-    outline: {
-      default: null,
-      ":focus-visible": `1px solid ${tokens.ruleSoft}`,
-    },
-    outlineOffset: { default: null, ":focus-visible": "-1px" },
-    "::before": {
-      position: "absolute",
-      top: "50%",
-      right: 0,
-      left: 0,
-      height: "1px",
-      backgroundColor: {
-        default: tokens.rule,
-        ":hover": tokens.inkFaint,
-        ":focus-visible": tokens.inkFaint,
-      },
-      transform: "translateY(-50%)",
-      content: "''",
-    },
-  },
-
-  topbar: {
-    position: "sticky",
-    top: 0,
-    zIndex: tokens.reviewDebugLayer,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "8px",
-    height: tokens.reviewHeaderHeight,
-    padding: "0 12px 0 16px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.rule,
-    backgroundColor: tokens.surface,
-  },
-  topbarLeft: {
-    display: "flex",
-    flex: "0 0 auto",
-    alignItems: "center",
-  },
-  topbarActions: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    flex: "1 1 auto",
-    minWidth: 0,
-    height: "100%",
-    overflowX: "auto",
-  },
+  sheetResizer:
+    "tw:relative tw:hidden tw:[@container_review-canvas_(max-width:_929px)]:block tw:[@media_(max-width:_720px)]:block tw:flex-[0_0_auto] tw:h-[10px] tw:min-h-[10px] tw:[cursor:row-resize] tw:bg-[color:var(--transparent)] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[touch-action:none] tw:[&:focus-visible]:[outline:1px_solid_var(--rule-soft)] tw:[&:focus-visible]:outline-offset-[-1px] tw:[&::before]:absolute tw:[&::before]:top-[50%] tw:[&::before]:right-0 tw:[&::before]:left-0 tw:[&::before]:h-[1px] tw:[&::before]:bg-[color:var(--rule)] tw:[&:hover::before]:bg-[color:var(--ink-faint)] tw:[&:focus-visible::before]:bg-[color:var(--ink-faint)] tw:[&::before]:[transform:translateY(-50%)] tw:[&::before]:[content:'']",
+  topbar:
+    "tw:sticky tw:top-0 tw:z-[var(--review-debug-layer)] tw:flex tw:items-center tw:justify-between tw:gap-[8px] tw:h-[var(--review-header-height)] tw:p-[0_12px_0_16px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--surface)]",
+  topbarLeft: "tw:flex tw:flex-[0_0_auto] tw:items-center",
+  topbarActions:
+    "tw:flex tw:items-center tw:gap-[10px] tw:flex-[1_1_auto] tw:min-w-0 tw:h-full tw:overflow-x-auto",
   // Every item in the action row keeps its size.
-  topbarItem: {
-    flex: { default: null, [inTopbarActions()]: "0 0 auto" },
-  },
+  topbarItem: "tw:[&:is(.canvas-topbar-actions:is(*)_*)]:flex-[0_0_auto]",
   // Popovers in the action row hang below their control, anchored by
   // useAnchoredPopover.
-  topbarPopover: {
-    position: { default: null, [inTopbarActions()]: "fixed" },
-    top: { default: null, [inTopbarActions()]: "calc(anchor(bottom) + 4px)" },
-    right: { default: null, [inTopbarActions()]: "anchor(right)" },
-    bottom: { default: null, [inTopbarActions()]: "auto" },
-    left: { default: null, [inTopbarActions()]: "auto" },
-    margin: { default: null, [inTopbarActions()]: 0 },
-    maxWidth: { default: null, [inTopbarActions()]: "calc(100vw - 16px)" },
-    positionTryFallbacks: {
-      default: null,
-      [inTopbarActions()]: "flip-inline, flip-block",
-    },
-    positionVisibility: {
-      default: null,
-      [inTopbarActions()]: "anchors-visible",
-    },
-  },
+  topbarPopover:
+    "tw:[&:is(.canvas-topbar-actions:is(*)_*)]:fixed tw:[&:is(.canvas-topbar-actions:is(*)_*)]:top-[calc(anchor(bottom)_+_4px)] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:right-[anchor(right)] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:bottom-[auto] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:left-[auto] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:m-0 tw:[&:is(.canvas-topbar-actions:is(*)_*)]:max-w-[calc(100vw_-_16px)] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:[position-try-fallbacks:flip-inline,_flip-block] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:[position-visibility:anchors-visible]",
   // The scratchpad has no source tree or pins to set apart, so no rule.
-  topbarContext: {
-    display: "flex",
-    flex: "0 0 auto",
-    minWidth: 0,
-    alignItems: "center",
-    marginRight: "auto",
-    "::before": {
-      display: { default: null, ":empty": "none" },
-      content: "''",
-      flex: "0 0 1px",
-      height: "20px",
-      margin: "0 14px 0 16px",
-      backgroundColor: tokens.chromeBorder,
-    },
-  },
-  actionsDivider: {
-    flexShrink: 0,
-    width: "1px",
-    height: "16px",
-    backgroundColor: tokens.chromeBorder,
-  },
-
-  viewRegion: {
-    position: "relative",
-    minWidth: 0,
-    minHeight: 0,
-    overflow: "hidden",
-  },
-  commitsRegion: {
-    overflow: "auto",
-  },
+  topbarContext:
+    "tw:flex tw:flex-[0_0_auto] tw:min-w-0 tw:items-center tw:mr-[auto] tw:[&:empty::before]:hidden tw:[&::before]:[content:''] tw:[&::before]:flex-[0_0_1px] tw:[&::before]:h-[20px] tw:[&::before]:m-[0_14px_0_16px] tw:[&::before]:bg-[color:var(--chrome-border)]",
+  actionsDivider:
+    "tw:shrink-0 tw:w-[1px] tw:h-[16px] tw:bg-[color:var(--chrome-border)]",
+  viewRegion: "tw:relative tw:min-w-0 tw:min-h-0 tw:overflow-hidden",
+  commitsRegion: "tw:overflow-auto",
   // --review-toc-tail is the room the contents rail adds so the last heading
   // can scroll up to the top edge, measured by the rail itself.
-  reviewRegion: {
-    display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "center",
-    gap: 0,
-    minWidth: 0,
-    overflowX: "hidden",
-    overflowY: "auto",
-    // Let macOS hide the document scrollbar when idle.
-    scrollbarWidth: "thin",
-    padding: {
-      default: `${tokens.reviewPageTop} 52px calc(max(120px, var(--review-bottom-scroll-padding, 0px)) + var(--review-toc-tail, 0px))`,
-      "@container review-content (max-width: 1180px)": {
-        default: `${tokens.reviewPageTop} 42px 120px`,
-        "@container review-content (max-width: 1080px)": {
-          default: `${tokens.reviewPageTop} 24px 120px`,
-          [narrowViewport]: "22px 8px calc(96px + var(--review-toc-tail, 0px))",
-        },
-      },
-      [narrowViewport]: "22px 8px calc(96px + var(--review-toc-tail, 0px))",
-    },
-  },
-  documentView: {
-    display: "contents",
-  },
-  hidden: {
-    display: "none",
-  },
-  mapView: {
-    position: "relative",
-    display: "grid",
-    gridTemplateRows: "minmax(0, 1fr)",
-    width: "100%",
-    height: "100%",
-    minHeight: 0,
-    overflow: "hidden",
-  },
+  reviewRegion:
+    "tw:flex tw:items-start tw:justify-center tw:gap-0 tw:min-w-0 tw:overflow-x-hidden tw:overflow-y-auto tw:[scrollbar-width:thin] tw:p-[var(--review-page-top)_52px_calc(max(120px,_var(--review-bottom-scroll-padding,_0px))_+_var(--review-toc-tail,_0px))] tw:[@container_review-content_(max-width:_1180px)]:p-[var(--review-page-top)_42px_120px] tw:[@container_review-content_(max-width:_1180px)]:[@container_review-content_(max-width:_1080px)]:p-[var(--review-page-top)_24px_120px] tw:[@container_review-content_(max-width:_1180px)]:[@container_review-content_(max-width:_1080px)]:[@media_(max-width:_720px)]:p-[22px_8px_calc(96px_+_var(--review-toc-tail,_0px))] tw:[@media_(max-width:_720px)]:p-[22px_8px_calc(96px_+_var(--review-toc-tail,_0px))]",
+  documentView: "tw:[display:contents]",
+  hidden: "tw:hidden",
+  mapView:
+    "tw:relative tw:grid tw:grid-rows-[minmax(0,_1fr)] tw:w-full tw:h-full tw:min-h-0 tw:overflow-hidden",
   // Anchors the floating map settings control.
-  mapCanvasShell: {
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    gridRow: 1,
-    minHeight: 0,
-    overflow: "hidden",
-  },
-  diffView: {
-    position: "relative",
-    display: "grid",
-    gridTemplateRows: "minmax(0, 1fr)",
-    width: "100%",
-    height: "100%",
-    minHeight: 0,
-    overflow: "hidden",
-  },
+  mapCanvasShell:
+    "tw:relative tw:flex tw:flex-col tw:[grid-row:1] tw:min-h-0 tw:overflow-hidden",
+  diffView:
+    "tw:relative tw:grid tw:grid-rows-[minmax(0,_1fr)] tw:w-full tw:h-full tw:min-h-0 tw:overflow-hidden",
   // Keep the full diff alive while another view is selected. It initializes
   // in the review page's loading window, then the first Diff click and every
   // return reuse the same file tree, editor models, selection, and scroll
   // state.
-  diffViewPreloaded: {
-    position: "absolute",
-    inset: 0,
-    opacity: 0,
-    visibility: "hidden",
-    pointerEvents: "none",
-  },
-  diffViewScoped: {
-    gridTemplateRows: "30px minmax(0, 1fr)",
-  },
-});
+  diffViewPreloaded:
+    "tw:absolute tw:inset-0 tw:opacity-0 tw:invisible tw:pointer-events-none",
+  diffViewScoped: "tw:grid-rows-[30px_minmax(0,_1fr)]",
+};

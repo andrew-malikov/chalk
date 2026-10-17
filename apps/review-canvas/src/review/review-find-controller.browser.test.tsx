@@ -1,19 +1,18 @@
 import { documentStyles } from "@canvas/documents/document-styles";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import {
   appMarker,
   documentMarker,
   topbarActionsMarker,
   topbarTabsMarker,
-} from "@canvas/styles/markers.stylex";
+} from "@canvas/styles/markers";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import { withClass } from "@canvas/styles/stylex-props";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import type {
   ReviewFindQuery,
   ReviewInlineEditorHandle,
 } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { StrictMode, act, useLayoutEffect, useMemo, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -30,9 +29,6 @@ import { ReviewRootsProvider } from "./review-root-context";
 import canvasCss from "@canvas/styles.css?inline";
 
 let root: ReturnType<typeof createRoot> | undefined;
-
-const cx = (...styles: stylex.StyleXArray<stylex.CompiledStyles | false>[]) =>
-  stylex.props(...styles).className;
 
 const findCount = (container: HTMLElement) =>
   container.querySelector('[role="search"] [aria-live]');
@@ -104,12 +100,14 @@ it("orders duplicate editors with MDX and wraps navigation", async () => {
       "::highlight(review-find-match)",
     ).backgroundColor,
   ).toBe("rgb(10, 20, 30)");
-  expect(
-    getComputedStyle(
-      container.querySelector("article")!,
-      "::highlight(review-find-match-active)",
-    ).backgroundColor,
-  ).toBe("rgb(40, 50, 60)");
+  await vi.waitFor(() => {
+    expect(
+      getComputedStyle(
+        container.querySelector("article")!,
+        "::highlight(review-find-match-active)",
+      ).backgroundColor,
+    ).toBe("rgb(40, 50, 60)");
+  });
   // The shell is the widget's containing block.
   expect(
     container.querySelector(".review-find-widget")?.parentElement,
@@ -427,17 +425,17 @@ it("keeps the find widget below and above the topbar", async () => {
   // A recoverable load error renders a status row above .review-app: the
   // height that used to slide the topbar onto the find widget.
   canvas.innerHTML = `
-    <div data-review-api class="${cx(shellStyles.apiCanvas)}">
+    <div data-review-api class="${cn(shellStyles.apiCanvas)}">
       <p role="status" style="margin: 8px 24px; font-size: 12px">Could not refresh this review.</p>
-      <div class="review-app ${stylex.props(appMarker).className}">
-        <main class="review-document-shell ${cx(shellStyles.documentShell)}">
-          <header class="${cx(shellStyles.topbar)}">
-            <div class="${cx(shellStyles.topbarLeft)} ${stylex.props(topbarTabsMarker).className}"></div>
-            <div class="${cx(shellStyles.topbarActions)} ${stylex.props(topbarActionsMarker).className}"></div>
+      <div class="review-app ${cn(appMarker)}">
+        <main class="review-document-shell ${cn(shellStyles.documentShell)}">
+          <header class="${cn(shellStyles.topbar)}">
+            <div class="${cn(shellStyles.topbarLeft)} ${cn(topbarTabsMarker)}"></div>
+            <div class="${cn(shellStyles.topbarActions)} ${cn(topbarActionsMarker)}"></div>
           </header>
-          <section class="${cx(shellStyles.viewRegion, shellStyles.reviewRegion)}">
-            <div class="${cx(shellStyles.documentView)}">
-              <article class="review-document ${cx(documentStyles.article)} ${stylex.props(documentMarker).className}">
+          <section class="${cn(shellStyles.viewRegion, shellStyles.reviewRegion)}">
+            <div class="${cn(shellStyles.documentView)}">
+              <article class="review-document ${cn(documentStyles.article)} ${cn(documentMarker)}">
                 <h2 id="rollout">Rollout</h2><p>body</p>
                 <h2 id="risks">Risks</h2><p>body</p>
               </article>
@@ -541,12 +539,12 @@ function FindHarness({
       >
         <main
           ref={shellRef}
-          {...withClass("review-document-shell", shellStyles.documentShell)}
+          className={cn("review-document-shell", shellStyles.documentShell)}
         >
           <section ref={scrollRef}>
             <article
               ref={articleRef}
-              {...withClass(
+              className={cn(
                 "review-document",
                 documentStyles.article,
                 documentMarker,

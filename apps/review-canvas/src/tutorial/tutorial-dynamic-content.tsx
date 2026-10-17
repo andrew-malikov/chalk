@@ -1,10 +1,7 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import { cn } from "@canvas/lib/utils";
 import { useReviewActions } from "@canvas/review/review-context";
-import { fontSize } from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import type { ReviewComponentProps } from "@review/documents/authoring";
-import * as stylex from "@stylexjs/stylex";
 import { ArrowRight } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
 
@@ -57,7 +54,7 @@ export function TutorialViewButton({
       variant="ghost"
       size="xs"
       type="button"
-      {...withClass("tutorial-view-button", styles.button)}
+      className={cn("tutorial-view-button", styles.button)}
       data-tutorial-view={view}
       onClick={() => openReviewView(view)}
     >
@@ -65,7 +62,7 @@ export function TutorialViewButton({
       <ArrowRight
         aria-hidden="true"
         focusable="false"
-        {...stylex.props(styles.arrow)}
+        className={styles.arrow}
       />
     </ButtonPrimitive>
   );
@@ -86,26 +83,8 @@ function viewLabel(view: TutorialViewButtonProps["view"]): string {
 
 // A row action is marker text with an ink-faint arrow, never a box; boxes are
 // for controls that act on the page.
-const styles = stylex.create({
-  button: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    margin: "6px 0 12px",
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: tokens.transparent,
-    color: tokens.accent,
-    cursor: "pointer",
-    font: `${fontSize.body} ${tokens.fontSans}`,
-    textDecoration: { default: null, ":hover": "underline" },
-  },
-  arrow: {
-    width: "14px",
-    height: "14px",
-    flexShrink: 0,
-    color: tokens.inkFaint,
-  },
-});
+const styles = {
+  button:
+    "tw:inline-flex tw:items-center tw:gap-[6px] tw:m-[6px_0_12px] tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:var(--transparent)] tw:text-[color:var(--accent)] tw:cursor-pointer tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[normal] tw:[&:hover]:[text-decoration:underline]",
+  arrow: "tw:size-[14px] tw:shrink-0 tw:text-[color:var(--ink-faint)]",
+};

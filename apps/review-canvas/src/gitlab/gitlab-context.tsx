@@ -1,54 +1,32 @@
 import { useReviewSession } from "@canvas/host/review-session";
 import { useOptionalReviewPanelActor } from "@canvas/review/review-panel";
-import {
-  type GitLabDiscussion,
-  type GitLabDraft,
-  type GitLabState,
-  type GitLabTarget,
-  gitLabDraftSchema,
-  gitLabSaveDraftSchema,
-  gitLabStateSchema,
-} from "@chalk/review-contracts";
+import type { GitLabDiscussion, GitLabTarget } from "@chalk/review-contracts";
+import { useActorRef, useSelector } from "@xstate/react";
 import {
   type ReactNode,
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
 import { z } from "zod";
 
-type ActionInput = {
-  id?: string;
-  discussionId?: string;
-  verified?: boolean;
-  posted?: boolean;
-  noteId?: number;
-};
+import {
+  type GitLabAction,
+  type GitLabActionInput,
+  type GitLabSnapshot,
+  createGitLabMachine,
+  saveDraft,
+} from "./gitlab-machine";
 
-interface Editor {
-  text: string;
-  target: GitLabTarget;
-  version?: number;
-  dirty: boolean;
-  error?: string;
-  generation: number;
-}
-
-interface GitLabContextValue {
-  state: GitLabState | null;
-  editors: Record<string, Editor>;
+type GitLabContextValue = Pick<
+  GitLabSnapshot["context"],
+  "state" | "editors" | "pending" | "error" | "selected"
+> & {
   editable: boolean;
   busy: boolean;
-  pending: {
-    action: "refresh" | "post" | "discard" | "resolve" | "recover";
-    input: ActionInput;
-  } | null;
-  error: string | null;
   open: boolean;
-  selected: string | null;
   /** Inline threads the user collapsed or expanded; unset ones follow `resolved`. */
   collapsed: Record<string, boolean>;
   collapse(id: string, value: boolean): void;
@@ -56,10 +34,7 @@ interface GitLabContextValue {
   edit(id: string, text: string): void;
   compose(target: GitLabTarget, placement?: "inline" | "panel"): void;
   select(discussion: GitLabDiscussion): void;
-  run(
-    action: "refresh" | "post" | "discard" | "resolve" | "recover",
-    input?: ActionInput,
-  ): Promise<void>;
+  run(action: GitLabAction, input?: GitLabActionInput): void;
   reveal: {
     file: string;
     side: "base" | "head";
@@ -67,7 +42,7 @@ interface GitLabContextValue {
     to: number;
     nonce: number;
   } | null;
-}
+};
 
 const Context = createContext<GitLabContextValue | null>(null);
 
@@ -75,11 +50,7 @@ export function useGitLab() {
   return useContext(Context);
 }
 
-// oxlint-disable-next-line anti-slop/no-unknown-parameters -- Errors from fetch and schema parsing are checked as Error instances here.
-const message = (error: unknown) =>
-  error instanceof Error ? error.message : "GitLab operation failed.";
-
-/** One save queue per review. Editor text survives a failed save; publishing waits for durable revisions. */
+/** Draft state lives in the GitLab machine; this adds the panel and diff coordination around it. */
 export function GitLabProvider({ children }: { children: ReactNode }) {
   const session = useReviewSession();
   const panels = useOptionalReviewPanelActor();
@@ -89,197 +60,63 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
 
   const editable = enabled && session.review?.historicalRevision === null;
 
-  const [state, setState] = useState<GitLabState | null>(null);
-  const stateRef = useRef(state);
-  stateRef.current = state;
+  const [request] = useState(
+    () =>
+      async (endpoint: `/${string}`, input?: object): Promise<unknown> => {
+        const response = await sessionRef.current.fetch(
+          endpoint,
+          input === undefined
+            ? undefined
+            : {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(input),
+              },
+        );
+
+        const value: unknown = await response.json();
+
+        if (!response.ok)
+          throw new Error(
+            z.object({ error: z.string() }).safeParse(value).data?.error ??
+              `GitLab request failed (${response.status}).`,
+          );
+
+        return value;
+      },
+  );
+
+  const [machine] = useState(() => createGitLabMachine(request));
+  const actor = useActorRef(machine);
+  const { state, editors, pending, error, selected } = useSelector(
+    actor,
+    (snapshot) => snapshot.context,
+  );
+
   const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState<GitLabContextValue["pending"]>(null);
-  const pendingRef = useRef(pending);
-  const busy = pending !== null;
-  const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [reveal, setReveal] = useState<GitLabContextValue["reveal"]>(null);
-  const [editors, setEditors] = useState<Record<string, Editor>>({});
-  const editorRef = useRef(editors);
-  editorRef.current = editors;
-  const queue = useRef(Promise.resolve());
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const mounted = useRef(true);
-  const loaded = useRef(false);
-
-  const syncEditors = () => {
-    if (mounted.current) setEditors({ ...editorRef.current });
-  };
-
-  const receive = (next: GitLabState) => {
-    stateRef.current = next;
-
-    for (const draft of next.drafts) {
-      const editor = editorRef.current[draft.id];
-
-      if (editor && !editor.dirty)
-        editorRef.current[draft.id] = {
-          text: draft.text,
-          target: draft.target,
-          version: draft.version,
-          dirty: false,
-          generation: editor.generation,
-        };
-    }
-
-    if (mounted.current) {
-      setState(next);
-      syncEditors();
-    }
-  };
-
-  const request = async (
-    endpoint: `/${string}`,
-    input?: ActionInput | z.infer<typeof gitLabSaveDraftSchema>,
-  ) => {
-    const response = await sessionRef.current.fetch(
-      endpoint,
-      input === undefined
-        ? undefined
-        : {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(input),
-          },
-    );
-
-    const value: unknown = await response.json();
-
-    if (!response.ok)
-      throw new Error(
-        z.object({ error: z.string() }).safeParse(value).data?.error ??
-          `GitLab request failed (${response.status}).`,
-      );
-
-    return value;
-  };
-
-  const serialize = (operation: () => Promise<void>) => {
-    const next = queue.current.then(operation);
-    queue.current = next.catch(() => {});
-
-    return next;
-  };
-
-  const flush = async () => {
-    clearTimeout(timer.current);
-
-    for (const [id, editor] of Object.entries(editorRef.current)) {
-      if (!editor.dirty) continue;
-      const generation = editor.generation;
-
-      try {
-        const draft = gitLabDraftSchema.parse(
-          await request("/gitlab/drafts", {
-            id,
-            text: editor.text,
-            target: editor.target,
-            ...(editor.version !== undefined && { version: editor.version }),
-          }),
-        );
-
-        const latest = editorRef.current[id];
-
-        if (latest) {
-          latest.version = draft.version;
-          latest.error = undefined;
-
-          if (latest.generation === generation) {
-            latest.target = draft.target;
-            latest.dirty = false;
-          }
-        }
-
-        const next = stateRef.current;
-
-        if (next) {
-          receive({
-            ...next,
-            drafts: [...next.drafts.filter((d) => d.id !== id), draft],
-          });
-        }
-      } catch (error) {
-        const latest = editorRef.current[id];
-
-        if (latest) latest.error = message(error);
-        syncEditors();
-        throw error;
-      }
-    }
-
-    // An edit typed during a request must be persisted too before any explicit operation.
-    if (Object.values(editorRef.current).some((editor) => editor.dirty))
-      await flush();
-  };
-
-  const run: GitLabContextValue["run"] = async (action, input = {}) => {
-    if (!editable || pendingRef.current) return;
-    pendingRef.current = { action, input };
-    setPending(pendingRef.current);
-    setError(null);
-
-    try {
-      await serialize(async () => {
-        await flush();
-
-        const next = gitLabStateSchema.parse(
-          await request(`/gitlab/${action}`, input),
-        );
-
-        if (action === "discard" && input.id !== undefined)
-          delete editorRef.current[input.id];
-        receive(next);
-      });
-    } catch (error) {
-      if (mounted.current) setError(message(error));
-    } finally {
-      pendingRef.current = null;
-
-      if (mounted.current) setPending(null);
-    }
-  };
 
   useEffect(() => {
-    mounted.current = true;
-
-    if (enabled && !loaded.current) {
-      loaded.current = true;
-      pendingRef.current = { action: "refresh", input: {} };
-      setPending(pendingRef.current);
-      void serialize(async () => {
-        try {
-          receive(gitLabStateSchema.parse(await request("/gitlab")));
-
-          if (editable)
-            receive(
-              gitLabStateSchema.parse(await request("/gitlab/refresh", {})),
-            );
-        } catch (error) {
-          if (mounted.current) setError(message(error));
-        } finally {
-          pendingRef.current = null;
-
-          if (mounted.current) setPending(null);
-        }
-      });
-    }
-
-    return () => {
-      mounted.current = false;
-      clearTimeout(timer.current);
-      void serialize(flush).catch(() => {});
-    };
-  }, [enabled, editable]);
+    if (enabled) actor.send({ type: "load", editable });
+  }, [actor, enabled, editable]);
+  // The actor stops with the provider; send text the debounce has not saved yet.
+  // shortcut: unordered after a save still in flight for the same draft, which then fails on its version; queue behind it if that shows up.
+  useEffect(
+    () => () => {
+      for (const [id, editor] of Object.entries(
+        actor.getSnapshot().context.editors,
+      ))
+        if (editor.dirty) void saveDraft(request, id, editor).catch(() => {});
+    },
+    [actor, request],
+  );
   // Save before the renderer closes where possible; otherwise warn about unsaved editor text.
   useEffect(() => {
     const beforeUnload = (event: BeforeUnloadEvent) => {
-      if (Object.values(editorRef.current).some((e) => e.dirty)) {
+      if (
+        Object.values(actor.getSnapshot().context.editors).some((e) => e.dirty)
+      ) {
         event.preventDefault();
         event.returnValue = "";
       }
@@ -288,126 +125,63 @@ export function GitLabProvider({ children }: { children: ReactNode }) {
     window.addEventListener("beforeunload", beforeUnload);
 
     return () => window.removeEventListener("beforeunload", beforeUnload);
-  }, []);
+  }, [actor]);
 
   const show = () => {
     panels?.send({ type: "close" });
     setOpen(true);
   };
 
-  const edit = (id: string, text: string) => {
-    if (!editable || busy) return;
-    const draft = stateRef.current?.drafts.find((d) => d.id === id);
-    const previous = editorRef.current[id];
+  const value: GitLabContextValue = {
+    state,
+    editors,
+    editable,
+    busy: pending !== null,
+    pending,
+    error,
+    open,
+    selected,
+    collapsed,
+    collapse: (id, value) =>
+      setCollapsed((current) => ({ ...current, [id]: value })),
+    reveal,
+    toggle: () => {
+      const panelState = panels?.getSnapshot().context;
 
-    if (draft && !["saved", "failed"].includes(draft.status)) return;
+      if (open && !panelState?.active) setOpen(false);
+      else show();
+    },
+    edit: (id, text) => actor.send({ type: "edit", id, text }),
+    compose: (target, placement = "panel") => {
+      const event = {
+        type: "compose" as const,
+        id: crypto.randomUUID(),
+        target,
+      };
 
-    if (!draft && !previous) return;
-    editorRef.current[id] = {
-      text,
-      target: previous?.target ?? draft!.target,
-      version: previous?.version ?? draft?.version,
-      dirty: true,
-      generation: (previous?.generation ?? 0) + 1,
-    };
-    syncEditors();
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => {
-      void serialize(flush).catch(() => {});
-    }, 400);
+      if (!actor.getSnapshot().can(event)) return;
+      actor.send(event);
+
+      if (placement === "inline") {
+        setOpen(false);
+      } else show();
+    },
+    select: (discussion) => {
+      actor.send({ type: "select", id: discussion.id });
+      setCollapsed((current) => ({ ...current, [discussion.id]: false }));
+      show();
+
+      if (
+        discussion.location &&
+        session.review?.pins?.base === state?.refs.baseSha &&
+        session.review?.pins?.head === state?.refs.headSha
+      ) {
+        panels?.send({ type: "showView", view: "diff" });
+        setReveal({ ...discussion.location, nonce: Date.now() });
+      }
+    },
+    run: (action, input) => actor.send({ type: "run", action, input }),
   };
-
-  const compose: GitLabContextValue["compose"] = (
-    target,
-    placement = "panel",
-  ) => {
-    if (!editable || busy) return;
-
-    const existing =
-      target.kind === "reply"
-        ? stateRef.current?.drafts.find(
-            (d) =>
-              d.target.kind === "reply" &&
-              d.target.discussionId === target.discussionId &&
-              ["saved", "failed"].includes(d.status),
-          )
-        : undefined;
-
-    const id = existing?.id ?? crypto.randomUUID();
-
-    if (!existing) {
-      editorRef.current[id] = { text: "", target, dirty: true, generation: 1 };
-      syncEditors();
-      clearTimeout(timer.current);
-      timer.current = setTimeout(() => {
-        void serialize(flush).catch(() => {});
-      }, 400);
-    }
-
-    setSelected(id);
-
-    if (placement === "inline") {
-      setOpen(false);
-    } else show();
-  };
-
-  const select = (discussion: GitLabDiscussion) => {
-    setSelected(discussion.id);
-    setCollapsed((current) => ({ ...current, [discussion.id]: false }));
-    show();
-
-    if (
-      discussion.location &&
-      session.review?.pins?.base === stateRef.current?.refs.baseSha &&
-      session.review?.pins?.head === stateRef.current?.refs.headSha
-    ) {
-      panels?.send({ type: "showView", view: "diff" });
-      setReveal({ ...discussion.location, nonce: Date.now() });
-    }
-  };
-
-  const value = useMemo<GitLabContextValue>(
-    () => ({
-      state,
-      editors,
-      editable,
-      busy,
-      pending,
-      error,
-      open,
-      selected,
-      collapsed,
-      collapse: (id, value) =>
-        setCollapsed((current) => ({ ...current, [id]: value })),
-      reveal,
-      toggle: () => {
-        const panelState = panels?.getSnapshot().context;
-
-        if (open && !panelState?.active) setOpen(false);
-        else show();
-      },
-      edit,
-      compose,
-      select,
-      run,
-    }),
-    [
-      state,
-      editors,
-      editable,
-      busy,
-      pending,
-      error,
-      open,
-      selected,
-      collapsed,
-      reveal,
-      edit,
-      compose,
-      select,
-      run,
-    ],
-  );
 
   return (
     <Context.Provider value={enabled ? value : null}>

@@ -1,5 +1,6 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { drawStyles } from "@canvas/drawing/draw-styles";
+import { cn } from "@canvas/lib/utils";
 import {
   useReviewPanel,
   useReviewPanelActor,
@@ -8,13 +9,8 @@ import type {
   GuidedTour,
   GuidedTourStop,
 } from "@canvas/review/review-panel-model";
-import { documentMarker } from "@canvas/styles/markers.stylex";
-import { fontSize, radius } from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import type { FlowDiagramBlock } from "@review/blocks/flow_diagram";
 import type { Snapshot } from "@review/node/review-api/store";
-import * as stylex from "@stylexjs/stylex";
 import { useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 
@@ -110,7 +106,7 @@ export function FlowDiagram({
   const figure = (fullscreen: boolean) => (
     // The class is how document-embed-scroll.ts recognizes the embed.
     <figure
-      {...withClass(
+      className={cn(
         "flow-diagram",
         styles.figure,
         fullscreen && styles.stage,
@@ -126,7 +122,7 @@ export function FlowDiagram({
           <ButtonPrimitive
             variant="ghost"
             size="xs"
-            {...withClass("diagram-tour-button", diagramStyles.control)}
+            className={cn("diagram-tour-button", diagramStyles.control)}
             onClick={() => (fullscreen ? close() : open())}
             aria-label={
               fullscreen ? "Close expanded diagram" : "Expand diagram"
@@ -137,10 +133,10 @@ export function FlowDiagram({
         }
       />
       {node.description && (
-        <p {...stylex.props(styles.description)}>{node.description}</p>
+        <p className={styles.description}>{node.description}</p>
       )}
-      <div {...stylex.props(styles.body, fullscreen && styles.stageBody)}>
-        <div {...stylex.props(styles.canvas)}>
+      <div className={cn(styles.body, fullscreen && styles.stageBody)}>
+        <div className={styles.canvas}>
           <FlowGraph
             block={node}
             selectedKey={fullscreen ? selectedKey : undefined}
@@ -154,17 +150,17 @@ export function FlowDiagram({
           />
         </div>
       </div>
-      <footer {...stylex.props(styles.footer)}>
+      <footer className={styles.footer}>
         <span>
           Select a node to explore its code
           {!fullscreen && " · pinch or ⌘/Ctrl + scroll to zoom"}
         </span>
-        <span {...stylex.props(styles.legend)}>
-          <i {...stylex.props(styles.swatch, styles.added)} />
+        <span className={styles.legend}>
+          <i className={cn(styles.swatch, styles.added)} />
           Added
-          <i {...stylex.props(styles.swatch, styles.removed)} />
+          <i className={cn(styles.swatch, styles.removed)} />
           Removed
-          <i {...stylex.props(styles.swatch, styles.modified)} />
+          <i className={cn(styles.swatch, styles.modified)} />
           Modified
         </span>
       </footer>
@@ -193,92 +189,24 @@ export function FlowDiagram({
   );
 }
 
-const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
-
-const styles = stylex.create({
-  figure: {
-    overflow: "hidden",
-    margin: "18px 0 4px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.surface,
-    backgroundColor: tokens.surface,
-    color: tokens.ink,
-    font: `${fontSize.body}/1.5 ${tokens.fontSans}`,
-  },
+const styles = {
+  figure:
+    "tw:overflow-hidden tw:m-[18px_0_4px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[1.5]",
   // The tour stage: the figure fills the overlay without its card chrome.
-  stage: {
-    display: "flex",
-    flexDirection: "column",
-    width: "100%",
-    height: "100%",
-    minHeight: 0,
-    margin: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: 0,
-  },
+  stage:
+    "tw:flex tw:flex-col tw:w-full tw:h-full tw:min-h-0 tw:m-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-none",
   // Keeps its caption type among document paragraphs.
-  description: {
-    margin: 0,
-    padding: "0 16px 12px",
-    color: tokens.inkMuted,
-    font: `${fontSize.small}/1.6 ${tokens.fontSans}`,
-    textAlign: { default: null, [inDocument()]: "left" },
-  },
-  body: {
-    display: "flex",
-    borderTopWidth: 0,
-    borderTopStyle: "none",
-  },
-  stageBody: {
-    flex: "1",
-    minHeight: 0,
-    maxHeight: "none",
-  },
-  canvas: {
-    position: "relative",
-    flex: "1",
-    minWidth: 0,
-    backgroundColor: tokens.surface,
-    backgroundImage: tokens.boardGrid,
-    backgroundRepeat: "repeat",
-  },
-  footer: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: "12px",
-    padding: "9px 16px",
-    borderTopWidth: "1px",
-    borderTopStyle: "solid",
-    borderTopColor: tokens.rule,
-    backgroundColor: tokens.tray,
-    color: tokens.inkMuted,
-    font: `${fontSize.micro}/1.5 ${tokens.fontSans}`,
-    fontSize: fontSize.small,
-  },
-  legend: {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-  },
-  swatch: {
-    display: "inline-block",
-    width: "6px",
-    height: "6px",
-    marginLeft: "7px",
-    borderRadius: radius.round,
-  },
-  added: {
-    backgroundColor: tokens.changeAdded,
-  },
-  removed: {
-    backgroundColor: tokens.changeRemoved,
-  },
-  modified: {
-    backgroundColor: tokens.changeModified,
-  },
-});
+  description:
+    "tw:m-0 tw:p-[0_16px_12px] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[1.6] tw:[&:is(.canvas-document:is(*)_*)]:text-left",
+  body: "tw:flex tw:[border-top-width:0] tw:[border-top-style:none]",
+  stageBody: "tw:flex-[1] tw:min-h-0 tw:max-h-none",
+  canvas:
+    "tw:relative tw:flex-[1] tw:min-w-0 tw:bg-[color:var(--surface)] tw:[background-image:var(--board-grid)] tw:[background-repeat:repeat]",
+  footer:
+    "tw:flex tw:flex-wrap tw:justify-between tw:gap-[12px] tw:p-[9px_16px] tw:[border-top-width:1px] tw:[border-top-style:solid] tw:[border-top-color:var(--rule)] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:10px] tw:font-normal tw:leading-[1.5] tw:text-[length:11px]",
+  legend: "tw:flex tw:items-center tw:gap-[6px]",
+  swatch: "tw:inline-block tw:size-[6px] tw:ml-[7px] tw:rounded-[50%]",
+  added: "tw:bg-[color:var(--change-added)]",
+  removed: "tw:bg-[color:var(--change-removed)]",
+  modified: "tw:bg-[color:var(--change-modified)]",
+};

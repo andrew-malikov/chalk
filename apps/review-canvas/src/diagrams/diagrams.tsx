@@ -1,19 +1,14 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
-import { flowLayer } from "@canvas/diagrams/flow-layers.stylex";
 import { useMotionPhase } from "@canvas/drawing/draw-queue-provider";
 import { drawStyles } from "@canvas/drawing/draw-styles";
+import { cn } from "@canvas/lib/utils";
 import {
   useReviewPanel,
   useReviewPanelActor,
 } from "@canvas/review/review-panel";
 import type { GuidedTour, PeekAnchor } from "@canvas/review/review-panel-model";
 import { useReviewDebugSettings } from "@canvas/settings/debug-settings";
-import { appMarker, documentMarker } from "@canvas/styles/markers.stylex";
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import type { Step } from "@review/documents/document";
-import * as stylex from "@stylexjs/stylex";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -407,7 +402,7 @@ function SequenceDiagramFigure({
           width: "var(--sequence-lane-width, 176px)",
           pointerEvents: "none",
         },
-        className: stylex.props(styles.lane).className,
+        className: styles.lane,
         data: {
           participant,
           height,
@@ -453,10 +448,7 @@ function SequenceDiagramFigure({
             openTour,
             stepNumber: onCloseTour ? index + 1 : null,
           },
-          className: stylex.props(
-            styles.message,
-            isActive && styles.messageActive,
-          ).className,
+          className: cn(styles.message, isActive && styles.messageActive),
           zIndex: isActive ? 2 : 1,
         };
       }),
@@ -555,7 +547,7 @@ function SequenceDiagramFigure({
   return (
     <>
       <figure
-        {...withClass(
+        className={cn(
           "sequence-diagram",
           styles.figure,
           stage && styles.stage,
@@ -571,7 +563,7 @@ function SequenceDiagramFigure({
           kind="SEQ"
           title={sequence.title}
           meta={`${stopCount} ${stopCount === 1 ? "stop" : "stops"}`}
-          xstyle={styles.header}
+          className={styles.header}
           action={
             // The tour panel's header owns the close control fullscreen.
             onCloseTour ? null : (
@@ -579,7 +571,7 @@ function SequenceDiagramFigure({
                 variant="ghost"
                 size="xs"
                 type="button"
-                {...withClass("diagram-tour-button", diagramStyles.control)}
+                className={cn("diagram-tour-button", diagramStyles.control)}
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -593,11 +585,11 @@ function SequenceDiagramFigure({
         />
         <div
           ref={sequenceScrollRef}
-          {...stylex.props(styles.body)}
+          className={styles.body}
           onClick={() => openTour()}
         >
           <ReactFlow
-            {...stylex.props(styles.canvas)}
+            className={styles.canvas}
             colorMode={theme}
             nodes={reactFlowNodes}
             edges={reactFlowEdges}
@@ -633,16 +625,13 @@ function SequenceParticipantNode({
   );
 
   return (
-    <div {...stylex.props(styles.participant)} style={{ height }}>
-      <div {...stylex.props(styles.participantLabelAnchor)}>
-        <span
-          {...stylex.props(styles.participantLabel)}
-          title={participant.label}
-        >
+    <div className={styles.participant} style={{ height }}>
+      <div className={styles.participantLabelAnchor}>
+        <span className={styles.participantLabel} title={participant.label}>
           {participant.label}
         </span>
       </div>
-      <div {...stylex.props(styles.lifeline)} />
+      <div className={styles.lifeline} />
       {activeMessages.flatMap((message, index) => {
         const messageIndex = messages.findIndex(
           (item) => item.id === message.id,
@@ -679,7 +668,7 @@ function SequenceParticipantNode({
             id={handle.id}
             type={handle.type}
             position={handle.side}
-            {...stylex.props(styles.handle)}
+            className={styles.handle}
             style={{
               left: "50%",
               top: sequenceMessageHandleTop(message, handle.type, top),
@@ -761,25 +750,23 @@ function SequenceMessageEdge(
         }
         // The class is a marker for tests. The stroke color is the edge's
         // inline style, so it holds while the line is drawn.
-        className={
-          withClass(
-            "sequence-message",
-            styles.message,
-            data.active && styles.messageActive,
-            (stepMotion === "outline" || stepMotion === "stroke") &&
-              styles.messageDrawing,
-            stepMotion === "queued" && drawStyles.hidden,
-            stepMotion === "stroke" && drawStyles.traceQuick,
-            stepMotion === "outline" && drawStyles.traceLine,
-          ).className
-        }
+        className={cn(
+          "sequence-message",
+          styles.message,
+          data.active && styles.messageActive,
+          (stepMotion === "outline" || stepMotion === "stroke") &&
+            styles.messageDrawing,
+          stepMotion === "queued" && drawStyles.hidden,
+          stepMotion === "stroke" && drawStyles.traceQuick,
+          stepMotion === "outline" && drawStyles.traceLine,
+        )}
         style={props.style}
         pathLength={1}
         data-motion={stepMotion}
       />
       <path
         d={edgePath}
-        {...stylex.props(styles.hitArea)}
+        className={styles.hitArea}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -791,7 +778,7 @@ function SequenceMessageEdge(
           variant="ghost"
           size="xs"
           type="button"
-          {...withClass(
+          className={cn(
             "tw:h-auto tw:whitespace-normal tw:font-normal",
             styles.dot,
             data.active && styles.dotActive,
@@ -815,7 +802,7 @@ function SequenceMessageEdge(
           {data.stepNumber}
         </ButtonPrimitive>
         <div
-          {...stylex.props(
+          className={cn(
             styles.labelAnchor,
             stepMotion === "queued" && drawStyles.hidden,
             (stepMotion === "outline" || stepMotion === "stroke") &&
@@ -829,7 +816,7 @@ function SequenceMessageEdge(
           <span
             role="button"
             tabIndex={0}
-            {...stylex.props(styles.label, data.active && styles.labelActive)}
+            className={cn(styles.label, data.active && styles.labelActive)}
             data-review-anchor-id={data.message.id}
             onClick={(event) => {
               event.stopPropagation();
@@ -1013,236 +1000,57 @@ function sequenceHandleId(
   return `${handleType}-${messageId}`;
 }
 
-const inDocument = () => stylex.when.ancestor(":is(*)", documentMarker);
-
-// Where the theme defines --diagram-border: inside the app root.
-const inApp = () => stylex.when.ancestor(":is(*)", appMarker);
-
-const labelHover = `0 0 0 2px ${tokens.accentShadow}, 0 6px 14px ${tokens.shadowColorStrong}`;
-
-const styles = stylex.create({
+const styles = {
   // Inline, a sequence takes the document's block measure, lanes spreading to
   // fill it. The fullscreen tour is the escape hatch.
-  figure: {
-    position: "relative",
-    display: "grid",
-    gridTemplateRows: "auto minmax(0, 1fr)",
-    width: {
-      default: "100%",
-      "@media (max-width: 720px)": {
-        default: "100%",
-        [inDocument()]: "calc(100cqi - 16px)",
-      },
-    },
-    minWidth: 0,
-    maxWidth: {
-      default: "100%",
-      [inDocument()]: `min(${tokens.reviewBlockMaxWidth}, calc(100cqi - ${tokens.reviewDocumentPaddingInline} - ${tokens.reviewDocumentPaddingInline}))`,
-    },
-    // Natural height; the document scrolls, not the diagram. The body
-    // scrolls only past about forty steps.
-    height: "auto",
-    minHeight: `min(${tokens.sequenceHeight}, 260px)`,
-    maxHeight: "3200px",
-    marginBlock: "24px",
-    marginInline: { default: 0, [inDocument()]: "auto" },
-    paddingTop: 0,
-    overflow: "hidden",
-    // Without --diagram-border the border drops out whole, as the shorthand
-    // it replaces did.
-    borderWidth: { default: null, [inApp()]: "1px" },
-    borderStyle: { default: null, [inApp()]: "solid" },
-    borderColor: { default: null, [inApp()]: tokens.diagramBorder },
-    borderRadius: radius.control,
-    backgroundColor: tokens.diagramSurface,
-    boxShadow: "none",
-    cursor: "pointer",
-  },
-  active: {
-    borderColor: tokens.selection,
-    boxShadow: `0 0 0 2px ${tokens.selectionShadow}`,
-  },
+  figure:
+    "tw:relative tw:grid tw:grid-rows-[auto_minmax(0,_1fr)] tw:w-full tw:[@media_(max-width:_720px)]:w-full tw:[@media_(max-width:_720px)]:[&:is(.canvas-document:is(*)_*)]:w-[calc(100cqi_-_16px)] tw:min-w-0 tw:max-w-full tw:[&:is(.canvas-document:is(*)_*)]:max-w-[min(var(--review-block-max-width),_calc(100cqi_-_var(--review-document-padding-inline)_-_var(--review-document-padding-inline)))] tw:h-auto tw:min-h-[min(var(--sequence-height),_260px)] tw:max-h-[3200px] tw:my-[24px] tw:mx-0 tw:[&:is(.canvas-document:is(*)_*)]:mx-[auto] tw:pt-0 tw:overflow-hidden tw:[&:is(.canvas-app:is(*)_*)]:border-[1px] tw:[&:is(.canvas-app:is(*)_*)]:border-solid tw:[&:is(.canvas-app:is(*)_*)]:border-[color:var(--diagram-border)] tw:rounded-[6px] tw:bg-[color:var(--diagram-surface)] tw:[box-shadow:none] tw:cursor-pointer",
+  active:
+    "tw:border-[color:var(--selection)] tw:[box-shadow:0_0_0_2px_var(--selection-shadow)]",
   // The tour stage: the figure fills the overlay without its card chrome.
-  stage: {
-    width: "100%",
-    maxWidth: "none",
-    height: "100%",
-    minHeight: 0,
-    marginBlock: 0,
-    marginInline: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: 0,
-    boxShadow: "none",
-  },
-  stageActive: {
-    borderColor: tokens.selection,
-  },
-  header: {
-    justifyContent: "space-between",
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
-  },
+  stage:
+    "tw:w-full tw:max-w-none tw:h-full tw:min-h-0 tw:my-0 tw:mx-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-none tw:[box-shadow:none]",
+  stageActive: "tw:border-[color:var(--selection)]",
+  header: "tw:justify-between tw:text-[length:12px] tw:font-bold",
   // No overscroll-behavior: Chrome latches wheel gestures to the nearest
   // scroll container even when it has nothing to scroll, and `contain` would
   // stop them chaining up to the document scroller.
-  body: {
-    minWidth: 0,
-    minHeight: 0,
-    overflow: "auto",
-  },
+  body: "tw:min-w-0 tw:min-h-0 tw:overflow-auto",
   // React Flow sizes its root inline at 100%; the min pair keeps the canvas
   // at its natural size so the body scrolls to the clipped remainder.
-  canvas: {
-    minWidth: tokens.sequenceWidth,
-    minHeight: tokens.sequenceHeight,
-    backgroundColor: tokens.diagramCanvasBg,
-  },
+  canvas:
+    "tw:min-w-[var(--sequence-width)] tw:min-h-[var(--sequence-height)] tw:bg-[color:var(--diagram-canvas-bg)]",
   // Its text reads like the prose around it.
-  lane: {
-    userSelect: "text",
-  },
-  participant: {
-    position: "relative",
-    width: "100%",
-  },
+  lane: "tw:select-text",
+  participant: "tw:relative tw:w-full",
   // The chip sizes to the name, capped at the lane: a long label uses the
   // whole lane before it ellipsizes (its title carries the full name).
-  participantLabelAnchor: {
-    position: "relative",
-    zIndex: flowLayer.label,
-    width: "fit-content",
-    minWidth: "min(148px, 100%)",
-    maxWidth: "calc(100% - 16px)",
-    margin: "24px auto 0",
-    pointerEvents: "all",
-  },
-  participantLabel: {
-    display: "block",
-    boxSizing: "border-box",
-    width: "100%",
-    padding: "6px 10px",
-    overflow: "hidden",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.control,
-    backgroundColor: tokens.surface,
-    boxShadow: { default: "none", ":hover": labelHover },
-    color: tokens.ink,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.bold,
-    textAlign: "center",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    pointerEvents: "all",
-  },
-  lifeline: {
-    position: "absolute",
-    top: "62px",
-    bottom: "18px",
-    left: "50%",
-    marginLeft: "-0.5px",
-    borderLeftWidth: "1px",
-    borderLeftStyle: "dashed",
-    borderLeftColor: tokens.ruleSoft,
-  },
+  participantLabelAnchor:
+    "tw:relative tw:z-[40] tw:w-fit tw:min-w-[min(148px,_100%)] tw:max-w-[calc(100%_-_16px)] tw:m-[24px_auto_0] tw:[pointer-events:all]",
+  participantLabel:
+    "tw:block tw:box-border tw:w-full tw:p-[6px_10px] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[6px] tw:bg-[color:var(--surface)] tw:[box-shadow:none] tw:[&:hover]:[box-shadow:0_0_0_2px_var(--accent-shadow),_0_6px_14px_var(--shadow-color-strong)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-bold tw:text-center tw:text-ellipsis tw:whitespace-nowrap tw:[pointer-events:all]",
+  lifeline:
+    "tw:absolute tw:top-[62px] tw:bottom-[18px] tw:left-[50%] tw:ml-[-0.5px] tw:[border-left-width:1px] tw:[border-left-style:dashed] tw:[border-left-color:var(--rule-soft)]",
   // Edge endpoints sit exactly on the lane: left: 50% places the handle's
   // left edge, so the handle centers itself on it.
-  handle: {
-    width: "1px",
-    height: "1px",
-    minWidth: 0,
-    minHeight: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    opacity: 0,
-    pointerEvents: "none",
-    transform: "translate(-50%, -50%)",
-  },
-  message: {
-    strokeWidth: "1.25px",
-    cursor: "pointer",
-  },
-  messageActive: {
-    strokeWidth: "2.4px",
-  },
-  messageDrawing: {
-    strokeWidth: "1.6px",
-  },
-  hitArea: {
-    fill: "none",
-    stroke: tokens.transparent,
-    strokeWidth: "18px",
-    cursor: "pointer",
-    pointerEvents: "stroke",
-  },
-  dot: {
-    position: "absolute",
-    zIndex: 3,
-    width: "11px",
-    height: "11px",
-    padding: 0,
-    borderWidth: "1.5px",
-    borderStyle: "solid",
-    borderColor: tokens.ruleSoft,
-    borderRadius: radius.round,
-    backgroundColor: tokens.surface,
-  },
-  dotAttention: {
-    borderColor: tokens.accent,
-    boxShadow: `0 0 0 3px ${tokens.markerGlow}`,
-  },
-  dotActive: {
-    borderColor: tokens.accent,
-    backgroundColor: tokens.accent,
-  },
+  handle:
+    "tw:size-[1px] tw:min-w-0 tw:min-h-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:opacity-0 tw:pointer-events-none tw:[transform:translate(-50%,_-50%)]",
+  message: "tw:stroke-[1.25px] tw:cursor-pointer",
+  messageActive: "tw:stroke-[2.4px]",
+  messageDrawing: "tw:stroke-[1.6px]",
+  hitArea:
+    "tw:fill-[none] tw:stroke-[var(--transparent)] tw:stroke-[18px] tw:cursor-pointer tw:[pointer-events:stroke]",
+  dot: "tw:absolute tw:z-[3] tw:size-[11px] tw:p-0 tw:border-[1.5px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[50%] tw:bg-[color:var(--surface)]",
+  dotAttention:
+    "tw:border-[color:var(--accent)] tw:[box-shadow:0_0_0_3px_var(--marker-glow)]",
+  dotActive: "tw:border-[color:var(--accent)] tw:bg-[color:var(--accent)]",
   // On the stage the dots grow into numbered stop badges.
-  stopBadge: {
-    display: "grid",
-    placeItems: "center",
-    width: "18px",
-    height: "18px",
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.micro,
-    lineHeight: 1,
-  },
-  stopBadgeActive: {
-    color: tokens.onAccent,
-  },
-  labelAnchor: {
-    position: "absolute",
-    zIndex: flowLayer.label,
-    display: "inline-flex",
-    alignItems: "center",
-    pointerEvents: "all",
-  },
-  label: {
-    position: "relative",
-    zIndex: 4,
-    maxWidth: "calc(var(--sequence-lane-width, 176px) - 12px)",
-    padding: "0 3px",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderRadius: 0,
-    backgroundColor: tokens.transparent,
-    boxShadow: { default: "none", ":hover": labelHover },
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    fontWeight: fontWeight.medium,
-    lineHeight: "14px",
-    overflowWrap: "anywhere",
-    textAlign: "center",
-    whiteSpace: "normal",
-    cursor: "pointer",
-  },
-  labelActive: {
-    color: tokens.accent,
-    fontWeight: fontWeight.bold,
-  },
-});
+  stopBadge:
+    "tw:grid tw:place-items-center tw:size-[18px] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:10px] tw:leading-[1]",
+  stopBadgeActive: "tw:text-[color:var(--on-accent)]",
+  labelAnchor:
+    "tw:absolute tw:z-[40] tw:inline-flex tw:items-center tw:[pointer-events:all]",
+  label:
+    "tw:relative tw:z-[4] tw:max-w-[calc(var(--sequence-lane-width,_176px)_-_12px)] tw:p-[0_3px] tw:border-[0] tw:border-none tw:rounded-none tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:[&:hover]:[box-shadow:0_0_0_2px_var(--accent-shadow),_0_6px_14px_var(--shadow-color-strong)] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-medium tw:leading-[14px] tw:[overflow-wrap:anywhere] tw:text-center tw:whitespace-normal tw:cursor-pointer",
+  labelActive: "tw:text-[color:var(--accent)] tw:font-bold",
+};

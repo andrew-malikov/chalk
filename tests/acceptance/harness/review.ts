@@ -184,18 +184,4 @@ function show(
   });
 }
 
-const css = document.createElement("link");
-
-css.rel = "stylesheet";
-
-css.href = `/virtual:stylex.css?t=${performance.now()}`;
-
-css.onload = () => {
-  window.reviewHarness = harness;
-};
-
-css.onerror = () => {
-  throw new Error("Cannot load canvas styles");
-};
-
-document.head.append(css);
+window.reviewHarness = harness;

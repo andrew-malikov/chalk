@@ -3,8 +3,7 @@ import { Input } from "@canvas/components/ui/input";
 import { MarkdownContent } from "@canvas/documents/agent-markdown";
 import { cn } from "@canvas/lib/utils";
 import { ReviewPanelFrame } from "@canvas/review/review-components";
-import { loadingStyles } from "@canvas/styles/loading.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
+import { loadingStyles } from "@canvas/styles/loading";
 import { Button, IconButton } from "@canvas/ui/button";
 import { RefreshIcon } from "@canvas/ui/icons";
 import type {
@@ -47,7 +46,7 @@ export function GitLabDiscussionPanel() {
               : undefined
           }
           disabled={!gitlab.editable || gitlab.busy}
-          onClick={() => void gitlab.run("refresh")}
+          onClick={() => gitlab.run("refresh")}
         >
           <RefreshIcon />
         </IconButton>
@@ -104,7 +103,7 @@ export function GitLabDiscussionContent() {
           </span>
         </div>
       ) : (
-        <p role="status" {...withClass(undefined, loadingStyles.text)}>
+        <p role="status" className={cn(undefined, loadingStyles.text)}>
           Loading GitLab discussions…
         </p>
       )}
@@ -130,7 +129,7 @@ export function GitLabDiscussionContent() {
             gitlab.busy ||
             !unsent.some((d) => ["saved", "failed"].includes(d.status))
           }
-          onClick={() => void gitlab.run("post")}
+          onClick={() => gitlab.run("post")}
         >
           Post all
         </Button>
@@ -478,7 +477,7 @@ function Discussion({
                 }
                 disabled={!gitlab.editable || gitlab.busy}
                 onClick={() =>
-                  void gitlab.run("resolve", { discussionId: discussion.id })
+                  gitlab.run("resolve", { discussionId: discussion.id })
                 }
               >
                 Resolve
@@ -537,7 +536,7 @@ function DraftEditor({
 
   const saveStatus = (
     <span
-      {...withClass(
+      className={cn(
         cn(meta, "tw:ms-auto"),
         editor?.dirty && !editor.error && loadingStyles.text,
       )}
@@ -562,8 +561,7 @@ function DraftEditor({
       className={cn(
         card,
         inline && inlineCard,
-        attached &&
-          "tw:-mt-2 tw:rounded-t-none tw:bg-[var(--surface)] tw:pt-5",
+        attached && "tw:-mt-2 tw:rounded-t-none tw:bg-[var(--surface)] tw:pt-5",
       )}
     >
       <div className="tw:flex tw:flex-wrap tw:items-baseline tw:justify-between tw:gap-2 tw:wrap-anywhere">
@@ -595,7 +593,7 @@ function DraftEditor({
         value={editor?.text ?? draft.text}
         onChange={(text) => gitlab.edit(draft.id, text)}
         onSubmit={() => {
-          if (canPost) void gitlab.run("post", { id: draft.id });
+          if (canPost) gitlab.run("post", { id: draft.id });
         }}
         disabled={!gitlab.editable || gitlab.busy || locked}
         focused={gitlab.selected === draft.id}
@@ -615,7 +613,7 @@ function DraftEditor({
               gitlab.pending.input.id === draft.id
             }
             disabled={!canPost}
-            onClick={() => void gitlab.run("post", { id: draft.id })}
+            onClick={() => gitlab.run("post", { id: draft.id })}
           >
             Post
           </Button>
@@ -625,7 +623,7 @@ function DraftEditor({
               gitlab.pending.input.id === draft.id
             }
             disabled={!gitlab.editable || gitlab.busy}
-            onClick={() => void gitlab.run("discard", { id: draft.id })}
+            onClick={() => gitlab.run("discard", { id: draft.id })}
           >
             Discard
           </Button>
@@ -659,7 +657,7 @@ function DraftEditor({
             }
             disabled={!verified || !gitlab.editable || gitlab.busy}
             onClick={() =>
-              void gitlab.run("recover", {
+              gitlab.run("recover", {
                 id: draft.id,
                 verified: true,
                 posted: false,
@@ -691,7 +689,7 @@ function DraftEditor({
               gitlab.busy
             }
             onClick={() =>
-              void gitlab.run("recover", {
+              gitlab.run("recover", {
                 id: draft.id,
                 verified: true,
                 posted: true,

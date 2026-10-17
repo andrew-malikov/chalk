@@ -5,11 +5,11 @@ import {
   PopoverTrigger,
 } from "@canvas/components/ui/popover";
 import { Switch } from "@canvas/components/ui/switch";
+import { cn } from "@canvas/lib/utils";
 import { Choice } from "@canvas/settings/settings-choice";
 import { Button, IconButton } from "@canvas/ui/button";
 import { ChatIcon } from "@canvas/ui/icons";
 import { StatusBanner } from "@canvas/ui/status-banner";
-import { textStyles } from "@canvas/ui/text";
 import {
   type ReviewCanvasRange,
   type ReviewCommitSummary,
@@ -19,7 +19,6 @@ import {
   type SoftwareMapTopologyDiff,
   diffSoftwareMaps,
 } from "@review/software-map/software-map-topology-diff";
-import * as stylex from "@stylexjs/stylex";
 import { Archive, ArrowLeft } from "lucide-react";
 import {
   type CSSProperties,
@@ -74,7 +73,6 @@ import {
   useReviewPanelActor,
   useSuppressPanelMotionOnCanvasResume,
 } from "./review/review-panel";
-import { type ReviewDiffScope } from "./review/review-panel-machine";
 import {
   ReviewRootsProvider,
   useReviewContainer,
@@ -89,7 +87,6 @@ import { useReviewViewStateSync } from "./review/review-view-state";
 import { useRightPanelResize } from "./review/side-panel-resizer";
 import {
   ReviewDebugSettingsProvider,
-  type ReviewNodeTint,
   useReviewDebugSettings,
 } from "./settings/debug-settings";
 import type {
@@ -108,18 +105,9 @@ import {
   segmentMarker,
   topbarActionsMarker,
   topbarTabsMarker,
-} from "./styles/markers.stylex";
-import {
-  elevation,
-  fontSize,
-  fontWeight,
-  motion,
-  radius,
-} from "./styles/scale.stylex";
+} from "./styles/markers";
 import { shellStyles } from "./styles/shell-styles";
-import { withClass } from "./styles/stylex-props";
 import { themeStyles } from "./styles/theme-styles";
-import { tokens } from "./styles/tokens.stylex";
 import { useTutorial } from "./tutorial/tutorial-context";
 import { TutorialExperienceProvider } from "./tutorial/tutorial-experience";
 import { MarkerUnderline, SettingsSlidersIcon } from "./ui/icons";
@@ -476,7 +464,7 @@ function ReviewLayoutContent({
   return (
     <div
       ref={appRef}
-      {...withClass(
+      className={cn(
         appClassName,
         appMarker,
         themeStyles.vars,
@@ -494,7 +482,7 @@ function ReviewLayoutContent({
     >
       <main
         ref={shellRef}
-        {...withClass(
+        className={cn(
           "review-document-shell",
           shellStyles.documentShell,
           !!banner && shellStyles.documentShellBanner,
@@ -504,10 +492,10 @@ function ReviewLayoutContent({
           shellRef={shellRef}
           scrollRegionRef={scrollRegionRef}
         >
-          <header {...stylex.props(shellStyles.topbar)}>
-            <div {...stylex.props(shellStyles.topbarLeft, topbarTabsMarker)}>
+          <header className={shellStyles.topbar}>
+            <div className={cn(shellStyles.topbarLeft, topbarTabsMarker)}>
               <div
-                {...stylex.props(
+                className={cn(
                   controlStyles.segmented,
                   controlStyles.segmentedTopbar,
                 )}
@@ -527,7 +515,7 @@ function ReviewLayoutContent({
                     }
                     aria-pressed={activeView === view}
                     title={view === "map" ? "Map (Experimental)" : undefined}
-                    {...withClass(
+                    className={cn(
                       "review-segment",
                       segmentMarker,
                       controlStyles.segment,
@@ -550,7 +538,7 @@ function ReviewLayoutContent({
                     )}
                     {view === "diff" && filesTabFileCount !== null && (
                       <span
-                        {...stylex.props(
+                        className={cn(
                           controlStyles.segmentCount,
                           activeView === view &&
                             controlStyles.segmentCountActive,
@@ -561,7 +549,7 @@ function ReviewLayoutContent({
                     )}
                     {view === "commits" && (
                       <span
-                        {...stylex.props(
+                        className={cn(
                           controlStyles.segmentCount,
                           activeView === view &&
                             controlStyles.segmentCountActive,
@@ -575,11 +563,9 @@ function ReviewLayoutContent({
                 ))}
               </div>
             </div>
-            <div
-              {...stylex.props(shellStyles.topbarActions, topbarActionsMarker)}
-            >
+            <div className={cn(shellStyles.topbarActions, topbarActionsMarker)}>
               <div
-                {...stylex.props(
+                className={cn(
                   shellStyles.topbarItem,
                   shellStyles.topbarContext,
                 )}
@@ -602,7 +588,7 @@ function ReviewLayoutContent({
                 !review.historicalRevision &&
                 !review.submissionOutcome && (
                   <div
-                    {...stylex.props(
+                    className={cn(
                       shellStyles.topbarItem,
                       shellStyles.actionsDivider,
                     )}
@@ -625,7 +611,7 @@ function ReviewLayoutContent({
           )}
           <section
             ref={scrollRegionRef}
-            {...withClass(
+            className={cn(
               `review-view-region review-view-region--${activeView}`,
               shellStyles.viewRegion,
               activeView === "commits" && shellStyles.commitsRegion,
@@ -633,7 +619,7 @@ function ReviewLayoutContent({
             )}
           >
             <div
-              {...withClass(
+              className={cn(
                 "review-document-view",
                 shellStyles.documentView,
                 activeView !== "review" && shellStyles.hidden,
@@ -643,7 +629,7 @@ function ReviewLayoutContent({
               <>
                 <article
                   ref={articleRef}
-                  {...withClass(
+                  className={cn(
                     "review-document",
                     documentStyles.article,
                     documentMarker,
@@ -665,14 +651,14 @@ function ReviewLayoutContent({
             </div>
             {softwareMapEnabled && activeView === "map" && (
               <div
-                {...withClass(
+                className={cn(
                   "review-map-view",
                   shellStyles.mapView,
                   mapViewStyles.view,
                 )}
               >
                 <div
-                  {...stylex.props(
+                  className={cn(
                     shellStyles.mapCanvasShell,
                     mapViewStyles.canvasShell,
                   )}
@@ -718,7 +704,7 @@ function ReviewLayoutContent({
             <div
               ref={diffHostRef}
               aria-hidden={diffPreloaded}
-              {...stylex.props(
+              className={cn(
                 shellStyles.diffView,
                 diffPreloaded && shellStyles.diffViewPreloaded,
               )}
@@ -728,7 +714,7 @@ function ReviewLayoutContent({
             </div>
             {activeView === "diff" && diffScope !== null && (
               <div
-                {...withClass(
+                className={cn(
                   "review-diff-view--scoped",
                   shellStyles.diffView,
                   shellStyles.diffViewScoped,
@@ -751,7 +737,7 @@ function ReviewLayoutContent({
       </main>
       {rightPanelOpen && (
         <div
-          {...stylex.props(
+          className={cn(
             shellStyles.resizer,
             shellStyles.peekResizer,
             shellStyles.resizerGrabPanel,
@@ -760,7 +746,7 @@ function ReviewLayoutContent({
           {...sidePeekResize.separatorProps}
         />
       )}
-      <div {...stylex.props(shellStyles.detailHost, detailHostMarker)}>
+      <div className={cn(shellStyles.detailHost, detailHostMarker)}>
         {gitlabShown && <GitLabDiscussionPanel />}
         <ReviewPanelHost />
       </div>
@@ -776,63 +762,33 @@ function CommitDiffScopeBar({
   onBack: () => void;
 }) {
   return (
-    <div {...stylex.props(scopeBarStyles.bar)}>
+    <div className={scopeBarStyles.bar}>
       <ButtonPrimitive
         variant="ghost"
         size="xs"
         type="button"
-        {...stylex.props(scopeBarStyles.back)}
+        className={scopeBarStyles.back}
         onClick={onBack}
       >
         <ArrowLeft size={12} aria-hidden="true" /> Commits
       </ButtonPrimitive>
-      <code {...stylex.props(scopeBarStyles.sha)} title={commit.commit}>
+      <code className={scopeBarStyles.sha} title={commit.commit}>
         {commit.commit.slice(0, 8)}
       </code>
-      <span {...stylex.props(scopeBarStyles.subject)} title={commit.subject}>
+      <span className={scopeBarStyles.subject} title={commit.subject}>
         {commit.subject}
       </span>
     </div>
   );
 }
 
-const scopeBarStyles = stylex.create({
-  bar: {
-    display: "flex",
-    height: "30px",
-    flex: "0 0 30px",
-    alignItems: "center",
-    gap: "12px",
-    padding: "0 12px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.ruleSoft,
-    backgroundColor: tokens.surface,
-  },
-  back: {
-    height: "20px",
-    flex: "0 0 auto",
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    backgroundColor: "transparent",
-    color: tokens.accent,
-    fontSize: fontSize.micro,
-  },
-  sha: {
-    color: tokens.inkMuted,
-    font: `${fontSize.micro} ${tokens.fontMono}`,
-  },
-  subject: {
-    minWidth: 0,
-    overflow: "hidden",
-    color: tokens.ink,
-    fontSize: fontSize.small,
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-});
+const scopeBarStyles = {
+  bar: "tw:flex tw:h-[30px] tw:flex-[0_0_30px] tw:items-center tw:gap-[12px] tw:p-[0_12px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule-soft)] tw:bg-[color:var(--surface)]",
+  back: "tw:h-[20px] tw:flex-[0_0_auto] tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:text-[color:var(--accent)] tw:text-[length:10px]",
+  sha: "tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-mono)] tw:text-[length:10px] tw:font-normal tw:leading-[normal]",
+  subject:
+    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:text-[length:11px] tw:text-ellipsis tw:whitespace-nowrap",
+};
 
 /**
  * Reports where the baton sits after the reader acts. It renders nothing while
@@ -851,12 +807,12 @@ function DiscussionsButton({
   return (
     <IconButton
       ref={tooltip}
-      xstyle={shellStyles.topbarItem}
+      className={shellStyles.topbarItem}
       aria-label="Discussions"
       aria-expanded={expanded}
       onClick={onClick}
     >
-      <ChatIcon xstyle={controlStyles.chromeIcon} />
+      <ChatIcon className={controlStyles.chromeIcon} />
     </IconButton>
   );
 }
@@ -873,13 +829,9 @@ function ReviewBatonChip({
   return (
     <span
       ref={tooltip}
-      {...stylex.props(shellStyles.topbarItem, batonStyles.chip)}
+      className={cn(shellStyles.topbarItem, batonStyles.chip)}
     >
-      <Archive
-        {...stylex.props(batonStyles.glyph)}
-        size={12}
-        aria-hidden="true"
-      />
+      <Archive className={batonStyles.glyph} size={12} aria-hidden="true" />
       <span>settled</span>
     </span>
   );
@@ -991,41 +943,16 @@ export function applySoftwareMapTopologyStatuses(
   };
 }
 
-const batonStyles = stylex.create({
-  chip: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "7px",
-    color: tokens.diffRemoved,
-    fontFamily: tokens.chromeFont,
-    fontSize: tokens.chromeFontSizeSmall,
-    fontWeight: tokens.chromeFontWeightStrong,
-    lineHeight: 1,
-    letterSpacing: tokens.chromeTracking,
-    textTransform: "uppercase",
-    whiteSpace: "nowrap",
-  },
-  glyph: {
-    fill: "none",
-    stroke: "currentColor",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    strokeWidth: "1.4",
-  },
-});
+const batonStyles = {
+  chip: "tw:inline-flex tw:items-center tw:gap-[7px] tw:text-[color:var(--diff-removed)] tw:font-[family-name:var(--chrome-font)] tw:text-[length:var(--chrome-font-size-small)] tw:font-[number:var(--chrome-font-weight-strong)] tw:leading-[1] tw:tracking-[var(--chrome-tracking)] tw:uppercase tw:whitespace-nowrap",
+  glyph:
+    "tw:fill-[none] tw:stroke-[currentColor] tw:[stroke-linecap:round] tw:[stroke-linejoin:round] tw:stroke-[1.4]",
+};
 
 // Map settings float over the map canvas instead of sitting behind a topbar
 // gear, so map-only controls stay with the map.
-const mapViewStyles = stylex.create({
-  view: {
-    backgroundColor: tokens.bg,
-  },
-  canvasShell: {
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: 0,
-    backgroundColor: tokens.bg,
-    boxShadow: "none",
-  },
-});
+const mapViewStyles = {
+  view: "tw:bg-[color:var(--bg)]",
+  canvasShell:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-none tw:bg-[color:var(--bg)] tw:[box-shadow:none]",
+};

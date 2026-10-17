@@ -1,669 +1,80 @@
-import { drawMotion } from "@canvas/drawing/draw-motion.stylex";
-import { documentNodeMarker } from "@canvas/styles/markers.stylex";
-import { motion, radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
-
-// Drawing (study 05). Each accepted edit is drawn as it lands, one at a time,
-// from the draw queue in draw-queue.ts; the courier stands on the one being
-// drawn. Blocks and units carry `data-motion` for their phase. Outline first,
-// then fill: a new flow node is traced clockwise from its top-left on its real
-// geometry (pathLength=1 on the rect), pulses once, and its label composes; an
-// edge is one stroke from source to target; a new block gets a slot, then
-// wipes in behind the marker dot; a rewritten block is erased in three
-// diagonal passes and rewritten; the top-level block being edited wears the
-// section ring. Queued content waits unseen so nothing lands twice. Reduced
-// motion shows every phase as its finished frame.
-//
-// `--wb-wipe` and `--wb-sweep` are registered in global.css so they animate.
-
-const REDUCED = "@media (prefers-reduced-motion: reduce)";
-
-const ease = "cubic-bezier(0.2, 0.7, 0.2, 1)";
-
-// A block's own elements: the children of a block in a phase.
-const landingChild = ':is([data-review-node-id][data-motion="landing"] > *)';
-
-const rewritingChild =
-  ':is([data-review-node-id][data-motion="rewriting"] > *)';
-
-const erasingChild = ':is([data-review-node-id][data-motion="erasing"] > *)';
-
-// A top-level section wears the ring on its own box, not the block's outline.
-const ringOnSection = ":is([data-region]):has(> .review-section)";
-
-// The section a top-level block renders.
-const regionOff = ':is([data-review-node-id][data-region="off"] > *)';
-
-const regionOn =
-  ':is([data-review-node-id]:is([data-region="writing"], [data-region="idle"]) > *)';
-
-const regionWriting = ':is([data-review-node-id][data-region="writing"] > *)';
-
-// SAFETY: StyleX compiles custom properties in keyframes; only its types
-// omit them.
-const wipe = stylex.keyframes({
-  from: { "--wb-wipe": "0%" } as stylex.CSSProperties,
-  to: { "--wb-wipe": "108%" } as stylex.CSSProperties,
-});
-
-const sweepMask = `linear-gradient(115deg, transparent calc(var(--wb-sweep) - 12%), #000 var(--wb-sweep))`;
-
-// SAFETY: as for the wipe, the sweep is a custom property.
-const erase = stylex.keyframes({
-  from: {
-    "--wb-sweep": "-20%",
-    opacity: 1,
-    WebkitMaskImage: sweepMask,
-    maskImage: sweepMask,
-  } as stylex.CSSProperties,
-  to: {
-    "--wb-sweep": "130%",
-    opacity: 1,
-    WebkitMaskImage: sweepMask,
-    maskImage: sweepMask,
-  } as stylex.CSSProperties,
-});
-
-const rewrite = stylex.keyframes({
-  from: { clipPath: "inset(0 100% 0 0)" },
-  to: { clipPath: "inset(0 0 0 0)" },
-});
-
-const landSlot = stylex.keyframes({
-  "0%": {
-    outline: `1px dashed ${tokens.ruleSoft}`,
-    outlineOffset: "-1px",
-    backgroundColor: tokens.transparent,
-  },
-  "38%": {
-    outline: `1px solid ${tokens.accent}`,
-    outlineOffset: "-1px",
-    backgroundColor: tokens.markerTint,
-  },
-  "70%": {
-    outline: `1px solid ${tokens.accent}`,
-    backgroundColor: tokens.markerTint,
-  },
-  "100%": {
-    outline: `1px solid ${tokens.transparent}`,
-    outlineOffset: "-1px",
-    backgroundColor: tokens.transparent,
-  },
-});
-
-const dotFade = stylex.keyframes({
-  from: { opacity: 1 },
-  to: { opacity: 0 },
-});
-
-const eraserIn = stylex.keyframes({
-  from: { opacity: 0, transform: "translateX(-60px) rotate(-6deg)" },
-  to: { opacity: 1, transform: "translateX(0) rotate(-6deg)" },
-});
-
-const eraserSweeps = stylex.keyframes({
-  "0%": { transform: "translate(0, 0) rotate(-6deg)" },
-  "33%": { transform: "translate(520px, 22px) rotate(-8deg)" },
-  "34%": { transform: "translate(30px, 26px) rotate(-6deg)" },
-  "66%": { transform: "translate(540px, 50px) rotate(-8deg)" },
-  "67%": { transform: "translate(60px, 54px) rotate(-6deg)" },
-  "100%": { transform: "translate(560px, 78px) rotate(-8deg)" },
-});
-
-const eraserOut = stylex.keyframes({
-  to: { opacity: 0, transform: "translate(600px, 88px) rotate(-8deg)" },
-});
-
-const collapse = stylex.keyframes({
-  from: { height: "auto", marginBlock: 0 },
-  to: { height: 0, marginBlock: 0 },
-});
-
-const regionPulse = stylex.keyframes({
-  "50%": {
-    outlineColor: `color-mix(in srgb, ${tokens.accent} 25%, transparent)`,
-  },
-});
-
-const regionPulseBorder = stylex.keyframes({
-  "50%": {
-    borderColor: `color-mix(in srgb, ${tokens.accent} 25%, transparent)`,
-  },
-});
-
-const label = stylex.keyframes({
-  from: { opacity: 0, clipPath: "inset(0 100% 0 0)" },
-  to: { opacity: 1, clipPath: "inset(0 0 0 0)" },
-});
-
-const trace = stylex.keyframes({
-  from: { strokeDashoffset: "1" },
-  to: { strokeDashoffset: "0" },
-});
-
-const nodeFill = stylex.keyframes({
-  "0%": {
-    fill: tokens.markerTint,
-    stroke: tokens.accent,
-    strokeWidth: "1.6",
-  },
-  "60%": { fill: tokens.markerTint, stroke: tokens.accent },
-  "100%": { strokeWidth: "1" },
-});
-
-const stepPop = stylex.keyframes({
-  "0%": {
-    borderColor: tokens.accent,
-    backgroundColor: tokens.accent,
-    boxShadow: `0 0 0 0 ${tokens.markerGlow}`,
-  },
-  "40%": { boxShadow: `0 0 0 8px ${tokens.markerGlow}` },
-  "100%": {
-    borderColor: tokens.accent,
-    backgroundColor: tokens.accent,
-    boxShadow: `0 0 0 0 ${tokens.transparent}`,
-  },
-});
-
-// A block's own elements while it is drawn. Reduced motion stops them (the
-// finished frame); an erased block's content stays gone.
-const childAnimationName = {
-  [landingChild]: { default: wipe, [REDUCED]: "none" },
-  [rewritingChild]: { default: `${erase}, ${rewrite}`, [REDUCED]: "none" },
-  [erasingChild]: { default: erase, [REDUCED]: "none" },
-};
-
-const childAnimationDuration = {
-  [landingChild]: { default: "420ms", [REDUCED]: "0s" },
-  [rewritingChild]: { default: "400ms, 500ms", [REDUCED]: "0s" },
-  [erasingChild]: { default: "400ms", [REDUCED]: "0s" },
-};
-
-const childAnimationTimingFunction = {
-  [landingChild]: { default: ease, [REDUCED]: "ease" },
-  [rewritingChild]: { default: `linear, ${ease}`, [REDUCED]: "ease" },
-  [erasingChild]: { default: "linear", [REDUCED]: "ease" },
-};
-
-const childAnimationDelay = {
-  [landingChild]: { default: "260ms", [REDUCED]: "0s" },
-  [rewritingChild]: { default: "200ms, 600ms", [REDUCED]: "0s" },
-  [erasingChild]: { default: "0s", [REDUCED]: "0s" },
-};
-
-const childAnimationFillMode = {
-  [landingChild]: { default: "both", [REDUCED]: "none" },
-  [rewritingChild]: { default: "both, both", [REDUCED]: "none" },
-  [erasingChild]: { default: "forwards", [REDUCED]: "none" },
-};
-
-const childAnimationList = {
-  [rewritingChild]: { default: "1, 1", [REDUCED]: "1" },
-};
-
-const childAnimationDirection = {
-  [rewritingChild]: { default: "normal, normal", [REDUCED]: "normal" },
-};
-
-const childAnimationPlayState = {
-  [rewritingChild]: { default: "running, running", [REDUCED]: "running" },
-};
-
-const wipeMask = `linear-gradient(90deg, #000 calc(${tokens.wbWipe} - 8%), transparent ${tokens.wbWipe})`;
-
-// The eraser: a flat well-gray block that lands and makes three diagonal
-// passes.
-const eraser = {
-  content: "''",
-  position: "absolute",
-  top: "4px",
-  left: 0,
-  width: "44px",
-  height: "18px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: tokens.ruleSoft,
-  borderRadius: "3px",
-  backgroundColor: tokens.well,
-  opacity: 0,
-  pointerEvents: "none",
-  display: { default: null, [REDUCED]: "none" },
-  animationName: {
-    default: `${eraserIn}, ${eraserSweeps}, ${eraserOut}`,
-    [REDUCED]: "none",
-  },
-  animationIterationCount: { default: "1, 1, 1", [REDUCED]: "1" },
-  animationDirection: {
-    default: "normal, normal, normal",
-    [REDUCED]: "normal",
-  },
-  animationPlayState: {
-    default: "running, running, running",
-    [REDUCED]: "running",
-  },
-  animationFillMode: { default: "both, both, both", [REDUCED]: "none" },
-  animationTimingFunction: {
-    default: `${ease}, linear, ease`,
-    [REDUCED]: "ease",
-  },
-};
-
-export const drawStyles = stylex.create({
+export const drawStyles = {
   // Every element a block renders as its own: the content wipes in behind
   // the dot, is erased and rewritten, or is erased for good. Opt-in: a new
   // block type must apply it to its root element or it skips these phases.
-  blockChild: {
-    WebkitMaskImage: {
-      default: null,
-      [landingChild]: { default: wipeMask, [REDUCED]: "none" },
-    },
-    maskImage: {
-      default: null,
-      [landingChild]: { default: wipeMask, [REDUCED]: "none" },
-    },
-    opacity: { default: null, [erasingChild]: 0 },
-    animationName: { default: null, ...childAnimationName },
-    animationDuration: { default: null, ...childAnimationDuration },
-    animationTimingFunction: {
-      default: null,
-      ...childAnimationTimingFunction,
-    },
-    animationDelay: { default: null, ...childAnimationDelay },
-    animationFillMode: { default: null, ...childAnimationFillMode },
-    animationIterationCount: { default: null, ...childAnimationList },
-    animationDirection: { default: null, ...childAnimationDirection },
-    animationPlayState: { default: null, ...childAnimationPlayState },
-  },
-  queued: {
-    visibility: "hidden",
-  },
+  blockChild:
+    "tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[-webkit-mask-image:linear-gradient(90deg,_#000_calc(var(--wb-wipe)_-_8%),_transparent_var(--wb-wipe))] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[-webkit-mask-image:none] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[mask-image:linear-gradient(90deg,_#000_calc(var(--wb-wipe)_-_8%),_transparent_var(--wb-wipe))] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[mask-image:none] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:opacity-0 tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-name:draw-styles-wipe] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-name:draw-styles-erase,_draw-styles-rewrite] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-name:draw-styles-erase] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-duration:420ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-duration:400ms,_500ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-duration:400ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-timing-function:linear,_cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-timing-function:linear] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-delay:260ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-delay:200ms,_600ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-delay:0s] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-fill-mode:both,_both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-fill-mode:forwards] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-iteration-count:1,_1] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-iteration-count:1] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-direction:normal,_normal] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-direction:normal] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-play-state:running,_running] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-play-state:running]",
+  queued: "tw:invisible",
   // Landing: a dashed slot, then the content wipes in behind the dot while
   // the slot takes the marker wash and a solid outline; both fade on settle.
-  landing: {
-    position: "relative",
-    borderRadius: radius.surface,
-    "::after": {
-      content: "''",
-      position: "absolute",
-      top: "50%",
-      left: tokens.wbWipe,
-      width: "8px",
-      height: "8px",
-      margin: "-4px 0 0 -4px",
-      borderRadius: radius.round,
-      backgroundColor: tokens.accent,
-      boxShadow: `0 0 0 3px ${tokens.markerGlow}`,
-      pointerEvents: "none",
-      display: { default: null, [REDUCED]: "none" },
-      animationName: { default: `${wipe}, ${dotFade}`, [REDUCED]: "none" },
-      animationDuration: {
-        default: `${drawMotion.stroke}, ${drawMotion.dotFade}`,
-        [REDUCED]: motion.instant,
-      },
-      animationTimingFunction: { default: `${ease}, ease`, [REDUCED]: "ease" },
-      animationDelay: { default: "260ms, 680ms", [REDUCED]: "0s" },
-      animationFillMode: { default: "both, both", [REDUCED]: "none" },
-      animationIterationCount: { default: "1, 1", [REDUCED]: "1" },
-      animationDirection: { default: "normal, normal", [REDUCED]: "normal" },
-      animationPlayState: {
-        default: "running, running",
-        [REDUCED]: "running",
-      },
-    },
-  },
+  landing:
+    "tw:relative tw:rounded-[8px] tw:[&::after]:[content:''] tw:[&::after]:absolute tw:[&::after]:top-[50%] tw:[&::after]:left-[var(--wb-wipe)] tw:[&::after]:w-[8px] tw:[&::after]:h-[8px] tw:[&::after]:m-[-4px_0_0_-4px] tw:[&::after]:rounded-[50%] tw:[&::after]:bg-[color:var(--accent)] tw:[&::after]:[box-shadow:0_0_0_3px_var(--marker-glow)] tw:[&::after]:pointer-events-none tw:[@media_(prefers-reduced-motion:_reduce)]:[&::after]:hidden tw:[&::after]:[animation-name:draw-styles-wipe,_draw-styles-dot-fade] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::after]:[animation-name:none] tw:[&::after]:[animation-duration:420ms,_150ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::after]:[animation-duration:0s] tw:[&::after]:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1),_ease] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::after]:[animation-timing-function:ease] tw:[&::after]:[animation-delay:260ms,_680ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::after]:[animation-delay:0s] tw:[&::after]:[animation-fill-mode:both,_both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::after]:[animation-fill-mode:none] tw:[&::after]:[animation-iteration-count:1,_1] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::after]:[animation-iteration-count:1] tw:[&::after]:[animation-direction:normal,_normal] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::after]:[animation-direction:normal] tw:[&::after]:[animation-play-state:running,_running] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::after]:[animation-play-state:running]",
   // Rewriting: the eraser lands and makes its passes; the text under it
   // drops away, then the new ink wipes in from the left.
-  rewriting: {
-    position: "relative",
-    "::before": {
-      ...eraser,
-      animationDuration: {
-        default: `${drawMotion.beat}, ${drawMotion.pass}, ${drawMotion.beat}`,
-        [REDUCED]: motion.instant,
-      },
-      animationDelay: { default: "0s, 200ms, 600ms", [REDUCED]: "0s" },
-    },
-  },
+  rewriting:
+    "tw:relative tw:[&::before]:[content:''] tw:[&::before]:absolute tw:[&::before]:top-[4px] tw:[&::before]:left-0 tw:[&::before]:w-[44px] tw:[&::before]:h-[18px] tw:[&::before]:border-[1px] tw:[&::before]:border-solid tw:[&::before]:border-[color:var(--rule-soft)] tw:[&::before]:rounded-[3px] tw:[&::before]:bg-[color:var(--well)] tw:[&::before]:opacity-0 tw:[&::before]:pointer-events-none tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:hidden tw:[&::before]:[animation-name:draw-styles-eraser-in,_draw-styles-eraser-sweeps,_draw-styles-eraser-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-name:none] tw:[&::before]:[animation-iteration-count:1,_1,_1] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-iteration-count:1] tw:[&::before]:[animation-direction:normal,_normal,_normal] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-direction:normal] tw:[&::before]:[animation-play-state:running,_running,_running] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-play-state:running] tw:[&::before]:[animation-fill-mode:both,_both,_both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-fill-mode:none] tw:[&::before]:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1),_linear,_ease] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-timing-function:ease] tw:[&::before]:[animation-duration:200ms,_400ms,_200ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-duration:0s] tw:[&::before]:[animation-delay:0s,_200ms,_600ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-delay:0s]",
   // Erasing: the eraser's three passes, then the board closes over the gap.
-  erasing: {
-    position: "relative",
-    display: { default: null, [REDUCED]: "none" },
-    overflow: "clip",
-    interpolateSize: "allow-keywords",
-    "::before": {
-      ...eraser,
-      animationDuration: {
-        default: `${drawMotion.tick}, ${drawMotion.pass}, ${drawMotion.tick}`,
-        [REDUCED]: motion.instant,
-      },
-      animationDelay: { default: "0s, 0s, 400ms", [REDUCED]: "0s" },
-    },
-  },
+  erasing:
+    "tw:relative tw:[@media_(prefers-reduced-motion:_reduce)]:hidden tw:overflow-clip tw:[interpolate-size:allow-keywords] tw:[&::before]:[content:''] tw:[&::before]:absolute tw:[&::before]:top-[4px] tw:[&::before]:left-0 tw:[&::before]:w-[44px] tw:[&::before]:h-[18px] tw:[&::before]:border-[1px] tw:[&::before]:border-solid tw:[&::before]:border-[color:var(--rule-soft)] tw:[&::before]:rounded-[3px] tw:[&::before]:bg-[color:var(--well)] tw:[&::before]:opacity-0 tw:[&::before]:pointer-events-none tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:hidden tw:[&::before]:[animation-name:draw-styles-eraser-in,_draw-styles-eraser-sweeps,_draw-styles-eraser-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-name:none] tw:[&::before]:[animation-iteration-count:1,_1,_1] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-iteration-count:1] tw:[&::before]:[animation-direction:normal,_normal,_normal] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-direction:normal] tw:[&::before]:[animation-play-state:running,_running,_running] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-play-state:running] tw:[&::before]:[animation-fill-mode:both,_both,_both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-fill-mode:none] tw:[&::before]:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1),_linear,_ease] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-timing-function:ease] tw:[&::before]:[animation-duration:120ms,_400ms,_120ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-duration:0s] tw:[&::before]:[animation-delay:0s,_0s,_400ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&::before]:[animation-delay:0s]",
   // The section ring: the top-level block the agent is editing wears the
   // marker hairline, outside its content so nothing shifts, and no wash.
   // While the agent writes only its color breathes; idle, it holds; when the
   // agent moves on or the lease ends, it fades.
-  region: {
-    borderRadius: radius.surface,
-    outline: {
-      default: `1px solid ${tokens.transparent}`,
-      [ringOnSection]: "none",
-    },
-    outlineOffset: "12px",
-    transition: `outline-color ${drawMotion.ring} ${motion.ease}`,
-  },
-  regionOn: {
-    outline: { default: `1px solid ${tokens.accent}`, [ringOnSection]: "none" },
-  },
+  region:
+    "tw:rounded-[8px] tw:[outline:1px_solid_var(--transparent)] tw:[&:is([data-region]):has(>_.review-section)]:[outline:none] tw:outline-offset-[12px] tw:[transition:outline-color_250ms_ease]",
+  regionOn:
+    "tw:[outline:1px_solid_var(--accent)] tw:[&:is([data-region]):has(>_.review-section)]:[outline:none]",
   // A block's own animation; a block is also the child of a tutorial
   // feature, whose phase then draws it.
-  blockLand: {
-    animationName: {
-      default: landSlot,
-      [ringOnSection]: "none",
-      [REDUCED]: "none",
-      ...childAnimationName,
-    },
-    animationDuration: {
-      default: drawMotion.land,
-      [ringOnSection]: motion.instant,
-      [REDUCED]: motion.instant,
-      ...childAnimationDuration,
-    },
-    animationTimingFunction: {
-      default: ease,
-      [ringOnSection]: "ease",
-      [REDUCED]: "ease",
-      ...childAnimationTimingFunction,
-    },
-    animationDelay: { default: null, ...childAnimationDelay },
-    animationFillMode: {
-      default: "both",
-      [ringOnSection]: "none",
-      [REDUCED]: "none",
-      ...childAnimationFillMode,
-    },
-    animationIterationCount: { default: null, ...childAnimationList },
-    animationDirection: { default: null, ...childAnimationDirection },
-    animationPlayState: { default: null, ...childAnimationPlayState },
-  },
-  blockCollapse: {
-    animationName: {
-      default: collapse,
-      [ringOnSection]: "none",
-      [REDUCED]: "none",
-      ...childAnimationName,
-    },
-    animationDuration: {
-      default: drawMotion.collapse,
-      [ringOnSection]: motion.instant,
-      [REDUCED]: motion.instant,
-      ...childAnimationDuration,
-    },
-    animationTimingFunction: {
-      default: ease,
-      [ringOnSection]: "ease",
-      [REDUCED]: "ease",
-      ...childAnimationTimingFunction,
-    },
-    animationDelay: {
-      default: "400ms",
-      [ringOnSection]: "0s",
-      [REDUCED]: "0s",
-      ...childAnimationDelay,
-    },
-    animationFillMode: {
-      default: "both",
-      [ringOnSection]: "none",
-      [REDUCED]: "none",
-      ...childAnimationFillMode,
-    },
-    animationIterationCount: { default: null, ...childAnimationList },
-    animationDirection: { default: null, ...childAnimationDirection },
-    animationPlayState: { default: null, ...childAnimationPlayState },
-  },
-  blockPulse: {
-    animationName: {
-      default: regionPulse,
-      [ringOnSection]: "none",
-      [REDUCED]: "none",
-      ...childAnimationName,
-    },
-    animationDuration: {
-      default: motion.pulse,
-      [ringOnSection]: motion.instant,
-      [REDUCED]: motion.instant,
-      ...childAnimationDuration,
-    },
-    animationTimingFunction: {
-      default: "ease-in-out",
-      [ringOnSection]: "ease",
-      [REDUCED]: "ease",
-      ...childAnimationTimingFunction,
-    },
-    animationDelay: { default: null, ...childAnimationDelay },
-    animationFillMode: { default: null, ...childAnimationFillMode },
-    animationIterationCount: {
-      default: "infinite",
-      [ringOnSection]: "1",
-      [REDUCED]: "1",
-      ...childAnimationList,
-    },
-    animationDirection: { default: null, ...childAnimationDirection },
-    animationPlayState: { default: null, ...childAnimationPlayState },
-  },
+  blockLand:
+    "tw:[animation-name:draw-styles-land-slot] tw:[&:is([data-region]):has(>_.review-section)]:[animation-name:none] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-name:draw-styles-wipe] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-name:draw-styles-erase,_draw-styles-rewrite] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-name:draw-styles-erase] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-name:none] tw:[animation-duration:680ms] tw:[&:is([data-region]):has(>_.review-section)]:[animation-duration:0s] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-duration:420ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-duration:400ms,_500ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-duration:400ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-duration:0s] tw:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[&:is([data-region]):has(>_.review-section)]:[animation-timing-function:ease] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-timing-function:linear,_cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-timing-function:linear] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-delay:260ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-delay:200ms,_600ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-delay:0s] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-delay:0s] tw:[animation-fill-mode:both] tw:[&:is([data-region]):has(>_.review-section)]:[animation-fill-mode:none] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-fill-mode:both,_both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-fill-mode:forwards] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-iteration-count:1,_1] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-iteration-count:1] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-direction:normal,_normal] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-direction:normal] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-play-state:running,_running] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-play-state:running]",
+  blockCollapse:
+    "tw:[animation-name:draw-styles-collapse] tw:[&:is([data-region]):has(>_.review-section)]:[animation-name:none] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-name:draw-styles-wipe] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-name:draw-styles-erase,_draw-styles-rewrite] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-name:draw-styles-erase] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-name:none] tw:[animation-duration:260ms] tw:[&:is([data-region]):has(>_.review-section)]:[animation-duration:0s] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-duration:420ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-duration:400ms,_500ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-duration:400ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-duration:0s] tw:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[&:is([data-region]):has(>_.review-section)]:[animation-timing-function:ease] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-timing-function:linear,_cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-timing-function:linear] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-timing-function:ease] tw:[animation-delay:400ms] tw:[&:is([data-region]):has(>_.review-section)]:[animation-delay:0s] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-delay:260ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-delay:200ms,_600ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-delay:0s] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-delay:0s] tw:[animation-fill-mode:both] tw:[&:is([data-region]):has(>_.review-section)]:[animation-fill-mode:none] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-fill-mode:both,_both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-fill-mode:forwards] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-iteration-count:1,_1] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-iteration-count:1] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-direction:normal,_normal] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-direction:normal] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-play-state:running,_running] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-play-state:running]",
+  blockPulse:
+    "tw:[animation-name:draw-styles-region-pulse] tw:[&:is([data-region]):has(>_.review-section)]:[animation-name:none] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-name:draw-styles-wipe] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-name:draw-styles-erase,_draw-styles-rewrite] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-name:none] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-name:draw-styles-erase] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-name:none] tw:[animation-duration:1.6s] tw:[&:is([data-region]):has(>_.review-section)]:[animation-duration:0s] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-duration:420ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-duration:400ms,_500ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-duration:400ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-duration:0s] tw:[animation-timing-function:ease-in-out] tw:[&:is([data-region]):has(>_.review-section)]:[animation-timing-function:ease] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-timing-function:linear,_cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-timing-function:linear] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-delay:260ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-delay:200ms,_600ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-delay:0s] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-delay:0s] tw:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=landing]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-fill-mode:both,_both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-fill-mode:none] tw:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-fill-mode:forwards] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=erasing]_>_*)]:[animation-fill-mode:none] tw:[animation-iteration-count:infinite] tw:[&:is([data-region]):has(>_.review-section)]:[animation-iteration-count:1] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-iteration-count:1] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-iteration-count:1,_1] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-iteration-count:1] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-direction:normal,_normal] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-direction:normal] tw:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-play-state:running,_running] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-motion=rewriting]_>_*)]:[animation-play-state:running]",
   // A top-level section's ring, on its own box: its chevron hangs 28px left
   // of its heading, past the 12px offset, so an outline would cut through
   // it. The box reaches 12px past the chevron on the left.
-  sectionRing: {
-    "::before": {
-      content: { default: null, [regionOff]: "''", [regionOn]: "''" },
-      position: {
-        default: null,
-        [regionOff]: "absolute",
-        [regionOn]: "absolute",
-      },
-      inset: {
-        default: null,
-        [regionOff]: "-12px -12px -12px -40px",
-        [regionOn]: "-12px -12px -12px -40px",
-      },
-      borderWidth: { default: null, [regionOff]: "1px", [regionOn]: "1px" },
-      borderStyle: {
-        default: null,
-        [regionOff]: "solid",
-        [regionOn]: "solid",
-      },
-      borderColor: {
-        default: null,
-        [regionOff]: tokens.transparent,
-        [regionOn]: tokens.accent,
-      },
-      borderRadius: {
-        default: null,
-        [regionOff]: radius.surface,
-        [regionOn]: radius.surface,
-      },
-      pointerEvents: {
-        default: null,
-        [regionOff]: "none",
-        [regionOn]: "none",
-      },
-      transition: {
-        default: null,
-        [regionOff]: `border-color ${drawMotion.ring} ${motion.ease}`,
-        [regionOn]: `border-color ${drawMotion.ring} ${motion.ease}`,
-      },
-      animationName: {
-        default: null,
-        [regionWriting]: { default: regionPulseBorder, [REDUCED]: "none" },
-      },
-      animationDuration: {
-        default: null,
-        [regionWriting]: { default: motion.pulse, [REDUCED]: motion.instant },
-      },
-      animationTimingFunction: {
-        default: null,
-        [regionWriting]: { default: "ease-in-out", [REDUCED]: "ease" },
-      },
-      animationIterationCount: {
-        default: null,
-        [regionWriting]: { default: "infinite", [REDUCED]: "1" },
-      },
-    },
-  },
+  sectionRing:
+    "tw:[&:is([data-review-node-id][data-region=off]_>_*)::before]:[content:''] tw:[&:is([data-review-node-id]:is([data-region=writing],_[data-region=idle])_>_*)::before]:[content:''] tw:[&:is([data-review-node-id][data-region=off]_>_*)::before]:absolute tw:[&:is([data-review-node-id]:is([data-region=writing],_[data-region=idle])_>_*)::before]:absolute tw:[&:is([data-review-node-id][data-region=off]_>_*)::before]:inset-[-12px_-12px_-12px_-40px] tw:[&:is([data-review-node-id]:is([data-region=writing],_[data-region=idle])_>_*)::before]:inset-[-12px_-12px_-12px_-40px] tw:[&:is([data-review-node-id][data-region=off]_>_*)::before]:border-[1px] tw:[&:is([data-review-node-id]:is([data-region=writing],_[data-region=idle])_>_*)::before]:border-[1px] tw:[&:is([data-review-node-id][data-region=off]_>_*)::before]:border-solid tw:[&:is([data-review-node-id]:is([data-region=writing],_[data-region=idle])_>_*)::before]:border-solid tw:[&:is([data-review-node-id][data-region=off]_>_*)::before]:border-[color:var(--transparent)] tw:[&:is([data-review-node-id]:is([data-region=writing],_[data-region=idle])_>_*)::before]:border-[color:var(--accent)] tw:[&:is([data-review-node-id][data-region=off]_>_*)::before]:rounded-[8px] tw:[&:is([data-review-node-id]:is([data-region=writing],_[data-region=idle])_>_*)::before]:rounded-[8px] tw:[&:is([data-review-node-id][data-region=off]_>_*)::before]:pointer-events-none tw:[&:is([data-review-node-id]:is([data-region=writing],_[data-region=idle])_>_*)::before]:pointer-events-none tw:[&:is([data-review-node-id][data-region=off]_>_*)::before]:[transition:border-color_250ms_ease] tw:[&:is([data-review-node-id]:is([data-region=writing],_[data-region=idle])_>_*)::before]:[transition:border-color_250ms_ease] tw:[&:is([data-review-node-id][data-region=writing]_>_*)::before]:[animation-name:draw-styles-region-pulse-border] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-region=writing]_>_*)::before]:[animation-name:none] tw:[&:is([data-review-node-id][data-region=writing]_>_*)::before]:[animation-duration:1.6s] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-region=writing]_>_*)::before]:[animation-duration:0s] tw:[&:is([data-review-node-id][data-region=writing]_>_*)::before]:[animation-timing-function:ease-in-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-region=writing]_>_*)::before]:[animation-timing-function:ease] tw:[&:is([data-review-node-id][data-region=writing]_>_*)::before]:[animation-iteration-count:infinite] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is([data-review-node-id][data-region=writing]_>_*)::before]:[animation-iteration-count:1]",
   // Retitle: a section heading recomposes; its children stay.
-  retitledHeading: {
-    animationName: {
-      default: null,
-      [stylex.when.ancestor(
-        ':is([data-motion="retitle"])',
-        documentNodeMarker,
-      )]: { default: label, [REDUCED]: "none" },
-    },
-    animationDuration: {
-      default: null,
-      [stylex.when.ancestor(
-        ':is([data-motion="retitle"])',
-        documentNodeMarker,
-      )]: { default: drawMotion.stroke, [REDUCED]: motion.instant },
-    },
-    animationTimingFunction: {
-      default: null,
-      [stylex.when.ancestor(
-        ':is([data-motion="retitle"])',
-        documentNodeMarker,
-      )]: { default: "steps(14)", [REDUCED]: "ease" },
-    },
-    animationFillMode: {
-      default: null,
-      [stylex.when.ancestor(
-        ':is([data-motion="retitle"])',
-        documentNodeMarker,
-      )]: { default: "both", [REDUCED]: "none" },
-    },
-  },
+  retitledHeading:
+    "tw:[&:is(.canvas-document-node:is([data-motion=retitle])_*)]:[animation-name:draw-styles-label] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-document-node:is([data-motion=retitle])_*)]:[animation-name:none] tw:[&:is(.canvas-document-node:is([data-motion=retitle])_*)]:[animation-duration:420ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-document-node:is([data-motion=retitle])_*)]:[animation-duration:0s] tw:[&:is(.canvas-document-node:is([data-motion=retitle])_*)]:[animation-timing-function:steps(14)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-document-node:is([data-motion=retitle])_*)]:[animation-timing-function:ease] tw:[&:is(.canvas-document-node:is([data-motion=retitle])_*)]:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-document-node:is([data-motion=retitle])_*)]:[animation-fill-mode:none]",
   // A callout's title, while its block is retitled.
-  retitle: {
-    animationName: { default: label, [REDUCED]: "none" },
-    animationDuration: {
-      default: drawMotion.stroke,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "steps(14)", [REDUCED]: "ease" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
+  retitle:
+    "tw:[animation-name:draw-styles-label] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:420ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(14)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
   // Diagram units wait unseen while queued.
-  hidden: {
-    opacity: 0,
-  },
+  hidden: "tw:opacity-0",
   // A unit's stroke, traced end to end with pathLength=1: one quick pass
   // over a diagram written whole, or the outline of a new unit.
-  traceQuick: {
-    strokeDasharray: "1",
-    animationName: { default: trace, [REDUCED]: "none" },
-    animationDuration: { default: drawMotion.quick, [REDUCED]: motion.instant },
-    animationTimingFunction: { default: "linear", [REDUCED]: "ease" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
-  traceNode: {
-    strokeDasharray: "1",
-    animationName: { default: trace, [REDUCED]: "none" },
-    animationDuration: {
-      default: drawMotion.stroke,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: ease, [REDUCED]: "ease" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
-  traceLine: {
-    strokeDasharray: "1",
-    animationName: { default: trace, [REDUCED]: "none" },
-    animationDuration: { default: drawMotion.line, [REDUCED]: motion.instant },
-    animationTimingFunction: { default: ease, [REDUCED]: "ease" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
+  traceQuick:
+    "tw:[stroke-dasharray:1] tw:[animation-name:draw-styles-trace] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:220ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:linear] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
+  traceNode:
+    "tw:[stroke-dasharray:1] tw:[animation-name:draw-styles-trace] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:420ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
+  traceLine:
+    "tw:[stroke-dasharray:1] tw:[animation-name:draw-styles-trace] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:450ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
   // The marker wash and a pulse once a node is traced, or again when it is
   // relabeled.
-  fill: {
-    animationName: { default: nodeFill, [REDUCED]: "none" },
-    animationDuration: { default: drawMotion.fill, [REDUCED]: motion.instant },
-    animationTimingFunction: { default: "ease-out", [REDUCED]: "ease" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
-  refill: {
-    animationName: { default: nodeFill, [REDUCED]: "none" },
-    animationDuration: {
-      default: drawMotion.stroke,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "ease-out", [REDUCED]: "ease" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
+  fill: "tw:[animation-name:draw-styles-node-fill] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:330ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:ease-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
+  refill:
+    "tw:[animation-name:draw-styles-node-fill] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:420ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:ease-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
   // Labels compose left to right once their unit is drawn.
-  labelQuick: {
-    animationName: { default: label, [REDUCED]: "none" },
-    animationDuration: { default: drawMotion.label, [REDUCED]: motion.instant },
-    animationTimingFunction: { default: "steps(8)", [REDUCED]: "ease" },
-    animationDelay: { default: "60ms", [REDUCED]: "0s" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
-  labelFill: {
-    animationName: { default: label, [REDUCED]: "none" },
-    animationDuration: { default: drawMotion.fill, [REDUCED]: motion.instant },
-    animationTimingFunction: { default: "steps(12)", [REDUCED]: "ease" },
-    animationDelay: { default: "90ms", [REDUCED]: "0s" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
-  labelEdgeQuick: {
-    animationName: { default: label, [REDUCED]: "none" },
-    animationDuration: { default: drawMotion.tick, [REDUCED]: motion.instant },
-    animationTimingFunction: { default: "steps(6)", [REDUCED]: "ease" },
-    animationDelay: { default: "100ms", [REDUCED]: "0s" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
-  labelEdge: {
-    animationName: { default: label, [REDUCED]: "none" },
-    animationDuration: { default: drawMotion.beat, [REDUCED]: motion.instant },
-    animationTimingFunction: { default: "steps(8)", [REDUCED]: "ease" },
-    animationDelay: { default: "300ms", [REDUCED]: "0s" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
-  labelStep: {
-    animationName: { default: label, [REDUCED]: "none" },
-    animationDuration: { default: drawMotion.label, [REDUCED]: motion.instant },
-    animationTimingFunction: { default: "steps(8)", [REDUCED]: "ease" },
-    animationDelay: { default: "120ms", [REDUCED]: "0s" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
+  labelQuick:
+    "tw:[animation-name:draw-styles-label] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:160ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(8)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-delay:60ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-delay:0s] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
+  labelFill:
+    "tw:[animation-name:draw-styles-label] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:330ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(12)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-delay:90ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-delay:0s] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
+  labelEdgeQuick:
+    "tw:[animation-name:draw-styles-label] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:120ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(6)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-delay:100ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-delay:0s] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
+  labelEdge:
+    "tw:[animation-name:draw-styles-label] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:200ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(8)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-delay:300ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-delay:0s] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
+  labelStep:
+    "tw:[animation-name:draw-styles-label] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:160ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(8)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-delay:120ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-delay:0s] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
   // A lens row wipes in behind the slot, or is erased.
-  rowLanding: {
-    maskImage: { default: wipeMask, [REDUCED]: "none" },
-    animationName: { default: wipe, [REDUCED]: "none" },
-    animationDuration: {
-      default: drawMotion.rowLand,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: ease, [REDUCED]: "ease" },
-    animationDelay: { default: "180ms", [REDUCED]: "0s" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
-  rowErasing: {
-    animationName: { default: erase, [REDUCED]: "none" },
-    animationDuration: {
-      default: drawMotion.rowErase,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "linear", [REDUCED]: "ease" },
-    animationFillMode: { default: "forwards", [REDUCED]: "none" },
-    opacity: 0,
-  },
+  rowLanding:
+    "tw:[mask-image:linear-gradient(90deg,_#000_calc(var(--wb-wipe)_-_8%),_transparent_var(--wb-wipe))] tw:[@media_(prefers-reduced-motion:_reduce)]:[mask-image:none] tw:[animation-name:draw-styles-wipe] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:340ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-delay:180ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-delay:0s] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
+  rowErasing:
+    "tw:[animation-name:draw-styles-erase] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:320ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:linear] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:forwards] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none] tw:opacity-0",
   // A sequence step's dot pops once its line is drawn.
-  stepPop: {
-    animationName: { default: stepPop, [REDUCED]: "none" },
-    animationDuration: { default: drawMotion.line, [REDUCED]: motion.instant },
-    animationTimingFunction: { default: ease, [REDUCED]: "ease" },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
-});
+  stepPop:
+    "tw:[animation-name:draw-styles-step-pop] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:450ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
+};

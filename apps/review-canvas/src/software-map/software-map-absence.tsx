@@ -1,7 +1,4 @@
-import { fontSize, fontWeight, radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { EmptyState } from "@canvas/ui/empty-state";
-import * as stylex from "@stylexjs/stylex";
 import type { CSSProperties, ReactElement } from "react";
 
 import type { NormalizedSoftwareModel } from "./model";
@@ -40,14 +37,14 @@ export function SoftwareMapUnavailable({
     >
       <EmptyState
         variant="boxed"
-        xstyle={styles.unavailable}
+        className={styles.unavailable}
         title="No software map for this repo yet"
         message={
           <>
             A software map adds a structural view of the systems, containers,
             and components in this repo. Author one with{" "}
-            <code {...stylex.props(styles.code)}>chalk map</code>. The rest of
-            the document works without it.
+            <code className={styles.code}>chalk map</code>. The rest of the
+            document works without it.
           </>
         }
       />
@@ -74,7 +71,7 @@ export function SoftwareMapTopologyUnavailable({
   if (missingSides.length === 0) return null;
 
   return (
-    <p {...stylex.props(styles.topologyUnavailable)} role="status">
+    <p className={styles.topologyUnavailable} role="status">
       Structural diff unavailable: no software map at{" "}
       {missingSides.join(" or ")}.
     </p>
@@ -88,30 +85,9 @@ function softwareMapSideLabel(
   return ref ? `${side} ${ref}` : side;
 }
 
-const styles = stylex.create({
-  unavailable: {
-    minHeight: "var(--software-map-empty-height, 520px)",
-  },
-  code: {
-    padding: "2px 5px",
-    borderRadius: radius.small,
-    backgroundColor: tokens.well,
-    color: tokens.ink,
-    fontFamily: tokens.fontMono,
-    fontSize: "0.85em",
-    fontWeight: fontWeight.bold,
-  },
-  topologyUnavailable: {
-    flex: "none",
-    margin: 0,
-    padding: "7px 12px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: tokens.rule,
-    backgroundColor: tokens.tray,
-    color: tokens.inkFaint,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    lineHeight: "16px",
-  },
-});
+const styles = {
+  unavailable: "tw:min-h-[var(--software-map-empty-height,_520px)]",
+  code: "tw:p-[2px_5px] tw:rounded-[4px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)] tw:text-[length:0.85em] tw:font-bold",
+  topologyUnavailable:
+    "tw:flex-[none] tw:m-0 tw:p-[7px_12px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:leading-[16px]",
+};

@@ -1,7 +1,8 @@
 import { ReviewSessionProvider } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import type { ReviewRoots } from "@canvas/review/review-root-context";
 import { ReviewRootsProvider } from "@canvas/review/review-root-context";
-import { documentMarker } from "@canvas/styles/markers.stylex";
+import { documentMarker } from "@canvas/styles/markers";
 import { TestCanvasQuery } from "@canvas/test/canvas-query-test-utils";
 import {
   testApiDocumentData,
@@ -9,7 +10,6 @@ import {
 } from "@canvas/test/review-session-test-utils";
 import { ReviewApiClient } from "@chalk/review-contracts";
 import type { Block } from "@review/documents/document";
-import * as stylex from "@stylexjs/stylex";
 import { act, createRef } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -43,7 +43,7 @@ beforeEach(() => {
   window.sessionStorage.clear();
   window.localStorage.clear();
   article = document.createElement("article");
-  article.className = `review-document ${stylex.props(documentStyles.article, documentMarker).className}`;
+  article.className = `review-document ${cn(documentStyles.article, documentMarker)}`;
   container = document.createElement("div");
   article.append(container);
   document.body.append(article);

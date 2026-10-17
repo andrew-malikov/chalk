@@ -1,23 +1,13 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
-import { documentType } from "@canvas/documents/document-type.stylex";
+import { cn } from "@canvas/lib/utils";
 import { useReview } from "@canvas/review/review-context";
 import {
   REVIEW_INTERACTION_EVENT,
   reviewInteractionDetail,
 } from "@canvas/review/review-interaction-event";
 import { useOptionalReviewPanel } from "@canvas/review/review-panel";
-import {
-  elevation,
-  fontSize,
-  fontWeight,
-  motion,
-  radius,
-  tracking,
-} from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { Button, IconButton } from "@canvas/ui/button";
 import { CloseIcon, TutorialIcon } from "@canvas/ui/icons";
-import * as stylex from "@stylexjs/stylex";
 import {
   type ReactElement,
   type ReactNode,
@@ -346,7 +336,7 @@ export function TutorialExperienceProvider({
       {children}
       {region && rings.some((ring) => ring.host === "region")
         ? createPortal(
-            <div {...stylex.props(styles.targetLayer)} aria-hidden="true">
+            <div className={styles.targetLayer} aria-hidden="true">
               {rings
                 .filter((ring) => ring.host === "region")
                 .map((ring) => (
@@ -357,7 +347,7 @@ export function TutorialExperienceProvider({
           )
         : null}
       {tutorial && diagramTourKind === null ? (
-        <div {...stylex.props(styles.overlay)}>
+        <div className={styles.overlay}>
           {rings
             .filter((ring) => ring.host === "shell")
             .map((ring) => (
@@ -368,12 +358,12 @@ export function TutorialExperienceProvider({
               variant="ghost"
               size="xs"
               type="button"
-              {...stylex.props(styles.pill)}
+              className={styles.pill}
               aria-label="Show tutorial"
               title="Show tutorial"
               onClick={tutorial.reopen}
             >
-              <TutorialIcon xstyle={styles.pillIcon} />
+              <TutorialIcon className={styles.pillIcon} />
             </ButtonPrimitive>
           ) : (
             <TutorialGuide experience={experience} />
@@ -411,41 +401,39 @@ function TutorialGuide({
 
   return (
     <aside
-      {...stylex.props(styles.guide)}
+      className={styles.guide}
       aria-label="Tutorial guide"
       data-tutorial-step={activeStep?.id ?? "complete"}
     >
-      <header {...stylex.props(styles.guideHeader)}>
-        <span {...stylex.props(styles.guideChapter)}>
+      <header className={styles.guideHeader}>
+        <span className={styles.guideChapter}>
           Chapter {chapterLabel} of {TUTORIAL_CHAPTERS.length}
         </span>
         <IconButton
-          xstyle={styles.guideClose}
+          className={styles.guideClose}
           onClick={experience.onDismiss}
           aria-label="Hide tutorial"
         >
           <CloseIcon />
         </IconButton>
       </header>
-      <div {...stylex.props(styles.progress)} aria-hidden="true">
+      <div className={styles.progress} aria-hidden="true">
         <span
-          {...stylex.props(styles.progressBar)}
+          className={styles.progressBar}
           style={{
             width: `${Math.round((activeIndex / Math.max(1, totalSteps)) * 100)}%`,
           }}
         />
       </div>
-      <div {...stylex.props(styles.copy)}>
-        <p {...stylex.props(styles.chapter)}>{chapter.title}</p>
-        <h2 {...stylex.props(styles.step)}>
-          {activeStep?.title ?? "Tour complete"}
-        </h2>
-        <p {...stylex.props(styles.instruction)}>
+      <div className={styles.copy}>
+        <p className={styles.chapter}>{chapter.title}</p>
+        <h2 className={styles.step}>{activeStep?.title ?? "Tour complete"}</h2>
+        <p className={styles.instruction}>
           {activeStep?.instruction ??
             "You have walked through the core Chalk experience."}
         </p>
       </div>
-      <footer {...stylex.props(styles.guideFooter)}>
+      <footer className={styles.guideFooter}>
         <Button
           variant="ghost"
           onClick={experience.onBack}
@@ -596,7 +584,7 @@ function TutorialTargetRing({ ring }: { ring: TutorialRing }): ReactElement {
       {ring.boxes.map((box, index) => (
         <div
           key={index}
-          {...stylex.props(styles.ring, ring.inline && styles.ringInline)}
+          className={cn(styles.ring, ring.inline && styles.ringInline)}
           style={
             ring.inline
               ? {
@@ -619,196 +607,44 @@ function TutorialTargetRing({ ring }: { ring: TutorialRing }): ReactElement {
   );
 }
 
-// Target rings breathe a little.
-const targetPulse = stylex.keyframes({
-  "0%, 100%": {
-    boxShadow: `0 0 0 4px ${tokens.tutorialRingGlow}`,
-  },
-  "50%": {
-    boxShadow: `0 0 0 8px color-mix(in srgb, ${tokens.tutorialRingGlow} 45%, transparent)`,
-  },
-});
-
-const linkPulse = stylex.keyframes({
-  "0%, 100%": {
-    backgroundColor: tokens.tutorialRingGlow,
-  },
-  "50%": {
-    backgroundColor: `color-mix(in srgb, ${tokens.tutorialRing} 22%, transparent)`,
-  },
-});
-
-const reducedMotion = "@media (prefers-reduced-motion: reduce)";
-
-const styles = stylex.create({
+const styles = {
   // The tutorial lives in the bottom right corner of the shell, one layer
   // above the sticky toolbar, in every view. It never measures its target:
   // the target carries data-tutorial-target and draws its own outline.
-  overlay: {
-    position: "absolute",
-    zIndex: `calc(${tokens.reviewDebugLayer} + 1)`,
-    inset: 0,
-    pointerEvents: "none",
-  },
+  overlay:
+    "tw:absolute tw:z-[calc(var(--review-debug-layer)_+_1)] tw:inset-0 tw:pointer-events-none",
   // The workbench keeps a 10px strip under the canvas, so 8px here reads as
   // the same 18px gap from the window edge as the right side.
-  guide: {
-    position: "absolute",
-    right: "18px",
-    bottom: "8px",
-    display: "flex",
-    flexDirection: "column",
-    width: "min(292px, calc(100% - 36px))",
-    overflow: "hidden",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.tutorialGuideBorder,
-    borderRadius: radius.surface,
-    backgroundColor: tokens.tutorialGuideBg,
-    color: tokens.ink,
-    boxShadow: elevation.popover,
-    pointerEvents: "auto",
-    backdropFilter: "blur(16px)",
-  },
-  guideHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "10px 12px 8px",
-  },
-  guideChapter: {
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.small,
-    letterSpacing: tracking.chrome,
-    textTransform: "uppercase",
-  },
-  guideClose: {
-    fontSize: fontSize.heading,
-    fontWeight: fontWeight.medium,
-  },
-  progress: {
-    height: "2px",
-    marginInline: "12px",
-    overflow: "hidden",
-    borderRadius: radius.pill,
-    backgroundColor: tokens.ruleSoft,
-  },
-  progressBar: {
-    display: "block",
-    height: "100%",
-    borderRadius: "inherit",
-    backgroundColor: tokens.tutorialRing,
-    transition: {
-      default: `width ${motion.medium} ${motion.ease}`,
-      [reducedMotion]: "none",
-    },
-  },
-  copy: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "7px",
-    padding: "13px 14px 15px",
-  },
-  chapter: {
-    margin: 0,
-    color: tokens.tutorialRing,
-    font: `${fontSize.small}/16px ${tokens.fontSans}`,
-    textAlign: "left",
-  },
-  step: {
-    margin: 0,
-    color: tokens.ink,
-    font: `${fontWeight.medium} ${documentType.body}/22px ${tokens.fontSans}`,
-    textAlign: "left",
-  },
-  instruction: {
-    margin: 0,
-    color: tokens.inkMuted,
-    font: `${fontSize.body}/18px ${tokens.fontSans}`,
-    textAlign: "left",
-  },
-  guideFooter: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "9px 12px 10px",
-    borderTopWidth: "1px",
-    borderTopStyle: "solid",
-    borderTopColor: tokens.ruleSoft,
-  },
+  guide:
+    "tw:absolute tw:right-[18px] tw:bottom-[8px] tw:flex tw:flex-col tw:w-[min(292px,_calc(100%_-_36px))] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--tutorial-guide-border)] tw:rounded-[8px] tw:bg-[color:var(--tutorial-guide-bg)] tw:text-[color:var(--ink)] tw:[box-shadow:0_8px_24px_var(--shadow-color-strong)] tw:pointer-events-auto tw:[backdrop-filter:blur(16px)]",
+  guideHeader:
+    "tw:flex tw:items-center tw:justify-between tw:p-[10px_12px_8px]",
+  guideChapter:
+    "tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:tracking-[0.04em] tw:uppercase",
+  guideClose: "tw:text-[length:18px] tw:font-medium",
+  progress:
+    "tw:h-[2px] tw:mx-[12px] tw:overflow-hidden tw:rounded-[999px] tw:bg-[color:var(--rule-soft)]",
+  progressBar:
+    "tw:block tw:h-full tw:rounded-[inherit] tw:bg-[color:var(--tutorial-ring)] tw:[transition:width_200ms_ease] tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:none]",
+  copy: "tw:flex tw:flex-col tw:gap-[7px] tw:p-[13px_14px_15px]",
+  chapter:
+    "tw:m-0 tw:text-[color:var(--tutorial-ring)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[16px] tw:text-left",
+  step: "tw:m-0 tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:17px] tw:font-medium tw:leading-[22px] tw:text-left",
+  instruction:
+    "tw:m-0 tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[18px] tw:text-left",
+  guideFooter:
+    "tw:flex tw:items-center tw:justify-between tw:p-[9px_12px_10px] tw:[border-top-width:1px] tw:[border-top-style:solid] tw:[border-top-color:var(--rule-soft)]",
   // The hidden tutorial: a small floating button in the same corner.
-  pill: {
-    position: "absolute",
-    right: "28px",
-    bottom: "18px",
-    display: "grid",
-    placeItems: "center",
-    width: "44px",
-    height: "44px",
-    padding: 0,
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.tutorialGuideBorder,
-    borderRadius: radius.round,
-    backgroundColor: tokens.tutorialGuideBg,
-    color: { default: tokens.tutorialRing, ":hover": tokens.ink },
-    boxShadow: elevation.popover,
-    cursor: "pointer",
-    pointerEvents: "auto",
-    backdropFilter: "blur(16px)",
-    outline: {
-      default: null,
-      ":focus-visible": `2px solid ${tokens.tutorialRing}`,
-    },
-    outlineOffset: { default: null, ":focus-visible": "2px" },
-  },
+  pill: "tw:absolute tw:right-[28px] tw:bottom-[18px] tw:grid tw:place-items-center tw:size-[44px] tw:p-0 tw:border-[1px] tw:border-solid tw:border-[color:var(--tutorial-guide-border)] tw:rounded-[50%] tw:bg-[color:var(--tutorial-guide-bg)] tw:text-[color:var(--tutorial-ring)] tw:[&:hover]:text-[color:var(--ink)] tw:[box-shadow:0_8px_24px_var(--shadow-color-strong)] tw:cursor-pointer tw:pointer-events-auto tw:[backdrop-filter:blur(16px)] tw:[&:focus-visible]:[outline:2px_solid_var(--tutorial-ring)] tw:[&:focus-visible]:outline-offset-[2px]",
   // Target rings are their own elements, drawn in a layer nothing clips:
   // inside the scroll region for document content (so they travel with it),
   // in the shell overlay for toolbar controls. Each ring follows its
   // target's corner radius.
-  targetLayer: {
-    position: "absolute",
-    zIndex: `calc(${tokens.reviewDebugLayer} + 1)`,
-    top: 0,
-    left: 0,
-    width: 0,
-    height: 0,
-    overflow: "visible",
-    pointerEvents: "none",
-  },
-  ring: {
-    position: "absolute",
-    borderWidth: "2px",
-    borderStyle: "solid",
-    borderColor: tokens.tutorialRing,
-    boxShadow: `0 0 0 4px ${tokens.tutorialRingGlow}`,
-    pointerEvents: "none",
-    animationName: { default: targetPulse, [reducedMotion]: "none" },
-    animationDuration: {
-      default: motion.pulse,
-      [reducedMotion]: motion.instant,
-    },
-    animationTimingFunction: {
-      default: "ease-in-out",
-      [reducedMotion]: "ease",
-    },
-    animationIterationCount: { default: "infinite", [reducedMotion]: 1 },
-  },
+  targetLayer:
+    "tw:absolute tw:z-[calc(var(--review-debug-layer)_+_1)] tw:top-0 tw:left-0 tw:w-0 tw:h-0 tw:overflow-visible tw:pointer-events-none",
+  ring: "tw:absolute tw:border-[2px] tw:border-solid tw:border-[color:var(--tutorial-ring)] tw:[box-shadow:0_0_0_4px_var(--tutorial-ring-glow)] tw:pointer-events-none tw:[animation-name:tutorial-experience-target-pulse] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:1.6s] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:ease-in-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-iteration-count:infinite] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-iteration-count:1]",
   // An inline link reads as marked text: one wash box per line.
-  ringInline: {
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: radius.small,
-    backgroundColor: tokens.tutorialRingGlow,
-    boxShadow: "none",
-    animationName: { default: linkPulse, [reducedMotion]: "none" },
-  },
-  pillIcon: {
-    width: "22px",
-    height: "22px",
-    pointerEvents: "none",
-    strokeWidth: "1.6px",
-  },
-});
+  ringInline:
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-[4px] tw:bg-[color:var(--tutorial-ring-glow)] tw:[box-shadow:none] tw:[animation-name:tutorial-experience-link-pulse] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none]",
+  pillIcon: "tw:size-[22px] tw:pointer-events-none tw:stroke-[1.6px]",
+};

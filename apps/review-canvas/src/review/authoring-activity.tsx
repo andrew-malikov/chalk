@@ -4,19 +4,9 @@ import {
   lensRowElement,
 } from "@canvas/drawing/courier";
 import { CourierFigure } from "@canvas/drawing/courier-figure";
-import { courierMotion } from "@canvas/drawing/courier-motion.stylex";
 import { cursorElement } from "@canvas/lib/cursor-element";
 import { useTooltip } from "@canvas/lib/use-tooltip";
-import { topbarTabsMarker } from "@canvas/styles/markers.stylex";
-import {
-  fontSize,
-  fontWeight,
-  motion,
-  radius,
-} from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
-import * as stylex from "@stylexjs/stylex";
+import { cn } from "@canvas/lib/utils";
 import { useContext, useState } from "react";
 
 import { AuthoringActivityContext } from "./authoring-activity-context";
@@ -107,28 +97,31 @@ export function AuthoringActivityBadge({
   if (!working)
     return (
       <span
-        {...withClass(badge, styles.badge)}
+        className={cn(badge, styles.badge)}
         role="status"
         aria-live="polite"
         ref={tooltip}
       >
-        <CourierFigure xstyle={styles.courier} />
-        <span {...stylex.props(styles.text)}>{text}</span>
+        <CourierFigure className={styles.courier} />
+        <span className={styles.text}>{text}</span>
       </span>
     );
 
   return (
     <button
       type="button"
-      {...withClass(badge, styles.badge, styles.badgeActive)}
+      className={cn(badge, styles.badge, styles.badgeActive)}
       data-active
       data-locatable
       aria-label={cursor ? `${text}. Go to the courier.` : undefined}
       ref={tooltip}
       onClick={locate}
     >
-      <CourierFigure xstyle={[styles.courier, styles.courierActive]} marching />
-      <span {...stylex.props(styles.text)} role="status" aria-live="polite">
+      <CourierFigure
+        className={[styles.courier, styles.courierActive]}
+        marching
+      />
+      <span className={styles.text} role="status" aria-live="polite">
         {text}
       </span>
     </button>
@@ -175,7 +168,7 @@ export function ReviewSurfaceLabel({
 
   return (
     <span
-      {...stylex.props(
+      className={cn(
         styles.word,
         live && styles.wordWorking,
         live && active && styles.wordWorkingActive,
@@ -183,146 +176,33 @@ export function ReviewSurfaceLabel({
       data-working={live || undefined}
     >
       {label}
-      {unread && <span {...stylex.props(styles.unread)} aria-hidden="true" />}
+      {unread && <span className={styles.unread} aria-hidden="true" />}
     </span>
   );
 }
 
-const REDUCED = "@media (prefers-reduced-motion: reduce)";
-
-// The surface tab's word is styled only in the top bar's tabs.
-const inTopbarTabs = () => stylex.when.ancestor(":is(*)", topbarTabsMarker);
-
-const shimmer = stylex.keyframes({
-  from: { backgroundPosition: "120% 0" },
-  to: { backgroundPosition: "-120% 0" },
-});
-
-const courierArrive = stylex.keyframes({
-  "0%": { transform: "translateY(-16px)", opacity: 0 },
-  "70%": { transform: "translateY(2px) scale(1.1, 0.9)", opacity: 1 },
-  "100%": { transform: "none" },
-});
-
-const mutedInk = `linear-gradient(100deg, ${tokens.inkMuted} 0 40%, ${tokens.accent} 50%, ${tokens.inkMuted} 60% 100%)`;
-
-const strongInk = `linear-gradient(100deg, ${tokens.ink} 0 40%, ${tokens.accent} 50%, ${tokens.ink} 60% 100%)`;
-
-const styles = stylex.create({
-  badge: {
-    display: "inline-flex",
-    flex: "0 1 auto",
-    minWidth: 0,
-    maxWidth: "420px",
-    alignItems: "center",
-    gap: "7px",
-    height: tokens.chromeControlHeight,
-    marginInline: "4px",
-    padding: "0 10px 0 6px",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: radius.pill,
-    backgroundColor: tokens.transparent,
-    color: tokens.inkMuted,
-    font: `${fontWeight.medium} ${fontSize.small} ${tokens.fontSans}`,
-    whiteSpace: "nowrap",
-  },
+const styles = {
+  badge:
+    "tw:inline-flex tw:flex-[0_1_auto] tw:min-w-0 tw:max-w-[420px] tw:items-center tw:gap-[7px] tw:h-[var(--chrome-control-height)] tw:mx-[4px] tw:p-[0_10px_0_6px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-[999px] tw:bg-[color:var(--transparent)] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-medium tw:leading-[normal] tw:whitespace-nowrap",
   // While an agent works the badge is a button that locates the courier.
-  badgeActive: {
-    cursor: "pointer",
-    backgroundColor: {
-      default: tokens.markerTint,
-      ":hover": tokens.markerGlow,
-    },
-    color: tokens.accent,
-    fontWeight: fontWeight.semibold,
-    outline: { default: null, ":focus-visible": `1px solid ${tokens.accent}` },
-    outlineOffset: { default: null, ":focus-visible": "1px" },
-  },
+  badgeActive:
+    "tw:cursor-pointer tw:bg-[color:var(--marker-tint)] tw:[&:hover]:bg-[color:var(--marker-glow)] tw:text-[color:var(--accent)] tw:font-semibold tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[1px]",
   // A long update ends in an ellipsis inside the pill; the tooltip has it all.
-  text: {
-    minWidth: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  courier: {
-    flexShrink: 0,
-    width: "16px",
-    height: "20px",
-    overflow: "visible",
-    color: tokens.inkFaint,
-    transform: "translateY(2px) rotate(-8deg)",
-  },
+  text: "tw:min-w-0 tw:overflow-hidden tw:text-ellipsis",
+  courier:
+    "tw:shrink-0 tw:w-[16px] tw:h-[20px] tw:overflow-visible tw:text-[color:var(--ink-faint)] tw:[transform:translateY(2px)_rotate(-8deg)]",
   // Arriving: the mini courier drops in when a lease begins.
-  courierActive: {
-    color: tokens.accent,
-    transform: "none",
-    animationName: { default: courierArrive, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.arrive,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: {
-      default: "cubic-bezier(0.2, 0.7, 0.2, 1)",
-      [REDUCED]: "ease",
-    },
-    animationFillMode: { default: "both", [REDUCED]: "none" },
-  },
+  courierActive:
+    "tw:text-[color:var(--accent)] tw:[transform:none] tw:[animation-name:authoring-activity-courier-arrive] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:380ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
   // Neither the ink nor the unread dot touches the tab's layout: the dot is
   // out of flow and only color moves.
-  word: {
-    position: { default: null, [inTopbarTabs()]: "relative" },
-  },
+  word: "tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:relative",
   // Marker ink sweeps through the word while the agent writes.
-  wordWorking: {
-    backgroundImage: {
-      default: null,
-      [inTopbarTabs()]: { default: mutedInk, [REDUCED]: "none" },
-    },
-    backgroundSize: {
-      default: null,
-      [inTopbarTabs()]: { default: "240% 100%", [REDUCED]: "auto" },
-    },
-    backgroundClip: {
-      default: null,
-      [inTopbarTabs()]: { default: "text", [REDUCED]: "border-box" },
-    },
-    color: {
-      default: null,
-      [inTopbarTabs()]: {
-        default: tokens.transparent,
-        [REDUCED]: tokens.inkMuted,
-      },
-    },
-    animationName: {
-      default: null,
-      [inTopbarTabs()]: { default: shimmer, [REDUCED]: "none" },
-    },
-    animationDuration: {
-      default: null,
-      [inTopbarTabs()]: { default: motion.pulse, [REDUCED]: motion.instant },
-    },
-    animationTimingFunction: {
-      default: null,
-      [inTopbarTabs()]: { default: "linear", [REDUCED]: "ease" },
-    },
-    animationIterationCount: {
-      default: null,
-      [inTopbarTabs()]: { default: "infinite", [REDUCED]: 1 },
-    },
-  },
+  wordWorking:
+    "tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:[background-image:linear-gradient(100deg,_var(--ink-muted)_0_40%,_var(--accent)_50%,_var(--ink-muted)_60%_100%)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-topbar-tabs:is(*)_*)]:[background-image:none] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:[background-size:240%_100%] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-topbar-tabs:is(*)_*)]:[background-size:auto] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:[background-clip:text] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-topbar-tabs:is(*)_*)]:[background-clip:border-box] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:text-[color:var(--transparent)] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-topbar-tabs:is(*)_*)]:text-[color:var(--ink-muted)] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:[animation-name:authoring-activity-shimmer] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-topbar-tabs:is(*)_*)]:[animation-name:none] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:[animation-duration:1.6s] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-topbar-tabs:is(*)_*)]:[animation-duration:0s] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:[animation-timing-function:linear] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-topbar-tabs:is(*)_*)]:[animation-timing-function:ease] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:[animation-iteration-count:infinite] tw:[@media_(prefers-reduced-motion:_reduce)]:[&:is(.canvas-topbar-tabs:is(*)_*)]:[animation-iteration-count:1]",
   // The chosen tab inks darker, reduced motion included.
-  wordWorkingActive: {
-    backgroundImage: { default: null, [inTopbarTabs()]: strongInk },
-  },
-  unread: {
-    position: { default: null, [inTopbarTabs()]: "absolute" },
-    top: { default: null, [inTopbarTabs()]: "1px" },
-    right: { default: null, [inTopbarTabs()]: "-7px" },
-    width: { default: null, [inTopbarTabs()]: "4px" },
-    height: { default: null, [inTopbarTabs()]: "4px" },
-    borderRadius: { default: null, [inTopbarTabs()]: radius.round },
-    backgroundColor: { default: null, [inTopbarTabs()]: tokens.accent },
-  },
-});
+  wordWorkingActive:
+    "tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:[background-image:linear-gradient(100deg,_var(--ink)_0_40%,_var(--accent)_50%,_var(--ink)_60%_100%)]",
+  unread:
+    "tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:absolute tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:top-[1px] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:right-[-7px] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:w-[4px] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:h-[4px] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:rounded-[50%] tw:[&:is(.canvas-topbar-tabs:is(*)_*)]:bg-[color:var(--accent)]",
+};

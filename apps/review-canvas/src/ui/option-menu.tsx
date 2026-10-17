@@ -1,6 +1,7 @@
 import { Button } from "@canvas/components/ui/button";
 import { useCanvasMenu } from "@canvas/host/canvas-ui";
-import * as stylex from "@stylexjs/stylex";
+import { cn } from "@canvas/lib/utils";
+import type { ClassValue } from "clsx";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -10,7 +11,7 @@ export function OptionMenu<T extends string>({
   value,
   options,
   onChange,
-  triggerStyle,
+  triggerClassName,
   triggerProps,
   variant = "ghost",
   size = "xs",
@@ -22,7 +23,7 @@ export function OptionMenu<T extends string>({
   onChange(value: T): void;
   variant?: "ghost" | "outline";
   size?: "xs" | "sm";
-  triggerStyle?: stylex.StyleXStyles;
+  triggerClassName?: ClassValue;
   triggerProps?: { "aria-pressed"?: boolean };
   children: ReactNode;
 }) {
@@ -40,11 +41,11 @@ export function OptionMenu<T extends string>({
   });
 
   return (
-    <div {...stylex.props(styles.menu)}>
+    <div className={styles.menu}>
       <Button
         variant={variant}
         size={size}
-        {...stylex.props(triggerStyle)}
+        className={cn(triggerClassName)}
         type="button"
         aria-label={ariaLabel}
         {...menu.triggerProps}
@@ -52,27 +53,17 @@ export function OptionMenu<T extends string>({
       >
         {children}
         {menu.open ? (
-          <ChevronUp {...stylex.props(styles.chevron)} aria-hidden="true" />
+          <ChevronUp className={styles.chevron} aria-hidden="true" />
         ) : (
-          <ChevronDown {...stylex.props(styles.chevron)} aria-hidden="true" />
+          <ChevronDown className={styles.chevron} aria-hidden="true" />
         )}
       </Button>
     </div>
   );
 }
 
-const styles = stylex.create({
-  menu: {
-    position: "relative",
-  },
-  chevron: {
-    width: "12px",
-    height: "12px",
-    flexShrink: 0,
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: "1.8",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  },
-});
+const styles = {
+  menu: "tw:relative",
+  chevron:
+    "tw:size-[12px] tw:shrink-0 tw:fill-[none] tw:stroke-[currentColor] tw:stroke-[1.8] tw:[stroke-linecap:round] tw:[stroke-linejoin:round]",
+};

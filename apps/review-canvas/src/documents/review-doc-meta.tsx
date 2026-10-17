@@ -1,19 +1,17 @@
 import { DiffCount } from "@canvas/diff/diff-count";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { useReviewSession } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import { DisplayedReviewVersionContext } from "@canvas/review/displayed-review-version-context";
 import {
   ReviewBranchRange,
   WORKING_TREE,
 } from "@canvas/review/review-branch-range";
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
-import { fontSize, radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import {
   type ReviewDiffStats,
   summarizeReviewDiffFiles,
 } from "@chalk/review-contracts";
-import * as stylex from "@stylexjs/stylex";
 import { GitBranch } from "lucide-react";
 import {
   Fragment,
@@ -64,13 +62,13 @@ export function ReviewDocumentMetaLine({
     facts.push({
       key: "branch",
       node: (
-        <span {...stylex.props(styles.branch)} title={`Head branch: ${branch}`}>
+        <span className={styles.branch} title={`Head branch: ${branch}`}>
           <GitBranch
             size={13}
             aria-hidden="true"
-            {...stylex.props(styles.icon, styles.branchIcon)}
+            className={cn(styles.icon, styles.branchIcon)}
           />
-          <span {...stylex.props(styles.branchName)}>{branch}</span>
+          <span className={styles.branchName}>{branch}</span>
         </span>
       ),
     });
@@ -88,23 +86,23 @@ export function ReviewDocumentMetaLine({
     facts.push({
       key: "changes",
       node: (
-        <span {...stylex.props(styles.row, styles.stats)}>
+        <span className={cn(styles.row, styles.stats)}>
           <DiffCount
             additions={diff.additions}
             deletions={diff.deletions}
             large
           />
           {diff.additions + diff.deletions > 0 ? (
-            <span {...stylex.props(styles.changeBar)} aria-hidden="true">
+            <span className={styles.changeBar} aria-hidden="true">
               {diff.additions > 0 ? (
                 <span
-                  {...stylex.props(styles.change)}
+                  className={styles.change}
                   style={{ flexGrow: diff.additions }}
                 />
               ) : null}
               {diff.deletions > 0 ? (
                 <span
-                  {...stylex.props(styles.change, styles.removed)}
+                  className={cn(styles.change, styles.removed)}
                   style={{ flexGrow: diff.deletions }}
                 />
               ) : null}
@@ -132,19 +130,16 @@ export function ReviewDocumentMetaLine({
   return (
     // The attribute is a marker for tests.
     <header
-      {...stylex.props(styles.header, drawStyles.blockChild)}
+      className={cn(styles.header, drawStyles.blockChild)}
       data-review-document-header
     >
-      <div {...stylex.props(styles.row, styles.top)} data-review-copy-ignore>
+      <div className={cn(styles.row, styles.top)} data-review-copy-ignore>
         {updatedLabel && (
-          <span {...stylex.props(styles.updated)}>Updated {updatedLabel}</span>
+          <span className={styles.updated}>Updated {updatedLabel}</span>
         )}
       </div>
       {children}
-      <div
-        {...stylex.props(styles.row, styles.details)}
-        data-review-copy-ignore
-      >
+      <div className={cn(styles.row, styles.details)} data-review-copy-ignore>
         {withFactDots(facts)}
       </div>
     </header>
@@ -157,9 +152,7 @@ function withFactDots(
 ): ReactNode {
   return facts.map(({ key, node }, index) => (
     <Fragment key={key}>
-      {index > 0 ? (
-        <span {...stylex.props(styles.dot)} aria-hidden="true" />
-      ) : null}
+      {index > 0 ? <span className={styles.dot} aria-hidden="true" /> : null}
       {node}
     </Fragment>
   ));
@@ -195,91 +188,22 @@ function relativeTimeLabel(timeMs: number, nowMs: number): string | null {
 }
 
 // Paper's review header: identity, title, then source and diff metadata.
-const styles = stylex.create({
-  header: {
-    width: `min(100%, ${tokens.reviewProseMaxWidth})`,
-    margin: "28px auto 0",
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    paddingBottom: "28px",
-    font: `${fontSize.ui}/18px ${tokens.fontSans}`,
-    color: tokens.inkFaint,
-  },
-  row: {
-    display: "flex",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-  top: {
-    justifyContent: "space-between",
-    gap: "10px 24px",
-  },
-  updated: {
-    marginLeft: "auto",
-  },
-  icon: {
-    flexShrink: 0,
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: "1.8",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  },
+const styles = {
+  header:
+    "tw:w-[min(100%,_var(--review-prose-max-width))] tw:m-[28px_auto_0] tw:flex tw:flex-col tw:gap-[12px] tw:pb-[28px] tw:font-[family-name:var(--font-sans)] tw:text-[length:13px] tw:font-normal tw:leading-[18px] tw:text-[color:var(--ink-faint)]",
+  row: "tw:flex tw:items-center tw:flex-wrap",
+  top: "tw:justify-between tw:gap-[10px_24px]",
+  updated: "tw:ml-[auto]",
+  icon: "tw:shrink-0 tw:fill-[none] tw:stroke-[currentColor] tw:stroke-[1.8] tw:[stroke-linecap:round] tw:[stroke-linejoin:round]",
   // Facts in the details row are divided by small ink-faint dots.
-  details: {
-    gap: "8px 10px",
-    paddingTop: "12px",
-  },
-  dot: {
-    flex: "0 0 3px",
-    width: "3px",
-    height: "3px",
-    borderRadius: radius.round,
-    backgroundColor: tokens.inkFaint,
-  },
-  branch: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "7px",
-    boxSizing: "border-box",
-    minWidth: 0,
-    minHeight: "26px",
-    maxWidth: "100%",
-    padding: "3px 10px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: tokens.rule,
-    borderRadius: radius.control,
-    backgroundColor: tokens.well,
-    color: tokens.ink,
-    overflowWrap: "anywhere",
-  },
-  branchIcon: {
-    color: tokens.inkFaint,
-  },
-  branchName: {
-    minWidth: 0,
-    overflowWrap: "anywhere",
-  },
-  stats: {
-    gap: "10px",
-    flexWrap: "nowrap",
-    flexShrink: 0,
-  },
-  changeBar: {
-    display: "flex",
-    flex: "0 0 42px",
-    width: "42px",
-    gap: "2px",
-    height: "8px",
-  },
-  change: {
-    minWidth: "1px",
-    borderRadius: radius.hairline,
-    backgroundColor: tokens.changeAdded,
-  },
-  removed: {
-    backgroundColor: tokens.changeRemoved,
-  },
-});
+  details: "tw:gap-[8px_10px] tw:pt-[12px]",
+  dot: "tw:flex-[0_0_3px] tw:size-[3px] tw:rounded-[50%] tw:bg-[color:var(--ink-faint)]",
+  branch:
+    "tw:inline-flex tw:items-center tw:gap-[7px] tw:box-border tw:min-w-0 tw:min-h-[26px] tw:max-w-full tw:p-[3px_10px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:[overflow-wrap:anywhere]",
+  branchIcon: "tw:text-[color:var(--ink-faint)]",
+  branchName: "tw:min-w-0 tw:[overflow-wrap:anywhere]",
+  stats: "tw:gap-[10px] tw:flex-nowrap tw:shrink-0",
+  changeBar: "tw:flex tw:flex-[0_0_42px] tw:w-[42px] tw:gap-[2px] tw:h-[8px]",
+  change: "tw:min-w-[1px] tw:rounded-[2px] tw:bg-[color:var(--change-added)]",
+  removed: "tw:bg-[color:var(--change-removed)]",
+};

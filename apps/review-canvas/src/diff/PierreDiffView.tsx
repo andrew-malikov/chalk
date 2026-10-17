@@ -7,14 +7,13 @@ import {
   useGitLabDrafts,
 } from "@canvas/gitlab/gitlab-discussions";
 import { useReviewSession } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
 import {
   readReviewUiState,
   writeReviewUiState,
 } from "@canvas/review/review-ui-state";
-import { loadingStyles } from "@canvas/styles/loading.stylex";
-import { fontSize, radius } from "@canvas/styles/scale.stylex";
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { loadingStyles } from "@canvas/styles/loading";
 import { Button, IconButton } from "@canvas/ui/button";
 import type {
   ReviewCommitScope,
@@ -30,7 +29,6 @@ import type {
   NumericScrollLineAnchor,
 } from "@pierre/diffs";
 import { CodeView, type CodeViewHandle } from "@pierre/diffs/react";
-import * as stylex from "@stylexjs/stylex";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDownIcon,
@@ -130,14 +128,14 @@ export function PierreDiffView(props: Props) {
 
   if (error)
     return (
-      <p {...stylex.props(styles.notice)} role="alert">
+      <p className={styles.notice} role="alert">
         {error}
       </p>
     );
 
   if (!files)
     return (
-      <p {...stylex.props(styles.notice, loadingStyles.text)} role="status">
+      <p className={cn(styles.notice, loadingStyles.text)} role="status">
         Loading changed files…
       </p>
     );
@@ -823,7 +821,7 @@ function Comparison({
 
   return (
     <div
-      {...stylex.props(styles.root, inWorkspace && styles.workspace)}
+      className={cn(styles.root, inWorkspace && styles.workspace)}
       ref={container}
       style={hidden ? { display: "none" } : undefined}
       data-pierre-diff="true"
@@ -836,11 +834,11 @@ function Comparison({
     >
       {lens && (
         <div
-          {...stylex.props(styles.toolbar)}
+          className={styles.toolbar}
           role="toolbar"
           aria-label="Diff display"
         >
-          <span {...stylex.props(styles.lensNotice)}>
+          <span className={styles.lensNotice}>
             Showing full file diffs for this lens
           </span>
         </div>
@@ -856,30 +854,27 @@ function Comparison({
           treeContainer,
         )}
       {comparison.error && (
-        <p {...stylex.props(styles.notice)} role="alert">
+        <p className={styles.notice} role="alert">
           {comparison.error.message}
         </p>
       )}
       {visible.length === 0 && (
-        <p {...stylex.props(styles.notice)} role="status">
+        <p className={styles.notice} role="status">
           No changed files
         </p>
       )}
       {chosen && (!chosen.diff || chosen.error) && (
-        <div
-          {...stylex.props(styles.notice)}
-          role={chosen.error ? "alert" : "status"}
-        >
+        <div className={styles.notice} role={chosen.error ? "alert" : "status"}>
           <strong>{chosen.file.path}</strong>
           <p
-            {...stylex.props(
+            className={cn(
               !chosen.error && !chosen.notice && loadingStyles.text,
             )}
           >
             {chosen.error ?? chosen.notice ?? "Loading diff…"}
           </p>
           {(chosen.error || chosen.notice) && (
-            <div {...stylex.props(styles.noticeActions)}>
+            <div className={styles.noticeActions}>
               {structural && chosen.error && (
                 <Button onClick={() => setStructural(false)}>
                   Show text diff
@@ -922,7 +917,7 @@ function Comparison({
           </IconButton>
         )}
         renderHeaderMetadata={(item) => (
-          <div {...stylex.props(styles.headerActions)}>
+          <div className={styles.headerActions}>
             {viewed(item.id)}
             <Button
               variant="ghost"
@@ -1013,36 +1008,14 @@ function readSavedView(key: string): SavedView {
   );
 }
 
-const styles = stylex.create({
-  root: {
-    display: "flex",
-    flexDirection: "column",
-    height: "100%",
-    minHeight: 240,
-    minWidth: 0,
-    position: "relative",
-  },
-  workspace: { minHeight: 0, flex: 1 },
-  notice: {
-    padding: 16,
-    color: tokens.inkMuted,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.body,
-  },
-  noticeActions: { display: "flex", flexWrap: "wrap", gap: 8 },
-  lensNotice: { marginInlineEnd: "auto" },
-  headerActions: { display: "flex", gap: 8, alignItems: "center" },
-  toolbar: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 8,
-    alignItems: "center",
-    justifyContent: "flex-end",
-    paddingInline: 8,
-    // CodeView's layout paddingTop supplies the gap below.
-    paddingTop: 8,
-    fontFamily: tokens.fontSans,
-    fontSize: fontSize.body,
-    color: tokens.inkMuted,
-  },
-});
+const styles = {
+  root: "tw:flex tw:flex-col tw:h-full tw:min-h-[240px] tw:min-w-0 tw:relative",
+  workspace: "tw:min-h-0 tw:flex-[1]",
+  notice:
+    "tw:p-[16px] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px]",
+  noticeActions: "tw:flex tw:flex-wrap tw:gap-[8px]",
+  lensNotice: "tw:[margin-inline-end:auto]",
+  headerActions: "tw:flex tw:gap-[8px] tw:items-center",
+  toolbar:
+    "tw:flex tw:flex-wrap tw:gap-[8px] tw:items-center tw:justify-end tw:px-[8px] tw:pt-[8px] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:text-[color:var(--ink-muted)]",
+};

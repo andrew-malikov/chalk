@@ -43,17 +43,9 @@ function run(command, args, cwd = app, overrides = {}) {
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
-run(
-  process.execPath,
-  ["run", "--filter", "@chalk/server", "build"],
-  checkout,
-);
+run(process.execPath, ["run", "--filter", "@chalk/server", "build"], checkout);
 
-run(
-  process.execPath,
-  ["run", "--filter", "@chalk/cli", "build"],
-  checkout,
-);
+run(process.execPath, ["run", "--filter", "@chalk/cli", "build"], checkout);
 
 run(process.execPath, ["run", "host:build"]);
 
@@ -65,10 +57,7 @@ if (release) {
 
 run(hutch, ["electrobun", "prepare"]);
 
-// Bun 1.4.2 FTL miscompiles StyleX media-query parsing; keep the baseline JIT.
-run(process.execPath, ["x", "--bun", "--no-install", "vp", "build"], app, {
-  BUN_JSC_useFTLJIT: "0",
-});
+run(process.execPath, ["x", "--bun", "--no-install", "vp", "build"], app);
 
 run(hutch, ["electrobun", "build", `--env=${release ? "stable" : "dev"}`]);
 

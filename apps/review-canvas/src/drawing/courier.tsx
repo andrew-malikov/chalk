@@ -1,5 +1,5 @@
-import { courierMotion } from "@canvas/drawing/courier-motion.stylex";
 import { cursorElement } from "@canvas/lib/cursor-element";
+import { cn } from "@canvas/lib/utils";
 import { AuthoringActivityContext } from "@canvas/review/authoring-activity-context";
 import {
   type AuthoringCursor,
@@ -7,20 +7,8 @@ import {
   scopeLive,
 } from "@canvas/review/authoring-cursor";
 import { useReviewRoots } from "@canvas/review/review-root-context";
-import {
-  courierMarker,
-  diffWorkspaceMarker,
-} from "@canvas/styles/markers.stylex";
-import {
-  fontSize,
-  fontWeight,
-  motion,
-  radius,
-} from "@canvas/styles/scale.stylex";
-import { withClass } from "@canvas/styles/stylex-props";
-import { tokens } from "@canvas/styles/tokens.stylex";
+import { courierMarker } from "@canvas/styles/markers";
 import type { LeaseScope } from "@review/node/review-api/activity";
-import * as stylex from "@stylexjs/stylex";
 import { type AnimationPlaybackControls, animate } from "motion";
 import {
   type Context,
@@ -92,7 +80,7 @@ interface Parts {
   shadow: HTMLElement;
 }
 
-// The hop: the wrapper slides (CSS, courierMotion.hop), the arc lifts, the
+// The hop: the wrapper slides (CSS, 260ms), the arc lifts, the
 // body squashes on landing. The jump, on click: higher, with a wobble and
 // happy eyes. The lease ended: up and out.
 const moves: Record<
@@ -347,7 +335,7 @@ export function Courier({
   // courier is a marker: code, tests and the lens list's :has(> .courier) find it.
   return (
     <div
-      {...withClass("courier", styles.courier, unknown && styles.unknown)}
+      className={cn("courier", styles.courier, unknown && styles.unknown)}
       data-scope={scope}
       data-state={unknown ? "unknown" : live ? "live" : "ended"}
       data-idle={idle}
@@ -357,7 +345,7 @@ export function Courier({
     >
       <button
         type="button"
-        {...withClass("courier-figure", courierMarker, styles.figure)}
+        className={cn("courier-figure", courierMarker, styles.figure)}
         aria-label={
           description
             ? `The agent's courier: ${description}. Press to make him jump.`
@@ -366,157 +354,51 @@ export function Courier({
         onClick={jump}
       >
         {description && (
-          <span {...withClass("courier-tag", styles.tag)} aria-hidden="true">
+          <span className={cn("courier-tag", styles.tag)} aria-hidden="true">
             {description}
           </span>
         )}
-        <span ref={arcRef} {...stylex.props(styles.arc)}>
+        <span ref={arcRef} className={styles.arc}>
           <span
-            {...stylex.props(
+            className={cn(
               styles.body,
               idle === "sit" && styles.sitting,
               unknown && styles.slumped,
               idle === "march" && styles.bob,
             )}
           >
-            <span ref={squashRef} {...stylex.props(styles.body)}>
+            <span ref={squashRef} className={styles.body}>
               <CourierFigure
-                xstyle={styles.figureSvg}
+                className={styles.figureSvg}
                 pose={{ idle, jumping: motion === "jumping" }}
               />
             </span>
           </span>
         </span>
-        <span ref={shadowRef} {...stylex.props(styles.shadow)} />
+        <span ref={shadowRef} className={styles.shadow} />
       </button>
     </div>
   );
 }
 
-const REDUCED = "@media (prefers-reduced-motion: reduce)";
-
-const inDiffWorkspace = () =>
-  stylex.when.ancestor(":is(*)", diffWorkspaceMarker);
-
-const marchBob = stylex.keyframes({
-  "0%, 100%": { transform: "translateY(0) rotate(-2deg)" },
-  "50%": { transform: "translateY(-1.5px) rotate(2deg)" },
-});
-
 // He stands on the top edge of whatever the cursor names and slides when it
 // reflows. Reduced motion keeps him and drops the hops.
-const styles = stylex.create({
-  courier: {
-    position: "absolute",
-    zIndex: 4,
-    width: "32px",
-    height: "39px",
-    margin: "-39px 0 0 -16px",
-    color: tokens.accent,
-    pointerEvents: "none",
-    transition: {
-      default: `left ${courierMotion.hop} linear, top ${courierMotion.hop} linear`,
-      [REDUCED]: "none",
-    },
-  },
+const styles = {
+  courier:
+    "tw:absolute tw:z-[4] tw:w-[32px] tw:h-[39px] tw:m-[-39px_0_0_-16px] tw:text-[color:var(--accent)] tw:pointer-events-none tw:[transition:left_260ms_linear,_top_260ms_linear] tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:none]",
   // Unknown: grey and slumped, no motion.
-  unknown: {
-    color: tokens.inkFaint,
-  },
-  figure: {
-    position: "relative",
-    display: "block",
-    width: "100%",
-    height: "100%",
-    padding: 0,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderColor: "currentcolor",
-    borderRadius: { default: null, ":focus-visible": radius.surface },
-    backgroundColor: "transparent",
-    backgroundImage: "none",
-    color: "inherit",
-    cursor: "pointer",
-    pointerEvents: "auto",
-    // In the lens list the diff workspace's button focus ring wins.
-    outline: {
-      default: null,
-      ":focus-visible": {
-        default: `2px solid ${tokens.accent}`,
-        [inDiffWorkspace()]: `1px solid ${tokens.accent}`,
-      },
-    },
-    outlineOffset: {
-      default: null,
-      ":focus-visible": { default: "4px", [inDiffWorkspace()]: "-2px" },
-    },
-  },
-  figureSvg: {
-    display: "block",
-    width: "100%",
-    height: "100%",
-    overflow: "visible",
-  },
-  tag: {
-    position: "absolute",
-    top: "-20px",
-    left: "50%",
-    padding: "2px 7px",
-    borderRadius: radius.pill,
-    backgroundColor: tokens.ink,
-    color: tokens.surface,
-    font: `${fontWeight.medium} ${fontSize.micro} ${tokens.fontSans}`,
-    whiteSpace: "nowrap",
-    transform: "translateX(-50%)",
-    opacity: {
-      default: 0,
-      [stylex.when.ancestor(":hover", courierMarker)]: 1,
-      [stylex.when.ancestor(":focus-visible", courierMarker)]: 1,
-      [REDUCED]: 1,
-    },
-    transition: `opacity ${motion.fast} ${motion.ease}`,
-    pointerEvents: "none",
-  },
-  arc: {
-    display: "block",
-    width: "100%",
-    height: "100%",
-    transition: { default: null, [REDUCED]: "none" },
-  },
-  body: {
-    display: "block",
-    width: "100%",
-    height: "100%",
-    transformOrigin: "50% 100%",
-    transition: { default: null, [REDUCED]: "none" },
-  },
+  unknown: "tw:text-[color:var(--ink-faint)]",
+  figure:
+    "tw:relative tw:block tw:w-full tw:h-full tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[&:focus-visible]:rounded-[8px] tw:bg-[color:transparent] tw:[background-image:none] tw:text-[color:inherit] tw:cursor-pointer tw:pointer-events-auto tw:[&:focus-visible]:[outline:2px_solid_var(--accent)] tw:[&:focus-visible:is(.canvas-diff-workspace:is(*)_*)]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[4px] tw:[&:focus-visible:is(.canvas-diff-workspace:is(*)_*)]:outline-offset-[-2px]",
+  figureSvg: "tw:block tw:w-full tw:h-full tw:overflow-visible",
+  tag: "tw:absolute tw:top-[-20px] tw:left-[50%] tw:p-[2px_7px] tw:rounded-[999px] tw:bg-[color:var(--ink)] tw:text-[color:var(--surface)] tw:font-[family-name:var(--font-sans)] tw:text-[length:10px] tw:font-medium tw:leading-[normal] tw:whitespace-nowrap tw:[transform:translateX(-50%)] tw:opacity-0 tw:[&:is(.canvas-courier:hover_*)]:opacity-[1] tw:[&:is(.canvas-courier:focus-visible_*)]:opacity-[1] tw:[@media_(prefers-reduced-motion:_reduce)]:opacity-[1] tw:[transition:opacity_120ms_ease] tw:pointer-events-none",
+  arc: "tw:block tw:w-full tw:h-full tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:none]",
+  body: "tw:block tw:w-full tw:h-full tw:[transform-origin:50%_100%] tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:none]",
   // Sitting eases in, reduced motion included.
-  sitting: {
-    transform: "translateY(7px)",
-    transition: `transform ${motion.slow} ${motion.ease}`,
-  },
-  slumped: {
-    transform: "translateY(2px) rotate(-8deg)",
-  },
-  bob: {
-    animationName: { default: marchBob, [REDUCED]: "none" },
-    animationDuration: {
-      default: courierMotion.march,
-      [REDUCED]: motion.instant,
-    },
-    animationTimingFunction: { default: "ease-in-out", [REDUCED]: "ease" },
-    animationIterationCount: { default: "infinite", [REDUCED]: 1 },
-  },
-  shadow: {
-    position: "absolute",
-    bottom: "-3px",
-    left: "50%",
-    width: "18px",
-    height: "4px",
-    marginLeft: "-9px",
-    borderRadius: radius.round,
-    backgroundColor: tokens.ink,
-    opacity: 0.18,
-    transition: { default: null, [REDUCED]: "none" },
-  },
-});
+  sitting:
+    "tw:[transform:translateY(7px)] tw:[transition:transform_300ms_ease]",
+  slumped: "tw:[transform:translateY(2px)_rotate(-8deg)]",
+  bob: "tw:[animation-name:courier-march-bob] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:480ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:ease-in-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-iteration-count:infinite] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-iteration-count:1]",
+  shadow:
+    "tw:absolute tw:bottom-[-3px] tw:left-[50%] tw:w-[18px] tw:h-[4px] tw:ml-[-9px] tw:rounded-[50%] tw:bg-[color:var(--ink)] tw:opacity-[0.18] tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:none]",
+};

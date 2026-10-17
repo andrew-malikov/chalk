@@ -1,12 +1,12 @@
 import { ReviewDocumentBoundary } from "@canvas/documents/review-document-boundary";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
+import { cn } from "@canvas/lib/utils";
 import { ReviewDebugSettingsProvider } from "@canvas/settings/debug-settings";
-import { detailHostMarker } from "@canvas/styles/markers.stylex";
+import { detailHostMarker } from "@canvas/styles/markers";
 import { shellStyles } from "@canvas/styles/shell-styles";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import type { PeekableAnchorRef } from "@review/documents/authoring";
 import { selectSource } from "@review/documents/lens-selection";
-import * as stylex from "@stylexjs/stylex";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -72,9 +72,7 @@ describe("side-peek validation boundary", () => {
                 <ReviewDocumentBoundary revision="valid" onError={() => {}}>
                   <AnchorLink anchor={anchor}>Startup</AnchorLink>
                 </ReviewDocumentBoundary>
-                <div
-                  {...stylex.props(shellStyles.detailHost, detailHostMarker)}
-                >
+                <div className={cn(shellStyles.detailHost, detailHostMarker)}>
                   <ReviewPanelHost />
                 </div>
               </ReviewPanelProvider>

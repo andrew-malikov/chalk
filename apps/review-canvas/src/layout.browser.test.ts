@@ -1,20 +1,12 @@
-import * as stylex from "@stylexjs/stylex";
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
+import { cn } from "@canvas/lib/utils";
 import { describe, expect, it } from "vitest";
 
 import { scopeReviewCanvasCss } from "../desktop-css-scope";
-import { MarkdownContent } from "./documents/agent-markdown";
-import { documentStyles } from "./documents/document-styles";
 import {
   softwareMapFrameProps,
   softwareMapOverlayProps,
 } from "./software-map/SoftwareMap";
-import {
-  appMarker,
-  documentMarker,
-  proseMarker,
-} from "./styles/markers.stylex";
+import { appMarker } from "./styles/markers";
 
 import canvasCss from "./styles.css?inline";
 import "./styles.css";
@@ -28,7 +20,7 @@ describe("Review layout", () => {
     canvas.style.cssText =
       "position: fixed; inset: 40px 0 0; height: auto; min-height: 0";
     const review = document.createElement("div");
-    review.className = `review-app ${stylex.props(appMarker).className}`;
+    review.className = `review-app ${cn(appMarker)}`;
     canvas.append(review);
     const frame = document.createElement("figure");
     frame.className = softwareMapFrameProps({

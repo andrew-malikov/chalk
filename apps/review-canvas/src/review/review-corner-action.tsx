@@ -1,13 +1,11 @@
 import { useAnchoredPopover } from "@canvas/lib/use-anchored-popover";
 import { useTooltip } from "@canvas/lib/use-tooltip";
-import { fontSize, fontWeight } from "@canvas/styles/scale.stylex";
+import { cn } from "@canvas/lib/utils";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import { tokens } from "@canvas/styles/tokens.stylex";
 import { useTutorial } from "@canvas/tutorial/tutorial-context";
 import { Button, IconButton } from "@canvas/ui/button";
 import type { IconProps } from "@canvas/ui/icons";
 import { surfaceStyles } from "@canvas/ui/surface";
-import * as stylex from "@stylexjs/stylex";
 import { Archive } from "lucide-react";
 import { type ReactElement, useRef, useState } from "react";
 
@@ -33,9 +31,9 @@ export function ReviewCornerAction(): ReactElement | null {
      confirmation. */
   if (tutorial) {
     return (
-      <div {...stylex.props(shellStyles.topbarItem, styles.action)}>
+      <div className={cn(shellStyles.topbarItem, styles.action)}>
         <Button ref={closeTooltip} onClick={tutorial.close}>
-          <ArchiveIcon xstyle={styles.icon} />
+          <ArchiveIcon className={styles.icon} />
           <span>Close</span>
         </Button>
       </div>
@@ -58,20 +56,20 @@ export function ReviewCornerAction(): ReactElement | null {
   };
 
   return (
-    <div ref={control} {...stylex.props(shellStyles.topbarItem, styles.action)}>
+    <div ref={control} className={cn(shellStyles.topbarItem, styles.action)}>
       <IconButton
         ref={settleTooltip}
         aria-label="Settle review"
         loading={busy}
         onClick={() => void dismiss()}
       >
-        <ArchiveIcon xstyle={styles.icon} />
+        <ArchiveIcon className={styles.icon} />
       </IconButton>
       {failed && (
         <span
           ref={errorPopover}
           popover="manual"
-          {...stylex.props(
+          className={cn(
             shellStyles.topbarPopover,
             surfaceStyles.popover,
             styles.error,
@@ -85,10 +83,10 @@ export function ReviewCornerAction(): ReactElement | null {
   );
 }
 
-export function ArchiveIcon({ xstyle }: IconProps = {}): ReactElement {
+export function ArchiveIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Archive
-      {...stylex.props(xstyle)}
+      className={cn(className)}
       size={13}
       aria-hidden="true"
       focusable="false"
@@ -99,23 +97,10 @@ export function ArchiveIcon({ xstyle }: IconProps = {}): ReactElement {
 // The single end-of-review control, sized to fit inside the topbar.
 // Settling is terminal but reversible, so it is a quiet icon rather than a
 // destructive fill. It never uses a bare X: that reads as "close".
-const styles = stylex.create({
-  action: {
-    position: "relative",
-    display: "inline-flex",
-    alignItems: "center",
-  },
-  icon: {
-    fill: "none",
-    stroke: "currentcolor",
-    strokeWidth: "1.3",
-    strokeLinejoin: "round",
-  },
+const styles = {
+  action: "tw:relative tw:inline-flex tw:items-center",
+  icon: "tw:fill-[none] tw:stroke-[currentcolor] tw:stroke-[1.3] tw:[stroke-linejoin:round]",
   // Only rendered in the topbar, where the popover placement positions it.
-  error: {
-    padding: "8px 12px",
-    color: tokens.changeRemoved,
-    font: `${fontWeight.regular} ${fontSize.small} ${tokens.fontSans}`,
-    whiteSpace: "nowrap",
-  },
-});
+  error:
+    "tw:p-[8px_12px] tw:text-[color:var(--change-removed)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[normal] tw:whitespace-nowrap",
+};
