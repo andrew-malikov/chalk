@@ -832,17 +832,6 @@ function Comparison({
       )}
       data-rejected-files={entries.filter((entry) => entry.error).length}
     >
-      {lens && (
-        <div
-          className={styles.toolbar}
-          role="toolbar"
-          aria-label="Diff display"
-        >
-          <span className={styles.lensNotice}>
-            Showing full file diffs for this lens
-          </span>
-        </div>
-      )}
       {treeContainer &&
         createPortal(
           <ChangedFilesTree
@@ -1014,8 +1003,5 @@ const styles = {
   notice:
     "tw:p-[16px] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px]",
   noticeActions: "tw:flex tw:flex-wrap tw:gap-[8px]",
-  lensNotice: "tw:[margin-inline-end:auto]",
   headerActions: "tw:flex tw:gap-[8px] tw:items-center",
-  toolbar:
-    "tw:flex tw:flex-wrap tw:gap-[8px] tw:items-center tw:justify-end tw:px-[8px] tw:pt-[8px] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:text-[color:var(--ink-muted)]",
 };

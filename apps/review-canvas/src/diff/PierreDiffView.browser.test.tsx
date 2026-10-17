@@ -627,9 +627,6 @@ it("keeps renamed lens files visible in worktrees without expanding from live so
     ).toContain("after"),
   );
   await vi.waitFor(() => expect(treeRow(tree, "new.ts")).toBeTruthy());
-  expect(container.textContent).toContain(
-    "Showing full file diffs for this lens",
-  );
   expect(request.mock.calls).toHaveLength(1);
   expect(
     container

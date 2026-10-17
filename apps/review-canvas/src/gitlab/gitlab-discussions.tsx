@@ -388,12 +388,13 @@ function Discussion({
       )}
       {collapsed && first ? (
         <div className="tw:flex tw:min-w-0 tw:items-baseline tw:gap-2">
-          <span className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-[var(--ink-muted)]">
+          {/* Blocks flow inline so the rendered body still truncates to one line. */}
+          <div className="tw:min-w-0 tw:flex-1 tw:truncate tw:text-[var(--ink-muted)] tw:[&_*]:inline tw:[&_*]:m-0 tw:[&_img]:hidden">
             <strong className="tw:text-[var(--ink)]">
               {authorName(first.author, gitlab.state?.account?.id)}
             </strong>{" "}
-            {first.body}
-          </span>
+            <MarkdownContent source={first.body} />
+          </div>
           {discussion.comments.length > 1 && (
             <span className={meta}>{discussion.comments.length}</span>
           )}

@@ -295,11 +295,11 @@ const styles = {
   // the right. The toggle's hit area covers the whole header, under the
   // actions, so the header draws its focus ring.
   header:
-    "tw:relative tw:grid tw:items-center tw:p-[10px_12px] tw:gap-[4px_12px] tw:grid-cols-[minmax(0,_1fr)_auto] tw:[&:has(.canvas-chevron:focus-visible)]:[box-shadow:inset_0_0_0_1px_var(--accent)]",
+    "tw:relative tw:grid tw:items-center tw:p-[10px_12px] tw:gap-[4px_12px] tw:grid-cols-[minmax(0,_1fr)_auto] tw:[&:hover]:bg-[color:var(--control-bg)] tw:[&:has(.canvas-chevron:focus-visible)]:[box-shadow:inset_0_0_0_1px_var(--accent)]",
   headerExpanded:
     "tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule-soft)]",
   toggle:
-    "tw:has-[>svg]:px-0 tw:flex tw:justify-start tw:min-w-0 tw:items-center tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:text-[color:inherit] tw:gap-[10px] tw:text-left tw:[&:focus-visible]:[outline:none] tw:[&::after]:absolute tw:[&::after]:inset-0 tw:[&::after]:[content:'']",
+    "tw:has-[>svg]:px-0 tw:flex tw:justify-start tw:min-w-0 tw:items-center tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:hover:bg-transparent tw:dark:hover:bg-transparent tw:text-[color:inherit] tw:gap-[10px] tw:text-left tw:[&:focus-visible]:[outline:none] tw:[&::after]:absolute tw:[&::after]:inset-0 tw:[&::after]:[content:'']",
   subject:
     "tw:overflow-hidden tw:text-[color:var(--ink)] tw:text-[length:12px] tw:font-medium tw:text-ellipsis tw:whitespace-nowrap",
   actions:

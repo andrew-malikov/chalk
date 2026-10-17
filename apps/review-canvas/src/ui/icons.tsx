@@ -149,18 +149,24 @@ export function MapPinIcon({ className }: IconProps = {}): ReactElement {
  * left to right with a clip. Its tab carries `segmentMarker`.
  */
 export function MarkerUnderline({ active }: { active: boolean }): ReactElement {
+  // The span keeps the svg from being a direct button child, and `size-full`
+  // exempts it from the button's svg sizing.
   return (
-    <svg
+    <span
       className={cn(styles.underline, active && styles.underlineActive)}
-      viewBox="0 0 48 3"
-      preserveAspectRatio="none"
       aria-hidden="true"
     >
-      <path
-        className={styles.underlineStroke}
-        d="M1 1.6 C 12 0.5, 30 2.5, 47 1.2"
-      />
-    </svg>
+      <svg
+        className={styles.underlineSvg}
+        viewBox="0 0 48 3"
+        preserveAspectRatio="none"
+      >
+        <path
+          className={styles.underlineStroke}
+          d="M1 1.6 C 12 0.5, 30 2.5, 47 1.2"
+        />
+      </svg>
+    </span>
   );
 }
 
@@ -363,9 +369,10 @@ const styles = {
   // be under non-scaling-stroke). Hover draws a lighter stroke; leaving fades
   // the ink and only then closes the clip, so the pen never runs backwards.
   underline:
-    "tw:absolute tw:bottom-[6px] tw:left-0 tw:w-full tw:h-[3px] tw:overflow-visible tw:[clip-path:inset(-2px_100%_-2px_0)] tw:[&:is(.canvas-segment:hover_*)]:[clip-path:inset(-2px_0_-2px_0)] tw:opacity-0 tw:[&:is(.canvas-segment:hover_*)]:opacity-[0.7] tw:pointer-events-none tw:[transition:opacity_120ms_ease,_clip-path_0s_linear_120ms] tw:[&:is(.canvas-segment:hover_*)]:[transition:opacity_0s,_clip-path_300ms_cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:opacity_120ms_ease]",
+    "tw:absolute tw:bottom-[6px] tw:left-0 tw:w-full tw:h-[3px] tw:[clip-path:inset(-2px_100%_-2px_0)] tw:[&:is(.canvas-segment:hover_*)]:[clip-path:inset(-2px_0_-2px_0)] tw:opacity-0 tw:[&:is(.canvas-segment:hover_*)]:opacity-[0.7] tw:pointer-events-none tw:[transition:opacity_120ms_ease,_clip-path_0s_linear_120ms] tw:[&:is(.canvas-segment:hover_*)]:[transition:opacity_0s,_clip-path_300ms_cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:opacity_120ms_ease]",
   underlineActive:
     "tw:[clip-path:inset(-2px_0_-2px_0)] tw:opacity-[1] tw:[&:is(.canvas-segment:hover_*)]:opacity-[0.7] tw:[transition:opacity_0s,_clip-path_300ms_cubic-bezier(0.2,_0.7,_0.2,_1)] tw:[@media_(prefers-reduced-motion:_reduce)]:[transition:opacity_120ms_ease]",
+  underlineSvg: "tw:block tw:size-full tw:overflow-visible",
   underlineStroke:
     "tw:fill-[none] tw:stroke-[var(--accent)] tw:stroke-[2] tw:[stroke-linecap:round] tw:[vector-effect:non-scaling-stroke]",
   chevron:
