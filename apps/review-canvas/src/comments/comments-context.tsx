@@ -27,7 +27,7 @@ type CommentsContextValue = Pick<
   editable: boolean;
   busy: boolean;
   open: boolean;
-  /** Inline threads the user collapsed or expanded; unset ones follow `resolved`. */
+  /** Discussions and drafts the user collapsed or expanded; unset threads follow `resolved`. */
   collapsed: Record<string, boolean>;
   collapse(id: string, value: boolean): void;
   toggle(): void;

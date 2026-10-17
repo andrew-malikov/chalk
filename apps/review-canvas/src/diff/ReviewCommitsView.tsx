@@ -82,6 +82,9 @@ function CommitGroups({
           />
         ))}
       </div>
+      {index === groups.length - 1 && (
+        <CircleSmall className={styles.endIcon} aria-hidden="true" />
+      )}
     </section>
   ));
 }
@@ -287,6 +290,8 @@ const styles = {
   dateIcon:
     "tw:size-[14px] tw:flex-[0_0_14px] tw:fill-[none] tw:stroke-[var(--ink-faint)] tw:stroke-[1.5]",
   dateHeading: "tw:m-0",
+  endIcon:
+    "tw:block tw:size-[14px] tw:fill-[none] tw:stroke-[var(--ink-faint)] tw:stroke-[1.5]",
   timeline:
     "tw:relative tw:ml-[6px] tw:pl-[22px] tw:[&::before]:absolute tw:[&::before]:top-[-8px] tw:[&::before]:bottom-0 tw:[&::before]:left-0 tw:[&::before]:w-[1px] tw:[&::before]:bg-[color:var(--rule-soft)] tw:[&::before]:[content:'']",
   card: "tw:mb-[6px] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[box-shadow:none]",

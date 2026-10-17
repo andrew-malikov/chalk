@@ -759,17 +759,27 @@ export function GuidedTourPanel({
           })}
           {tour.stops.length > 0 && (
             <>
-              <div className={tourStyles.endCap}>
-                <span>End of tour</span>
-                <ButtonPrimitive
-                  variant="ghost"
-                  size="xs"
-                  type="button"
-                  className={tourStyles.endCapButton}
-                  onClick={() => stepTo(0)}
-                >
-                  ↑ Back to step 1
-                </ButtonPrimitive>
+              <div className={tourStyles.stop}>
+                <div className={cn(tourStyles.rail, tourStyles.railEnd)}>
+                  <div
+                    className={cn(tourStyles.railNumber, tourStyles.railDone)}
+                    aria-hidden="true"
+                  >
+                    ✓
+                  </div>
+                </div>
+                <div className={tourStyles.endCap}>
+                  <span>End of tour</span>
+                  <ButtonPrimitive
+                    variant="ghost"
+                    size="xs"
+                    type="button"
+                    className={tourStyles.endCapButton}
+                    onClick={() => stepTo(0)}
+                  >
+                    ↑ Back to step 1
+                  </ButtonPrimitive>
+                </div>
               </div>
               <div
                 ref={tailRef}

@@ -224,7 +224,7 @@ export function InlineComments({
   if (!comments) return null;
 
   if (annotation.kind === "collapsed")
-    return <DiscussionChips ids={annotation.ids} />;
+    return <CommentChips ids={annotation.ids} />;
 
   const discussion =
     annotation.kind === "discussion"
@@ -268,47 +268,73 @@ export function InlineComments({
   );
 }
 
-/** Collapsed threads take no height; their chips overlay the right end of the commented line. */
-function DiscussionChips({ ids }: { ids: string[] }) {
+/** Collapsed comments take no height; their chips overlay the right end of the commented line. */
+function CommentChips({ ids }: { ids: string[] }) {
   const comments = useComments()!;
+  const drafts = useCommentDrafts();
 
-  const discussions = ids.flatMap(
-    (id) => comments.state?.gitlab?.discussions.find((d) => d.id === id) ?? [],
-  );
+  const chips = ids.flatMap((id) => {
+    const discussion = comments.state?.gitlab?.discussions.find(
+      (d) => d.id === id,
+    );
 
-  // A lone thread has room for its author; a stack shows state colors only.
-  const single = discussions.length === 1;
+    if (discussion) {
+      const author = discussion.comments[0]?.author.username;
+
+      return [
+        {
+          id,
+          label: `${discussion.resolved ? "resolved " : ""}discussion by @${author}`,
+          text: `@${author}${discussion.comments.length > 1 ? ` · ${discussion.comments.length}` : ""}`,
+          title: `@${author}: ${discussion.comments[0]?.body.slice(0, 200)}`,
+          resolved: discussion.resolved,
+        },
+      ];
+    }
+
+    const draft = drafts.find((d) => d.id === id && d.status !== "sent");
+
+    return draft
+      ? [
+          {
+            id,
+            label: draft.author === "agent" ? "agent draft" : "your draft",
+            text: `${draft.author === "agent" ? "Agent" : "You"} · Draft`,
+            title: draft.text.slice(0, 200),
+            resolved: false,
+          },
+        ]
+      : [];
+  });
+
+  // A lone comment has room for its author; a stack shows state colors only.
+  const single = chips.length === 1;
 
   return (
-    <section
-      className="tw:relative tw:h-0"
-      aria-label="Collapsed GitLab discussions"
-    >
+    <section className="tw:relative tw:h-0" aria-label="Collapsed comments">
       <div className="tw:absolute tw:right-3 tw:bottom-px tw:flex tw:font-[family-name:var(--chrome-font)] tw:text-[11px]">
-        {discussions.map((discussion, index) => {
-          const author = discussion.comments[0]?.author.username;
-          const count = discussion.comments.length;
-          const Icon = discussion.resolved ? CheckIcon : MessageSquareIcon;
+        {chips.map((chip, index) => {
+          const Icon = chip.resolved ? CheckIcon : MessageSquareIcon;
 
           return (
             <button
-              key={discussion.id}
+              key={chip.id}
               type="button"
               aria-expanded={false}
-              aria-label={`Expand ${discussion.resolved ? "resolved " : ""}discussion by @${author}`}
-              title={`@${author}: ${discussion.comments[0]?.body.slice(0, 200)}`}
-              onClick={() => comments.collapse(discussion.id, false)}
+              aria-label={`Expand ${chip.label}`}
+              title={chip.title}
+              onClick={() => comments.collapse(chip.id, false)}
               className={cn(
                 "tw:flex tw:h-[18px] tw:cursor-pointer tw:items-center tw:justify-center tw:gap-1 tw:rounded-full tw:border tw:bg-[var(--surface-raised)] tw:whitespace-nowrap tw:hover:z-[1] tw:hover:text-[var(--ink)]",
                 single ? "tw:px-2" : "tw:w-[18px]",
                 index > 0 && "tw:-ms-1",
-                discussion.resolved
+                chip.resolved
                   ? "tw:border-[var(--chrome-border)] tw:text-[var(--ink-muted)]"
                   : "tw:border-[color-mix(in_srgb,var(--link)_40%,transparent)] tw:text-[var(--link)]",
               )}
             >
               <Icon className="tw:size-3 tw:shrink-0" aria-hidden="true" />
-              {single && `@${author}${count > 1 ? ` · ${count}` : ""}`}
+              {single && chip.text}
             </button>
           );
         })}
@@ -533,6 +559,7 @@ function DraftEditor({
   const comments = useComments()!;
   const editor = comments.editors[draft.id];
   const labelId = useId();
+  const collapsed = comments.collapsed[draft.id] ?? false;
   const [verified, setVerified] = useState(false);
   const [noteId, setNoteId] = useState("");
   const locked = !["saved", "failed"].includes(draft.status);
@@ -586,143 +613,154 @@ function DraftEditor({
       <div className="tw:flex tw:flex-wrap tw:items-baseline tw:justify-between tw:gap-2 tw:wrap-anywhere">
         <span id={labelId}>{targetLabel(editor?.target ?? draft.target)}</span>
         {draft.author === "agent" && <Chip className="tw:me-auto">Agent</Chip>}
-        {inline && gitlab && (
-          <span className={meta}>
-            {gitlab.account
-              ? `Posting as @${gitlab.account.username}`
-              : "Posting account unavailable"}{" "}
-            · {gitlab.identity.host}
-          </span>
-        )}
+        <IconButton
+          aria-label={collapsed ? "Expand discussion" : "Collapse discussion"}
+          title={collapsed ? "Expand discussion" : "Collapse discussion"}
+          aria-expanded={!collapsed}
+          aria-controls={`${labelId}-body`}
+          className="tw:ms-auto"
+          onClick={() => comments.collapse(draft.id, !collapsed)}
+        >
+          {collapsed ? (
+            <ChevronRightIcon aria-hidden="true" />
+          ) : (
+            <ChevronsDownUpIcon aria-hidden="true" />
+          )}
+        </IconButton>
       </div>
 
-      {thread && !inline && (
-        <Button variant="ghost" onClick={() => comments.select(thread)}>
-          {thread.location
-            ? `${thread.location.file}:${thread.location.from}`
-            : `@${thread.comments[0]?.author.username} · ${thread.comments[0]?.body.slice(0, 80)}`}
-        </Button>
-      )}
-      {draft.target.kind === "inline" && draft.target.unmapped && (
-        <p role="status">
-          Code could not be mapped. Your text is preserved. Select the current
-          code to write a replacement comment.
-        </p>
-      )}
-      <CommentEditor
-        value={editor?.text ?? draft.text}
-        onChange={(text) => comments.edit(draft.id, text)}
-        onSubmit={() => {
-          if (canPost) comments.run("post", { id: draft.id });
-        }}
-        disabled={!comments.editable || comments.busy || locked}
-        focused={comments.selected === draft.id}
-        placeholder="Write your comment…"
-        labelledBy={labelId}
-        inline={inline}
-      />
-      {(editor?.error || draft.error) && (
-        <p role="alert">{editor?.error ?? draft.error}</p>
-      )}
-      {!locked ? (
-        <div className={cn(actions, "tw:items-center")}>
-          {gitlab && (
+      <div
+        id={`${labelId}-body`}
+        className={collapsed ? "tw:hidden" : "tw:contents"}
+      >
+        {thread && !inline && (
+          <Button variant="ghost" onClick={() => comments.select(thread)}>
+            {thread.location
+              ? `${thread.location.file}:${thread.location.from}`
+              : `@${thread.comments[0]?.author.username} · ${thread.comments[0]?.body.slice(0, 80)}`}
+          </Button>
+        )}
+        {draft.target.kind === "inline" && draft.target.unmapped && (
+          <p role="status">
+            Code could not be mapped. Your text is preserved. Select the current
+            code to write a replacement comment.
+          </p>
+        )}
+        <CommentEditor
+          value={editor?.text ?? draft.text}
+          onChange={(text) => comments.edit(draft.id, text)}
+          onSubmit={() => {
+            if (canPost) comments.run("post", { id: draft.id });
+          }}
+          disabled={!comments.editable || comments.busy || locked}
+          focused={!collapsed && comments.selected === draft.id}
+          placeholder="Write your comment…"
+          labelledBy={labelId}
+          inline={inline}
+        />
+        {(editor?.error || draft.error) && (
+          <p role="alert">{editor?.error ?? draft.error}</p>
+        )}
+        {!locked ? (
+          <div className={cn(actions, "tw:items-center")}>
+            {gitlab && (
+              <Button
+                variant="primary"
+                loading={
+                  comments.pending?.action === "post" &&
+                  comments.pending.input.id === draft.id
+                }
+                disabled={!canPost}
+                onClick={() => comments.run("post", { id: draft.id })}
+              >
+                Post
+              </Button>
+            )}
             <Button
-              variant="primary"
               loading={
-                comments.pending?.action === "post" &&
+                comments.pending?.action === "discard" &&
                 comments.pending.input.id === draft.id
               }
-              disabled={!canPost}
-              onClick={() => comments.run("post", { id: draft.id })}
-            >
-              Post
-            </Button>
-          )}
-          <Button
-            loading={
-              comments.pending?.action === "discard" &&
-              comments.pending.input.id === draft.id
-            }
-            disabled={!comments.editable || comments.busy}
-            onClick={() => comments.run("discard", { id: draft.id })}
-          >
-            Discard
-          </Button>
-          {editor?.error && (
-            <Button
-              disabled={comments.busy}
-              onClick={() => comments.edit(draft.id, editor.text)}
-            >
-              Retry save
-            </Button>
-          )}
-          {saveStatus}
-        </div>
-      ) : (
-        <div className="tw:flex tw:flex-col tw:gap-2">
-          {saveStatus}
-          <label>
-            <Checkbox
-              aria-label="I checked this MR on GitLab and verified the outcome"
-              checked={verified}
               disabled={!comments.editable || comments.busy}
-              onCheckedChange={(checked) => setVerified(checked === true)}
-            />{" "}
-            I checked this MR on GitLab and verified the outcome
-          </label>
-          <Button
-            loading={
-              comments.pending?.action === "recover" &&
-              comments.pending.input.id === draft.id &&
-              comments.pending.input.posted === false
-            }
-            disabled={!verified || !comments.editable || comments.busy}
-            onClick={() =>
-              comments.run("recover", {
-                id: draft.id,
-                verified: true,
-                posted: false,
-              })
-            }
-          >
-            Not posted · allow retry
-          </Button>
-          <label>
-            Posted note ID{" "}
-            <Input
-              type="number"
-              min="1"
-              value={noteId}
-              onChange={(e) => setNoteId(e.target.value)}
-            />
-          </label>
-          <Button
-            loading={
-              comments.pending?.action === "recover" &&
-              comments.pending.input.id === draft.id &&
-              comments.pending.input.posted === true
-            }
-            disabled={
-              !verified ||
-              !Number.isSafeInteger(Number(noteId)) ||
-              Number(noteId) < 1 ||
-              !comments.editable ||
-              comments.busy
-            }
-            onClick={() =>
-              comments.run("recover", {
-                id: draft.id,
-                verified: true,
-                posted: true,
-                noteId: Number(noteId),
-              })
-            }
-          >
-            Mark as sent
-          </Button>
-        </div>
-      )}
+              onClick={() => comments.run("discard", { id: draft.id })}
+            >
+              Discard
+            </Button>
+            {editor?.error && (
+              <Button
+                disabled={comments.busy}
+                onClick={() => comments.edit(draft.id, editor.text)}
+              >
+                Retry save
+              </Button>
+            )}
+            {saveStatus}
+          </div>
+        ) : (
+          <div className="tw:flex tw:flex-col tw:gap-2">
+            {saveStatus}
+            <label>
+              <Checkbox
+                aria-label="I checked this MR on GitLab and verified the outcome"
+                checked={verified}
+                disabled={!comments.editable || comments.busy}
+                onCheckedChange={(checked) => setVerified(checked === true)}
+              />{" "}
+              I checked this MR on GitLab and verified the outcome
+            </label>
+            <Button
+              loading={
+                comments.pending?.action === "recover" &&
+                comments.pending.input.id === draft.id &&
+                comments.pending.input.posted === false
+              }
+              disabled={!verified || !comments.editable || comments.busy}
+              onClick={() =>
+                comments.run("recover", {
+                  id: draft.id,
+                  verified: true,
+                  posted: false,
+                })
+              }
+            >
+              Not posted · allow retry
+            </Button>
+            <label>
+              Posted note ID{" "}
+              <Input
+                type="number"
+                min="1"
+                value={noteId}
+                onChange={(e) => setNoteId(e.target.value)}
+              />
+            </label>
+            <Button
+              loading={
+                comments.pending?.action === "recover" &&
+                comments.pending.input.id === draft.id &&
+                comments.pending.input.posted === true
+              }
+              disabled={
+                !verified ||
+                !Number.isSafeInteger(Number(noteId)) ||
+                Number(noteId) < 1 ||
+                !comments.editable ||
+                comments.busy
+              }
+              onClick={() =>
+                comments.run("recover", {
+                  id: draft.id,
+                  verified: true,
+                  posted: true,
+                  noteId: Number(noteId),
+                })
+              }
+            >
+              Mark as sent
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

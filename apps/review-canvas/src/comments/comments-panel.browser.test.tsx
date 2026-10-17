@@ -227,11 +227,41 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
 
     expect(document.activeElement).toBe(inline);
     await userEvent.fill(inline, "Inline text");
-    await vi.waitFor(() => expect(state.comments[0]?.text).toBe("Inline text"));
     expect(
       container.querySelector('[aria-label^="Comment "] [role="textbox"]'),
     ).toBe(inline);
     expect(document.activeElement).toBe(inline);
+    const draftCard = inline.closest('section[aria-label^="Comment "]')!;
+    await userEvent.click(
+      draftCard.querySelector<HTMLElement>(
+        '[aria-label="Collapse discussion"]',
+      )!,
+    );
+
+    const expand = () =>
+      container.querySelector<HTMLElement>('[aria-label="Expand your draft"]');
+
+    await vi.waitFor(() => expect(expand()).not.toBeNull());
+    expect(container.querySelector('[aria-label^="Comment "]')).toBeNull();
+
+    const row = added
+      .querySelector<HTMLElement>('[data-line="2"][data-line-type]')!
+      .getBoundingClientRect();
+
+    const chip = expand()!.getBoundingClientRect();
+
+    expect(chip.top).toBeGreaterThanOrEqual(row.top);
+    expect(chip.bottom).toBeLessThanOrEqual(row.bottom);
+    expect(expand()!.getAttribute("aria-expanded")).toBe("false");
+    await vi.waitFor(() => expect(state.comments[0]?.text).toBe("Inline text"));
+    await userEvent.click(expand()!);
+
+    await vi.waitFor(() =>
+      expect(
+        container.querySelector('[aria-label^="Comment "] [role="textbox"]')
+          ?.textContent,
+      ).toBe("Inline text"),
+    );
     expect(state.comments[0]?.target).toMatchObject({
       kind: "inline",
       position: {
@@ -276,7 +306,7 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
   }
 });
 
-it("stacks collapsed discussions as chips on their line that take no diff height", async () => {
+it("stacks collapsed discussions and agent drafts as chips on their line that take no diff height", async () => {
   const gitlab: GitLabState = {
     identity: {
       host: "gitlab.test",
@@ -324,7 +354,30 @@ it("stacks collapsed discussions as chips on their line that take no diff height
     ],
   };
 
-  const state: CommentsState = { comments: [], gitlab };
+  const state: CommentsState = {
+    gitlab,
+    comments: [
+      {
+        id: crypto.randomUUID(),
+        text: "Agent text",
+        author: "agent",
+        status: "saved",
+        version: 1,
+        target: {
+          kind: "inline",
+          position: {
+            baseSha: gitlab.refs.baseSha,
+            headSha: gitlab.refs.headSha,
+            oldPath: "a.ts",
+            newPath: "a.ts",
+            side: "head",
+            from: 1,
+            to: 1,
+          },
+        },
+      },
+    ],
+  };
 
   const files: ReviewDiffFileWire[] = [
     { path: "a.ts", status: "modified", additions: 2, deletions: 2 },
@@ -386,6 +439,21 @@ it("stacks collapsed discussions as chips on their line that take no diff height
 
     await vi.waitFor(() => expect(chip()).not.toBeNull());
     expect(chip("markup")).not.toBeNull();
+
+    const draft = () =>
+      container.querySelector<HTMLElement>('[aria-label^="Comment "]');
+
+    await vi.waitFor(() => expect(draft()).not.toBeNull());
+    await userEvent.click(
+      draft()!.querySelector<HTMLElement>(
+        '[aria-label="Collapse discussion"]',
+      )!,
+    );
+
+    const draftChip = () =>
+      container.querySelector<HTMLElement>('[aria-label="Expand agent draft"]');
+
+    await vi.waitFor(() => expect(draftChip()).not.toBeNull());
     // A stack has no room for author names.
     expect(container.textContent).not.toContain("@andrew");
     expect(container.textContent).not.toContain("Check cancellation");
@@ -394,22 +462,32 @@ it("stacks collapsed discussions as chips on their line that take no diff height
 
     const onLine = (author: string) => {
       const mark = chip(author)!.getBoundingClientRect();
-      expect(mark.top).toBeGreaterThanOrEqual(row.top);
-      expect(mark.bottom).toBeLessThanOrEqual(row.bottom);
+      const currentRow = line(1).getBoundingClientRect();
+
+      expect(mark.top).toBeGreaterThanOrEqual(currentRow.top);
+      expect(mark.bottom).toBeLessThanOrEqual(currentRow.bottom);
     };
 
     onLine("andrew");
     onLine("markup");
+    expect(draftChip()!.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      row.top,
+    );
+    expect(draftChip()!.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      row.bottom,
+    );
     expect(line(2).getBoundingClientRect().top).toBe(row.bottom);
 
     await userEvent.click(chip()!);
     await vi.waitFor(() =>
       expect(container.textContent).toContain("Check cancellation"),
     );
-    expect(line(2).getBoundingClientRect().top).toBeGreaterThan(row.bottom);
+    expect(line(2).getBoundingClientRect().top).toBeGreaterThan(
+      line(1).getBoundingClientRect().bottom,
+    );
     // The remaining chip stays on the line, above the expanded thread.
     onLine("markup");
-    expect(container.textContent).toContain("@markup");
+    expect(container.textContent).not.toContain("@markup");
 
     await userEvent.click(
       container.querySelector<HTMLElement>(
@@ -417,6 +495,15 @@ it("stacks collapsed discussions as chips on their line that take no diff height
       )!,
     );
     await vi.waitFor(() => expect(chip()).not.toBeNull());
+    await userEvent.click(draftChip()!);
+    await vi.waitFor(() =>
+      expect(draft()?.querySelector('[role="textbox"]')?.textContent).toBe(
+        "Agent text",
+      ),
+    );
+    expect(line(2).getBoundingClientRect().top).toBeGreaterThan(
+      line(1).getBoundingClientRect().bottom,
+    );
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -494,6 +581,7 @@ it("collapses a sidebar discussion to a one-line summary and expands it back", a
       container.querySelector<HTMLElement>(
         '[aria-label="Collapse discussion"]',
       );
+
     await vi.waitFor(() => expect(collapse()).not.toBeNull());
     expect(container.textContent).toContain("Sure thing");
 

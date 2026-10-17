@@ -8,6 +8,7 @@ import { Switch } from "@canvas/components/ui/switch";
 import { cn } from "@canvas/lib/utils";
 import { Choice } from "@canvas/settings/settings-choice";
 import { Button, IconButton } from "@canvas/ui/button";
+import { CopyButton } from "@canvas/ui/copy-text";
 import { ChatIcon } from "@canvas/ui/icons";
 import { StatusBanner } from "@canvas/ui/status-banner";
 import {
@@ -577,6 +578,12 @@ function ReviewLayoutContent({
                 />
               </div>
               <ReviewBatonChip outcome={review.submissionOutcome} />
+              <CopyButton
+                text={document.key}
+                label="Copy Chalk ID"
+                className={shellStyles.topbarItem}
+                iconClassName={controlStyles.chromeIcon}
+              />
               <DiffSettingsControl />
               {comments && (
                 <CommentsButton

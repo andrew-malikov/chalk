@@ -43,7 +43,7 @@ export const tourStyles = {
   pillButton:
     "tw:rounded-[50%] tw:bg-[color:var(--transparent)] tw:[&:hover:not(:disabled)]:bg-[color:color-mix(in_srgb,_var(--on-accent)_16%,_var(--transparent))] tw:[&:focus-visible]:bg-[color:color-mix(in_srgb,_var(--on-accent)_16%,_var(--transparent))] tw:text-[color:var(--on-accent)] tw:text-[length:inherit] tw:font-[number:inherit]",
   endCap:
-    "tw:flex tw:items-center tw:justify-between tw:gap-[12px] tw:m-[8px_16px_16px_52px] tw:[@media_(max-width:_720px)]:m-[8px_8px_16px_38px] tw:p-[12px_16px] tw:border-[1px] tw:border-dashed tw:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:text-[color:var(--ink-muted)] tw:text-[length:11px] tw:font-bold",
+    "tw:flex tw:items-center tw:justify-between tw:gap-[12px] tw:m-[8px_0_16px] tw:p-[12px_16px] tw:border-[1px] tw:border-dashed tw:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:text-[color:var(--ink-muted)] tw:text-[length:11px] tw:font-bold",
   endCapButton:
     "tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:text-[color:var(--accent)] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:cursor-pointer tw:whitespace-nowrap",
   scrollTail: "tw:shrink-0",
@@ -51,6 +51,9 @@ export const tourStyles = {
   rail: "tw:relative tw:flex tw:justify-center tw:[&::before]:absolute tw:[&::before]:top-0 tw:[&::before]:bottom-0 tw:[&::before]:left-[29px] tw:[@media_(max-width:_720px)]:[&::before]:left-[19px] tw:[&::before]:w-[2px] tw:[&::before]:bg-[color:var(--rule-soft)] tw:[&::before]:[content:'']",
   railNumber:
     "tw:z-[1] tw:grid tw:place-items-center tw:size-[26px] tw:mt-[18px] tw:border-[2px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[50%] tw:bg-[color:var(--bg)] tw:[box-shadow:0_0_0_4px_var(--bg)] tw:text-[color:var(--ink-faint)] tw:text-[length:12px] tw:font-bold",
+  // The rail stops at the end cap instead of trailing off past the last stop.
+  railEnd: "tw:items-center tw:[&::before]:bottom-1/2",
+  railDone: "tw:mt-0",
   railNumberActive:
     "tw:border-[color:var(--accent)] tw:bg-[color:var(--accent)] tw:text-[color:var(--on-accent)]",
   main: "tw:min-w-0 tw:pt-[16px] tw:pr-0 tw:pb-[22px] tw:pl-[4px] tw:[@media_(max-width:_720px)]:pl-0",

@@ -246,15 +246,16 @@ export function CommentEditor({
   );
 
   const box = cn(
-    "tw:overflow-y-auto tw:p-2 tw:text-[13px] tw:leading-normal tw:text-[var(--ink)] tw:font-[family-name:var(--chrome-font)] tw:outline-none",
+    "tw:overflow-y-auto tw:px-3 tw:py-2 tw:text-[13px] tw:leading-normal tw:text-[var(--ink)] tw:font-[family-name:var(--chrome-font)] tw:outline-none",
     inline ? "tw:min-h-[72px]" : "tw:min-h-[90px]",
     "tw:max-h-[480px]",
   );
 
   return (
     <ProseKit editor={editor}>
-      <div className="tw:flex tw:min-w-0 tw:flex-col tw:rounded-[4px] tw:border tw:border-[var(--chrome-border)] tw:bg-[var(--bg)] tw:focus-within:border-[var(--ink-faint)]">
-        <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-1 tw:border-b tw:border-[var(--chrome-border)] tw:p-1">
+      {/* Bleeds through the card padding so its sides meet the card border instead of doubling it. */}
+      <div className="tw:-mx-3 tw:flex tw:min-w-0 tw:flex-col tw:border-y tw:border-[var(--chrome-border)] tw:bg-[var(--bg)] tw:focus-within:border-[var(--ink-faint)]">
+        <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-1 tw:border-b tw:border-[var(--chrome-border)] tw:px-2 tw:py-1">
           <div className="tw:flex tw:gap-0.5">
             {(["write", "preview"] as const).map((tab) => (
               <Button

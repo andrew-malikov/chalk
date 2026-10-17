@@ -330,14 +330,6 @@ function Comparison({
       else chips.set(key, { annotation, ids: [discussion.id] });
     }
 
-    // Pierre stacks a line's annotations in array order; chips go first so they sit on the line itself.
-    annotations.unshift(
-      ...[...chips.values()].map(({ annotation, ids }) => ({
-        ...annotation,
-        metadata: { kind: "collapsed" as const, ids },
-      })),
-    );
-
     for (const draft of drafts) {
       const target = draft.target;
 
@@ -350,13 +342,34 @@ function Comparison({
       )
         continue;
       const p = target.position;
-      annotations.push({
+
+      const annotation = {
         file: p.side === "head" ? p.newPath : p.oldPath,
         lineNumber: p.to,
         side: p.side === "head" ? "additions" : "deletions",
         metadata: { kind: "draft", id: draft.id },
-      });
+      } as const;
+
+      // shortcut: chip swaps reset editor undo; keep editors mounted if undo must survive collapsing.
+      if (!comments?.collapsed[draft.id]) {
+        annotations.push(annotation);
+        continue;
+      }
+
+      const key = `${annotation.file}:${annotation.side}:${annotation.lineNumber}`;
+      const chip = chips.get(key);
+
+      if (chip) chip.ids.push(draft.id);
+      else chips.set(key, { annotation, ids: [draft.id] });
     }
+
+    // Pierre stacks a line's annotations in array order; chips go first so they sit on the line itself.
+    annotations.unshift(
+      ...[...chips.values()].map(({ annotation, ids }) => ({
+        ...annotation,
+        metadata: { kind: "collapsed" as const, ids },
+      })),
+    );
   }
 
   const annotationRevision = useRef({ key: "", version: 0 });
