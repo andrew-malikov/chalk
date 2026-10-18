@@ -131,10 +131,17 @@ function CommitRow({
           className={cn(chevronMarker, styles.toggle)}
           aria-expanded={expanded}
           onClick={toggleExpanded}
-          title={commit.subject}
+          title={commit.subject || undefined}
         >
           <DisclosureChevron expanded={expanded} className={styles.chevron} />
-          <strong className={styles.subject}>{commit.subject}</strong>
+          <strong
+            className={cn(
+              styles.subject,
+              !commit.subject && styles.subjectMissing,
+            )}
+          >
+            {commit.subject || "No commit message"}
+          </strong>
         </ButtonPrimitive>
         <span className={styles.actions}>
           <span className={styles.sha}>{commit.commit.slice(0, 8)}</span>
@@ -307,6 +314,7 @@ const styles = {
     "tw:has-[>svg]:px-0 tw:flex tw:justify-start tw:min-w-0 tw:items-center tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:hover:bg-transparent tw:dark:hover:bg-transparent tw:text-[color:inherit] tw:gap-[10px] tw:text-left tw:[&:focus-visible]:[outline:none] tw:[&::after]:absolute tw:[&::after]:inset-0 tw:[&::after]:[content:'']",
   subject:
     "tw:overflow-hidden tw:text-[color:var(--ink)] tw:text-[length:12px] tw:font-medium tw:text-ellipsis tw:whitespace-nowrap",
+  subjectMissing: "tw:text-[color:var(--ink-muted)] tw:italic",
   actions:
     "tw:relative tw:flex tw:items-center tw:gap-[2px] tw:[grid-column:2] tw:[grid-row:1_/_3]",
   sha: "tw:mr-[6px] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-mono)] tw:text-[length:11px] tw:font-normal tw:leading-[normal] tw:tabular-nums",

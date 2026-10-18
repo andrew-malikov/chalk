@@ -35,7 +35,11 @@ export function CommentsPanel() {
 
   return (
     <ReviewPanelFrame
-      title="Comments"
+      title={
+        comments.state
+          ? `Comments · ${commentThreads(drafts, comments.state.gitlab?.discussions ?? []).open.length}`
+          : "Comments"
+      }
       onClose={comments.toggle}
       closeLabel="Close comments"
       headerActions={
@@ -115,16 +119,13 @@ export function useCommentDrafts(): ReviewComment[] {
   ];
 }
 
-export function CommentsContent() {
-  const comments = useComments();
-  const drafts = useCommentDrafts();
-
-  if (!comments) return null;
-  const gitlab = comments.state?.gitlab;
-
+function commentThreads(
+  drafts: ReviewComment[],
+  discussions: GitLabDiscussion[],
+) {
   const unsent = drafts.filter((d) => d.status !== "sent");
 
-  const threads = (gitlab?.discussions ?? []).map((discussion) => {
+  const threads = discussions.map((discussion) => {
     const replies = unsent.filter(
       (d) =>
         d.target.kind === "reply" && d.target.discussionId === discussion.id,
@@ -160,6 +161,21 @@ export function CommentsContent() {
         time: Date.parse(draft.createdAt ?? "") || 0,
       })),
   ].sort((a, b) => b.time - a.time);
+
+  return { threads, resolved, open };
+}
+
+export function CommentsContent() {
+  const comments = useComments();
+  const drafts = useCommentDrafts();
+
+  if (!comments) return null;
+  const gitlab = comments.state?.gitlab;
+
+  const { threads, resolved, open } = commentThreads(
+    drafts,
+    gitlab?.discussions ?? [],
+  );
 
   const renderThread = (thread: (typeof threads)[number]) => (
     <div
@@ -200,7 +216,6 @@ export function CommentsContent() {
       {comments.error && <p role="alert">{comments.error}</p>}
       {gitlab?.connectionError && <p role="alert">{gitlab.connectionError}</p>}
       {gitlab?.sourceError && <p role="alert">{gitlab.sourceError}</p>}
-      <h3 className={heading}>Comments · {open.length}</h3>
       {comments.state && open.length === 0 && <p>No open comments.</p>}
       {open.map((entry) =>
         entry.kind === "draft" ? (
@@ -860,12 +875,9 @@ const card =
 const inlineCard = "tw:max-w-[820px] tw:gap-3 tw:bg-[var(--surface-raised)]";
 
 /** Covers the whole positioned card, so clicking anywhere on a collapsed card expands it. */
-const stretched =
-  "tw:static tw:after:absolute tw:after:inset-0";
+const stretched = "tw:static tw:after:absolute tw:after:inset-0";
 
 const actions = "tw:flex tw:flex-wrap tw:gap-2";
-
-const heading = "tw:m-0 tw:text-[13px] tw:font-semibold";
 
 const meta = "tw:text-[11px] tw:text-[var(--ink-faint)]";
 

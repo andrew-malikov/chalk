@@ -782,8 +782,14 @@ function CommitDiffScopeBar({
       <code className={scopeBarStyles.sha} title={commit.commit}>
         {commit.commit.slice(0, 8)}
       </code>
-      <span className={scopeBarStyles.subject} title={commit.subject}>
-        {commit.subject}
+      <span
+        className={cn(
+          scopeBarStyles.subject,
+          !commit.subject && scopeBarStyles.subjectMissing,
+        )}
+        title={commit.subject || undefined}
+      >
+        {commit.subject || "No commit message"}
       </span>
     </div>
   );
@@ -795,6 +801,7 @@ const scopeBarStyles = {
   sha: "tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-mono)] tw:text-[length:10px] tw:font-normal tw:leading-[normal]",
   subject:
     "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:text-[length:11px] tw:text-ellipsis tw:whitespace-nowrap",
+  subjectMissing: "tw:text-[color:var(--ink-muted)] tw:italic",
 };
 
 /**

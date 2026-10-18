@@ -220,12 +220,13 @@ export function structuralMetadata(
   return metadata;
 }
 
+/** Resolves false when diffr fell back to lines; the caller loads the text patch instead. */
 export async function loadStructuralFile(
   entry: PierreComparisonEntry,
   url: URL,
   request: (url: string | URL, init?: RequestInit) => Promise<Response>,
   signal: AbortSignal,
-): Promise<void> {
+): Promise<boolean> {
   url.pathname = url.pathname.replace(/\/diff$/, "/structural-diff");
   url.searchParams.set("file", entry.file.path);
   url.searchParams.delete("format");
@@ -241,6 +242,7 @@ export async function loadStructuralFile(
   let pending = "";
   let found = false;
   let complete = false;
+  let fallback = false;
   entry.bytes = 0;
 
   const cancel = () => {
@@ -274,8 +276,13 @@ export async function loadStructuralFile(
       return;
     }
 
-    if (event.diff.stats.fallback)
-      throw new Error(event.diff.stats.fallback.message);
+    // diffr's line fallback can omit changed lines; git's patch is complete.
+    if (event.diff.stats.fallback) {
+      fallback = true;
+
+      return;
+    }
+
     entry.diff = structuralMetadata(
       event.diff,
       entry.file.path,
@@ -316,6 +323,8 @@ export async function loadStructuralFile(
 
     if (!found || !complete)
       throw new Error("Incomplete structural diff stream");
+
+    return !fallback;
   } finally {
     signal.removeEventListener("abort", cancel);
     await reader.cancel().catch(() => {});

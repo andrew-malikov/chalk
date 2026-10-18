@@ -307,3 +307,38 @@ it("cancels a pending structural stream when the comparison is superseded", asyn
   expect(await rejected).toMatchObject({ name: "AbortError" });
   expect(cancelled).toBe(true);
 });
+
+it("loads the text patch when diffr falls back to lines", async () => {
+  const fallback = {
+    type: "file",
+    file: { lhs: { path: "a.cs", oid: "", mode: "" } },
+    diff: {
+      ...diff,
+      stats: {
+        ...diff.stats,
+        fallback: { code: "parse_error", message: "C# parse errors" },
+      },
+    },
+  };
+
+  const [entry] = await loadPierreComparison({
+    files: [{ path: "a.cs", status: "modified", additions: 1, deletions: 1 }],
+    url: "http://localhost/reviews-api/id/diff",
+    structural: true,
+    signal: new AbortController().signal,
+    onUpdate() {},
+    request: async (url) =>
+      new URL(url).pathname.endsWith("/structural-diff")
+        ? new Response(
+            [fallback, { type: "complete", succeeded: 1, failed: 0 }]
+              .map((x) => JSON.stringify(x))
+              .join("\n"),
+          )
+        : new Response(
+            "--- a/a.cs\n+++ b/a.cs\n@@ -1 +1 @@\n-before\n+after\n",
+          ),
+  });
+
+  expect(entry!.error).toBeUndefined();
+  expect(entry!.diff?.additionLines).toEqual(["after\n"]);
+});

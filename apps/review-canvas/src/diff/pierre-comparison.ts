@@ -62,8 +62,10 @@ export async function loadPierreComparison({
       patchUrl.searchParams.set("file", entry.file.path);
       patchUrl.searchParams.set("maxBytes", "500000");
       try {
-        if (structural) {
-          await loadStructuralFile(entry, patchUrl, request, signal);
+        if (
+          structural &&
+          (await loadStructuralFile(entry, new URL(patchUrl), request, signal))
+        ) {
           entries[index] = entry;
           publish();
           continue;
