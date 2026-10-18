@@ -21,9 +21,11 @@ jobs:
       - name: Resolve version
         id: version
         # Commit time keeps reruns of the same commit on the same version.
+        # Patch is seconds since the start of the UTC month, so versions sort by commit time.
         run: |
           ts=$(git show -s --format=%ct HEAD)
-          echo "version=$(date -u -d "@$ts" +%Y.%m).$(git rev-parse --short=7 HEAD)-$ts" >> "$GITHUB_OUTPUT"
+          month_start=$(date -u -d "$(date -u -d "@$ts" +%Y-%m-01)" +%s)
+          echo "version=$(date -u -d "@$ts" +%Y.%m).$((ts - month_start))" >> "$GITHUB_OUTPUT"
 
   cli:
     needs: version
