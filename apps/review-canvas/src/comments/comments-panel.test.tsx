@@ -79,7 +79,7 @@ it("keeps unsaved text after an autosave failure and flushes the latest edit bef
 
   const button = (label: string) =>
     [...container.querySelectorAll("button")].find(
-      (b) => b.textContent === label,
+      (b) => (b.getAttribute("aria-label") ?? b.textContent) === label,
     )!;
 
   try {

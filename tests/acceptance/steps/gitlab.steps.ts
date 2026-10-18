@@ -355,7 +355,7 @@ Then(
         to: 3,
       });
       await expect(panel(page).getByRole("textbox")).toHaveAccessibleName(
-        "code.ts:3 · head",
+        "code.ts:3",
       );
       await expect(
         panel(page).getByRole("button", { name: "Post", exact: true }),

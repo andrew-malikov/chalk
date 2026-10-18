@@ -251,6 +251,24 @@ it("reads and replies to GitLab threads inside the diff, preserves failed saves,
   expect(thread()).toBeNull();
   await userEvent.click(chip()!);
   await vi.waitFor(() => expect(thread()).not.toBeNull());
+
+  // A thread with a draft reply still collapses into a chip on request.
+  await click("Reply");
+  await userEvent.fill(
+    thread().querySelector<HTMLElement>('[role="textbox"]')!,
+    "Kept while collapsed",
+  );
+  await userEvent.click(
+    thread().querySelector<HTMLElement>('[aria-label="Collapse discussion"]')!,
+  );
+  await vi.waitFor(() => expect(thread()).toBeNull());
+  expect(chip()!.textContent).toContain("Draft");
+  await userEvent.click(chip()!);
+  await vi.waitFor(() =>
+    expect(
+      thread().querySelector<HTMLElement>('[role="textbox"]')!.textContent,
+    ).toBe("Kept while collapsed"),
+  );
   await render("historic");
   await vi.waitFor(() => expect(thread()).toBeNull());
 });
@@ -365,7 +383,7 @@ it("comments on the full native text selection using the selection button", asyn
       container.querySelector<HTMLElement>('[role="textbox"]'),
     ).not.toBeNull(),
   );
-  expect(container.textContent).toContain("new.ts:1–2 · head");
+  expect(container.textContent).toContain("new.ts:1–2");
   await userEvent.fill(
     container.querySelector<HTMLElement>('[role="textbox"]')!,
     "Selected range",

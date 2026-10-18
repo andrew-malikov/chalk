@@ -253,9 +253,9 @@ export function CommentEditor({
 
   return (
     <ProseKit editor={editor}>
-      {/* Bleeds through the card padding so its sides meet the card border instead of doubling it. */}
-      <div className="tw:-mx-3 tw:flex tw:min-w-0 tw:flex-col tw:border-y tw:border-[var(--chrome-border)] tw:bg-[var(--bg)] tw:focus-within:border-[var(--ink-faint)]">
-        <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-1 tw:border-b tw:border-[var(--chrome-border)] tw:px-2 tw:py-1">
+      {/* Bleeds through the card padding; its background sets it apart, and the card shows focus. */}
+      <div className="tw:-mx-3 tw:flex tw:min-w-0 tw:flex-col tw:bg-[var(--bg)]">
+        <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-1 tw:px-2 tw:py-1">
           <div className="tw:flex tw:gap-0.5">
             {(["write", "preview"] as const).map((tab) => (
               <Button

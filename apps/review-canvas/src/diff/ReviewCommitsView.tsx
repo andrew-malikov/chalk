@@ -318,7 +318,7 @@ const styles = {
   filePath:
     "tw:min-w-0 tw:flex-[1] tw:overflow-hidden tw:text-ellipsis tw:whitespace-nowrap",
   filesFooter:
-    "tw:p-[6px_12px_4px_38px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:text-[color:var(--ink-faint)] tw:[&:hover]:text-[color:var(--accent)] tw:text-[length:10px]",
+    "tw:w-full tw:justify-start tw:p-[6px_12px_4px_38px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:text-[color:var(--ink-faint)] tw:[&:hover]:text-[color:var(--accent)] tw:text-[length:10px]",
   // The whole header is the toggle's hit area, so its chevron stays quiet on
   // hover.
   chevron:

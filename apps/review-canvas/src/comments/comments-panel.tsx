@@ -18,6 +18,8 @@ import {
   ChevronsDownUpIcon,
   CornerDownRightIcon,
   MessageSquareIcon,
+  MessageSquarePlusIcon,
+  SendIcon,
 } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
@@ -38,14 +40,20 @@ export function CommentsPanel() {
       closeLabel="Close comments"
       headerActions={
         <>
-          <Button
+          <IconButton
+            size="large"
+            aria-label="New comment"
+            title="New comment"
             disabled={!comments.editable || comments.busy || !comments.state}
             onClick={() => comments.compose({ kind: "general" })}
           >
-            New comment
-          </Button>
+            <MessageSquarePlusIcon />
+          </IconButton>
           {comments.state?.gitlab && (
-            <Button
+            <IconButton
+              size="large"
+              aria-label="Post all"
+              title="Post all"
               loading={
                 comments.pending?.action === "post" &&
                 !comments.pending.input.id
@@ -57,8 +65,8 @@ export function CommentsPanel() {
               }
               onClick={() => comments.run("post")}
             >
-              Post all
-            </Button>
+              <SendIcon />
+            </IconButton>
           )}
           {comments.state?.gitlab && (
             <IconButton
@@ -160,7 +168,7 @@ export function CommentsContent() {
     >
       <Discussion
         discussion={thread.discussion}
-        collapsible={thread.replies.length === 0}
+        replying={thread.replies.length > 0}
       />
       {thread.replies.map((draft) => (
         <DraftEditor key={draft.id} draft={draft} attached />
@@ -223,7 +231,12 @@ function targetLabel(target: CommentTarget) {
   if (target.kind === "reply") return "Reply to discussion";
   const p = target.position;
 
-  return `${p.side === "head" ? p.newPath : p.oldPath}:${p.from}${p.to !== p.from ? `–${p.to}` : ""} · ${p.side}`;
+  return `${p.side === "head" ? p.newPath : p.oldPath}:${p.from}${p.to !== p.from ? `–${p.to}` : ""}${sideLabel(p.side)}`;
+}
+
+/** Head is the default side; only removed lines need saying so. */
+function sideLabel(side: "base" | "head") {
+  return side === "base" ? " · base" : "";
 }
 
 export type CommentAnnotation =
@@ -240,15 +253,15 @@ function hasUnsentReply(discussion: GitLabDiscussion, drafts: ReviewComment[]) {
   );
 }
 
-/** Threads with local drafts stay open so the draft is never hidden. */
+/** Resolved threads collapse by default unless a draft reply is open, which resolving must not hide. */
 export function discussionCollapsed(
   discussion: GitLabDiscussion,
   collapsed: Record<string, boolean>,
   drafts: ReviewComment[],
 ) {
   return (
-    !hasUnsentReply(discussion, drafts) &&
-    (collapsed[discussion.id] ?? discussion.resolved)
+    collapsed[discussion.id] ??
+    (discussion.resolved && !hasUnsentReply(discussion, drafts))
   );
 }
 
@@ -291,7 +304,7 @@ export function InlineComments({
           <Discussion
             discussion={discussion}
             inline
-            collapsible={local.length === 0}
+            replying={local.length > 0}
           />
         )}
         {local.map((draft) => (
@@ -324,7 +337,7 @@ function CommentChips({ ids }: { ids: string[] }) {
         {
           id,
           label: `${discussion.resolved ? "resolved " : ""}discussion by @${author}`,
-          text: `@${author}${discussion.comments.length > 1 ? ` · ${discussion.comments.length}` : ""}`,
+          text: `@${author}${discussion.comments.length > 1 ? ` · ${discussion.comments.length}` : ""}${hasUnsentReply(discussion, drafts) ? " · Draft" : ""}`,
           title: `@${author}: ${discussion.comments[0]?.body.slice(0, 200)}`,
           resolved: discussion.resolved,
         },
@@ -411,12 +424,12 @@ function Collapsible({
 function Discussion({
   discussion,
   inline = false,
-  collapsible = false,
+  replying = false,
 }: {
   discussion: GitLabDiscussion;
   inline?: boolean;
-  /** Threads with local drafts stay open so the draft is never hidden. */
-  collapsible?: boolean;
+  /** Has a local reply draft attached below it. */
+  replying?: boolean;
 }) {
   const comments = useComments()!;
   const ref = useRef<HTMLDivElement>(null);
@@ -428,8 +441,7 @@ function Discussion({
   // Inline threads render only when expanded; collapsed ones become line chips.
   const collapsed =
     !inline &&
-    collapsible &&
-    (comments.collapsed[discussion.id] ?? discussion.resolved);
+    (comments.collapsed[discussion.id] ?? (discussion.resolved && !replying));
 
   const first = discussion.comments[0];
 
@@ -446,14 +458,14 @@ function Discussion({
       {inline ? null : discussion.location ? (
         <Button
           variant="ghost"
-          className="tw:h-auto tw:self-start tw:bg-transparent tw:px-0 tw:has-[>svg]:px-0 tw:text-[11px] tw:text-[color:var(--ink-faint)] tw:hover:text-[color:var(--ink)]"
+          className="tw:z-[1] tw:h-auto tw:self-start tw:bg-transparent tw:px-0 tw:has-[>svg]:px-0 tw:text-[11px] tw:text-[color:var(--ink-faint)] tw:hover:text-[color:var(--ink)]"
           onClick={() => comments.select(discussion)}
         >
           {discussion.location.file}:{discussion.location.from}
           {discussion.location.to !== discussion.location.from
             ? `–${discussion.location.to}`
             : ""}{" "}
-          · {discussion.location.side}
+          {sideLabel(discussion.location.side)}
         </Button>
       ) : (
         <span className={meta}>
@@ -474,14 +486,15 @@ function Discussion({
           {discussion.comments.length > 1 && (
             <span className={meta}>{discussion.comments.length}</span>
           )}
-          <Button
-            variant="ghost"
-            className={cn(textAction, "tw:h-auto")}
+          <IconButton
+            aria-label="Expand discussion"
+            title="Expand discussion"
             aria-expanded={false}
+            className={stretched}
             onClick={() => comments.collapse(discussion.id, false)}
           >
-            Expand
-          </Button>
+            <ChevronRightIcon aria-hidden="true" />
+          </IconButton>
         </div>
       ) : (
         <>
@@ -517,7 +530,7 @@ function Discussion({
                   >
                     {relativeTime(note.createdAt)}
                   </time>
-                  {collapsible && index === 0 && (
+                  {index === 0 && (
                     <IconButton
                       aria-label="Collapse discussion"
                       title="Collapse discussion"
@@ -533,20 +546,22 @@ function Discussion({
             </div>
           ))}
           <div className={cn(actions, "tw:ms-11 tw:items-center")}>
-            <Button
-              variant="ghost"
-              className={textAction}
-              disabled={!comments.editable || comments.busy}
-              onClick={() =>
-                comments.compose(
-                  { kind: "reply", discussionId: discussion.id },
-                  inline ? "inline" : "panel",
-                )
-              }
-            >
-              <CornerDownRightIcon aria-hidden="true" />
-              Reply
-            </Button>
+            {!replying && (
+              <Button
+                variant="ghost"
+                className={textAction}
+                disabled={!comments.editable || comments.busy}
+                onClick={() =>
+                  comments.compose(
+                    { kind: "reply", discussionId: discussion.id },
+                    inline ? "inline" : "panel",
+                  )
+                }
+              >
+                <CornerDownRightIcon aria-hidden="true" />
+                Reply
+              </Button>
+            )}
             {discussion.resolvable && !discussion.resolved && (
               <Button
                 variant="ghost"
@@ -652,6 +667,8 @@ function DraftEditor({
       className={cn(
         card,
         inline && inlineCard,
+        collapsed && "tw:relative",
+        "tw:focus-within:border-[var(--ink-faint)]",
         attached &&
           "tw:mx-3 tw:-mt-2 tw:bg-[var(--surface)] tw:pt-5 tw:motion-safe:animate-[comment-reply-enter_180ms_cubic-bezier(0.16,1,0.3,1)]",
       )}
@@ -666,7 +683,7 @@ function DraftEditor({
           title={collapsed ? "Expand discussion" : "Collapse discussion"}
           aria-expanded={!collapsed}
           aria-controls={`${labelId}-body`}
-          className="tw:ms-auto"
+          className={cn("tw:ms-auto", collapsed && stretched)}
           onClick={() => comments.collapse(draft.id, !collapsed)}
         >
           {collapsed ? (
@@ -841,6 +858,10 @@ const card =
   "tw:flex tw:min-w-0 tw:flex-col tw:gap-2.5 tw:rounded-[8px] tw:border tw:border-[var(--chrome-border)] tw:p-3";
 
 const inlineCard = "tw:max-w-[820px] tw:gap-3 tw:bg-[var(--surface-raised)]";
+
+/** Covers the whole positioned card, so clicking anywhere on a collapsed card expands it. */
+const stretched =
+  "tw:static tw:after:absolute tw:after:inset-0";
 
 const actions = "tw:flex tw:flex-wrap tw:gap-2";
 

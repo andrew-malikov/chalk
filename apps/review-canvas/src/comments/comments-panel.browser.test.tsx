@@ -290,7 +290,7 @@ it("V10: drafts from hovered/selected Git lines and resolves with stable loading
     );
     expect(resolveButton.disabled).toBe(true);
     expect(resolveButton.getBoundingClientRect().width).toBe(resolveWidth);
-    expect(threadButton("Reply").hasAttribute("aria-busy")).toBe(false);
+    expect(threadButton("Reply")).toBeUndefined();
     expect(reply.textContent).toBe("Keep this reply");
     expect(resolveCalls).toBe(1);
     resolveRequest.resolve();
@@ -587,12 +587,16 @@ it("collapses a sidebar discussion to a one-line summary and expands it back", a
     expect(container.textContent).toContain("Sure thing");
 
     await userEvent.click(collapse()!);
-    await vi.waitFor(() => expect(button("Expand")).toBeDefined());
+    await vi.waitFor(() => expect(collapse()).toBeNull());
     expect(container.textContent).toContain("Can we rework it?");
     expect(container.textContent).not.toContain("Sure thing");
     expect(button("Reply")).toBeUndefined();
 
-    await userEvent.click(button("Expand")!);
+    // The collapsed card itself expands, not just its chevron.
+    await userEvent.click(
+      container.querySelector<HTMLElement>("[aria-expanded=false]")!
+        .parentElement!.parentElement!,
+    );
     await vi.waitFor(() =>
       expect(container.textContent).toContain("Sure thing"),
     );
@@ -764,8 +768,8 @@ it("orders drafts and discussions by latest activity, hides resolved threads, an
       resolved.querySelector("summary")!.getBoundingClientRect().height,
     );
     const header = container.querySelector("header")!;
-    expect(header.textContent).toContain("New comment");
-    expect(header.textContent).toContain("Post all");
+    expect(header.querySelector('[aria-label="New comment"]')).not.toBeNull();
+    expect(header.querySelector('[aria-label="Post all"]')).not.toBeNull();
     await act(async () => {
       container.style.width = "320px";
     });
@@ -774,34 +778,47 @@ it("orders drafts and discussions by latest activity, hides resolved threads, an
       container.style.width = "450px";
     });
     const draft = textbox()!.closest('[id$="-body"]')!.parentElement!;
+    const thread = draft.parentElement!;
+
+    const reply = () =>
+      [...thread.querySelectorAll("button")].find(
+        (b) => b.textContent === "Reply",
+      );
+
+    // The attached draft replaces the thread's Reply button.
+    expect(reply()).toBeUndefined();
     await userEvent.click(
       draft.querySelector<HTMLElement>('[aria-label="Collapse discussion"]')!,
     );
     expect(textbox()!.getBoundingClientRect().height).toBe(0);
 
-    const reply = [...draft.parentElement!.querySelectorAll("button")].find(
-      (b) => b.textContent === "Reply",
-    )!;
-
-    await userEvent.click(reply);
-    await vi.waitFor(() => expect(document.activeElement).toBe(textbox()));
+    // The whole collapsed reply card expands it, not just its chevron.
+    await userEvent.click(draft);
     expect(textbox()!.getBoundingClientRect().height).toBeGreaterThan(0);
     expect(textbox()!.textContent).toBe("Keep my reply");
     expect(container.querySelectorAll('[role="textbox"]')).toHaveLength(2);
+
+    // The discussion still collapses while the reply stays open below it.
+    await userEvent.click(
+      thread.querySelector<HTMLElement>('[aria-label="Collapse discussion"]')!,
+    );
+    expect(textbox()!.getBoundingClientRect().height).toBeGreaterThan(0);
     await userEvent.click(
       [...draft.querySelectorAll("button")].find(
         (b) => b.textContent === "Discard",
       )!,
     );
     await vi.waitFor(() => expect(textbox()).toBeUndefined());
-    await userEvent.click(reply);
+    await userEvent.click(
+      thread.querySelector<HTMLElement>('[aria-label="Expand discussion"]')!,
+    );
+    await userEvent.click(reply()!);
     await vi.waitFor(() =>
       expect(document.activeElement?.getAttribute("role")).toBe("textbox"),
     );
-    const focused = document.activeElement!;
-    await userEvent.click(reply);
+    expect(document.activeElement!.textContent).toBe("");
     expect(container.querySelectorAll('[role="textbox"]')).toHaveLength(2);
-    expect(focused.textContent).toBe("");
+    expect(reply()).toBeUndefined();
   } finally {
     await act(async () => root.unmount());
     container.remove();
