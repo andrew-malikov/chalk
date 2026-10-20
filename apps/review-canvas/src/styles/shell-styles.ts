@@ -46,6 +46,9 @@ export const shellStyles = {
   // rules between them.
   topbarFlush: "tw:[border-bottom-width:0]",
   peekResizerFlush: "tw:[background-image:none]",
+  // With the tabs and actions in the host's command bar, only the diff view
+  // keeps a toolbar. Collapsed rather than unmounted, so its portals stay.
+  topbarHidden: "tw:h-0 tw:invisible tw:[border-bottom-width:0]",
   topbar:
     "tw:sticky tw:top-0 tw:z-[var(--review-debug-layer)] tw:flex tw:items-center tw:justify-between tw:gap-[8px] tw:h-[var(--review-header-height)] tw:p-[0_12px_0_16px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--surface)]",
   topbarLeft: "tw:flex tw:flex-[0_0_auto] tw:items-center",

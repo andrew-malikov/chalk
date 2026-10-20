@@ -1,14 +1,6 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@canvas/components/ui/popover";
-import { Switch } from "@canvas/components/ui/switch";
 import { cn } from "@canvas/lib/utils";
-import { Choice } from "@canvas/settings/settings-choice";
-import { Button, IconButton } from "@canvas/ui/button";
-import { ChatIcon } from "@canvas/ui/icons";
+import { Button } from "@canvas/ui/button";
 import { StatusBanner } from "@canvas/ui/status-banner";
 import {
   type ReviewCanvasChrome,
@@ -20,7 +12,7 @@ import {
   type SoftwareMapTopologyDiff,
   diffSoftwareMaps,
 } from "@review/software-map/software-map-topology-diff";
-import { Archive, ArrowLeft } from "lucide-react";
+import { Archive } from "lucide-react";
 import {
   type CSSProperties,
   type ComponentType,
@@ -38,18 +30,15 @@ import {
   AgentSelectionProvider,
   useAgentSelection,
 } from "./agent-context/agent-selection";
-import { observeAgentTextSelection } from "./agent-context/agent-text-selection";
-import { CommentsProvider, useComments } from "./comments/comments-context";
-import { CommentsPanel } from "./comments/comments-panel";
-import { DiffSettingsControl } from "./diff/diff-settings";
-import { DiffSidebarToggleSlot, ReviewDiffView } from "./diff/DiffView";
-import { ReviewCommitsView } from "./diff/ReviewCommitsView";
+import { CommentsProvider } from "./comments/comments-context";
 import { useDocumentEmbedScroll } from "./documents/document-embed-scroll";
-import { documentStyles } from "./documents/document-styles";
-import { ReviewDocumentBoundary } from "./documents/review-document-boundary";
-import { reportReviewDocumentRenderError } from "./documents/review-document-error-report";
 import { useReviewSession } from "./host/review-session";
 import { useTooltip } from "./lib/use-tooltip";
+import { ChalkPage } from "./pages/chalk-page";
+import { CommitsPage } from "./pages/commits-page";
+import { DiffPage } from "./pages/diff-page";
+import { MapPage } from "./pages/map-page";
+import { PageSlotsContext } from "./pages/page-slots";
 import {
   AuthoringActivityBadge,
   ReviewSurfaceLabel,
@@ -64,22 +53,13 @@ import {
 } from "./review/review-context";
 import { useReviewDiffFiles } from "./review/review-diff-files-context";
 import { ReviewDiffFilesProvider } from "./review/review-diff-files-context";
-import {
-  type ReviewFindHost,
-  ReviewFindProvider,
-  useReviewFindRegistration,
-} from "./review/review-find";
-import { useReviewLenses } from "./review/review-lenses";
+import { type ReviewFindHost, ReviewFindProvider } from "./review/review-find";
 import {
   useReviewPanel,
   useReviewPanelActor,
   useSuppressPanelMotionOnCanvasResume,
 } from "./review/review-panel";
-import {
-  ReviewRootsProvider,
-  useReviewContainer,
-} from "./review/review-root-context";
-import { ReviewToc } from "./review/review-toc";
+import { ReviewRootsProvider } from "./review/review-root-context";
 import {
   type ReviewView,
   offeredReviewViews,
@@ -91,28 +71,19 @@ import {
   ReviewDebugSettingsProvider,
   useReviewDebugSettings,
 } from "./settings/debug-settings";
-import type {
-  NormalizedSoftwareElement,
-  NormalizedSoftwareModel,
-} from "./software-map/model";
-import { SoftwareMapTopologyUnavailable } from "./software-map/software-map-absence";
-import { selectActiveSoftwareMapModel } from "./software-map/software-map-selection";
-import { SoftwareMap } from "./software-map/SoftwareMap";
+import type { NormalizedSoftwareModel } from "./software-map/model";
 import { controlStyles } from "./styles/controls-styles";
 import {
   appMarker,
   detailHostMarker,
-  documentMarker,
-  scopedDiffMarker,
   segmentMarker,
   topbarActionsMarker,
   topbarTabsMarker,
 } from "./styles/markers";
 import { shellStyles } from "./styles/shell-styles";
 import { themeStyles } from "./styles/theme-styles";
-import { useTutorial } from "./tutorial/tutorial-context";
 import { TutorialExperienceProvider } from "./tutorial/tutorial-experience";
-import { MarkerUnderline, SettingsSlidersIcon } from "./ui/icons";
+import { MarkerUnderline } from "./ui/icons";
 
 const DEFAULT_SIDE_PEEK_WIDTH = 560;
 
@@ -229,7 +200,6 @@ function ReviewLayout({
                   scrollRegionRef={scrollRegionRef}
                   articleRef={articleRef}
                   document={document}
-                  documentRevision={documentRevision}
                   softwareModels={[
                     ...(softwareMap.head ? [softwareMap.head] : []),
                     ...document.documentSoftwareModels,
@@ -260,7 +230,6 @@ function ReviewLayoutContent({
   scrollRegionRef,
   articleRef,
   document,
-  documentRevision,
   softwareModels,
   repoSoftwareMap,
   baseSoftwareMap,
@@ -275,7 +244,6 @@ function ReviewLayoutContent({
   scrollRegionRef: RefObject<HTMLElement | null>;
   articleRef: RefObject<HTMLElement | null>;
   document: RenderedReviewDocument;
-  documentRevision: string;
   softwareModels: NormalizedSoftwareModel[];
   repoSoftwareMap: NormalizedSoftwareModel | null;
   baseSoftwareMap: NormalizedSoftwareModel | null;
@@ -286,7 +254,6 @@ function ReviewLayoutContent({
   chrome?: ReviewCanvasChrome;
 }): ReactElement {
   const session = useReviewSession();
-  const comments = useComments();
   const review = useReview();
   // The scratchpad is a document and nothing else: no source tree to browse,
   // nothing to dismiss.
@@ -298,42 +265,31 @@ function ReviewLayoutContent({
   const activeView = useReviewPanel((state) => state.value);
   const diffScope = useReviewPanel((state) => state.context.diffScope);
 
-  // The full diff stays mounted while another view shows, at the width it
-  // had when it was hidden: following the column through a side peek's
-  // resize would lay out every editor in it on each step. Shown, it fills the
-  // column again and lays out once.
-  const diffHostRef = useRef<HTMLDivElement | null>(null);
-  const diffPreloaded = activeView !== "diff" || diffScope !== null;
-  // Built the first time it is shown, then kept for instant returns.
-  const [diffOpened, setDiffOpened] = useState(!diffPreloaded);
-
-  if (!diffPreloaded && !diffOpened) setDiffOpened(true);
-
-  const [diffSidebarToggle, setDiffSidebarToggle] =
-    useState<HTMLElement | null>(null);
-
-  const [frozenDiffWidth, setFrozenDiffWidth] = useState<number>();
-
-  useLayoutEffect(() => {
-    const width = diffHostRef.current?.getBoundingClientRect().width;
-
-    setFrozenDiffWidth(diffPreloaded && width ? width : undefined);
-  }, [diffPreloaded]);
-
-  const frozenDiffStyle =
-    diffPreloaded && frozenDiffWidth
-      ? { right: "auto", width: `${frozenDiffWidth}px` }
-      : undefined;
-
-  const mapFocus = useReviewPanel((state) => state.context.mapFocus);
-
   const showView = (view: ReviewView) =>
     panelActor.send({ type: "showView", view });
 
   const debugSettings = useReviewDebugSettings();
 
-  const commentsShown = !!comments?.open && activePanel === null;
-  const rightPanelOpen = activePanel !== null || commentsShown;
+  const [toolbarStart, setToolbarStart] = useState<HTMLElement | null>(null);
+  const [toolbarEnd, setToolbarEnd] = useState<HTMLElement | null>(null);
+  const [pageOverlay, setPageOverlay] = useState<HTMLElement | null>(null);
+  const [pageSidebar, setPageSidebar] = useState<HTMLElement | null>(null);
+  const [pageToolbarShown, setPageToolbarShown] = useState(false);
+  const [pageSidebarShown, setPageSidebarShown] = useState(false);
+
+  const pageSlots = useMemo(
+    () => ({
+      toolbarStart,
+      toolbarEnd,
+      overlay: pageOverlay,
+      sidebar: pageSidebar,
+      showToolbar: setPageToolbarShown,
+      showSidebar: setPageSidebarShown,
+    }),
+    [toolbarStart, toolbarEnd, pageOverlay, pageSidebar],
+  );
+
+  const rightPanelOpen = activePanel !== null || pageSidebarShown;
 
   const sidePeekResize = useRightPanelResize({
     stateKey: "side-peek-width",
@@ -350,18 +306,6 @@ function ReviewLayoutContent({
 
   useDocumentEmbedScroll(scrollRegionRef);
   useReviewViewStateSync({ scrollRegionRef, panelActor });
-
-  // Diagrams only read the open tour, so a restored tour whose diagram is
-  // no longer in the document would sit in the store unrendered. The
-  // document and its tour overlay commit before this effect runs.
-  const canvasRoot = useReviewContainer();
-  useEffect(() => {
-    const { overlayTour } = panelActor.getSnapshot().context;
-
-    if (overlayTour && !canvasRoot?.querySelector(".diagram-tour-overlay")) {
-      panelActor.send({ type: "closeOverlayTour" });
-    }
-  }, [canvasRoot, documentRevision, panelActor]);
 
   const hasChangeRange =
     !!range.worktreeRevision || range.baseCommit !== range.headCommit;
@@ -390,18 +334,6 @@ function ReviewLayoutContent({
   useEffect(() => {
     selectForAgent(null);
   }, [activeView, diffScope, selectForAgent]);
-  useEffect(() => {
-    const article = articleRef.current;
-
-    if (activeView !== "review" || !article) return;
-
-    return observeAgentTextSelection(article, selectForAgent);
-  }, [activeView, documentRevision, articleRef, selectForAgent]);
-
-  const reviewFind = useReviewFindRegistration();
-  useEffect(() => {
-    reviewFind?.setReviewActive(activeView === "review");
-  }, [activeView, reviewFind]);
 
   const diffFiles = useReviewDiffFiles();
 
@@ -424,12 +356,6 @@ function ReviewLayoutContent({
     panelActor.send({ type: "setAvailableViews", views: reviewViews });
   }, [panelActor, reviewViews]);
 
-  const lenses = useReviewLenses();
-
-  const tutorial = useTutorial() !== null;
-
-  const tocEntries = document.tocEntries ?? [];
-
   // Subscribe before the canvas signals ready so a reveal immediately after
   // mounting cannot outrun the listener.
   useLayoutEffect(() => {
@@ -441,24 +367,6 @@ function ReviewLayoutContent({
         panelActor.send({ type: "showView", view: event.view });
     });
   }, [panelActor, session.surface]);
-
-  const activeSoftwareMapSource = useMemo(
-    () =>
-      selectActiveSoftwareMapModel({
-        softwareModels,
-        focusElementPath: mapFocus?.elementPath,
-      }),
-    [mapFocus?.elementPath, softwareModels],
-  );
-
-  const activeSoftwareMap = useMemo(
-    () =>
-      applySoftwareMapTopologyStatuses(
-        activeSoftwareMapSource,
-        softwareMapTopologyDiff,
-      ),
-    [activeSoftwareMapSource, softwareMapTopologyDiff],
-  );
 
   // SAFETY: `--side-peek-width` is a CSS custom property, which React forwards
   // to style.setProperty; the CSSProperties typings only omit custom names.
@@ -556,321 +464,146 @@ function ReviewLayoutContent({
   );
 
   return (
-    <div
-      ref={appRef}
-      className={cn(
-        appClassName,
-        appMarker,
-        themeStyles.vars,
-        themeStyles.app,
-        debugSettings.theme === "light" && themeStyles.light,
-        rightPanelOpen && shellStyles.appPeekOpen,
-        sidePeekResize.isResizing && shellStyles.appResizing,
-        panelMotion === "restored" && shellStyles.appRestoredPanel,
-      )}
-      style={appStyle}
-      data-peek-open={rightPanelOpen || undefined}
-      data-view={activeView}
-      data-document-header={document.header || undefined}
-      data-database-lens={document.databaseLens || undefined}
-      data-document-width={document.width}
-    >
-      <main
-        ref={shellRef}
+    <PageSlotsContext.Provider value={pageSlots}>
+      <div
+        ref={appRef}
         className={cn(
-          "review-document-shell",
-          shellStyles.documentShell,
-          !!banner && shellStyles.documentShellBanner,
+          appClassName,
+          appMarker,
+          themeStyles.vars,
+          themeStyles.app,
+          debugSettings.theme === "light" && themeStyles.light,
+          rightPanelOpen && shellStyles.appPeekOpen,
+          sidePeekResize.isResizing && shellStyles.appResizing,
+          panelMotion === "restored" && shellStyles.appRestoredPanel,
         )}
+        style={appStyle}
+        data-peek-open={rightPanelOpen || undefined}
+        data-view={activeView}
+        data-document-header={document.header || undefined}
+        data-database-lens={document.databaseLens || undefined}
+        data-document-width={document.width}
       >
-        <TutorialExperienceProvider
-          shellRef={shellRef}
-          scrollRegionRef={scrollRegionRef}
-        >
-          <header
-            className={cn(
-              shellStyles.topbar,
-              activeView === "diff" && shellStyles.topbarFlush,
-            )}
-          >
-            <div className={shellStyles.topbarLeft}>
-              <div
-                ref={setDiffSidebarToggle}
-                className={shellStyles.topbarLeft}
-              />
-              {chrome ? createPortal(viewTabs, chrome.views) : viewTabs}
-              {chrome && createPortal(actionsMenu, chrome.actions)}
-            </div>
-            <div className={cn(shellStyles.topbarActions, topbarActionsMarker)}>
-              <div
-                className={cn(
-                  shellStyles.topbarItem,
-                  shellStyles.topbarContext,
-                )}
-              >
-                <AuthoringActivityBadge
-                  onLocate={(view) => {
-                    showView(view);
-                  }}
-                />
-              </div>
-              <ReviewBatonChip outcome={review.submissionOutcome} />
-              <DiffSettingsControl />
-              {comments && (
-                <CommentsButton
-                  expanded={commentsShown}
-                  onClick={comments.toggle}
-                />
-              )}
-              {!chrome && (
-                <>
-                  <div
-                    className={cn(
-                      shellStyles.topbarItem,
-                      shellStyles.actionsDivider,
-                    )}
-                  />
-                  {actionsMenu}
-                </>
-              )}
-            </div>
-          </header>
-          {banner}
-          {activeView === "review" && (
-            <ReviewToc
-              entries={tocEntries}
-              besideHeader={document.header}
-              documentWidth={document.width}
-            />
+        <main
+          ref={shellRef}
+          className={cn(
+            "review-document-shell",
+            shellStyles.documentShell,
+            !!banner && shellStyles.documentShellBanner,
           )}
-          <section
-            ref={scrollRegionRef}
-            className={cn(
-              `review-view-region review-view-region--${activeView}`,
-              shellStyles.viewRegion,
-              activeView === "commits" && shellStyles.commitsRegion,
-              activeView === "review" && shellStyles.reviewRegion,
-            )}
+        >
+          <TutorialExperienceProvider
+            shellRef={shellRef}
+            scrollRegionRef={scrollRegionRef}
           >
-            <div
+            <header
               className={cn(
-                "review-document-view",
-                shellStyles.documentView,
-                activeView !== "review" && shellStyles.hidden,
+                shellStyles.topbar,
+                activeView === "diff" && shellStyles.topbarFlush,
+                chrome && !pageToolbarShown && shellStyles.topbarHidden,
               )}
-              hidden={activeView !== "review"}
             >
-              <>
-                <article
-                  ref={articleRef}
-                  className={cn(
-                    "review-document",
-                    documentStyles.article,
-                    documentMarker,
-                    rightPanelOpen && documentStyles.articlePeekOpen,
-                  )}
-                  data-kind={scratchpad ? "scratchpad" : undefined}
-                >
-                  <ReviewDocumentBoundary
-                    key={documentRevision}
-                    revision={documentRevision}
-                    onError={(_revision, error) =>
-                      reportReviewDocumentRenderError(session, error)
-                    }
-                  >
-                    <document.render />
-                  </ReviewDocumentBoundary>
-                </article>
-              </>
-            </div>
-            {softwareMapEnabled && activeView === "map" && (
+              <div className={shellStyles.topbarLeft}>
+                <div ref={setToolbarStart} className={shellStyles.topbarLeft} />
+                {chrome ? createPortal(viewTabs, chrome.views) : viewTabs}
+                {chrome && createPortal(actionsMenu, chrome.actions)}
+              </div>
               <div
-                className={cn(
-                  "review-map-view",
-                  shellStyles.mapView,
-                  mapViewStyles.view,
-                )}
+                className={cn(shellStyles.topbarActions, topbarActionsMarker)}
               >
                 <div
                   className={cn(
-                    shellStyles.mapCanvasShell,
-                    mapViewStyles.canvasShell,
+                    shellStyles.topbarItem,
+                    shellStyles.topbarContext,
                   )}
                 >
-                  <SoftwareMapTopologyUnavailable
-                    repoSoftwareMap={repoSoftwareMap}
-                    baseSoftwareMap={baseSoftwareMap}
-                    baseRef={review.resolvedBaseRef ?? undefined}
-                    headRef={review.resolvedHeadRef ?? undefined}
+                  <AuthoringActivityBadge
+                    onLocate={(view) => {
+                      showView(view);
+                    }}
                   />
-                  <SoftwareMap
-                    model={activeSoftwareMap ?? undefined}
-                    pinnedData={
-                      activeSoftwareMapSource
-                        ? session.softwareMapData?.(activeSoftwareMapSource)
-                        : undefined
-                    }
-                    focusRequest={mapFocus?.pending ? mapFocus : null}
-                    onFocusRequestHandled={(requestId) =>
-                      panelActor.send({ type: "consumeMapFocus", requestId })
-                    }
-                    height="100%"
-                    showChrome={false}
-                    showFloatingActions={!rightPanelOpen}
-                    variant="view"
-                  />
-                  <MapSettingsControl />
                 </div>
-              </div>
-            )}
-            {activeView === "commits" && (
-              <ReviewCommitsView
-                commits={commits}
-                range={range}
-                onOpenDiff={(commit, file) => {
-                  panelActor.send({
-                    type: "openCommitDiff",
-                    scope: { commit, file },
-                  });
-                }}
-              />
-            )}
-            <div
-              ref={diffHostRef}
-              aria-hidden={diffPreloaded}
-              className={cn(
-                shellStyles.diffView,
-                diffPreloaded && shellStyles.diffViewPreloaded,
-              )}
-              style={frozenDiffStyle}
-            >
-              {diffOpened && (
-                <DiffSidebarToggleSlot.Provider
-                  value={diffPreloaded ? null : diffSidebarToggle}
-                >
-                  <ReviewDiffView />
-                </DiffSidebarToggleSlot.Provider>
-              )}
-            </div>
-            {activeView === "diff" && diffScope !== null && (
-              <div
-                className={cn(
-                  "review-diff-view--scoped",
-                  shellStyles.diffView,
-                  shellStyles.diffViewScoped,
-                  scopedDiffMarker,
+                <ReviewBatonChip outcome={review.submissionOutcome} />
+                <div ref={setToolbarEnd} className="tw:contents" />
+                {!chrome && (
+                  <>
+                    <div
+                      className={cn(
+                        shellStyles.topbarItem,
+                        shellStyles.actionsDivider,
+                      )}
+                    />
+                    {actionsMenu}
+                  </>
                 )}
-              >
-                <CommitDiffScopeBar
-                  commit={diffScope.commit}
-                  onBack={() => showView("commits")}
-                />
-                <ReviewDiffView
-                  scope={{ commit: diffScope.commit.commit }}
-                  revealFile={diffScope.file}
-                  restoreFile={diffScope.restoreFile}
-                />
               </div>
+            </header>
+            {banner}
+            <div ref={setPageOverlay} className="tw:contents" />
+            <section
+              ref={scrollRegionRef}
+              className={cn(
+                `review-view-region review-view-region--${activeView}`,
+                shellStyles.viewRegion,
+                activeView === "commits" && shellStyles.commitsRegion,
+                activeView === "review" && shellStyles.reviewRegion,
+              )}
+            >
+              <ChalkPage
+                document={document}
+                articleRef={articleRef}
+                active={activeView === "review"}
+                scratchpad={scratchpad}
+                peekOpen={rightPanelOpen}
+              />
+              {softwareMapEnabled && activeView === "map" && (
+                <MapPage
+                  softwareModels={softwareModels}
+                  repoSoftwareMap={repoSoftwareMap}
+                  baseSoftwareMap={baseSoftwareMap}
+                  softwareMapTopologyDiff={softwareMapTopologyDiff}
+                  showFloatingActions={!rightPanelOpen}
+                />
+              )}
+              {activeView === "commits" && (
+                <CommitsPage commits={commits} range={range} />
+              )}
+              <DiffPage active={activeView === "diff"} />
+            </section>
+          </TutorialExperienceProvider>
+        </main>
+        {rightPanelOpen && (
+          <div
+            className={cn(
+              shellStyles.resizer,
+              shellStyles.peekResizer,
+              shellStyles.resizerGrabPanel,
+              activeView === "diff" && [
+                shellStyles.peekResizerFlush,
+                shellStyles.resizerDots,
+              ],
+              sidePeekResize.isResizing && shellStyles.peekResizerActive,
+              activeView === "diff" &&
+                sidePeekResize.isResizing &&
+                shellStyles.resizerDotsActive,
             )}
-          </section>
-        </TutorialExperienceProvider>
-      </main>
-      {rightPanelOpen && (
-        <div
-          className={cn(
-            shellStyles.resizer,
-            shellStyles.peekResizer,
-            shellStyles.resizerGrabPanel,
-            activeView === "diff" && [
-              shellStyles.peekResizerFlush,
-              shellStyles.resizerDots,
-            ],
-            sidePeekResize.isResizing && shellStyles.peekResizerActive,
-            activeView === "diff" &&
-              sidePeekResize.isResizing &&
-              shellStyles.resizerDotsActive,
-          )}
-          {...sidePeekResize.separatorProps}
-        />
-      )}
-      <div className={cn(shellStyles.detailHost, detailHostMarker)}>
-        {commentsShown && <CommentsPanel />}
-        <ReviewPanelHost />
-      </div>
-    </div>
-  );
-}
-
-function CommitDiffScopeBar({
-  commit,
-  onBack,
-}: {
-  commit: ReviewCommitSummary;
-  onBack: () => void;
-}) {
-  return (
-    <div className={scopeBarStyles.bar}>
-      <ButtonPrimitive
-        variant="ghost"
-        size="xs"
-        type="button"
-        className={scopeBarStyles.back}
-        onClick={onBack}
-      >
-        <ArrowLeft size={12} aria-hidden="true" /> Commits
-      </ButtonPrimitive>
-      <code className={scopeBarStyles.sha} title={commit.commit}>
-        {commit.commit.slice(0, 8)}
-      </code>
-      <span
-        className={cn(
-          scopeBarStyles.subject,
-          !commit.subject && scopeBarStyles.subjectMissing,
+            {...sidePeekResize.separatorProps}
+          />
         )}
-        title={commit.subject || undefined}
-      >
-        {commit.subject || "No commit message"}
-      </span>
-    </div>
+        <div className={cn(shellStyles.detailHost, detailHostMarker)}>
+          <div ref={setPageSidebar} className="tw:contents" />
+          <ReviewPanelHost />
+        </div>
+      </div>
+    </PageSlotsContext.Provider>
   );
 }
-
-const scopeBarStyles = {
-  bar: "tw:flex tw:h-[30px] tw:flex-[0_0_30px] tw:items-center tw:gap-[12px] tw:p-[0_12px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule-soft)] tw:bg-[color:var(--surface)]",
-  back: "tw:h-[20px] tw:flex-[0_0_auto] tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:text-[color:var(--accent)] tw:text-[length:10px]",
-  sha: "tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-mono)] tw:text-[length:10px] tw:font-normal tw:leading-[normal]",
-  subject:
-    "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:text-[length:11px] tw:text-ellipsis tw:whitespace-nowrap",
-  subjectMissing: "tw:text-[color:var(--ink-muted)] tw:italic",
-};
 
 /**
  * Reports where the baton sits after the reader acts. It renders nothing while
  * the review is simply waiting: the corner action already says what to do, and
  * a standing "awaiting your review" chip was noise on every review.
  */
-function CommentsButton({
-  expanded,
-  onClick,
-}: {
-  expanded: boolean;
-  onClick(): void;
-}): ReactElement {
-  const tooltip = useTooltip("Comments");
-
-  return (
-    <IconButton
-      ref={tooltip}
-      className={shellStyles.topbarItem}
-      aria-label="Comments"
-      aria-expanded={expanded}
-      onClick={onClick}
-    >
-      <ChatIcon className={controlStyles.chromeIcon} />
-    </IconButton>
-  );
-}
-
 function ReviewBatonChip({
   outcome,
 }: {
@@ -891,122 +624,8 @@ function ReviewBatonChip({
   );
 }
 
-/**
- * Map settings, floating over the map canvas. They used to sit behind a topbar
- * gear that held nothing else, which put map-only controls in front of readers
- * who never open the map.
- */
-function MapSettingsControl(): ReactElement {
-  const {
-    showModifiedOnly,
-    setShowModifiedOnly,
-    showRemovedNodes,
-    setShowRemovedNodes,
-    nodeTint,
-    setNodeTint,
-  } = useReviewDebugSettings();
-
-  const controlRef = useRef<HTMLDivElement | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div ref={controlRef} className="tw:absolute tw:right-4 tw:bottom-4 tw:z-3">
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <IconButton
-            size="large"
-            className="tw:rounded-lg tw:border tw:border-input tw:bg-[var(--tray)] tw:shadow-md"
-            aria-label="Map settings"
-          >
-            <SettingsSlidersIcon />
-          </IconButton>
-        </PopoverTrigger>
-        <PopoverContent
-          container={
-            controlRef.current?.closest<HTMLElement>(".review-app") ??
-            controlRef.current
-          }
-          align="end"
-          side="top"
-          aria-label="Map settings"
-          className="tw:w-[268px] tw:p-0"
-        >
-          <DebugSwitch
-            label="Show modified nodes only"
-            checked={showModifiedOnly}
-            onChange={setShowModifiedOnly}
-          />
-          <DebugSwitch
-            label="Show removed nodes"
-            checked={showRemovedNodes}
-            onChange={setShowRemovedNodes}
-          />
-          <div className="tw:grid tw:gap-2 tw:p-2.5">
-            <span className="tw:text-xs tw:font-semibold tw:text-muted-foreground">
-              Map node tint
-            </span>
-            <Choice
-              label="Node tint"
-              value={nodeTint}
-              labels={{ none: "None", slate: "Slate", mineral: "Mineral" }}
-              disabled={false}
-              onChange={setNodeTint}
-            />
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
-
-function DebugSwitch({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}): ReactElement {
-  return (
-    <div className="tw:flex tw:min-h-[50px] tw:items-center tw:justify-between tw:gap-3.5 tw:border-b tw:border-border tw:px-3 tw:py-2.5 tw:text-[13px]">
-      <span>{label}</span>
-      <Switch aria-label={label} checked={checked} onCheckedChange={onChange} />
-    </div>
-  );
-}
-
-export function applySoftwareMapTopologyStatuses(
-  model: NormalizedSoftwareModel | undefined,
-  diff: SoftwareMapTopologyDiff | null,
-): NormalizedSoftwareModel | undefined {
-  if (!model || !diff) return model;
-
-  const elements = model.elements.map((element): NormalizedSoftwareElement => {
-    const topologyStatus = diff.elementStatusByPath[element.path];
-
-    return topologyStatus
-      ? { ...element, changeStatus: topologyStatus }
-      : element;
-  });
-
-  return {
-    ...model,
-    elements,
-    elementsByPath: new Map(elements.map((element) => [element.path, element])),
-  };
-}
-
 const batonStyles = {
   chip: "tw:inline-flex tw:items-center tw:gap-[7px] tw:text-[color:var(--diff-removed)] tw:font-[family-name:var(--chrome-font)] tw:text-[length:var(--chrome-font-size-small)] tw:font-[number:var(--chrome-font-weight-strong)] tw:leading-[1] tw:tracking-[var(--chrome-tracking)] tw:uppercase tw:whitespace-nowrap",
   glyph:
     "tw:fill-[none] tw:stroke-[currentColor] tw:[stroke-linecap:round] tw:[stroke-linejoin:round] tw:stroke-[1.4]",
-};
-
-// Map settings float over the map canvas instead of sitting behind a topbar
-// gear, so map-only controls stay with the map.
-const mapViewStyles = {
-  view: "tw:bg-[color:var(--bg)]",
-  canvasShell:
-    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-none tw:bg-[color:var(--bg)] tw:[box-shadow:none]",
 };
