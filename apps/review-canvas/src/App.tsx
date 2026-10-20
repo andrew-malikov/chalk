@@ -8,10 +8,10 @@ import { Switch } from "@canvas/components/ui/switch";
 import { cn } from "@canvas/lib/utils";
 import { Choice } from "@canvas/settings/settings-choice";
 import { Button, IconButton } from "@canvas/ui/button";
-import { CopyButton } from "@canvas/ui/copy-text";
 import { ChatIcon } from "@canvas/ui/icons";
 import { StatusBanner } from "@canvas/ui/status-banner";
 import {
+  type ReviewCanvasChrome,
   type ReviewCanvasRange,
   type ReviewCommitSummary,
   type ReviewDocumentWidthChoice,
@@ -32,6 +32,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import {
   AgentSelectionProvider,
@@ -41,7 +42,7 @@ import { observeAgentTextSelection } from "./agent-context/agent-text-selection"
 import { CommentsProvider, useComments } from "./comments/comments-context";
 import { CommentsPanel } from "./comments/comments-panel";
 import { DiffSettingsControl } from "./diff/diff-settings";
-import { ReviewDiffView } from "./diff/DiffView";
+import { DiffSidebarToggleSlot, ReviewDiffView } from "./diff/DiffView";
 import { ReviewCommitsView } from "./diff/ReviewCommitsView";
 import { useDocumentEmbedScroll } from "./documents/document-embed-scroll";
 import { documentStyles } from "./documents/document-styles";
@@ -54,13 +55,13 @@ import {
   ReviewSurfaceLabel,
 } from "./review/authoring-activity";
 import { MissingCheckoutBanner } from "./review/missing-checkout-banner";
+import { ReviewActionsMenu } from "./review/review-actions-menu";
 import { ReviewPanelHost } from "./review/review-components";
 import {
   ReviewProvider,
   type ReviewSubmissionOutcome,
   useReview,
 } from "./review/review-context";
-import { ReviewCornerAction } from "./review/review-corner-action";
 import { useReviewDiffFiles } from "./review/review-diff-files-context";
 import { ReviewDiffFilesProvider } from "./review/review-diff-files-context";
 import {
@@ -128,6 +129,7 @@ export function App({
   range,
   commits,
   findHost,
+  chrome,
 }: {
   document: RenderedReviewDocument;
   softwareMap: PublishedSoftwareMap;
@@ -135,6 +137,7 @@ export function App({
   range: ReviewCanvasRange;
   commits: readonly ReviewCommitSummary[];
   findHost?: ReviewFindHost;
+  chrome?: ReviewCanvasChrome;
 }): ReactElement {
   return (
     <ReviewDiffFilesProvider
@@ -149,6 +152,7 @@ export function App({
         range={range}
         commits={commits}
         findHost={findHost}
+        chrome={chrome}
       />
     </ReviewDiffFilesProvider>
   );
@@ -181,6 +185,7 @@ function ReviewLayout({
   range,
   commits,
   findHost,
+  chrome,
 }: {
   document: RenderedReviewDocument;
   softwareMap: PublishedSoftwareMap;
@@ -188,6 +193,7 @@ function ReviewLayout({
   range: ReviewCanvasRange;
   commits: readonly ReviewCommitSummary[];
   findHost?: ReviewFindHost;
+  chrome?: ReviewCanvasChrome;
 }): ReactElement {
   const documentRoute = document.routePath;
   const documentRevision = document.key;
@@ -237,6 +243,7 @@ function ReviewLayout({
                   softwareMapEnabled={softwareMapEnabled}
                   range={range}
                   commits={commits}
+                  chrome={chrome}
                 />
               </AgentSelectionProvider>
             </CommentsProvider>
@@ -261,6 +268,7 @@ function ReviewLayoutContent({
   softwareMapEnabled,
   range,
   commits,
+  chrome,
 }: {
   appRef: RefObject<HTMLDivElement | null>;
   shellRef: RefObject<HTMLElement | null>;
@@ -275,6 +283,7 @@ function ReviewLayoutContent({
   softwareMapEnabled: boolean;
   range: ReviewCanvasRange;
   commits: readonly ReviewCommitSummary[];
+  chrome?: ReviewCanvasChrome;
 }): ReactElement {
   const session = useReviewSession();
   const comments = useComments();
@@ -299,6 +308,9 @@ function ReviewLayoutContent({
   const [diffOpened, setDiffOpened] = useState(!diffPreloaded);
 
   if (!diffPreloaded && !diffOpened) setDiffOpened(true);
+
+  const [diffSidebarToggle, setDiffSidebarToggle] =
+    useState<HTMLElement | null>(null);
 
   const [frozenDiffWidth, setFrozenDiffWidth] = useState<number>();
 
@@ -462,6 +474,87 @@ function ReviewLayoutContent({
     `review-app--tint-${debugSettings.nodeTint}`,
   ].join(" ");
 
+  const actionsMenu = (
+    <ReviewActionsMenu
+      chalkId={document.key}
+      settleable={
+        !scratchpad && !review.historicalRevision && !review.submissionOutcome
+      }
+      deletable={!scratchpad}
+      onDelete={chrome?.deleteReview}
+      overlay={chrome?.overlay}
+    />
+  );
+
+  // A host with chrome (the desktop command bar) shows these there.
+  const viewTabs = (
+    <div
+      className={cn(
+        controlStyles.segmented,
+        controlStyles.segmentedTopbar,
+        topbarTabsMarker,
+      )}
+      role="group"
+      aria-label="Session views"
+    >
+      {reviewViews.map((view) => (
+        <ButtonPrimitive
+          variant="ghost"
+          size="xs"
+          key={view}
+          type="button"
+          aria-label={
+            view === "map" ? "Map (Experimental)" : reviewViewLabel(view)
+          }
+          aria-pressed={activeView === view}
+          title={view === "map" ? "Map (Experimental)" : undefined}
+          className={cn(
+            "review-segment",
+            segmentMarker,
+            controlStyles.segment,
+            controlStyles.segmentTopbar,
+            activeView === view && controlStyles.segmentActive,
+            activeView === view && controlStyles.segmentTopbarActive,
+          )}
+          onClick={() => {
+            showView(view);
+          }}
+        >
+          {view === "review" ? (
+            <ReviewSurfaceLabel
+              label={scratchpad ? "Scratchpad" : "Chalk"}
+              hasContent={document.empty === false}
+              active={activeView === "review"}
+            />
+          ) : (
+            <span>{reviewViewLabel(view)}</span>
+          )}
+          {view === "diff" && filesTabFileCount !== null && (
+            <span
+              className={cn(
+                controlStyles.segmentCount,
+                activeView === view && controlStyles.segmentCountActive,
+              )}
+            >
+              {filesTabFileCount}
+            </span>
+          )}
+          {view === "commits" && (
+            <span
+              className={cn(
+                controlStyles.segmentCount,
+                activeView === view && controlStyles.segmentCountActive,
+              )}
+            >
+              {commits.length}
+            </span>
+          )}
+          <MarkerUnderline active={activeView === view} />
+        </ButtonPrimitive>
+      ))}
+    </div>
+  );
+
   return (
     <div
       ref={appRef}
@@ -477,6 +570,7 @@ function ReviewLayoutContent({
       )}
       style={appStyle}
       data-peek-open={rightPanelOpen || undefined}
+      data-view={activeView}
       data-document-header={document.header || undefined}
       data-database-lens={document.databaseLens || undefined}
       data-document-width={document.width}
@@ -493,76 +587,19 @@ function ReviewLayoutContent({
           shellRef={shellRef}
           scrollRegionRef={scrollRegionRef}
         >
-          <header className={shellStyles.topbar}>
-            <div className={cn(shellStyles.topbarLeft, topbarTabsMarker)}>
+          <header
+            className={cn(
+              shellStyles.topbar,
+              activeView === "diff" && shellStyles.topbarFlush,
+            )}
+          >
+            <div className={shellStyles.topbarLeft}>
               <div
-                className={cn(
-                  controlStyles.segmented,
-                  controlStyles.segmentedTopbar,
-                )}
-                role="group"
-                aria-label="Session views"
-              >
-                {reviewViews.map((view) => (
-                  <ButtonPrimitive
-                    variant="ghost"
-                    size="xs"
-                    key={view}
-                    type="button"
-                    aria-label={
-                      view === "map"
-                        ? "Map (Experimental)"
-                        : reviewViewLabel(view)
-                    }
-                    aria-pressed={activeView === view}
-                    title={view === "map" ? "Map (Experimental)" : undefined}
-                    className={cn(
-                      "review-segment",
-                      segmentMarker,
-                      controlStyles.segment,
-                      controlStyles.segmentTopbar,
-                      activeView === view && controlStyles.segmentActive,
-                      activeView === view && controlStyles.segmentTopbarActive,
-                    )}
-                    onClick={() => {
-                      showView(view);
-                    }}
-                  >
-                    {view === "review" ? (
-                      <ReviewSurfaceLabel
-                        label={scratchpad ? "Scratchpad" : "Chalk"}
-                        hasContent={document.empty === false}
-                        active={activeView === "review"}
-                      />
-                    ) : (
-                      <span>{reviewViewLabel(view)}</span>
-                    )}
-                    {view === "diff" && filesTabFileCount !== null && (
-                      <span
-                        className={cn(
-                          controlStyles.segmentCount,
-                          activeView === view &&
-                            controlStyles.segmentCountActive,
-                        )}
-                      >
-                        {filesTabFileCount}
-                      </span>
-                    )}
-                    {view === "commits" && (
-                      <span
-                        className={cn(
-                          controlStyles.segmentCount,
-                          activeView === view &&
-                            controlStyles.segmentCountActive,
-                        )}
-                      >
-                        {commits.length}
-                      </span>
-                    )}
-                    <MarkerUnderline active={activeView === view} />
-                  </ButtonPrimitive>
-                ))}
-              </div>
+                ref={setDiffSidebarToggle}
+                className={shellStyles.topbarLeft}
+              />
+              {chrome ? createPortal(viewTabs, chrome.views) : viewTabs}
+              {chrome && createPortal(actionsMenu, chrome.actions)}
             </div>
             <div className={cn(shellStyles.topbarActions, topbarActionsMarker)}>
               <div
@@ -578,12 +615,6 @@ function ReviewLayoutContent({
                 />
               </div>
               <ReviewBatonChip outcome={review.submissionOutcome} />
-              <CopyButton
-                text={document.key}
-                label="Copy Chalk ID"
-                className={shellStyles.topbarItem}
-                iconClassName={controlStyles.chromeIcon}
-              />
               <DiffSettingsControl />
               {comments && (
                 <CommentsButton
@@ -591,21 +622,17 @@ function ReviewLayoutContent({
                   onClick={comments.toggle}
                 />
               )}
-              {!scratchpad &&
-                !review.historicalRevision &&
-                !review.submissionOutcome && (
+              {!chrome && (
+                <>
                   <div
                     className={cn(
                       shellStyles.topbarItem,
                       shellStyles.actionsDivider,
                     )}
                   />
-                )}
-              {!scratchpad &&
-              !review.historicalRevision &&
-              !review.submissionOutcome ? (
-                <ReviewCornerAction />
-              ) : null}
+                  {actionsMenu}
+                </>
+              )}
             </div>
           </header>
           {banner}
@@ -717,7 +744,13 @@ function ReviewLayoutContent({
               )}
               style={frozenDiffStyle}
             >
-              {diffOpened && <ReviewDiffView />}
+              {diffOpened && (
+                <DiffSidebarToggleSlot.Provider
+                  value={diffPreloaded ? null : diffSidebarToggle}
+                >
+                  <ReviewDiffView />
+                </DiffSidebarToggleSlot.Provider>
+              )}
             </div>
             {activeView === "diff" && diffScope !== null && (
               <div
@@ -748,7 +781,14 @@ function ReviewLayoutContent({
             shellStyles.resizer,
             shellStyles.peekResizer,
             shellStyles.resizerGrabPanel,
+            activeView === "diff" && [
+              shellStyles.peekResizerFlush,
+              shellStyles.resizerDots,
+            ],
             sidePeekResize.isResizing && shellStyles.peekResizerActive,
+            activeView === "diff" &&
+              sidePeekResize.isResizing &&
+              shellStyles.resizerDotsActive,
           )}
           {...sidePeekResize.separatorProps}
         />

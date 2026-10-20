@@ -30,6 +30,7 @@ import {
 } from "@chalk/review-contracts";
 import type {
   ReviewApiSummary,
+  ReviewCanvasChrome,
   ReviewCanvasContent,
   ReviewCanvasHandle,
   ReviewCanvasInstallContent,
@@ -45,7 +46,6 @@ import {
   BookOpenIcon,
   ChevronDownIcon,
   FileTextIcon,
-  MoreHorizontalIcon,
   SearchIcon,
   Settings2Icon,
   SquareArrowOutUpRightIcon,
@@ -100,6 +100,9 @@ type Tab = {
   view: ReviewSourceView;
   content: Extract<ReviewCanvasContent, { kind: "api" }>;
   handle?: ReviewCanvasHandle;
+  // The canvas portals its tabs and actions here; the titlebar shows the
+  // active tab's.
+  chrome: ReviewCanvasChrome;
 };
 
 function Canvas({
@@ -171,6 +174,8 @@ function Shell(
   },
 ) {
   const shellElement = useRef<HTMLDivElement>(null);
+  const viewsHost = useRef<HTMLDivElement>(null);
+  const actionsHost = useRef<HTMLDivElement>(null);
   const uiRef = useRef<ReturnType<typeof createCanvasUi>>(undefined);
   const [, render] = useReducer((value) => value + 1, 0);
   const tabs = useRef(new Map<string, Tab>());
@@ -428,6 +433,16 @@ function Shell(
       id: summary.reviewId,
       title: summary.title,
       view: { reviewId: summary.reviewId, version: summary.version },
+      chrome: {
+        views: document.createElement("div"),
+        actions: document.createElement("div"),
+        // add runs from effects and async loads, after the shell mounts.
+        overlay: shellElement.current!,
+        deleteReview: async () => {
+          if (await ui.confirmDelete?.(tab.title))
+            await command({ type: "delete", reviewId: tab.id });
+        },
+      },
     });
 
     const bridge = createCanvasBridge({
@@ -460,6 +475,7 @@ function Shell(
       },
       openSource: (source, range) =>
         openSourceFile(api, options.rpc.request.openSource, source, range),
+      chrome: tab.chrome,
     };
     bridge.reportDiagnostic = (message) =>
       options.rpc.send.diagnostic({
@@ -834,24 +850,6 @@ function Shell(
     await open(result.reviewUuid, "Tutorial");
   }
 
-  function reviewMenu(anchor: HTMLElement, id: string, title: string) {
-    const review = catalog.current.find((item) => item.reviewId === id);
-    ui.showMenu({
-      anchor,
-      items: [
-        ...(review && review.kind !== "scratchpad"
-          ? // Settling lives on the review's topbar; the palette restores.
-            [{ id: "delete", label: "Delete review…" }]
-          : []),
-      ],
-      onHide() {},
-      onSelect: async (action) => {
-        if (action === "delete" && (await ui.confirmDelete?.(title)))
-          await command({ type: "delete", reviewId: id });
-      },
-    });
-  }
-
   function openInMenu(anchor: HTMLElement) {
     ui.showMenu({
       anchor,
@@ -930,6 +928,15 @@ function Shell(
     (review) => review.reviewId === active.current,
   );
 
+  useLayoutEffect(() => {
+    viewsHost.current?.replaceChildren(
+      ...(currentTab ? [currentTab.chrome.views] : []),
+    );
+    actionsHost.current?.replaceChildren(
+      ...(currentTab ? [currentTab.chrome.actions] : []),
+    );
+  }, [currentTab]);
+
   return (
     <div
       ref={shellElement}
@@ -940,41 +947,47 @@ function Shell(
       data-theme={resolvedTheme}
     >
       <header
-        className="review-shell-titlebar electrobun-webkit-app-region-drag tw:grid tw:h-14 tw:flex-none tw:grid-cols-[1fr_minmax(0,36rem)_1fr] tw:items-center tw:gap-4 tw:border-b tw:border-border tw:bg-[var(--tray)] tw:px-4 tw:select-none tw:[-webkit-app-region:drag] tw:data-[native-titlebar]:pl-[88px] tw:[&_button]:[-webkit-app-region:no-drag] tw:max-[760px]:gap-2 tw:max-[760px]:pr-2"
+        className="review-shell-titlebar electrobun-webkit-app-region-drag tw:grid tw:h-14 tw:flex-none tw:grid-cols-[1fr_minmax(0,44rem)_1fr] tw:items-center tw:gap-4 tw:bg-[var(--tray)] tw:px-4 tw:select-none tw:[-webkit-app-region:drag] tw:data-[native-titlebar]:pl-[88px] tw:[&_button]:[-webkit-app-region:no-drag] tw:max-[760px]:gap-2 tw:max-[760px]:pr-2"
         data-native-titlebar={options.nativeTitlebar || undefined}
       >
-        <Button
-          variant="outline"
-          size="sm"
-          className="review-shell-context tw:col-start-2 tw:min-w-0 tw:justify-start tw:font-normal tw:text-muted-foreground"
-          aria-label="Search reviews"
-          title="Search reviews (⇧⇧)"
-          onClick={() => setPalette(true)}
-        >
-          <SearchIcon aria-hidden="true" />
-          {currentTab && (
-            <>
-              <span
-                className="review-shell-repository tw:max-w-[180px] tw:truncate tw:max-[760px]:max-w-24 tw:max-[480px]:hidden"
-                title={currentReview?.repositoryName}
-              >
-                {currentReview?.repositoryName || "Reviews"}
-              </span>
-              <span
-                className="review-shell-context-separator tw:text-[var(--ink-faint)] tw:max-[480px]:hidden"
-                aria-hidden="true"
-              >
-                /
-              </span>
-            </>
-          )}
-          <span
-            className="review-shell-current-title tw:truncate tw:text-foreground"
-            title={currentTab?.title || "Chalk"}
+        <div className="review-shell-context tw:col-start-2 tw:flex tw:h-8 tw:min-w-0 tw:items-center tw:rounded-md tw:border tw:bg-background tw:shadow-xs tw:dark:border-input tw:dark:bg-input/30">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="tw:min-w-0 tw:flex-1 tw:justify-start tw:rounded-r-none tw:font-normal tw:text-muted-foreground"
+            aria-label="Search reviews"
+            title="Search reviews (⇧⇧)"
+            onClick={() => setPalette(true)}
           >
-            {currentTab?.title || "Chalk"}
-          </span>
-        </Button>
+            <SearchIcon aria-hidden="true" />
+            {currentTab && (
+              <>
+                <span
+                  className="review-shell-repository tw:max-w-[180px] tw:truncate tw:max-[760px]:max-w-24 tw:max-[480px]:hidden"
+                  title={currentReview?.repositoryName}
+                >
+                  {currentReview?.repositoryName || "Reviews"}
+                </span>
+                <span
+                  className="review-shell-context-separator tw:text-[var(--ink-faint)] tw:max-[480px]:hidden"
+                  aria-hidden="true"
+                >
+                  /
+                </span>
+              </>
+            )}
+            <span
+              className="review-shell-current-title tw:truncate tw:text-foreground"
+              title={currentTab?.title || "Chalk"}
+            >
+              {currentTab?.title || "Chalk"}
+            </span>
+          </Button>
+          <div
+            ref={viewsHost}
+            className="review-shell-views tw:flex tw:flex-none tw:items-center tw:border-l tw:px-3 tw:empty:hidden tw:dark:border-input"
+          />
+        </div>
         <div className="review-shell-actions tw:flex tw:items-center tw:justify-self-end tw:gap-1 tw:text-muted-foreground">
           {currentTab && (
             <div className="review-shell-editor tw:mr-2 tw:flex tw:max-[760px]:mr-0">
@@ -1004,26 +1017,7 @@ function Shell(
               </Button>
             </div>
           )}
-          {currentTab &&
-            currentReview &&
-            currentReview.kind !== "scratchpad" && (
-              <Button
-                variant="outline"
-                size="icon-sm"
-                className="tw:border-border"
-                aria-label={`Actions for ${currentTab.title}`}
-                disabled={!connected}
-                onClick={(event) =>
-                  reviewMenu(
-                    event.currentTarget,
-                    currentTab.id,
-                    currentTab.title,
-                  )
-                }
-              >
-                <MoreHorizontalIcon aria-hidden="true" />
-              </Button>
-            )}
+          <div ref={actionsHost} className="tw:flex tw:empty:hidden" />
         </div>
       </header>
       <div className="review-shell-notices tw:fixed tw:right-[18px] tw:bottom-[18px] tw:z-[10001] tw:flex tw:max-w-[380px] tw:flex-col tw:gap-2">

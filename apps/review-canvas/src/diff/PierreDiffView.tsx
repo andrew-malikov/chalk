@@ -750,8 +750,7 @@ function Comparison({
   const options = useMemo(
     () => ({
       diffStyle: layout,
-      hunkSeparators:
-        committed || structural ? ("line-info" as const) : ("simple" as const),
+      hunkSeparators: "line-info" as const,
       theme: theme === "light" ? "pierre-light" : "pierre-dark",
       themeType: theme === "light" ? ("light" as const) : ("dark" as const),
       preferredHighlighter: "shiki-js" as const,

@@ -156,11 +156,13 @@ export function TutorialExperienceProvider({
       }
     };
 
-    root.addEventListener("click", onClick, true);
+    // The document, not the shell: a desktop host shows the view tabs in its
+    // own command bar.
+    root.ownerDocument.addEventListener("click", onClick, true);
     root.addEventListener(REVIEW_INTERACTION_EVENT, onReviewInteraction);
 
     return () => {
-      root.removeEventListener("click", onClick, true);
+      root.ownerDocument.removeEventListener("click", onClick, true);
       root.removeEventListener(REVIEW_INTERACTION_EVENT, onReviewInteraction);
     };
   }, [activeStep, completeStep, dismissed, shell]);

@@ -368,11 +368,19 @@ it("dismisses immediately through the API without changing the saved document", 
     );
   });
 
-  const dismiss = [
-    ...container.querySelectorAll<HTMLButtonElement>("button"),
-  ].find((button) => button.ariaLabel === "Settle review")!;
+  await act(async () =>
+    container
+      .querySelector('button[aria-label="Review actions"]')!
+      .dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+      ),
+  );
 
-  await act(async () => dismiss.click());
+  const settle = [
+    ...document.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+  ].find((item) => item.textContent === "Settle review")!;
+
+  await act(async () => settle.click());
 
   await vi.waitFor(() =>
     expect(store.list()[0]?.dismissedAt).toEqual(expect.any(String)),

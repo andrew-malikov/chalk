@@ -656,6 +656,19 @@ export interface ReviewApiSourceLocation {
   readonly side: ReviewDiffSide;
 }
 
+// Host chrome the canvas fills instead of its own topbar, as the desktop
+// command bar does.
+export interface ReviewCanvasChrome {
+  // The session view tabs (Chalk, Commits, Diff).
+  views: HTMLElement;
+  // The review actions menu.
+  actions: HTMLElement;
+  // Where menus opened from the chrome render, above the canvas.
+  overlay: HTMLElement;
+  // Confirms, then deletes the review and closes its canvas.
+  deleteReview?(): Promise<void>;
+}
+
 export type ReviewCanvasContent =
   | { kind: "loading" }
   | {
@@ -677,6 +690,7 @@ export type ReviewCanvasContent =
         source: ReviewApiSourceLocation,
         range: ReviewInlineEditorRange,
       ): Promise<void>;
+      chrome?: ReviewCanvasChrome;
     }
   | {
       kind: "error";

@@ -34,6 +34,18 @@ export const shellStyles = {
   // divider owns resizing.
   sheetResizer:
     "tw:relative tw:hidden tw:[@container_review-canvas_(max-width:_929px)]:block tw:[@media_(max-width:_720px)]:block tw:flex-[0_0_auto] tw:h-[10px] tw:min-h-[10px] tw:[cursor:row-resize] tw:bg-[color:var(--transparent)] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[touch-action:none] tw:[&:focus-visible]:[outline:1px_solid_var(--rule-soft)] tw:[&:focus-visible]:outline-offset-[-1px] tw:[&::before]:absolute tw:[&::before]:top-[50%] tw:[&::before]:right-0 tw:[&::before]:left-0 tw:[&::before]:h-[1px] tw:[&::before]:bg-[color:var(--rule)] tw:[&:hover::before]:bg-[color:var(--ink-faint)] tw:[&:focus-visible::before]:bg-[color:var(--ink-faint)] tw:[&::before]:[transform:translateY(-50%)] tw:[&::before]:[content:'']",
+  // Three dots stand in for a divider's rule, hidden until hover or drag.
+  resizerDots:
+    "tw:[&::before]:top-[50%] tw:[&::before]:bottom-[auto] tw:[&::before]:left-[50%] tw:[&::before]:right-[auto] tw:[&::before]:w-[3px] tw:[&::before]:h-[18px] tw:[&::before]:[transform:translate(-50%,-50%)] tw:[&::before]:bg-[color:var(--transparent)] tw:[&::before]:[mask:radial-gradient(circle,#000_1px,transparent_1.5px)_0_0/3px_6px]",
+  sheetResizerDots:
+    "tw:[&::before]:top-[50%] tw:[&::before]:left-[50%] tw:[&::before]:right-[auto] tw:[&::before]:w-[18px] tw:[&::before]:h-[3px] tw:[&::before]:[transform:translate(-50%,-50%)] tw:[&::before]:bg-[color:var(--transparent)] tw:[&::before]:[mask:radial-gradient(circle,#000_1px,transparent_1.5px)_0_0/6px_3px]",
+  // Dragged dots grow and darken; important beats the hover tint.
+  resizerDotsActive:
+    "tw:[&::before]:bg-[color:var(--ink)]! tw:[&::before]:[scale:1.5]",
+  // The diff view shares one surface across topbar, sidebar and panel, so no
+  // rules between them.
+  topbarFlush: "tw:[border-bottom-width:0]",
+  peekResizerFlush: "tw:[background-image:none]",
   topbar:
     "tw:sticky tw:top-0 tw:z-[var(--review-debug-layer)] tw:flex tw:items-center tw:justify-between tw:gap-[8px] tw:h-[var(--review-header-height)] tw:p-[0_12px_0_16px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--surface)]",
   topbarLeft: "tw:flex tw:flex-[0_0_auto] tw:items-center",

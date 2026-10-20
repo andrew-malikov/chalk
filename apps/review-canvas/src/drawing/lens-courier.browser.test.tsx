@@ -1,4 +1,4 @@
-import { ReviewDiffView } from "@canvas/diff/DiffView";
+import { DiffSidebarToggleSlot, ReviewDiffView } from "@canvas/diff/DiffView";
 import { reviewPreferenceKey } from "@canvas/host/review-client";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { AuthoringActivityBadge } from "@canvas/review/authoring-activity";
@@ -91,7 +91,7 @@ const createManualClock = () => {
   };
 };
 
-let app: HTMLDivElement, root: Root;
+let app: HTMLDivElement, toggleSlot: HTMLDivElement, root: Root;
 
 let manualClock: ReturnType<typeof createManualClock>;
 
@@ -139,7 +139,8 @@ beforeEach(() => {
   app = document.createElement("div");
   app.style.width = "900px";
   app.style.height = "700px";
-  document.body.append(app);
+  toggleSlot = document.createElement("div");
+  document.body.append(app, toggleSlot);
   root = createRoot(app);
   manualClock = createManualClock();
   onLocate.mockClear();
@@ -150,6 +151,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   app.remove();
+  toggleSlot.remove();
   window.localStorage.clear();
 });
 
@@ -199,7 +201,9 @@ const render = async (state: {
                   <ReviewPanelProvider>
                     <ReviewLensesProvider client={client} snapshot={snapshot}>
                       <AuthoringActivityBadge onLocate={onLocate} />
-                      <ReviewDiffView />
+                      <DiffSidebarToggleSlot.Provider value={toggleSlot}>
+                        <ReviewDiffView />
+                      </DiffSidebarToggleSlot.Provider>
                     </ReviewLensesProvider>
                   </ReviewPanelProvider>
                 </DrawQueueProvider>
@@ -247,19 +251,6 @@ it.each([
       ).not.toContain("…"),
     );
     expect(!!row("automatic-uncategorized")).toBe(visible);
-
-    await act(async () =>
-      app
-        .querySelector<HTMLButtonElement>(
-          '[aria-label="Collapse diff sidebar"]',
-        )!
-        .click(),
-    );
-    expect(
-      !!app.querySelector(
-        'nav[aria-label="Lens rail"] button[aria-label="Uncategorized changes"]',
-      ),
-    ).toBe(visible);
   },
 );
 
@@ -345,7 +336,7 @@ it("sends the top-bar badge to the Diffs page while only lenses are written", as
   expect(onLocate).toHaveBeenCalledWith("review");
 });
 
-it("folds the sidebar to a rail that still filters and opens again", async () => {
+it("folds the sidebar away and opens it again, keeping the lens filter", async () => {
   window.localStorage.setItem(
     reviewPreferenceKey("ui", "diff-sidebar-width-collapsed"),
     "true",
@@ -354,46 +345,32 @@ it("folds the sidebar to a rail that still filters and opens again", async () =>
   try {
     await render({ lenses: [api, docs], version: 1, lensCursor: null });
 
-    const railLens = (title: string) =>
-      app.querySelector<HTMLButtonElement>(
-        `nav[aria-label="Lens rail"] button[aria-label="${title}"]`,
-      );
+    const shown = () => !!row(api.id)?.checkVisibility();
 
-    await vi.waitFor(() =>
-      expect(railLens("Uncategorized changes")).not.toBeNull(),
-    );
+    const toggle = (label: string) =>
+      toggleSlot.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)!;
 
-    const divider = app.querySelector<HTMLElement>(
-      '[role="separator"][aria-label="Resize diff sidebar"]',
-    )!;
+    await vi.waitFor(() => expect(row(api.id)).not.toBeNull());
+    expect(shown()).toBe(false);
 
-    expect(divider.getBoundingClientRect().width).toBeGreaterThan(0);
-    expect(divider.getBoundingClientRect().left).toBeGreaterThanOrEqual(
-      railLens(api.title)!.getBoundingClientRect().right,
-    );
+    const divider = () =>
+      app.querySelector('[role="separator"][aria-label="Resize diff sidebar"]');
 
-    await act(async () => railLens(api.title)!.click());
-    expect(railLens(api.title)?.getAttribute("aria-pressed")).toBe("true");
+    // Folded, only the toggle opens it: no divider to drag.
+    expect(divider()).toBeNull();
+    await act(async () => toggle("Expand diff sidebar").click());
+    expect(shown()).toBe(true);
+    expect(divider()).not.toBeNull();
 
     await act(async () =>
-      divider.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
-      ),
-    );
-    expect(app.querySelector('nav[aria-label="Lens rail"]')).toBeNull();
-
-    const collapse = app.querySelector<HTMLButtonElement>(
-      '[aria-label="Collapse diff sidebar"]',
-    )!;
-
-    await act(async () => collapse.click());
-    expect(app.querySelector('nav[aria-label="Lens rail"]')).not.toBeNull();
-    await act(async () =>
-      app
-        .querySelector<HTMLButtonElement>('[aria-label="Expand diff sidebar"]')!
+      row(api.id)!
+        .querySelector<HTMLButtonElement>("button[aria-pressed]")!
         .click(),
     );
-    expect(app.querySelector('nav[aria-label="Lens rail"]')).toBeNull();
+    await act(async () => toggle("Collapse diff sidebar").click());
+    expect(shown()).toBe(false);
+    await act(async () => toggle("Expand diff sidebar").click());
+    expect(shown()).toBe(true);
     expect(
       row(api.id)
         ?.querySelector("button[aria-pressed]")

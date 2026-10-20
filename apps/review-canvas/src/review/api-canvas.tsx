@@ -18,6 +18,7 @@ import {
 } from "@canvas/host/review-session";
 import { TutorialProvider } from "@canvas/tutorial/tutorial-context";
 import {
+  type ReviewCanvasChrome,
   type ReviewCanvasContent,
   type ReviewDocumentWidthChoice,
   resolveReviewSourceView,
@@ -429,6 +430,7 @@ export function ApiCanvas({
                                 content.softwareMapEnabled === true
                               }
                               documentWidth={content.documentWidth}
+                              chrome={content.chrome}
                             />
                           </SaveMarkdown.Provider>
                         </MapEnabled.Provider>
@@ -451,11 +453,13 @@ const CanvasDocument = memo(function CanvasDocument({
   findHost,
   softwareMapEnabled,
   documentWidth,
+  chrome,
 }: {
   data: ApiDocumentData;
   findHost?: ReviewFindHost;
   softwareMapEnabled: boolean;
   documentWidth?: ReviewDocumentWidthChoice;
+  chrome?: ReviewCanvasChrome;
 }) {
   const snapshot = data.snapshot;
 
@@ -504,6 +508,7 @@ const CanvasDocument = memo(function CanvasDocument({
       }}
       commits={data.commits}
       findHost={findHost}
+      chrome={chrome}
     />
   );
 });

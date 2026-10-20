@@ -28,9 +28,9 @@ import {
   coverageSources,
 } from "@review/documents/viewed-coverage";
 import type { ClassValue } from "clsx";
-import { File, PanelLeftCloseIcon, PanelLeftOpenIcon, X } from "lucide-react";
+import { PanelLeftCloseIcon, PanelLeftOpenIcon, X } from "lucide-react";
 import {
-  type ReactNode,
+  createContext,
   useCallback,
   useContext,
   useEffect,
@@ -38,6 +38,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { compactDiffCount, diffCountStyles } from "./diff-count";
 import { PierreDiffView } from "./PierreDiffView";
@@ -125,6 +126,9 @@ export function DiffCounts({
   );
 }
 
+/** Where the shown diff puts its sidebar toggle, in the canvas topbar. */
+export const DiffSidebarToggleSlot = createContext<HTMLElement | null>(null);
+
 export function ReviewDiffView({
   scope,
   revealFile,
@@ -146,7 +150,7 @@ export function ReviewDiffView({
     minWidth: 250,
     maxWidth: 800,
     minMainWidth: 320,
-    collapsedWidth: 44,
+    collapsedWidth: 0,
     label: "Resize diff sidebar",
     containerRef: workspaceRef,
   });
@@ -166,6 +170,7 @@ export function ReviewDiffView({
   const [lensList, setLensList] = useState<HTMLDivElement | null>(null);
   const rows = useLensRows(lenses?.lenses ?? []);
   const lensCursor = useContext(LensCursorContext);
+  const toggleSlot = useContext(DiffSidebarToggleSlot);
 
   const lensesLive = scopeLive(useContext(AuthoringActivityContext), "lenses");
   const [fullTree, setFullTree] = useState<HTMLDivElement | null>(null);
@@ -253,14 +258,33 @@ export function ReviewDiffView({
       className={cn("diff-workspace", styles.workspace, diffWorkspaceMarker)}
       ref={workspaceRef}
     >
-      {sidebarResize.collapsed && (
-        <DiffRail
-          rows={rows}
-          lenses={lenses}
-          activeId={lens?.id}
-          onExpand={sidebarResize.expand}
-        />
-      )}
+      {toggleSlot &&
+        createPortal(
+          <IconButton
+            aria-label={
+              sidebarResize.collapsed
+                ? "Expand diff sidebar"
+                : "Collapse diff sidebar"
+            }
+            title={
+              sidebarResize.collapsed
+                ? "Expand diff sidebar"
+                : "Collapse diff sidebar"
+            }
+            onClick={
+              sidebarResize.collapsed
+                ? sidebarResize.expand
+                : sidebarResize.collapse
+            }
+          >
+            {sidebarResize.collapsed ? (
+              <PanelLeftOpenIcon aria-hidden="true" />
+            ) : (
+              <PanelLeftCloseIcon aria-hidden="true" />
+            )}
+          </IconButton>,
+          toggleSlot,
+        )}
       {/* Stays mounted while folded: it hosts the diff views' file trees. */}
       <aside
         className={cn(styles.sidebar, sidebarResize.collapsed && styles.hidden)}
@@ -287,16 +311,6 @@ export function ReviewDiffView({
               </>
             )}
           </span>
-          <div className={styles.progressActions}>
-            <IconButton
-              aria-label="Collapse diff sidebar"
-              title="Collapse diff sidebar"
-              className={styles.sidebarAction}
-              onClick={sidebarResize.collapse}
-            >
-              <PanelLeftCloseIcon aria-hidden="true" />
-            </IconButton>
-          </div>
         </div>
         <div className={styles.cabinets} ref={cabinetsRef}>
           <div
@@ -435,8 +449,9 @@ export function ReviewDiffView({
             {...cabinetsResize.separatorProps}
             className={cn(
               shellStyles.sheetResizer,
+              shellStyles.sheetResizerDots,
               styles.cabinetsResizer,
-              cabinetsResize.isResizing && styles.resizing,
+              cabinetsResize.isResizing && shellStyles.resizerDotsActive,
             )}
           />
           <div className={styles.files}>
@@ -478,15 +493,18 @@ export function ReviewDiffView({
           </div>
         </div>
       </aside>
-      <div
-        {...sidebarResize.separatorProps}
-        className={cn(
-          shellStyles.resizer,
-          styles.sidebarResizer,
-          sidebarResize.collapsed && styles.railResizer,
-          sidebarResize.isResizing && styles.resizing,
-        )}
-      />
+      {/* Folded, only the topbar toggle opens it again. */}
+      {!sidebarResize.collapsed && (
+        <div
+          {...sidebarResize.separatorProps}
+          className={cn(
+            shellStyles.resizer,
+            styles.sidebarResizer,
+            shellStyles.resizerDots,
+            sidebarResize.isResizing && shellStyles.resizerDotsActive,
+          )}
+        />
+      )}
       <div className={styles.editor}>
         {fullTree && (
           <PierreDiffView
@@ -530,161 +548,23 @@ function useLensRows<Item extends { id: string }>(items: Item[]) {
   return { items: shown, phases };
 }
 
-type ReviewLenses = NonNullable<ReturnType<typeof useReviewLenses>>;
-
-type LensItem = ReviewLenses["lenses"][number];
-
-function DiffRail({
-  rows,
-  lenses,
-  activeId,
-  onExpand,
-}: {
-  rows: { items: LensItem[]; phases: Map<string, MotionPhase> };
-  lenses: ReviewLenses;
-  activeId: string | undefined;
-  onExpand: () => void;
-}) {
-  return (
-    <nav className={styles.rail} aria-label="Lens rail">
-      <div className={styles.railProgress}>
-        <RailButton label="Expand diff sidebar" onClick={onExpand}>
-          <PanelLeftOpenIcon size={16} aria-hidden="true" />
-        </RailButton>
-      </div>
-      {rows.items.map((item, index) => (
-        <RailLens
-          key={item.id}
-          item={item}
-          number={index + 1}
-          lenses={lenses}
-          selected={activeId === item.id}
-          phase={rows.phases.get(item.id)}
-        />
-      ))}
-      <div className={styles.railFiles}>
-        <RailButton label="Show files" onClick={onExpand}>
-          <FileIcon />
-        </RailButton>
-      </div>
-    </nav>
-  );
-}
-
-function RailLens({
-  item,
-  number,
-  lenses,
-  selected,
-  phase,
-}: {
-  item: LensItem;
-  number: number;
-  lenses: ReviewLenses;
-  selected: boolean;
-  phase: MotionPhase | undefined;
-}) {
-  const stats = lenses.stats(item.sources),
-    empty = !item.pending && item.fileCount === 0;
-
-  // On the name: disabled buttons get no pointer events.
-  const tooltip = useTooltip<HTMLSpanElement>(item.title, {
-    instant: true,
-    detail: item.pending ? undefined : empty ? "0 files" : countsLabel(stats),
-  });
-
-  return (
-    <ButtonPrimitive
-      variant="ghost"
-      size="xs"
-      className={cn(
-        "tw:h-auto tw:whitespace-normal tw:font-normal",
-        styles.railLens,
-        empty && styles.toggleEmpty,
-        selected && styles.railLensActive,
-        stats.state === "viewed" && !selected && styles.faded,
-        phase && sectionMotionStyle(phase),
-      )}
-      aria-label={item.title}
-      aria-pressed={selected}
-      disabled={!!item.unavailable || (empty && !selected)}
-      onClick={() => (selected ? lenses.clear() : lenses.select(item.id))}
-    >
-      <span ref={tooltip}>{number}</span>
-    </ButtonPrimitive>
-  );
-}
-
-function countsLabel({ state, remaining }: CoverageProgress) {
-  return state === "viewed"
-    ? "Viewed"
-    : state === "folded"
-      ? "Folded"
-      : `+${remaining.additions} −${remaining.deletions} remaining`;
-}
-
-function RailButton({
-  label,
-  onClick,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  const tooltip = useTooltip(label, { instant: true });
-
-  return (
-    <ButtonPrimitive
-      variant="ghost"
-      size="xs"
-      ref={tooltip}
-      className={cn(
-        "tw:h-auto tw:whitespace-normal tw:font-normal",
-        styles.railButton,
-      )}
-      aria-label={label}
-      onClick={onClick}
-    >
-      {children}
-    </ButtonPrimitive>
-  );
-}
-
-function FileIcon() {
-  return <File className={styles.icon} size={14} aria-hidden="true" />;
-}
-
 const styles = {
   workspace:
     "tw:flex tw:min-h-0 tw:h-full tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[1.5]",
   // The sidebar is the tray; its right padding holds the divider.
   sidebar:
-    "tw:w-[320px] tw:min-w-[250px] tw:shrink-0 tw:overflow-hidden tw:flex tw:flex-col tw:pr-[16px] tw:bg-[color:var(--tray)]",
+    "tw:w-[320px] tw:min-w-[250px] tw:shrink-0 tw:overflow-hidden tw:flex tw:flex-col tw:pr-[16px] tw:bg-[color:var(--surface)]",
   hidden: "tw:hidden",
-  rail: "tw:flex tw:flex-col tw:items-center tw:gap-[6px] tw:shrink-0 tw:w-[44px] tw:pb-[8px] tw:overflow-x-hidden tw:overflow-y-auto tw:bg-[color:var(--tray)] tw:[border-right-width:1px] tw:[border-right-style:solid] tw:[border-right-color:var(--rule)]",
-  railProgress:
-    "tw:flex tw:flex-col tw:items-center tw:justify-center tw:gap-[6px] tw:self-stretch tw:shrink-0 tw:min-h-[52px] tw:py-[8px] tw:mb-[2px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:text-[color:var(--ink-muted)]",
-  railButton:
-    "tw:flex tw:items-center tw:justify-center tw:shrink-0 tw:size-[28px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-[6px] tw:p-0 tw:text-[color:var(--ink-muted)] tw:cursor-pointer tw:bg-[color:transparent] tw:[&:hover]:bg-[color:var(--well)] tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[-2px]",
-  railLens:
-    "tw:shrink-0 tw:box-border tw:w-[28px] tw:h-[24px] tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-[999px] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:text-[color:inherit] tw:text-center tw:whitespace-nowrap tw:cursor-pointer tw:bg-[color:transparent] tw:[&:hover]:bg-[color:var(--well)] tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[-2px]",
-  railLensActive:
-    "tw:text-[color:var(--ink)] tw:font-semibold tw:bg-[color:var(--marker-tint)]",
-  railFiles:
-    "tw:flex tw:justify-center tw:shrink-0 tw:w-[22px] tw:mt-[2px] tw:pt-[8px] tw:[border-top-width:1px] tw:[border-top-style:solid] tw:[border-top-color:var(--rule)]",
   progress:
-    "tw:flex tw:items-center tw:justify-between tw:gap-[8px] tw:shrink-0 tw:min-h-[52px] tw:p-[0_8px_0_16px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:text-[color:var(--ink-muted)] tw:text-[length:11px]",
+    "tw:flex tw:items-center tw:justify-between tw:gap-[8px] tw:shrink-0 tw:min-h-[52px] tw:p-[0_8px_0_16px] tw:text-[color:var(--ink-muted)] tw:text-[length:11px]",
   progressLabel: "tw:flex tw:items-baseline tw:gap-[9px]",
-  sidebarAction: "tw:size-[28px]",
-  progressActions: "tw:flex tw:items-center tw:gap-[8px]",
   cabinets: "tw:flex tw:flex-col tw:flex-[1] tw:min-h-0",
   // The courier stands on the row being written.
   lenses:
     "tw:flex-[0_0_auto] tw:min-h-0 tw:overflow-auto tw:relative tw:[&:has(>_.courier)]:pt-[14px]",
   files: "tw:flex tw:flex-col tw:flex-[1] tw:min-h-0 tw:overflow-hidden",
   heading: "tw:p-[10px_14px_6px_16px]",
-  lensesHeading: "tw:pb-[2px]",
+  lensesHeading: "tw:pt-0 tw:pb-[2px]",
   filesHeading: "tw:whitespace-nowrap tw:overflow-hidden tw:text-ellipsis",
   nativeTree: "tw:flex-[1] tw:min-h-0 tw:overflow-y-auto tw:relative",
   section:
@@ -706,7 +586,6 @@ const styles = {
   // the counts stay outside it so they keep their column.
   chip: "tw:flex tw:min-w-0 tw:items-center tw:gap-[8px] tw:h-[24px] tw:p-[0_8px] tw:rounded-[999px] tw:[&:is(.canvas-lens-toggle:hover_*)]:bg-[color:var(--well)]",
   chipActive: "tw:pr-[4px] tw:bg-[color:var(--marker-tint)]",
-  icon: "tw:shrink-0 tw:text-[color:var(--ink-muted)]",
   name: "tw:min-w-0 tw:flex-[0_1_auto] tw:leading-[1.5] tw:whitespace-nowrap tw:overflow-hidden tw:text-ellipsis",
   nameRelabel:
     "tw:[animation-name:-diff-view-relabel] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:420ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(14)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
@@ -714,13 +593,12 @@ const styles = {
     "tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:size-[18px] tw:rounded-[999px] tw:[&:is(.canvas-lens-toggle:hover_*)]:bg-[color:var(--marker-glow)]",
   clearMark:
     "tw:fill-[none] tw:stroke-[currentColor] tw:stroke-[1.4] tw:[stroke-linecap:round]",
-  // Inside the sidebar, clear of its scrollbar; line on the editor's edge.
+  // Inside the sidebar, clear of its scrollbar.
   sidebarResizer:
-    "tw:flex-[0_0_16px] tw:w-[16px] tw:min-w-[16px] tw:ml-[-16px] tw:bg-[color:var(--tray)] tw:[&::before]:left-[auto] tw:[&::before]:right-0 tw:[&::before]:[transform:none] tw:[&::after]:absolute tw:[&::after]:top-0 tw:[&::after]:bottom-0 tw:[&::after]:left-0 tw:[&::after]:right-[-3px] tw:[&::after]:[content:'']",
-  railResizer: "tw:flex-[0_0_6px] tw:w-[6px] tw:min-w-[6px] tw:ml-[-6px]",
-  // Overlaps the files pane; the line stays on the pane edge.
-  cabinetsResizer: "tw:block tw:m-[-5px_0] tw:z-[2]",
-  resizing: "tw:[&::before]:bg-[color:var(--ink-faint)]",
+    "tw:flex-[0_0_16px] tw:w-[16px] tw:min-w-[16px] tw:ml-[-16px] tw:bg-[color:var(--surface)] tw:[&::after]:absolute tw:[&::after]:top-0 tw:[&::after]:bottom-0 tw:[&::after]:left-0 tw:[&::after]:right-[-3px] tw:[&::after]:[content:'']",
+  // Overlaps the files pane; a wide grab around its dots.
+  cabinetsResizer:
+    "tw:block tw:h-[16px] tw:min-h-[16px] tw:m-[-8px_0] tw:z-[2]",
   editor: "tw:relative tw:flex-[1] tw:min-w-0 tw:min-h-0 tw:flex tw:flex-col",
   // The workbench mounts its diff widgets here and sizes them from this box.
   host: "tw:relative tw:[grid-row:1] tw:[&:is(.canvas-scoped-diff:is(*)_*)]:[grid-row:2] tw:min-h-0 tw:h-full",

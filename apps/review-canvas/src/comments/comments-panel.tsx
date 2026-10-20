@@ -681,7 +681,8 @@ function DraftEditor({
       ref={ref}
       className={cn(
         card,
-        inline && inlineCard,
+        // Match the editor body so header and footer read as one surface.
+        inline && [inlineCard, "tw:bg-[var(--bg)]"],
         collapsed && "tw:relative",
         "tw:focus-within:border-[var(--ink-faint)]",
         attached &&
