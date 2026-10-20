@@ -9,7 +9,7 @@ export const panelStyles = {
   // Inside a diagram tour the panel keeps its column at every width.
   docked: "tw:static tw:inset-[auto] tw:w-full tw:h-full tw:max-h-none",
   header:
-    "tw:flex tw:flex-[0_0_auto] tw:items-center tw:justify-between tw:gap-[12px] tw:min-h-[var(--review-header-height)] tw:p-[0_10px_0_16px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:[&:is(.canvas-app[data-view=diff]_*)]:[border-bottom-width:0] tw:bg-[color:var(--surface)]",
+    "tw:flex tw:flex-[0_0_auto] tw:items-center tw:justify-between tw:gap-[12px] tw:min-h-[var(--review-header-height)] tw:p-[0_10px_0_16px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--surface)]",
   title: "tw:flex tw:items-center tw:gap-[9px] tw:min-w-0",
   kicker: "tw:flex-[0_0_auto] tw:font-[family-name:var(--font-sans)]",
   heading:

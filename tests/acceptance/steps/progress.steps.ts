@@ -1,6 +1,7 @@
 import { type Page, expect } from "@playwright/test";
 
 import { Given, Then, When } from "../support/fixtures";
+import { openDiffNavigation } from "./navigation.steps";
 
 function lensRow(page: Page, title: string) {
   return page.locator('[aria-label="Lenses"] section').filter({
@@ -16,6 +17,7 @@ Given(
 );
 
 When("I select the {string} lens", async ({ page }, title: string) => {
+  await openDiffNavigation(page);
   const toggle = lensRow(page, title).getByRole("button", { pressed: false });
   await toggle.click();
   await expect(
@@ -24,18 +26,19 @@ When("I select the {string} lens", async ({ page }, title: string) => {
 });
 
 When("I clear the selected lens", async ({ page }) => {
+  await openDiffNavigation(page);
   await page
-    .locator('[aria-label="Lenses"]')
-    .getByRole("button", { pressed: true })
+    .getByRole("button", { name: "No lens All changes", exact: true })
     .click();
   await expect(
     page
-      .locator('[aria-label="Lenses"]')
+      .locator('[aria-label="Lenses"] section')
       .getByRole("button", { pressed: true }),
   ).toHaveCount(0);
 });
 
 Then("only {string} is listed in the diff", async ({ page }, file: string) => {
+  await openDiffNavigation(page, "Files");
   const files = page.locator(".diff-native-tree:visible").getByRole("treeitem");
   await expect(files).toHaveCount(1);
   await expect(files).toHaveAccessibleName(file);
@@ -44,6 +47,8 @@ Then("only {string} is listed in the diff", async ({ page }, file: string) => {
 Then(
   "{string} and {string} are listed in the diff",
   async ({ page }, first: string, second: string) => {
+    await openDiffNavigation(page, "Files");
+
     const files = page
       .locator(".diff-native-tree:visible")
       .getByRole("treeitem");
@@ -63,6 +68,7 @@ Then(
   "the lens contains only the added line {int} of {string}",
   async ({ storedReview, page }, line: number, file: string) => {
     const progress = await storedReview.progress();
+    await openDiffNavigation(page);
 
     const selected = page
       .locator('[aria-label="Lenses"] section')
@@ -78,6 +84,7 @@ Then(
 Then(
   "the {string} lens cannot be selected",
   async ({ page }, title: string) => {
+    await openDiffNavigation(page);
     await expect(
       lensRow(page, title).getByRole("button", { pressed: false }),
     ).toBeDisabled();
@@ -87,6 +94,7 @@ Then(
 When(
   /^I mark the "([^"]+)" lens as (viewed|unviewed)$/,
   async ({ page }, title: string, state: string) => {
+    await openDiffNavigation(page);
     const row = lensRow(page, title);
     const box = row.getByRole("checkbox");
     await expect(box).toHaveAttribute(
@@ -116,6 +124,7 @@ When(
 Then(
   /^the "([^"]+)" lens is (viewed|partially viewed|unviewed)$/,
   async ({ page }, title: string, state: string) => {
+    await openDiffNavigation(page);
     await expect(lensRow(page, title).getByRole("checkbox")).toHaveAttribute(
       "aria-checked",
       state === "viewed"
@@ -162,9 +171,10 @@ Then(
         0,
       ),
     ).toBe(viewed);
+    await openDiffNavigation(page);
     await expect(
       page
-        .locator(".diff-workspace aside")
+        .getByRole("dialog", { name: "Lenses and files" })
         .getByText("Remaining", { exact: false }),
     ).toContainText(`+${total - viewed}`);
   },
@@ -217,4 +227,15 @@ Then("the server reports that the displayed file changed", async ({ page }) => {
 
 When("I reload the changed review", async ({ storedReview }) => {
   await storedReview.open();
+});
+
+When("I close and reopen diff navigation", async ({ page }) => {
+  const diff = await page.locator("[data-pierre-diff]:visible").elementHandle();
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("dialog", { name: "Lenses and files" }),
+  ).toBeHidden();
+  expect(await diff?.evaluate((element) => element.isConnected)).toBe(true);
+  await expect(page.locator("[data-pierre-diff]:visible")).toBeVisible();
+  await openDiffNavigation(page);
 });

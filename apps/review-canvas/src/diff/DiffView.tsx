@@ -1,25 +1,20 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import {
-  Courier,
-  LensCursorContext,
-  lensRowElement,
-} from "@canvas/drawing/courier";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@canvas/components/ui/popover";
+import { Courier, lensRowElement } from "@canvas/drawing/courier";
 import { type MotionPhase, withErasedBlocks } from "@canvas/drawing/draw-queue";
 import { useMotionPhases } from "@canvas/drawing/draw-queue-provider";
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { useTooltip } from "@canvas/lib/use-tooltip";
 import { cn } from "@canvas/lib/utils";
-import { AuthoringActivityContext } from "@canvas/review/authoring-activity-context";
-import { scopeLive } from "@canvas/review/authoring-cursor";
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
 import { useReviewLenses } from "@canvas/review/review-lenses";
-import {
-  useBottomSheetResize,
-  useRightPanelResize,
-} from "@canvas/review/side-panel-resizer";
+import { Choice } from "@canvas/settings/settings-choice";
 import { diffWorkspaceMarker, lensToggleMarker } from "@canvas/styles/markers";
-import { shellStyles } from "@canvas/styles/shell-styles";
-import { IconButton } from "@canvas/ui/button";
+import { Button } from "@canvas/ui/button";
 import { textStyles } from "@canvas/ui/text";
 import type { ReviewCommitScope } from "@chalk/review-contracts";
 import {
@@ -28,7 +23,7 @@ import {
   coverageSources,
 } from "@review/documents/viewed-coverage";
 import type { ClassValue } from "clsx";
-import { PanelLeftCloseIcon, PanelLeftOpenIcon, X } from "lucide-react";
+import { ChevronDownIcon, ListFilterIcon, X } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -126,8 +121,8 @@ export function DiffCounts({
   );
 }
 
-/** Where the shown diff puts its sidebar toggle, in the canvas topbar. */
-export const DiffSidebarToggleSlot = createContext<HTMLElement | null>(null);
+/** Where the shown diff puts its navigation button, in the canvas toolbar. */
+export const DiffNavigationSlot = createContext<HTMLElement | null>(null);
 
 export function ReviewDiffView({
   scope,
@@ -140,39 +135,16 @@ export function ReviewDiffView({
   /** A saved diff position wins over `revealFile`. */
   restoreFile?: boolean;
 }) {
-  const workspaceRef = useRef<HTMLDivElement>(null);
-  const cabinetsRef = useRef<HTMLDivElement>(null);
-
-  const sidebarResize = useRightPanelResize({
-    side: "left",
-    stateKey: "diff-sidebar-width",
-    defaultWidth: 320,
-    minWidth: 250,
-    maxWidth: 800,
-    minMainWidth: 320,
-    collapsedWidth: 0,
-    label: "Resize diff sidebar",
-    containerRef: workspaceRef,
-  });
-
-  const cabinetsResize = useBottomSheetResize({
-    stateKey: "diff-files-height",
-    defaultFraction: 0.45,
-    minFraction: 0.2,
-    maxFraction: 0.8,
-    label: "Resize lenses and files",
-    containerRef: cabinetsRef,
-  });
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const [navigation, setNavigation] = useState<"lenses" | "files">("lenses");
 
   const lenses = useReviewLenses();
   const diffFiles = useReviewDiffFiles();
   const lens = scope ? undefined : lenses?.active;
   const [lensList, setLensList] = useState<HTMLDivElement | null>(null);
   const rows = useLensRows(lenses?.lenses ?? []);
-  const lensCursor = useContext(LensCursorContext);
-  const toggleSlot = useContext(DiffSidebarToggleSlot);
+  const toolbarSlot = useContext(DiffNavigationSlot);
 
-  const lensesLive = scopeLive(useContext(AuthoringActivityContext), "lenses");
   const [fullTree, setFullTree] = useState<HTMLDivElement | null>(null);
   const [lensTree, setLensTree] = useState<HTMLDivElement | null>(null);
 
@@ -251,83 +223,91 @@ export function ReviewDiffView({
       />
     );
   const global = lenses.stats();
+  const open = navigationOpen && !!toolbarSlot;
 
   // diff-workspace is a marker global.css keys on.
   return (
     <div
       className={cn("diff-workspace", styles.workspace, diffWorkspaceMarker)}
-      ref={workspaceRef}
     >
-      {toggleSlot &&
-        createPortal(
-          <IconButton
-            aria-label={
-              sidebarResize.collapsed
-                ? "Expand diff sidebar"
-                : "Collapse diff sidebar"
-            }
-            title={
-              sidebarResize.collapsed
-                ? "Expand diff sidebar"
-                : "Collapse diff sidebar"
-            }
-            onClick={
-              sidebarResize.collapsed
-                ? sidebarResize.expand
-                : sidebarResize.collapse
-            }
-          >
-            {sidebarResize.collapsed ? (
-              <PanelLeftOpenIcon aria-hidden="true" />
-            ) : (
-              <PanelLeftCloseIcon aria-hidden="true" />
-            )}
-          </IconButton>,
-          toggleSlot,
-        )}
-      {/* Stays mounted while folded: it hosts the diff views' file trees. */}
-      <aside
-        className={cn(styles.sidebar, sidebarResize.collapsed && styles.hidden)}
-        style={{ width: sidebarResize.width }}
-      >
-        <div className={styles.progress}>
-          <span className={styles.progressLabel}>
-            {lenses.error &&
-            !(lenses.progress && lenses.progress.complete !== false) ? (
-              "Counts unavailable"
-            ) : (
-              <>
-                Remaining{" "}
-                {lenses.progress && lenses.progress.complete !== false ? (
-                  <DiffCounts progress={global} />
-                ) : (
-                  <span
-                    className={diffCountStyles.counts}
-                    aria-label="Counting changes"
-                  >
-                    …
-                  </span>
-                )}
-              </>
-            )}
-          </span>
-        </div>
-        <div className={styles.cabinets} ref={cabinetsRef}>
+      <Popover open={open} onOpenChange={setNavigationOpen}>
+        {toolbarSlot &&
+          createPortal(
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                className="tw:max-w-[240px]"
+                aria-label="Lenses and files"
+                data-diff-navigation
+              >
+                <ListFilterIcon aria-hidden="true" />
+                <span className="tw:truncate">{lens?.title ?? "No lens"}</span>
+                <ChevronDownIcon aria-hidden="true" />
+              </Button>
+            </PopoverTrigger>,
+            toolbarSlot,
+          )}
+        <PopoverContent
+          align="start"
+          aria-label="Lenses and files"
+          className={styles.popover}
+        >
+          <div className={styles.navigation}>
+            <Choice
+              label="Browse diff"
+              value={navigation}
+              labels={{ lenses: "Lenses", files: "Files" }}
+              disabled={false}
+              onChange={setNavigation}
+            />
+          </div>
+          <div className={styles.progress}>
+            <span className={styles.progressLabel}>
+              {lenses.error &&
+              !(lenses.progress && lenses.progress.complete !== false) ? (
+                "Counts unavailable"
+              ) : (
+                <>
+                  Remaining{" "}
+                  {lenses.progress && lenses.progress.complete !== false ? (
+                    <DiffCounts progress={global} />
+                  ) : (
+                    <span
+                      className={diffCountStyles.counts}
+                      aria-label="Counting changes"
+                    >
+                      …
+                    </span>
+                  )}
+                </>
+              )}
+            </span>
+          </div>
+
           <div
-            className={cn("diff-sidebar-lenses", styles.lenses)}
+            className={cn(
+              "diff-lenses",
+              styles.lenses,
+              navigation !== "lenses" && "tw:hidden",
+            )}
             aria-label="Lenses"
             ref={setLensList}
-            style={{ flexBasis: `${(1 - cabinetsResize.fraction) * 100}%` }}
           >
-            <div
+            <ButtonPrimitive
+              variant="ghost"
+              size="xs"
               className={cn(
-                textStyles.eyebrow,
-                styles.heading,
-                styles.lensesHeading,
+                styles.noLens,
+                !lens && "tw:bg-muted tw:text-foreground",
               )}
+              aria-pressed={!lens}
+              onClick={lenses.clear}
             >
-              Lenses
-            </div>
+              No lens
+              <span className="tw:ml-auto tw:text-muted-foreground tw:font-normal">
+                All changes
+              </span>
+            </ButtonPrimitive>
             {rows.items.map((item) => {
               const selected = lens?.id === item.id,
                 stats = lenses.stats(item.sources),
@@ -446,15 +426,8 @@ export function ReviewDiffView({
             />
           </div>
           <div
-            {...cabinetsResize.separatorProps}
-            className={cn(
-              shellStyles.sheetResizer,
-              shellStyles.sheetResizerDots,
-              styles.cabinetsResizer,
-              cabinetsResize.isResizing && shellStyles.resizerDotsActive,
-            )}
-          />
-          <div className={styles.files}>
+            className={cn(styles.files, navigation !== "files" && "tw:hidden")}
+          >
             <div
               className={cn(
                 textStyles.eyebrow,
@@ -491,34 +464,20 @@ export function ReviewDiffView({
               style={!lens ? { display: "none" } : undefined}
             />
           </div>
-        </div>
-      </aside>
-      {/* Folded, only the topbar toggle opens it again. */}
-      {!sidebarResize.collapsed && (
-        <div
-          {...sidebarResize.separatorProps}
-          className={cn(
-            shellStyles.resizer,
-            styles.sidebarResizer,
-            shellStyles.resizerDots,
-            sidebarResize.isResizing && shellStyles.resizerDotsActive,
-          )}
-        />
-      )}
+        </PopoverContent>
+      </Popover>
       <div className={styles.editor}>
-        {fullTree && (
-          <PierreDiffView
-            treeContainer={fullTree}
-            progress={fullProgress}
-            onToggleViewed={(path) => markFile(path, false)}
-            hidden={!!lens}
-            inWorkspace
-          />
-        )}
-        {lens && lensTree && (
+        <PierreDiffView
+          treeContainer={fullTree ?? undefined}
+          progress={fullProgress}
+          onToggleViewed={(path) => markFile(path, false)}
+          hidden={!!lens}
+          inWorkspace
+        />
+        {lens && (
           <PierreDiffView
             lens={lens}
-            treeContainer={lensTree}
+            treeContainer={lensTree ?? undefined}
             progress={lensProgress}
             onToggleViewed={(path) => markFile(path, true)}
             inWorkspace
@@ -551,20 +510,17 @@ function useLensRows<Item extends { id: string }>(items: Item[]) {
 const styles = {
   workspace:
     "tw:flex tw:min-h-0 tw:h-full tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[1.5]",
-  // The sidebar is the tray; its right padding holds the divider.
-  sidebar:
-    "tw:w-[320px] tw:min-w-[250px] tw:shrink-0 tw:overflow-hidden tw:flex tw:flex-col tw:pr-[16px] tw:bg-[color:var(--surface)]",
-  hidden: "tw:hidden",
-  progress:
-    "tw:flex tw:items-center tw:justify-between tw:gap-[8px] tw:shrink-0 tw:min-h-[52px] tw:p-[0_8px_0_16px] tw:text-[color:var(--ink-muted)] tw:text-[length:11px]",
-  progressLabel: "tw:flex tw:items-baseline tw:gap-[9px]",
-  cabinets: "tw:flex tw:flex-col tw:flex-[1] tw:min-h-0",
+  popover:
+    "tw:w-[380px] tw:max-w-[calc(100vw-24px)] tw:max-h-[min(520px,var(--radix-popover-content-available-height))] tw:flex tw:flex-col tw:p-2 tw:text-[length:12px]",
+  navigation: "tw:px-1 tw:pb-2",
+  progress: "tw:shrink-0 tw:px-2 tw:py-2 tw:text-muted-foreground tw:text-xs",
+  progressLabel: "tw:flex tw:items-baseline tw:gap-2",
+  noLens: "tw:mb-1 tw:w-full tw:justify-start tw:px-3 tw:h-8",
   // The courier stands on the row being written.
   lenses:
-    "tw:flex-[0_0_auto] tw:min-h-0 tw:overflow-auto tw:relative tw:[&:has(>_.courier)]:pt-[14px]",
-  files: "tw:flex tw:flex-col tw:flex-[1] tw:min-h-0 tw:overflow-hidden",
+    "tw:min-h-0 tw:overflow-auto tw:relative tw:[&:has(>_.courier)]:pt-[14px]",
+  files: "tw:flex tw:flex-col tw:h-[320px] tw:min-h-0 tw:overflow-hidden",
   heading: "tw:p-[10px_14px_6px_16px]",
-  lensesHeading: "tw:pt-0 tw:pb-[2px]",
   filesHeading: "tw:whitespace-nowrap tw:overflow-hidden tw:text-ellipsis",
   nativeTree: "tw:flex-[1] tw:min-h-0 tw:overflow-y-auto tw:relative",
   section:
@@ -593,12 +549,6 @@ const styles = {
     "tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:size-[18px] tw:rounded-[999px] tw:[&:is(.canvas-lens-toggle:hover_*)]:bg-[color:var(--marker-glow)]",
   clearMark:
     "tw:fill-[none] tw:stroke-[currentColor] tw:stroke-[1.4] tw:[stroke-linecap:round]",
-  // Inside the sidebar, clear of its scrollbar.
-  sidebarResizer:
-    "tw:flex-[0_0_16px] tw:w-[16px] tw:min-w-[16px] tw:ml-[-16px] tw:bg-[color:var(--surface)] tw:[&::after]:absolute tw:[&::after]:top-0 tw:[&::after]:bottom-0 tw:[&::after]:left-0 tw:[&::after]:right-[-3px] tw:[&::after]:[content:'']",
-  // Overlaps the files pane; a wide grab around its dots.
-  cabinetsResizer:
-    "tw:block tw:h-[16px] tw:min-h-[16px] tw:m-[-8px_0] tw:z-[2]",
   editor: "tw:relative tw:flex-[1] tw:min-w-0 tw:min-h-0 tw:flex tw:flex-col",
   // The workbench mounts its diff widgets here and sizes them from this box.
   host: "tw:relative tw:[grid-row:1] tw:[&:is(.canvas-scoped-diff:is(*)_*)]:[grid-row:2] tw:min-h-0 tw:h-full",

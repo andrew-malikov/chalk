@@ -170,6 +170,16 @@ it("stays off the board while no activity is known and while viewing history", a
   expect(courier()).toBeNull();
 });
 
+it("stays gone when mounted after a lease ends and returns when authoring resumes", async () => {
+  await render(ended, at("b1", "focus", 1));
+  expect(courier()).toBeNull();
+
+  await render(working(), at("b1", "focus", 1));
+  await vi.waitFor(() => expect(courier()).toBeTruthy());
+  standsOn("b1");
+  expect(courier()!.dataset.state).toBe("live");
+});
+
 it("takes the reader to the courier from the top-bar badge, and he jumps", async () => {
   onLocate.mockClear();
   await render(working("Adding evidence"), at("b4", "focus", 1));

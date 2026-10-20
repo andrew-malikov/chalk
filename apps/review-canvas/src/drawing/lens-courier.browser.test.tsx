@@ -1,5 +1,4 @@
-import { DiffSidebarToggleSlot, ReviewDiffView } from "@canvas/diff/DiffView";
-import { reviewPreferenceKey } from "@canvas/host/review-client";
+import { DiffNavigationSlot, ReviewDiffView } from "@canvas/diff/DiffView";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
 import { AuthoringActivityBadge } from "@canvas/review/authoring-activity";
 import { AuthoringActivityContext } from "@canvas/review/authoring-activity-context";
@@ -7,6 +6,7 @@ import type { AuthoringCursor } from "@canvas/review/authoring-cursor";
 import { ReviewLensesProvider } from "@canvas/review/review-lenses";
 import { ReviewPanelProvider } from "@canvas/review/review-panel";
 import {
+  ReviewContainerProvider,
   type ReviewRoots,
   ReviewRootsProvider,
 } from "@canvas/review/review-root-context";
@@ -140,8 +140,9 @@ beforeEach(() => {
   app.style.width = "900px";
   app.style.height = "700px";
   toggleSlot = document.createElement("div");
-  document.body.append(app, toggleSlot);
-  root = createRoot(app);
+  document.body.append(app);
+  app.append(toggleSlot);
+  root = createRoot(app.appendChild(document.createElement("div")));
   manualClock = createManualClock();
   onLocate.mockClear();
   uncategorizedFileCount = 1;
@@ -186,30 +187,32 @@ const render = async (state: {
     root.render(
       <TestCanvasQuery>
         <ReviewSessionProvider session={session}>
-          <ReviewRootsProvider roots={roots}>
-            <AuthoringActivityContext.Provider
-              value={state.activity ?? lensesOnly}
-            >
-              <AuthoringCursorContext.Provider
-                value={state.documentCursor ?? null}
+          <ReviewContainerProvider container={app}>
+            <ReviewRootsProvider roots={roots}>
+              <AuthoringActivityContext.Provider
+                value={state.activity ?? lensesOnly}
               >
-                <DrawQueueProvider
-                  scope="lenses"
-                  cursor={state.lensCursor}
-                  clock={manualClock.clock}
+                <AuthoringCursorContext.Provider
+                  value={state.documentCursor ?? null}
                 >
-                  <ReviewPanelProvider>
-                    <ReviewLensesProvider client={client} snapshot={snapshot}>
-                      <AuthoringActivityBadge onLocate={onLocate} />
-                      <DiffSidebarToggleSlot.Provider value={toggleSlot}>
-                        <ReviewDiffView />
-                      </DiffSidebarToggleSlot.Provider>
-                    </ReviewLensesProvider>
-                  </ReviewPanelProvider>
-                </DrawQueueProvider>
-              </AuthoringCursorContext.Provider>
-            </AuthoringActivityContext.Provider>
-          </ReviewRootsProvider>
+                  <DrawQueueProvider
+                    scope="lenses"
+                    cursor={state.lensCursor}
+                    clock={manualClock.clock}
+                  >
+                    <ReviewPanelProvider>
+                      <ReviewLensesProvider client={client} snapshot={snapshot}>
+                        <AuthoringActivityBadge onLocate={onLocate} />
+                        <DiffNavigationSlot.Provider value={toggleSlot}>
+                          <ReviewDiffView />
+                        </DiffNavigationSlot.Provider>
+                      </ReviewLensesProvider>
+                    </ReviewPanelProvider>
+                  </DrawQueueProvider>
+                </AuthoringCursorContext.Provider>
+              </AuthoringActivityContext.Provider>
+            </ReviewRootsProvider>
+          </ReviewContainerProvider>
         </ReviewSessionProvider>
       </TestCanvasQuery>,
     ),
@@ -229,11 +232,46 @@ const lensEdit = (
   seq: ++seq,
 });
 
+const navigationButton = () =>
+  toggleSlot.querySelector<HTMLButtonElement>("[data-diff-navigation]")!;
+
+const openNavigation = async () => {
+  if (navigationButton().getAttribute("aria-expanded") === "false")
+    await act(async () => navigationButton().click());
+};
+
 const row = (id: string) =>
   app.querySelector<HTMLElement>(`[data-lens-id="${id}"]`);
 
 const courier = () =>
   app.querySelector<HTMLElement>('.courier[data-scope="lenses"]');
+
+it.each([
+  { workingCount: 0, expiresAt: null, scopes: [] },
+  { workingCount: 1, expiresAt: null, scopes: ["document"] },
+] satisfies ActivitySnapshot[])(
+  "does not replay the courier's departure when opening an inactive lens session: %j",
+  async (activity) => {
+    await render({
+      lenses: [api],
+      version: 1,
+      activity,
+      lensCursor: {
+        targetId: api.id,
+        blockId: api.id,
+        source: "focus",
+        seq: 1,
+      },
+    });
+
+    for (let opening = 0; opening < 2; opening++) {
+      await openNavigation();
+      await vi.waitFor(() => expect(row(api.id)).not.toBeNull());
+      expect(courier()).toBeNull();
+      await act(async () => navigationButton().click());
+    }
+  },
+);
 
 it.each([
   { fileCount: 0, pending: false, visible: false },
@@ -245,6 +283,7 @@ it.each([
     uncategorizedFileCount = fileCount;
     uncategorizedPending = pending;
     await render({ lenses: [api], version: 1, lensCursor: null });
+    await openNavigation();
     await vi.waitFor(() =>
       expect(
         row(api.id)?.querySelector("button[aria-pressed]")?.textContent,
@@ -257,6 +296,7 @@ it.each([
 it("lands a new lens row with the courier on it, without listing its files, and erases a removed one", async () => {
   await render({ lenses: [api], version: 1, lensCursor: null });
   expect(courier()).toBeNull();
+  await openNavigation();
 
   await render({
     lenses: [api, docs],
@@ -267,7 +307,7 @@ it("lands a new lens row with the courier on it, without listing its files, and 
   await vi.waitFor(() => expect(courier()).toBeTruthy());
 
   // The courier re-measures a frame later, once the list makes room for him.
-  const list = app.querySelector<HTMLElement>(".diff-sidebar-lenses")!;
+  const list = app.querySelector<HTMLElement>(".diff-lenses")!;
   await vi.waitFor(() =>
     expect(parseFloat(courier()!.style.top)).toBeCloseTo(
       row(docs.id)!.getBoundingClientRect().top -
@@ -304,10 +344,9 @@ it("sends the top-bar badge to the Diffs page while only lenses are written", as
     version: 2,
     lensCursor: { targetId: api.id, blockId: api.id, source: "focus", seq: 1 },
   });
-  await vi.waitFor(() => expect(courier()).toBeTruthy());
+  expect(navigationButton().getAttribute("aria-expanded")).toBe("false");
 
-  const scroll = vi.fn<() => void>();
-  row(api.id)!.scrollIntoView = scroll;
+  const scroll = vi.spyOn(HTMLElement.prototype, "scrollIntoView");
 
   const badge = app.querySelector<HTMLButtonElement>(
     "button.host-authoring-activity",
@@ -334,49 +373,54 @@ it("sends the top-bar badge to the Diffs page while only lenses are written", as
       .click(),
   );
   expect(onLocate).toHaveBeenCalledWith("review");
+  scroll.mockRestore();
 });
 
-it("folds the sidebar away and opens it again, keeping the lens filter", async () => {
-  window.localStorage.setItem(
-    reviewPreferenceKey("ui", "diff-sidebar-width-collapsed"),
-    "true",
+it("keeps the lens filter when navigation closes, switches to files, and clears with No lens", async () => {
+  await render({ lenses: [api, docs], version: 1, lensCursor: null });
+  await openNavigation();
+  await vi.waitFor(() => expect(row(api.id)).not.toBeNull());
+  await act(async () =>
+    row(api.id)!
+      .querySelector<HTMLButtonElement>("button[aria-pressed]")!
+      .click(),
   );
+  expect(navigationButton().textContent).toContain("API");
 
-  try {
-    await render({ lenses: [api, docs], version: 1, lensCursor: null });
+  await act(async () => navigationButton().click());
+  expect(row(api.id)).toBeNull();
+  await openNavigation();
+  expect(
+    row(api.id)!
+      .querySelector("button[aria-pressed]")!
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
 
-    const shown = () => !!row(api.id)?.checkVisibility();
-
-    const toggle = (label: string) =>
-      toggleSlot.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)!;
-
-    await vi.waitFor(() => expect(row(api.id)).not.toBeNull());
-    expect(shown()).toBe(false);
-
-    const divider = () =>
-      app.querySelector('[role="separator"][aria-label="Resize diff sidebar"]');
-
-    // Folded, only the toggle opens it: no divider to drag.
-    expect(divider()).toBeNull();
-    await act(async () => toggle("Expand diff sidebar").click());
-    expect(shown()).toBe(true);
-    expect(divider()).not.toBeNull();
-
-    await act(async () =>
-      row(api.id)!
-        .querySelector<HTMLButtonElement>("button[aria-pressed]")!
-        .click(),
-    );
-    await act(async () => toggle("Collapse diff sidebar").click());
-    expect(shown()).toBe(false);
-    await act(async () => toggle("Expand diff sidebar").click());
-    expect(shown()).toBe(true);
-    expect(
-      row(api.id)
-        ?.querySelector("button[aria-pressed]")
-        ?.getAttribute("aria-pressed"),
-    ).toBe("true");
-  } finally {
-    window.localStorage.clear();
-  }
+  await act(async () =>
+    app
+      .querySelector<HTMLButtonElement>('[role="radio"][value="files"]')!
+      .click(),
+  );
+  expect(row(api.id)!.checkVisibility()).toBe(false);
+  expect(
+    app
+      .querySelector<HTMLElement>(".diff-native-tree")
+      ?.parentElement?.checkVisibility(),
+  ).toBe(true);
+  await act(async () =>
+    app
+      .querySelector<HTMLButtonElement>('[role="radio"][value="lenses"]')!
+      .click(),
+  );
+  await act(async () =>
+    [...app.querySelectorAll<HTMLButtonElement>("button")]
+      .find((button) => button.textContent?.includes("No lens"))!
+      .click(),
+  );
+  expect(navigationButton().textContent).toContain("No lens");
+  expect(
+    row(api.id)!
+      .querySelector("button[aria-pressed]")!
+      .getAttribute("aria-pressed"),
+  ).toBe("false");
 });

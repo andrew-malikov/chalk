@@ -1,7 +1,7 @@
 import { expect } from "@playwright/test";
 
 import { Given, Then, When } from "../support/fixtures";
-import { openCommitDiff } from "./navigation.steps";
+import { openCommitDiff, openDiffNavigation } from "./navigation.steps";
 
 Given(
   "I selected the {string} view in a review",
@@ -21,7 +21,10 @@ Given(
     await review.open(version);
     await page.getByRole("button", { name: "Diff", exact: true }).click();
 
+    await openDiffNavigation(page);
+
     const lens = page
+      .locator('[aria-label="Lenses"]')
       .getByRole("button")
       .filter({ has: page.getByText(title, { exact: true }) });
 
@@ -42,7 +45,10 @@ When(
 );
 
 Then("the {string} lens is selected", async ({ page }, title: string) => {
+  await openDiffNavigation(page);
+
   const lens = page
+    .locator('[aria-label="Lenses"]')
     .getByRole("button")
     .filter({ has: page.getByText(title, { exact: true }) });
 
@@ -51,9 +57,10 @@ Then("the {string} lens is selected", async ({ page }, title: string) => {
 });
 
 Then("no lens is selected", async ({ page }) => {
+  await openDiffNavigation(page);
   await expect(page.getByText("API changes", { exact: true })).toBeVisible();
   await expect(
-    page.locator('[aria-label="Lenses"] button[aria-pressed="true"]'),
+    page.locator('[aria-label="Lenses"] section button[aria-pressed="true"]'),
   ).toHaveCount(0);
 });
 

@@ -499,7 +499,6 @@ function ReviewLayoutContent({
             <header
               className={cn(
                 shellStyles.topbar,
-                activeView === "diff" && shellStyles.topbarFlush,
                 chrome && !pageToolbarShown && shellStyles.topbarHidden,
               )}
             >
@@ -578,10 +577,7 @@ function ReviewLayoutContent({
               shellStyles.resizer,
               shellStyles.peekResizer,
               shellStyles.resizerGrabPanel,
-              activeView === "diff" && [
-                shellStyles.peekResizerFlush,
-                shellStyles.resizerDots,
-              ],
+              activeView === "diff" && shellStyles.resizerDots,
               sidePeekResize.isResizing && shellStyles.peekResizerActive,
               activeView === "diff" &&
                 sidePeekResize.isResizing &&

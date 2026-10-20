@@ -2,7 +2,7 @@ import { useComments } from "@canvas/comments/comments-context";
 import { CommentsPanel } from "@canvas/comments/comments-panel";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
 import { DiffSettingsControl } from "@canvas/diff/diff-settings";
-import { DiffSidebarToggleSlot, ReviewDiffView } from "@canvas/diff/DiffView";
+import { DiffNavigationSlot, ReviewDiffView } from "@canvas/diff/DiffView";
 import { useTooltip } from "@canvas/lib/use-tooltip";
 import { cn } from "@canvas/lib/utils";
 import {
@@ -81,11 +81,11 @@ export function DiffPage({ active }: { active: boolean }): ReactElement {
         style={frozenDiffStyle}
       >
         {diffOpened && (
-          <DiffSidebarToggleSlot.Provider
+          <DiffNavigationSlot.Provider
             value={diffPreloaded ? null : (slots?.toolbarStart ?? null)}
           >
             <ReviewDiffView />
-          </DiffSidebarToggleSlot.Provider>
+          </DiffNavigationSlot.Provider>
         )}
       </div>
       {active && diffScope !== null && (
@@ -126,7 +126,10 @@ function CommentsButton({
   return (
     <IconButton
       ref={tooltip}
-      className={shellStyles.topbarItem}
+      className={[
+        shellStyles.topbarItem,
+        "tw:aria-expanded:bg-accent tw:aria-expanded:text-accent-foreground",
+      ]}
       aria-label="Comments"
       aria-expanded={expanded}
       onClick={onClick}

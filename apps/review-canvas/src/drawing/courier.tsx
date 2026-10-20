@@ -195,7 +195,11 @@ export function Courier({
   };
 
   const [idle, setIdle] = useState<Idle>("none");
-  const [gone, setGone] = useState(false);
+
+  // Mounting after authoring ended must not replay the departure.
+  const [gone, setGone] = useState(
+    () => activity !== "unknown" && !scopeLive(activity, scope),
+  );
 
   const live = scopeLive(activity, scope);
 

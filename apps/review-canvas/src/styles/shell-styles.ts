@@ -42,10 +42,6 @@ export const shellStyles = {
   // Dragged dots grow and darken; important beats the hover tint.
   resizerDotsActive:
     "tw:[&::before]:bg-[color:var(--ink)]! tw:[&::before]:[scale:1.5]",
-  // The diff view shares one surface across topbar, sidebar and panel, so no
-  // rules between them.
-  topbarFlush: "tw:[border-bottom-width:0]",
-  peekResizerFlush: "tw:[background-image:none]",
   // With the tabs and actions in the host's command bar, only the diff view
   // keeps a toolbar. Collapsed rather than unmounted, so its portals stay.
   topbarHidden: "tw:h-0 tw:invisible tw:[border-bottom-width:0]",

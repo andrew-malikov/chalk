@@ -55,30 +55,42 @@ export function AuthoringActivityBadge({
   const locate = () => {
     onLocate?.(toLenses ? "diff" : "review");
 
-    if (!cursor) return;
-
-    // The surface may only be showing now; measure after it paints.
+    // The surface may only be showing now; open navigation before measuring.
     requestAnimationFrame(() => {
-      const container = toLenses
-        ? roots?.appRef.current?.querySelector<HTMLElement>(
-            ".diff-sidebar-lenses",
-          )
-        : roots?.articleRef.current;
+      if (toLenses) {
+        const trigger = roots?.appRef.current?.querySelector<HTMLButtonElement>(
+          "[data-diff-navigation]",
+        );
 
-      if (!container) return;
+        if (trigger?.getAttribute("aria-expanded") === "false") trigger.click();
+        roots?.appRef.current
+          ?.querySelector<HTMLButtonElement>('[role="radio"][value="lenses"]')
+          ?.click();
+      }
 
-      const target = (toLenses ? lensRowElement : cursorElement)(
-        container,
-        cursor,
-      );
+      if (!cursor) return;
+      requestAnimationFrame(() => {
+        const container = toLenses
+          ? roots?.appRef.current?.querySelector<HTMLElement>(".diff-lenses")
+          : roots?.articleRef.current;
 
-      if (!target) return;
-      target.scrollIntoView?.({ block: "center", behavior: "smooth" });
-      container
-        .querySelector<HTMLButtonElement>(
-          `.courier[data-scope="${toLenses ? "lenses" : "document"}"] .courier-figure`,
-        )
-        ?.click();
+        if (!container) return;
+
+        const target = (toLenses ? lensRowElement : cursorElement)(
+          container,
+          cursor,
+        );
+
+        if (!target) return;
+        target.scrollIntoView?.({ block: "center", behavior: "smooth" });
+        requestAnimationFrame(() =>
+          container
+            .querySelector<HTMLButtonElement>(
+              `.courier[data-scope="${toLenses ? "lenses" : "document"}"] .courier-figure`,
+            )
+            ?.click(),
+        );
+      });
     });
   };
 

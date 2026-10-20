@@ -5,6 +5,7 @@ Feature: Focus a review with lenses
 
   Scenario: Select and clear a lens
     When I select the "API" lens
+    And I close and reopen diff navigation
     Then only "api.ts" is listed in the diff
     When I clear the selected lens
     Then "api.ts" and "notes.md" are listed in the diff

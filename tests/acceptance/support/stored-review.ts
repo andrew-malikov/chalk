@@ -167,6 +167,9 @@ export class StoredReview {
       JSON.stringify(snapshot),
     );
     await this.page.getByRole("button", { name: "Diff", exact: true }).click();
+    await this.page
+      .getByRole("button", { name: "Lenses and files", exact: true })
+      .click();
     await expect(
       this.page
         .getByRole("checkbox", { name: "Mark viewed: API", exact: true })
