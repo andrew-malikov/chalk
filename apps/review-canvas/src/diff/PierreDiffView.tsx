@@ -71,6 +71,22 @@ interface Props {
   inWorkspace?: boolean;
 }
 
+export function useReviewTheme() {
+  const session = useReviewSession();
+
+  return useSyncExternalStore(
+    useCallback(
+      (notify) => {
+        const subscription = session.bridge.onDidChangeTheme(notify);
+
+        return () => subscription.dispose();
+      },
+      [session.bridge],
+    ),
+    () => session.theme(),
+  );
+}
+
 interface SavedView {
   collapsed: string[];
   anchor?: { id: string; line?: NumericScrollLineAnchor; offset: number };
@@ -278,17 +294,7 @@ function Comparison({
 
   const [layout] = useDiffPreference("layout");
 
-  const theme = useSyncExternalStore(
-    useCallback(
-      (notify) => {
-        const subscription = session.bridge.onDidChangeTheme(notify);
-
-        return () => subscription.dispose();
-      },
-      [session.bridge],
-    ),
-    () => session.theme(),
-  );
+  const theme = useReviewTheme();
 
   const annotations: (DiffLineAnnotation<CommentAnnotation> & {
     file: string;
@@ -758,7 +764,7 @@ function Comparison({
       overflow: wrap ? ("wrap" as const) : ("scroll" as const),
       stickyHeaders: true,
       unsafeCSS:
-        ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}:is([data-line-annotation],[data-gutter-buffer=annotation]){--diffs-annotation-bg:var(--diffs-bg)}",
+        ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}:is([data-line-annotation],[data-gutter-buffer=annotation]){--diffs-annotation-bg:var(--diffs-bg)}[data-diffs-header]{cursor:pointer}[data-diffs-header]:hover{background-color:var(--diffs-bg-context)}",
       onPostRender: restore,
       loadDiffFiles:
         committed && !structural
@@ -847,6 +853,31 @@ function Comparison({
         0,
       )}
       data-rejected-files={entries.filter((entry) => entry.error).length}
+      onClick={(event) => {
+        // The whole file header toggles collapse, except the controls in it.
+        const path = event.nativeEvent.composedPath();
+        const header = path.findIndex(
+          (node) =>
+            node instanceof HTMLElement &&
+            node.hasAttribute("data-diffs-header"),
+        );
+
+        if (
+          header < 0 ||
+          !document.getSelection()?.isCollapsed ||
+          path
+            .slice(0, header)
+            .some(
+              (node) =>
+                node instanceof HTMLElement &&
+                node.matches("button, a, input, label"),
+            )
+        )
+          return;
+        ((path[header] as HTMLElement).getRootNode() as ShadowRoot).host
+          .querySelector<HTMLButtonElement>('[slot="header-prefix"] button')
+          ?.click();
+      }}
     >
       {treeContainer &&
         createPortal(
@@ -905,6 +936,8 @@ function Comparison({
           overflowY: "auto",
           position: "relative",
         }}
+        // Room to scroll the last lines out from under the floating bottom bar.
+        renderCodeViewFooter={() => <div className="tw:h-[72px]" />}
         renderAnnotation={(annotation) => (
           <InlineComments annotation={annotation.metadata} />
         )}

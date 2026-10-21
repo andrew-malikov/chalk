@@ -593,6 +593,16 @@ it("shows real Git rows progressively, navigates files, marks viewed, and switch
       code().some((node) => node.textContent?.includes("after a.ts")),
     ).toBe(false),
   );
+  container
+    .querySelector('[aria-label="Expand a.ts"]')!
+    .closest("diffs-container")!
+    .shadowRoot!.querySelector<HTMLElement>("[data-title]")!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      code().some((node) => node.textContent?.includes("after a.ts")),
+    ).toBe(true),
+  );
 });
 
 it("keeps renamed lens files visible in worktrees without expanding from live source reads", async () => {

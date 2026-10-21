@@ -1,6 +1,10 @@
 import type { ReviewDiffFileWire } from "@chalk/review-contracts";
 import type { GitStatusEntry } from "@pierre/trees";
-import { FileTree, useFileTree } from "@pierre/trees/react";
+import {
+  FileTree,
+  useFileTree,
+  useFileTreeSelector,
+} from "@pierre/trees/react";
 import { type CSSProperties, useEffect, useRef } from "react";
 
 import { compactDiffCount } from "./diff-count";
@@ -73,6 +77,12 @@ function Tree({ files, selectedPath, theme, onSelect }: Props) {
     },
   });
 
+  // As tall as its rows plus the bottom padding; the popover caps it.
+  const height = useFileTreeSelector(
+    model,
+    (model) => model.getVisibleCount() * model.getItemHeight() + 12,
+  );
+
   useEffect(() => {
     if (!selectedPath) return;
     shown.current = selectedPath;
@@ -90,7 +100,8 @@ function Tree({ files, selectedPath, theme, onSelect }: Props) {
       // forwards as-is; CSSProperties just doesn't list them.
       style={
         {
-          height: "100%",
+          height,
+          minHeight: 0,
           colorScheme: theme,
           "--trees-bg-override": "transparent",
           "--trees-font-family-override": "var(--font-sans)",

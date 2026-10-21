@@ -985,7 +985,7 @@ function Shell(
           </Button>
           <div
             ref={viewsHost}
-            className="review-shell-views tw:flex tw:flex-none tw:items-center tw:border-l tw:px-3 tw:empty:hidden tw:dark:border-input"
+            className="review-shell-views tw:flex tw:flex-none tw:items-center tw:pr-3 tw:empty:hidden tw:before:mr-3 tw:before:text-[var(--ink-faint)] tw:before:content-['/']"
           />
         </div>
         <div className="review-shell-actions tw:flex tw:items-center tw:justify-self-end tw:gap-1 tw:text-muted-foreground">

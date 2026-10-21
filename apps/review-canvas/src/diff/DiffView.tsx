@@ -510,10 +510,10 @@ const styles = {
   // The courier stands on the row being written.
   lenses:
     "tw:min-h-0 tw:overflow-auto tw:relative tw:[&:has(>_.courier)]:pt-[14px]",
-  files: "tw:flex tw:flex-col tw:h-[320px] tw:min-h-0 tw:overflow-hidden",
+  files: "tw:flex tw:flex-col tw:min-h-0 tw:overflow-hidden",
   heading: "tw:p-[10px_14px_6px_16px]",
   filesHeading: "tw:whitespace-nowrap tw:overflow-hidden tw:text-ellipsis",
-  nativeTree: "tw:flex-[1] tw:min-h-0 tw:overflow-y-auto tw:relative",
+  nativeTree: "tw:flex tw:flex-col tw:min-h-0 tw:relative",
   section:
     "tw:[border-bottom-width:0] tw:[border-bottom-style:none] tw:[border-bottom-color:currentcolor]",
   // The section wears no wash; the pressed toggle already says open.
@@ -532,12 +532,13 @@ const styles = {
   // A selected lens is a filter chip around its funnel, name and clear mark;
   // the counts stay outside it so they keep their column.
   chip: "tw:flex tw:min-w-0 tw:items-center tw:gap-[8px] tw:h-[24px] tw:p-[0_8px] tw:rounded-[999px]",
-  chipActive: "tw:pr-[4px] tw:bg-[color:var(--marker-tint)]",
+  chipActive:
+    "tw:pr-[4px] tw:bg-[color:var(--marker-tint)] tw:[&:is(.canvas-lens-toggle:hover_*)]:bg-[color:var(--marker-glow)]",
   name: "tw:min-w-0 tw:flex-[0_1_auto] tw:leading-[1.5] tw:whitespace-nowrap tw:overflow-hidden tw:text-ellipsis",
   nameRelabel:
     "tw:[animation-name:-diff-view-relabel] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:420ms] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:steps(14)] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-fill-mode:both] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-fill-mode:none]",
   clear:
-    "tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:size-[18px] tw:rounded-[999px] tw:[&:is(.canvas-lens-toggle:hover_*)]:bg-[color:var(--marker-glow)]",
+    "tw:inline-flex tw:shrink-0 tw:items-center tw:justify-center tw:size-[18px] tw:rounded-[999px]",
   clearMark:
     "tw:fill-[none] tw:stroke-[currentColor] tw:stroke-[1.4] tw:[stroke-linecap:round]",
   editor: "tw:relative tw:flex-[1] tw:min-w-0 tw:min-h-0 tw:flex tw:flex-col",

@@ -29,6 +29,8 @@ export function createCanvasQueryClient(): QueryClient {
  */
 export const canvasQueryKeys = {
   commitFiles: (commit: string) => ["commit-files", commit] as const,
+  commitFileDiff: (commit: string, path: string) =>
+    ["commit-file-diff", commit, path] as const,
   diffFiles: (documentKey: string, source: number, revision?: string) =>
     ["diff-files", documentKey, source, revision] as const,
 

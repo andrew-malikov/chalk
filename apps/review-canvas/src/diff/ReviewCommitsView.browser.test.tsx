@@ -42,6 +42,7 @@ const file: ReviewDiffFileWire = {
 async function mount(
   element: React.ReactElement,
   diffView: ReviewCanvasBridge["diffView"],
+  request?: ReviewCanvasBridge["request"],
 ) {
   const container = document.createElement("div");
   container.className = "review-canvas-root";
@@ -51,7 +52,7 @@ async function mount(
   await act(async () =>
     root!.render(
       <TestCanvasQuery>
-        <ReviewSessionProvider session={testReviewSession({}, { diffView })}>
+        <ReviewSessionProvider session={testReviewSession({}, { diffView, request })}>
           {element}
         </ReviewSessionProvider>
       </TestCanvasQuery>,
@@ -91,9 +92,11 @@ it("aligns commit subjects with their metadata at different row widths", async (
   }
 });
 
-it("opens a commit's diff at the file clicked in its file list", async () => {
+it("shows a clicked file's diff inline and lists omitted files in place", async () => {
   const onOpenDiff =
     vi.fn<React.ComponentProps<typeof ReviewCommitsView>["onOpenDiff"]>();
+
+  const testFile = { ...file, path: "src/thing.test.ts" };
 
   const container = await mount(
     <ReviewCommitsView
@@ -106,24 +109,40 @@ it("opens a commit's diff at the file clicked in its file list", async () => {
       }}
       onOpenDiff={onOpenDiff}
     />,
-    { files: async () => [file] },
+    { files: async () => [file, testFile] },
+    async () =>
+      new Response(
+        "diff --git a/src/thing.ts b/src/thing.ts\n--- a/src/thing.ts\n+++ b/src/thing.ts\n@@ -1 +1 @@\n-before\n+after\n",
+      ),
   );
 
   await act(async () =>
     container.querySelector<HTMLButtonElement>("[aria-expanded]")!.click(),
   );
 
-  const fileButton = await vi.waitFor(() => {
-    const button = [...container.querySelectorAll("button")].find((button) =>
-      button.textContent?.includes(file.path),
-    );
+  const button = (text: string) =>
+    vi.waitFor(() => {
+      const found = [...container.querySelectorAll("button")].find((button) =>
+        button.textContent?.includes(text),
+      );
 
-    if (!button) throw new Error("file list not loaded");
+      if (!found) throw new Error(`${text} not shown`);
 
-    return button;
+      return found;
+    });
+
+  await act(async () => (await button(file.path)).click());
+
+  await vi.waitFor(() => {
+    if (!container.querySelector("diffs-container"))
+      throw new Error("diff not shown");
   });
 
-  await act(async () => fileButton.click());
+  expect(container.textContent).not.toContain(testFile.path);
 
-  expect(onOpenDiff).toHaveBeenCalledWith(commit, file.path);
+  await act(async () => (await button("1 more file")).click());
+
+  expect(container.textContent).toContain(testFile.path);
+  expect(container.textContent).not.toContain("more file");
+  expect(onOpenDiff).not.toHaveBeenCalled();
 });

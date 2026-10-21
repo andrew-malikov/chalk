@@ -15,12 +15,16 @@ import {
   type ReviewCommitSummary,
   type ReviewDiffFileWire,
 } from "@chalk/review-contracts";
+import { FileDiff } from "@pierre/diffs/react";
 import { useQuery } from "@tanstack/react-query";
 import { CircleSmall } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { useReviewTheme } from "./PierreDiffView";
 import { DiffCount } from "./diff-count";
+import { useDiffPreference } from "./diff-settings";
 import { FileMark } from "./file-mark";
+import { loadPierreComparison, loadPierreFile } from "./pierre-comparison";
 
 type OpenCommitDiff = (commit: ReviewCommitSummary, file?: string) => void;
 
@@ -98,6 +102,8 @@ function CommitRow({
 }) {
   const session = useReviewSession();
   const [expanded, setExpanded] = useState(false);
+  const [showAllFiles, setShowAllFiles] = useState(false);
+  const [openFiles, setOpenFiles] = useState<ReadonlySet<string>>(new Set());
   const openTooltip = useTooltip("Open commit diff");
 
   // A commit's files never change.
@@ -120,6 +126,25 @@ function CommitRow({
   const omittedFileCount = visibleFiles
     ? visibleFiles.testFilesOmitted + visibleFiles.overflowFilesOmitted
     : 0;
+
+  // Omitted files append below the ranked ones, so the rows already read stay
+  // put.
+  const shownFiles =
+    visibleFiles && showAllFiles
+      ? [
+          ...visibleFiles.files,
+          ...files.data!.filter((file) => !visibleFiles.files.includes(file)),
+        ]
+      : visibleFiles?.files;
+
+  const toggleFile = (path: string) =>
+    setOpenFiles((open) => {
+      const next = new Set(open);
+
+      if (!next.delete(path)) next.add(path);
+
+      return next;
+    });
 
   return (
     <article className={cn(styles.card, expanded && styles.cardExpanded)}>
@@ -176,30 +201,35 @@ function CommitRow({
           {files.isError ? (
             <p className={styles.filesNote}>{files.error.message}</p>
           ) : null}
-          {visibleFiles?.files.map((file) => (
-            <ButtonPrimitive
-              variant="ghost"
-              size="xs"
-              type="button"
-              className={styles.file}
-              key={file.path}
-              onClick={() => onOpenDiff(commit, file.path)}
-            >
-              <FileMark status={file.status} />
-              <span className={styles.filePath}>{file.path}</span>
-              <DiffCount
-                additions={file.additions}
-                deletions={file.deletions}
-              />
-            </ButtonPrimitive>
+          {shownFiles?.map((file) => (
+            <div key={file.path}>
+              <ButtonPrimitive
+                variant="ghost"
+                size="xs"
+                type="button"
+                className={styles.file}
+                aria-expanded={openFiles.has(file.path)}
+                onClick={() => toggleFile(file.path)}
+              >
+                <FileMark status={file.status} />
+                <span className={styles.filePath}>{file.path}</span>
+                <DiffCount
+                  additions={file.additions}
+                  deletions={file.deletions}
+                />
+              </ButtonPrimitive>
+              {openFiles.has(file.path) ? (
+                <CommitFileDiff commit={commit.commit} file={file} />
+              ) : null}
+            </div>
           ))}
-          {omittedFileCount > 0 ? (
+          {omittedFileCount > 0 && !showAllFiles ? (
             <ButtonPrimitive
               variant="ghost"
               size="xs"
               type="button"
               className={styles.filesFooter}
-              onClick={() => onOpenDiff(commit)}
+              onClick={() => setShowAllFiles(true)}
             >
               {countLabel(omittedFileCount, "more file")}
             </ButtonPrimitive>
@@ -207,6 +237,83 @@ function CommitRow({
         </div>
       ) : null}
     </article>
+  );
+}
+
+function CommitFileDiff({
+  commit,
+  file,
+}: {
+  commit: string;
+  file: ReviewDiffFileWire;
+}) {
+  const session = useReviewSession();
+  const theme = useReviewTheme();
+  const [layout] = useDiffPreference("layout");
+  const [wrap] = useDiffPreference("wrap");
+
+  const url = useMemo(() => {
+    const url = new URL(session.apiUrl("/diff"));
+    url.searchParams.set("commit", commit);
+
+    return url.href;
+  }, [session.apiUrl, commit]);
+
+  // A commit's patch never changes.
+  const entry = useQuery({
+    queryKey: canvasQueryKeys.commitFileDiff(commit, file.path),
+    queryFn: async ({ signal }) =>
+      (
+        await loadPierreComparison({
+          files: [file],
+          url,
+          signal,
+          request: session.fetchUrl,
+          onUpdate: () => {},
+        })
+      )[0]!,
+    staleTime: Infinity,
+  });
+
+  // Pierre hydrates metadata in place; each mounted viewer owns its copy.
+  const diff = useMemo(
+    () => entry.data?.diff && structuredClone(entry.data.diff),
+    [entry.data],
+  );
+
+  if (!diff)
+    return (
+      <p className={styles.filesNote}>
+        {entry.error?.message ??
+          entry.data?.error ??
+          entry.data?.notice ??
+          "Loading diff…"}
+      </p>
+    );
+
+  return (
+    <FileDiff
+      fileDiff={diff}
+      className={styles.fileDiff}
+      options={{
+        diffStyle: layout,
+        hunkSeparators: "line-info",
+        theme: theme === "light" ? "pierre-light" : "pierre-dark",
+        themeType: theme,
+        preferredHighlighter: "shiki-js",
+        overflow: wrap ? "wrap" : "scroll",
+        disableFileHeader: true,
+        unsafeCSS:
+          ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}",
+        loadDiffFiles: (diff) =>
+          loadPierreFile(
+            diff,
+            url,
+            session.fetchUrl,
+            new AbortController().signal,
+          ),
+      }}
+    />
   );
 }
 
@@ -322,9 +429,10 @@ const styles = {
   files: "tw:p-[6px_0]",
   filesNote:
     "tw:m-[6px_12px] tw:text-[color:var(--ink-faint)] tw:text-[length:11px]",
-  file: "tw:flex tw:w-full tw:items-center tw:gap-[10px] tw:p-[6px_12px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:[&:hover]:bg-[color:var(--control-bg)] tw:text-[color:var(--ink)] tw:text-[length:11px] tw:text-left",
+  file: "tw:flex tw:w-full tw:items-center tw:gap-[10px] tw:p-[6px_12px] tw:rounded-none tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:[&:hover]:bg-[color:var(--control-bg)] tw:text-[color:var(--ink)] tw:text-[length:11px] tw:text-left",
   filePath:
     "tw:min-w-0 tw:flex-[1] tw:overflow-hidden tw:text-ellipsis tw:whitespace-nowrap",
+  fileDiff: "tw:block tw:my-[4px]",
   filesFooter:
     "tw:w-full tw:justify-start tw:p-[6px_12px_4px_38px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:transparent] tw:text-[color:var(--ink-faint)] tw:[&:hover]:text-[color:var(--accent)] tw:text-[length:10px]",
   // The whole header is the toggle's hit area, so its chevron stays quiet on
