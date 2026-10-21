@@ -198,7 +198,12 @@ export function CommentsContent() {
       )}
       {gitlab && (
         <div className="tw:flex tw:flex-col tw:gap-1.5 tw:text-[12px] tw:wrap-anywhere tw:text-[var(--ink-faint)]">
-          <a href={gitlab.identity.url} target="_blank" rel="noreferrer">
+          <a
+            className="tw:text-[var(--ink-muted)] tw:underline tw:decoration-[var(--ink-faint)] tw:underline-offset-2 tw:hover:text-[var(--ink)]"
+            href={gitlab.identity.url}
+            target="_blank"
+            rel="noreferrer"
+          >
             {gitlab.identity.projectPath} !{gitlab.identity.iid}
           </a>
           <span>
@@ -467,6 +472,7 @@ function Discussion({
       className={cn(
         card,
         inlineCard,
+        !inline && "tw:bg-[var(--surface)]",
         "tw:relative tw:z-[1]",
         comments.selected === discussion.id && "tw:border-[var(--ink-faint)]",
       )}
@@ -694,7 +700,7 @@ function DraftEditor({
       className={cn(
         card,
         // Match the editor body so header and footer read as one surface.
-        inline && [inlineCard, "tw:bg-[var(--bg)]"],
+        inline ? [inlineCard, "tw:bg-[var(--bg)]"] : "tw:bg-[var(--surface)]",
         collapsed && "tw:relative",
         "tw:focus-within:border-[var(--ink-faint)]",
         attached &&
@@ -884,7 +890,7 @@ function relativeTime(date: string) {
 /** GitLab Markdown, rendered as the editor's Preview renders it. */
 function NoteBody({ source }: { source: string }) {
   return (
-    <div className="tw:min-w-0 tw:leading-[1.6] tw:wrap-anywhere">
+    <div className="tw:min-w-0 tw:leading-[1.6] tw:wrap-anywhere tw:[&_a]:text-[var(--ink-muted)] tw:[&_a]:underline tw:[&_a]:decoration-[var(--ink-faint)] tw:[&_a]:underline-offset-2 tw:[&_a:hover]:text-[var(--ink)]">
       <MarkdownContent source={source} />
     </div>
   );

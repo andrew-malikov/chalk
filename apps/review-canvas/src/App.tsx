@@ -469,7 +469,10 @@ function ReviewLayoutContent({
       )}
     >
       <div className={shellStyles.topbarLeft}>
-        <div ref={setToolbarStart} className={shellStyles.topbarLeft} />
+        <div
+          ref={setToolbarStart}
+          className={cn(shellStyles.topbarLeft, "tw:gap-2")}
+        />
         {chrome ? createPortal(viewTabs, chrome.views) : viewTabs}
         {chrome && createPortal(actionsMenu, chrome.actions)}
       </div>

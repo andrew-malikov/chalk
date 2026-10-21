@@ -378,7 +378,7 @@ it("sends the top-bar badge to the Diffs page while only lenses are written", as
   scroll.mockRestore();
 });
 
-it("keeps the lens filter when navigation closes, opens files, and clears with No lens", async () => {
+it("keeps the lens filter when navigation closes, opens files, and clears by unselecting", async () => {
   await render({ lenses: [api, docs], version: 1, lensCursor: null });
   await openNavigation();
   await vi.waitFor(() => expect(row(api.id)).not.toBeNull());
@@ -411,11 +411,11 @@ it("keeps the lens filter when navigation closes, opens files, and clears with N
   ).toBe(true);
   await openNavigation();
   await act(async () =>
-    [...app.querySelectorAll<HTMLButtonElement>("button")]
-      .find((button) => button.textContent?.includes("No lens"))!
+    row(api.id)!
+      .querySelector<HTMLButtonElement>("button[aria-pressed]")!
       .click(),
   );
-  expect(navigationButton().textContent).toContain("No lens");
+  expect(navigationButton().textContent).toContain("Lenses");
   expect(
     row(api.id)!
       .querySelector("button[aria-pressed]")!

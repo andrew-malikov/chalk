@@ -758,7 +758,7 @@ function Comparison({
       overflow: wrap ? ("wrap" as const) : ("scroll" as const),
       stickyHeaders: true,
       unsafeCSS:
-        ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}[data-diffs-header]{box-shadow:inset 0 1px var(--rule)}:host(:first-child) [data-diffs-header]{box-shadow:none}:is([data-line-annotation],[data-gutter-buffer=annotation]){--diffs-annotation-bg:var(--diffs-bg)}",
+        ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}:is([data-line-annotation],[data-gutter-buffer=annotation]){--diffs-annotation-bg:var(--diffs-bg)}",
       onPostRender: restore,
       loadDiffFiles:
         committed && !structural

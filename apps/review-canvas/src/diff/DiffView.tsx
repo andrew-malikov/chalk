@@ -227,7 +227,6 @@ export function ReviewDiffView({
         restoreFile={restoreFile}
       />
     );
-  const global = lenses.stats();
   const openNavigation = (section: "lenses" | "files") => (open: boolean) =>
     setNavigationOpen(open ? section : null);
   // Switching popovers: returning focus to the old trigger would close the new one.
@@ -247,12 +246,12 @@ export function ReviewDiffView({
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
-                className="tw:max-w-[240px]"
+                className={cn(styles.trigger, "tw:max-w-[240px]")}
                 aria-label="Lenses"
                 data-diff-navigation="lenses"
               >
                 <ListFilterIcon aria-hidden="true" />
-                <span className="tw:truncate">{lens?.title ?? "No lens"}</span>
+                <span className="tw:truncate">{lens?.title ?? "Lenses"}</span>
                 <ChevronDownIcon aria-hidden="true" />
               </Button>
             </PopoverTrigger>,
@@ -260,53 +259,17 @@ export function ReviewDiffView({
           )}
         <PopoverContent
           align="start"
+          sideOffset={-1}
+          container={toolbarSlot}
           aria-label="Lenses"
           className={styles.popover}
           onCloseAutoFocus={keepFocus}
         >
-          <div className={styles.progress}>
-            <span className={styles.progressLabel}>
-              {lenses.error &&
-              !(lenses.progress && lenses.progress.complete !== false) ? (
-                "Counts unavailable"
-              ) : (
-                <>
-                  Remaining{" "}
-                  {lenses.progress && lenses.progress.complete !== false ? (
-                    <DiffCounts progress={global} />
-                  ) : (
-                    <span
-                      className={diffCountStyles.counts}
-                      aria-label="Counting changes"
-                    >
-                      …
-                    </span>
-                  )}
-                </>
-              )}
-            </span>
-          </div>
-
           <div
             className={cn("diff-lenses", styles.lenses)}
             aria-label="Lenses"
             ref={setLensList}
           >
-            <ButtonPrimitive
-              variant="ghost"
-              size="xs"
-              className={cn(
-                styles.noLens,
-                !lens && "tw:bg-muted tw:text-foreground",
-              )}
-              aria-pressed={!lens}
-              onClick={lenses.clear}
-            >
-              No lens
-              <span className="tw:ml-auto tw:text-muted-foreground tw:font-normal">
-                All changes
-              </span>
-            </ButtonPrimitive>
             {rows.items.map((item) => {
               const selected = lens?.id === item.id,
                 stats = lenses.stats(item.sources),
@@ -435,6 +398,7 @@ export function ReviewDiffView({
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
+                className={styles.trigger}
                 aria-label="Files"
                 data-diff-navigation="files"
               >
@@ -447,6 +411,8 @@ export function ReviewDiffView({
           )}
         <PopoverContent
           align="start"
+          sideOffset={-1}
+          container={toolbarSlot}
           aria-label="Files"
           className={styles.popover}
           onCloseAutoFocus={keepFocus}
@@ -534,11 +500,13 @@ function useLensRows<Item extends { id: string }>(items: Item[]) {
 const styles = {
   workspace:
     "tw:flex tw:min-h-0 tw:h-full tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[1.5]",
+  // The open trigger takes the popover's fill and covers its top border, so
+  // the two read as one tab. The popover renders inside the sticky topbar,
+  // which would otherwise paint over its top.
+  trigger:
+    "tw:data-[state=open]:z-[calc(var(--z-index-popover)+1)] tw:data-[state=open]:rounded-b-none tw:data-[state=open]:bg-popover! tw:data-[state=open]:text-popover-foreground! tw:data-[state=open]:[box-shadow:inset_1px_1px_0_var(--border),inset_-1px_0_0_var(--border)]",
   popover:
-    "tw:w-[380px] tw:max-w-[calc(100vw-24px)] tw:max-h-[min(520px,var(--radix-popover-content-available-height))] tw:flex tw:flex-col tw:p-2 tw:text-[length:12px]",
-  progress: "tw:shrink-0 tw:px-2 tw:py-2 tw:text-muted-foreground tw:text-xs",
-  progressLabel: "tw:flex tw:items-baseline tw:gap-2",
-  noLens: "tw:mb-1 tw:w-full tw:justify-start tw:px-3 tw:h-8",
+    "tw:rounded-tl-none tw:w-[380px] tw:max-w-[calc(100vw-24px)] tw:max-h-[min(520px,var(--radix-popover-content-available-height))] tw:flex tw:flex-col tw:p-2 tw:text-[length:12px]",
   // The courier stands on the row being written.
   lenses:
     "tw:min-h-0 tw:overflow-auto tw:relative tw:[&:has(>_.courier)]:pt-[14px]",
@@ -550,7 +518,7 @@ const styles = {
     "tw:[border-bottom-width:0] tw:[border-bottom-style:none] tw:[border-bottom-color:currentcolor]",
   // The section wears no wash; the pressed toggle already says open.
   sectionExpanded: "tw:bg-[color:var(--transparent)]",
-  row: "tw:flex tw:items-center tw:pr-[8px] tw:gap-[7px]",
+  row: "tw:flex tw:items-center tw:pr-[8px] tw:gap-[7px] tw:rounded-md tw:hover:bg-muted",
   toggle:
     "tw:flex tw:flex-[1] tw:min-w-0 tw:items-center tw:gap-[8px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:text-left tw:p-[3px_4px_3px_8px] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:text-[color:inherit] tw:cursor-pointer tw:bg-[color:transparent] tw:hover:bg-transparent tw:dark:hover:bg-transparent tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[-2px]",
   // A lens with no changes (usually Uncategorized) has nothing to filter to.
@@ -563,7 +531,7 @@ const styles = {
   toggleCounts: "tw:ml-[auto]",
   // A selected lens is a filter chip around its funnel, name and clear mark;
   // the counts stay outside it so they keep their column.
-  chip: "tw:flex tw:min-w-0 tw:items-center tw:gap-[8px] tw:h-[24px] tw:p-[0_8px] tw:rounded-[999px] tw:[&:is(.canvas-lens-toggle:hover_*)]:bg-[color:var(--well)]",
+  chip: "tw:flex tw:min-w-0 tw:items-center tw:gap-[8px] tw:h-[24px] tw:p-[0_8px] tw:rounded-[999px]",
   chipActive: "tw:pr-[4px] tw:bg-[color:var(--marker-tint)]",
   name: "tw:min-w-0 tw:flex-[0_1_auto] tw:leading-[1.5] tw:whitespace-nowrap tw:overflow-hidden tw:text-ellipsis",
   nameRelabel:

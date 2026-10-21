@@ -6,10 +6,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@canvas/components/ui/popover";
+import { diffCountStyles } from "@canvas/diff/diff-count";
 import { DiffSettingsControl } from "@canvas/diff/diff-settings";
-import { DiffNavigationSlot, ReviewDiffView } from "@canvas/diff/DiffView";
+import {
+  DiffCounts,
+  DiffNavigationSlot,
+  ReviewDiffView,
+} from "@canvas/diff/DiffView";
 import { useTooltip } from "@canvas/lib/use-tooltip";
 import { cn } from "@canvas/lib/utils";
+import { useReviewLenses } from "@canvas/review/review-lenses";
 import {
   useReviewPanel,
   useReviewPanelActor,
@@ -30,6 +36,7 @@ export function DiffPage({ active }: { active: boolean }): ReactElement {
   const diffScope = useReviewPanel((state) => state.context.diffScope);
   const activePanel = useReviewPanel((state) => state.context.active);
   const comments = useComments();
+  const lenses = useReviewLenses();
   const slots = usePageSlots();
   const commentsTooltip = useTooltip("Comments");
 
@@ -66,27 +73,52 @@ export function DiffPage({ active }: { active: boolean }): ReactElement {
           <DiffSettingsControl />
         </PageToolbar>
       )}
-      {active && comments && (
+      {active && (comments || lenses) && (
         <div className={styles.bottomBar}>
-          <Popover open={commentsShown} onOpenChange={comments.toggle}>
-            <PopoverTrigger asChild>
-              <IconButton
-                ref={commentsTooltip}
-                size="large"
-                className="tw:aria-expanded:bg-accent tw:aria-expanded:text-accent-foreground"
+          {lenses && (
+            <span className={styles.remaining}>
+              {lenses.error &&
+              !(lenses.progress && lenses.progress.complete !== false) ? (
+                "Counts unavailable"
+              ) : (
+                <>
+                  Remaining{" "}
+                  {lenses.progress && lenses.progress.complete !== false ? (
+                    <DiffCounts progress={lenses.stats()} />
+                  ) : (
+                    <span
+                      className={diffCountStyles.counts}
+                      aria-label="Counting changes"
+                    >
+                      …
+                    </span>
+                  )}
+                </>
+              )}
+            </span>
+          )}
+          {comments && (
+            <Popover open={commentsShown} onOpenChange={comments.toggle}>
+              <PopoverTrigger asChild>
+                <IconButton
+                  ref={commentsTooltip}
+                  size="large"
+                  className="tw:aria-expanded:bg-accent tw:aria-expanded:text-accent-foreground"
+                  aria-label="Comments"
+                >
+                  <ChatIcon className={controlStyles.chromeIcon} />
+                </IconButton>
+              </PopoverTrigger>
+              <PopoverContent
+                side="top"
+                sideOffset={10}
                 aria-label="Comments"
+                className={styles.comments}
               >
-                <ChatIcon className={controlStyles.chromeIcon} />
-              </IconButton>
-            </PopoverTrigger>
-            <PopoverContent
-              side="top"
-              aria-label="Comments"
-              className={styles.comments}
-            >
-              <CommentsPanel />
-            </PopoverContent>
-          </Popover>
+                <CommentsPanel />
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
       )}
       <div
@@ -169,6 +201,8 @@ function CommitDiffScopeBar({
 const styles = {
   bottomBar:
     "tw:absolute tw:bottom-4 tw:left-1/2 tw:z-3 tw:flex tw:-translate-x-1/2 tw:items-center tw:gap-1 tw:rounded-lg tw:border tw:border-input tw:bg-[var(--tray)] tw:p-1 tw:shadow-md",
+  remaining:
+    "tw:flex tw:items-baseline tw:gap-2 tw:px-2 tw:text-muted-foreground tw:text-xs",
   comments:
     "tw:w-[440px] tw:max-w-[calc(100vw-24px)] tw:max-h-[min(640px,var(--radix-popover-content-available-height))] tw:overflow-x-hidden tw:overflow-y-auto tw:overscroll-contain tw:p-0",
 };

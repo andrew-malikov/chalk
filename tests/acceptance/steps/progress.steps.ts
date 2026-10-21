@@ -28,7 +28,8 @@ When("I select the {string} lens", async ({ page }, title: string) => {
 When("I clear the selected lens", async ({ page }) => {
   await openDiffNavigation(page);
   await page
-    .getByRole("button", { name: "No lens All changes", exact: true })
+    .locator('[aria-label="Lenses"] section')
+    .getByRole("button", { pressed: true })
     .click();
   await expect(
     page
@@ -171,12 +172,9 @@ Then(
         0,
       ),
     ).toBe(viewed);
-    await openDiffNavigation(page);
-    await expect(
-      page
-        .getByRole("dialog", { name: "Lenses" })
-        .getByText("Remaining", { exact: false }),
-    ).toContainText(`+${total - viewed}`);
+    await expect(page.getByText("Remaining", { exact: false })).toContainText(
+      `+${total - viewed}`,
+    );
   },
 );
 
