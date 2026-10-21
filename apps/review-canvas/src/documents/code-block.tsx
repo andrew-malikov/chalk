@@ -209,7 +209,7 @@ function normalizeMarkdownCodeLanguage(language: string): ShjLanguage | null {
 // button; then the code, scrolling sideways, never wrapping.
 const styles = {
   block:
-    "tw:min-w-0 tw:max-w-full tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:max-w-[calc(100cqi_-_2_*_var(--review-document-padding-inline))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:w-[min(100%,_var(--review-block-max-width))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:mx-[auto] tw:my-[24px] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--surface)]",
+    "tw:min-w-0 tw:max-w-full tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:max-w-[calc(100cqi_-_2_*_var(--review-document-padding-inline))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:w-[min(100%,_var(--review-block-max-width))] tw:[&:is(.canvas-document:is(*)_*):is([data-review-node-id]_>_*)]:mx-[auto] tw:my-[24px] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[10px] tw:bg-[color:var(--surface)]",
   header: "tw:pr-[8px]",
   meta: "tw:ml-0",
   copy: "tw:ml-[auto] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--well)] tw:[&:is([data-copied])]:bg-[color:var(--well)]",

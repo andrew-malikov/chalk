@@ -491,11 +491,11 @@ const styles = {
     "tw:flex tw:flex-[1] tw:flex-col tw:[@container_review-welcome_(max-width:_880px)]:self-stretch tw:gap-[12px] tw:min-w-0 tw:m-0 tw:p-0 tw:[list-style:none]",
   // One accordion item per step. The header is always visible; only the open
   // step renders a body, so a single step asks for attention at a time.
-  step: "tw:flex tw:flex-col tw:border-[1px] tw:border-solid tw:border-[color:var(--review-home-rule)] tw:rounded-[8px]",
+  step: "tw:flex tw:flex-col tw:border-[1px] tw:border-solid tw:border-[color:var(--review-home-rule)] tw:rounded-[10px]",
   stepOpen:
     "tw:border-[color:var(--review-home-rule-soft)] tw:bg-[color:var(--tray)]",
   stepHeader:
-    "tw:flex tw:items-center tw:gap-[12px] tw:w-full tw:p-[16px_20px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[&:focus-visible]:rounded-[8px] tw:text-[color:inherit] tw:bg-[color:var(--transparent)] tw:cursor-pointer tw:[&:disabled]:[cursor:not-allowed] tw:[&:disabled]:opacity-[0.5] tw:text-left tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[-2px]",
+    "tw:flex tw:items-center tw:gap-[12px] tw:w-full tw:p-[16px_20px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[&:focus-visible]:rounded-[10px] tw:text-[color:inherit] tw:bg-[color:var(--transparent)] tw:cursor-pointer tw:[&:disabled]:[cursor:not-allowed] tw:[&:disabled]:opacity-[0.5] tw:text-left tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[-2px]",
   // The chevron closes the row: it sits in the trailing lane, after the note.
   stepChevron: "tw:m-[2px_2px_2px_auto] tw:stroke-[var(--review-home-meta)]",
   badge:
@@ -519,5 +519,5 @@ const styles = {
   stepDone: "tw:opacity-[1]",
   hint: "tw:m-[0_0_14px] tw:max-w-[560px] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:13px] tw:font-normal tw:leading-[20px]",
   hintCode:
-    "tw:p-[1px_5px] tw:border-[1px] tw:border-solid tw:border-[color:var(--review-home-rule-soft)] tw:rounded-[4px] tw:text-[color:var(--ink)] tw:bg-[color:var(--control-bg)] tw:font-[family-name:var(--font-mono)]",
+    "tw:p-[1px_5px] tw:border-[1px] tw:border-solid tw:border-[color:var(--review-home-rule-soft)] tw:rounded-[6px] tw:text-[color:var(--ink)] tw:bg-[color:var(--control-bg)] tw:font-[family-name:var(--font-mono)]",
 };

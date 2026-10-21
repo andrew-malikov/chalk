@@ -891,7 +891,7 @@ function NoteBody({ source }: { source: string }) {
 }
 
 const card =
-  "tw:flex tw:min-w-0 tw:flex-col tw:gap-2.5 tw:rounded-[8px] tw:border tw:border-[var(--chrome-border)] tw:p-3";
+  "tw:flex tw:min-w-0 tw:flex-col tw:gap-2.5 tw:rounded-[10px] tw:border tw:border-[var(--chrome-border)] tw:p-3";
 
 const inlineCard = "tw:max-w-[820px] tw:gap-3 tw:bg-[var(--surface-raised)]";
 

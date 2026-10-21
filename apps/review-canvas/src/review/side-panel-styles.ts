@@ -43,7 +43,7 @@ export const tourStyles = {
   pillButton:
     "tw:rounded-[50%] tw:bg-[color:var(--transparent)] tw:[&:hover:not(:disabled)]:bg-[color:color-mix(in_srgb,_var(--on-accent)_16%,_var(--transparent))] tw:[&:focus-visible]:bg-[color:color-mix(in_srgb,_var(--on-accent)_16%,_var(--transparent))] tw:text-[color:var(--on-accent)] tw:text-[length:inherit] tw:font-[number:inherit]",
   endCap:
-    "tw:flex tw:items-center tw:justify-between tw:gap-[12px] tw:m-[8px_0_16px] tw:p-[12px_16px] tw:border-[1px] tw:border-dashed tw:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:text-[color:var(--ink-muted)] tw:text-[length:11px] tw:font-bold",
+    "tw:flex tw:items-center tw:justify-between tw:gap-[12px] tw:m-[8px_0_16px] tw:p-[12px_16px] tw:border-[1px] tw:border-dashed tw:border-[color:var(--rule-soft)] tw:rounded-[10px] tw:text-[color:var(--ink-muted)] tw:text-[length:11px] tw:font-bold",
   endCapButton:
     "tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:text-[color:var(--accent)] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:cursor-pointer tw:whitespace-nowrap",
   scrollTail: "tw:shrink-0",
@@ -57,7 +57,7 @@ export const tourStyles = {
   railNumberActive:
     "tw:border-[color:var(--accent)] tw:bg-[color:var(--accent)] tw:text-[color:var(--on-accent)]",
   main: "tw:min-w-0 tw:pt-[16px] tw:pr-0 tw:pb-[22px] tw:pl-[4px] tw:[@media_(max-width:_720px)]:pl-0",
-  mainActive: "tw:rounded-[8px]",
+  mainActive: "tw:rounded-[10px]",
   // The stop's content breaks out over the rail to the panel's inner edge.
   content:
     "tw:relative tw:z-[2] tw:w-[calc(100%_+_50px)] tw:[@media_(max-width:_720px)]:w-[calc(100%_+_30px)] tw:ml-[calc(-1_*_50px)] tw:[@media_(max-width:_720px)]:ml-[calc(-1_*_30px)] tw:bg-[color:var(--bg)]",

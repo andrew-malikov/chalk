@@ -35,7 +35,7 @@ export function Chip({
 
 // Exported for chips that are buttons. Sites set their own tone after these.
 export const chipStyles = {
-  tag: "tw:inline-flex tw:flex-[0_0_auto] tw:items-center tw:h-[18px] tw:p-[0_5px] tw:rounded-[4px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink-muted)] tw:text-[length:10px] tw:font-semibold tw:leading-[1] tw:tracking-[0.08em] tw:uppercase tw:whitespace-nowrap",
+  tag: "tw:inline-flex tw:flex-[0_0_auto] tw:items-center tw:h-[18px] tw:p-[0_5px] tw:rounded-[6px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink-muted)] tw:text-[length:10px] tw:font-semibold tw:leading-[1] tw:tracking-[0.08em] tw:uppercase tw:whitespace-nowrap",
   pill: "tw:inline-flex tw:flex-[0_0_auto] tw:items-center tw:gap-[6px] tw:h-[18px] tw:p-[0_8px] tw:rounded-[999px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink-muted)] tw:text-[length:11px] tw:leading-[1] tw:whitespace-nowrap",
   large: "tw:h-[22px]",
 };

@@ -941,16 +941,16 @@ function Shell(
     <div
       ref={shellElement}
       className={[
-        "review-shell tw:flex tw:h-full tw:min-h-0 tw:flex-col tw:bg-background tw:text-foreground tw:font-[family-name:var(--chrome-font)] tw:text-sm tw:antialiased",
+        "review-shell tw:flex tw:h-full tw:min-h-0 tw:flex-col tw:[--titlebar-bg:var(--tray)] tw:dark:[--titlebar-bg:#0c0c0c] tw:bg-background tw:text-foreground tw:font-[family-name:var(--chrome-font)] tw:text-sm tw:antialiased",
         themeClass,
       ].join(" ")}
       data-theme={resolvedTheme}
     >
       <header
-        className="review-shell-titlebar electrobun-webkit-app-region-drag tw:grid tw:h-14 tw:flex-none tw:grid-cols-[1fr_minmax(0,44rem)_1fr] tw:items-center tw:gap-4 tw:bg-[var(--tray)] tw:px-4 tw:select-none tw:[-webkit-app-region:drag] tw:data-[native-titlebar]:pl-[88px] tw:[&_button]:[-webkit-app-region:no-drag] tw:max-[760px]:gap-2 tw:max-[760px]:pr-2"
+        className="review-shell-titlebar electrobun-webkit-app-region-drag tw:grid tw:h-14 tw:flex-none tw:grid-cols-[1fr_minmax(0,44rem)_1fr] tw:items-center tw:gap-4 tw:bg-[var(--titlebar-bg)] tw:px-4 tw:select-none tw:[-webkit-app-region:drag] tw:data-[native-titlebar]:pl-[88px] tw:[&_button]:[-webkit-app-region:no-drag] tw:max-[760px]:gap-2 tw:max-[760px]:pr-2"
         data-native-titlebar={options.nativeTitlebar || undefined}
       >
-        <div className="review-shell-context tw:col-start-2 tw:flex tw:h-8 tw:min-w-0 tw:items-center tw:rounded-md tw:border tw:bg-background tw:shadow-xs tw:dark:border-input tw:dark:bg-input/30">
+        <div className="review-shell-context tw:col-start-2 tw:flex tw:h-8 tw:min-w-0 tw:items-center tw:rounded-md tw:bg-background tw:dark:bg-input/30">
           <Button
             variant="ghost"
             size="sm"
@@ -992,9 +992,9 @@ function Shell(
           {currentTab && (
             <div className="review-shell-editor tw:mr-2 tw:flex tw:max-[760px]:mr-0">
               <Button
-                variant="outline"
-                size="sm"
-                className="tw:rounded-r-none tw:border-border tw:text-xs tw:[&_span]:leading-5 tw:max-[760px]:w-8 tw:max-[760px]:p-0 tw:max-[760px]:[&_span]:hidden"
+                variant="ghost"
+                size="icon-sm"
+                className="tw:rounded-r-none"
                 aria-label="Open in VS Code"
                 title="Open review source in VS Code"
                 disabled={!connected}
@@ -1003,12 +1003,11 @@ function Shell(
                 }
               >
                 <SquareArrowOutUpRightIcon aria-hidden="true" />
-                <span>Open</span>
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon-sm"
-                className="tw:w-7 tw:rounded-l-none tw:border-l-0 tw:border-border"
+                className="tw:w-7 tw:rounded-l-none"
                 aria-label="Open in…"
                 disabled={!connected}
                 onClick={(event) => openInMenu(event.currentTarget)}
@@ -1023,7 +1022,7 @@ function Shell(
       <div className="review-shell-notices tw:fixed tw:right-[18px] tw:bottom-[18px] tw:z-[10001] tw:flex tw:max-w-[380px] tw:flex-col tw:gap-2">
         {!connected && (
           <div
-            className="review-shell-notice tw:flex tw:items-center tw:justify-between tw:gap-2 tw:rounded-[8px] tw:border tw:border-border tw:bg-[var(--tray)] tw:px-3 tw:py-2 tw:shadow-[0_8px_24px_var(--shadow-color-strong)]"
+            className="review-shell-notice tw:flex tw:items-center tw:justify-between tw:gap-2 tw:rounded-[10px] tw:border tw:border-border tw:bg-[var(--tray)] tw:px-3 tw:py-2 tw:shadow-[0_8px_24px_var(--shadow-color-strong)]"
             role="status"
           >
             Reconnecting to review server…
@@ -1031,7 +1030,7 @@ function Shell(
         )}
         {error && (
           <div
-            className="review-shell-notice tw:flex tw:items-center tw:justify-between tw:gap-2 tw:rounded-[8px] tw:border tw:border-border tw:bg-[var(--tray)] tw:px-3 tw:py-2 tw:shadow-[0_8px_24px_var(--shadow-color-strong)]"
+            className="review-shell-notice tw:flex tw:items-center tw:justify-between tw:gap-2 tw:rounded-[10px] tw:border tw:border-border tw:bg-[var(--tray)] tw:px-3 tw:py-2 tw:shadow-[0_8px_24px_var(--shadow-color-strong)]"
             role="alert"
           >
             {error}
@@ -1048,7 +1047,7 @@ function Shell(
       </div>
       <div className="review-shell-body tw:relative tw:flex tw:min-h-0 tw:flex-1">
         <main
-          className="review-shell-content tw:flex tw:min-h-0 tw:min-w-0 tw:flex-1 tw:flex-col tw:overflow-hidden"
+          className="review-shell-content tw:flex tw:min-h-0 tw:min-w-0 tw:flex-1 tw:flex-col tw:overflow-hidden tw:bg-[var(--titlebar-bg)]"
           inert={!connected}
         >
           {!loaded ? (
@@ -1077,7 +1076,7 @@ function Shell(
           ) : null}
           {[...tabs.current.values()].map((tab) => (
             <section
-              className="review-shell-review-panel tw:relative tw:flex tw:min-h-0 tw:flex-1 tw:[&[hidden]]:hidden"
+              className="review-shell-review-panel tw:relative tw:flex tw:min-h-0 tw:flex-1 tw:overflow-hidden tw:rounded-t-[10px] tw:[&[hidden]]:hidden"
               aria-label={tab.title}
               key={tab.id}
               hidden={active.current !== tab.id}

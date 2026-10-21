@@ -132,7 +132,7 @@ const styles = {
     "tw:flex tw:min-w-0 tw:items-center tw:gap-[6px] tw:text-[color:inherit] tw:whitespace-nowrap",
   // Each pinned commit is a small mono chip that copies its full hash; a
   // working-tree head wears the same chip but has nothing to copy.
-  chip: "tw:relative tw:inline-flex tw:min-w-0 tw:items-center tw:m-0 tw:p-[0_6px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[4px] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[18px] tw:cursor-pointer",
+  chip: "tw:relative tw:inline-flex tw:min-w-0 tw:items-center tw:m-0 tw:p-[0_6px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[18px] tw:cursor-pointer",
   copy: "tw:bg-[color:var(--tray)] tw:[&:hover]:bg-[color:var(--chrome-hover-bg)] tw:[&:focus-visible]:bg-[color:var(--chrome-hover-bg)] tw:[&:hover]:[outline:none] tw:[&:focus-visible]:[outline:none] tw:border-[color:var(--rule)] tw:[&:focus-visible]:border-[color:var(--accent)]",
   copyBase:
     "tw:text-[color:var(--ink-muted)] tw:[&:hover]:text-[color:var(--ink)] tw:[&:focus-visible]:text-[color:var(--ink)]",

@@ -38,7 +38,7 @@ export function TutorialAuthoringConversation({
 
 const styles = {
   conversation:
-    "tw:m-[18px_0_24px] tw:border-[1px] tw:border-solid tw:border-[color:var(--review-home-rule-soft)] tw:rounded-[8px] tw:bg-[color:color-mix(in_srgb,_var(--surface-raised)_76%,_transparent)]",
+    "tw:m-[18px_0_24px] tw:border-[1px] tw:border-solid tw:border-[color:var(--review-home-rule-soft)] tw:rounded-[10px] tw:bg-[color:color-mix(in_srgb,_var(--surface-raised)_76%,_transparent)]",
   summary:
     "tw:flex tw:items-baseline tw:justify-between tw:gap-[16px] tw:p-[12px_14px] tw:cursor-pointer tw:font-semibold",
   summaryNote:

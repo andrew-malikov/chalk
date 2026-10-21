@@ -11,7 +11,7 @@ export const diagramStyles = {
   // A quiet count ("5 stops", "4 nodes"), not a chip.
   meta: "tw:flex-[0_0_auto] tw:ml-[auto] tw:p-0 tw:border-[0] tw:border-none tw:rounded-none tw:bg-[color:var(--transparent)] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[normal] tw:not-italic tw:tracking-[0] tw:normal-case",
   control:
-    "tw:flex-[0_0_auto] tw:h-[24px] tw:p-[0_10px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:[&:focus-visible]:border-[color:var(--accent)] tw:rounded-[6px] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-medium tw:leading-[normal] tw:leading-[22px] tw:cursor-pointer tw:[&:focus-visible]:[outline:none]",
+    "tw:flex-[0_0_auto] tw:h-[24px] tw:p-[0_10px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:[&:focus-visible]:border-[color:var(--accent)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-medium tw:leading-[normal] tw:leading-[22px] tw:cursor-pointer tw:[&:focus-visible]:[outline:none]",
   select:
     "tw:w-full tw:min-w-0 tw:pr-[26px] tw:overflow-hidden tw:appearance-none tw:[background-image:var(--chevron-down)] tw:[background-repeat:no-repeat] tw:[background-position:right_8px_center] tw:[background-size:12px_12px] tw:text-ellipsis",
 };

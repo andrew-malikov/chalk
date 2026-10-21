@@ -191,7 +191,7 @@ export function FlowDiagram({
 
 const styles = {
   figure:
-    "tw:overflow-hidden tw:m-[18px_0_4px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[1.5]",
+    "tw:overflow-hidden tw:m-[18px_0_4px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[10px] tw:bg-[color:var(--surface)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[1.5]",
   // The tour stage: the figure fills the overlay without its card chrome.
   stage:
     "tw:flex tw:flex-col tw:w-full tw:h-full tw:min-h-0 tw:m-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-none",

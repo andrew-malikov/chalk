@@ -43,6 +43,9 @@ export const shellStyles = {
   topbarHidden: "tw:h-0 tw:invisible tw:[border-bottom-width:0]",
   topbar:
     "tw:sticky tw:top-0 tw:z-[var(--review-debug-layer)] tw:flex tw:items-center tw:justify-between tw:gap-[8px] tw:h-[var(--review-header-height)] tw:p-[0_12px_0_16px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--surface)]",
+  // Under the host's command bar the page toolbar runs on from it, with no
+  // rules of its own and room for the controls to breathe.
+  pageToolbar: "tw:h-[44px] tw:[border-bottom-width:0]",
   topbarLeft: "tw:flex tw:flex-[0_0_auto] tw:items-center",
   topbarActions:
     "tw:flex tw:items-center tw:gap-[10px] tw:flex-[1_1_auto] tw:min-w-0 tw:h-full tw:overflow-x-auto",

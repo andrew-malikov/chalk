@@ -991,27 +991,27 @@ const styles = {
   headerTools: "tw:flex tw:min-w-0 tw:items-center tw:gap-[8px]",
   // Fixed width, so the clear button appearing does not resize the field.
   search:
-    "tw:flex tw:min-w-0 tw:items-center tw:w-[256px] tw:h-[38px] tw:p-[0_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:focus-within]:border-[color:var(--accent)] tw:rounded-[6px] tw:bg-[color:var(--surface)] tw:[&:focus-within]:[box-shadow:0_0_0_3px_var(--marker-tint)] tw:text-[color:var(--ink-faint)] tw:[&:focus-within]:text-[color:var(--ink-muted)] tw:text-[length:15px] tw:gap-[12px]",
+    "tw:flex tw:min-w-0 tw:items-center tw:w-[256px] tw:h-[38px] tw:p-[0_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:focus-within]:border-[color:var(--accent)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[&:focus-within]:[box-shadow:0_0_0_3px_var(--marker-tint)] tw:text-[color:var(--ink-faint)] tw:[&:focus-within]:text-[color:var(--ink-muted)] tw:text-[length:15px] tw:gap-[12px]",
   searchIcon: "tw:size-[18px] tw:flex-[0_0_auto]",
   searchStroke:
     "tw:fill-[none] tw:stroke-[currentColor] tw:[stroke-linecap:round] tw:stroke-[1.5]",
   searchInput:
     "tw:min-w-0 tw:flex-[1] tw:p-0 tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:text-[color:var(--ink)] tw:bg-[color:var(--transparent)] tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:[outline:none] tw:[&::placeholder]:text-[color:var(--review-home-meta)] tw:[&::-webkit-search-cancel-button]:appearance-none tw:[&::-webkit-search-decoration]:appearance-none",
   searchClear:
-    "tw:grid tw:size-[16px] tw:flex-[0_0_auto] tw:p-0 tw:place-items-center tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-[4px] tw:text-[color:var(--review-home-meta)] tw:[&:hover]:text-[color:var(--ink)] tw:bg-[color:var(--transparent)] tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[1px]",
+    "tw:grid tw:size-[16px] tw:flex-[0_0_auto] tw:p-0 tw:place-items-center tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-[6px] tw:text-[color:var(--review-home-meta)] tw:[&:hover]:text-[color:var(--ink)] tw:bg-[color:var(--transparent)] tw:[&:focus-visible]:[outline:1px_solid_var(--accent)] tw:[&:focus-visible]:outline-offset-[1px]",
   clearIcon: "tw:size-[11px] tw:flex-[0_0_auto]",
   // The user agent paints <mark> black on yellow, which is unreadable on the
   // canvas. Carry the mark on the background and inherit the text colour: on
   // a dark theme, recolouring the glyphs to the accent makes the matched word
   // dimmer than the words around it, which is the opposite of a highlight.
   // Inherit the weight too, so marking a run does not reflow its line.
-  mark: "tw:p-[0_1px] tw:rounded-[4px] tw:bg-[color:color-mix(in_srgb,_var(--accent)_30%,_var(--transparent))] tw:text-[color:inherit] tw:font-[number:inherit]",
+  mark: "tw:p-[0_1px] tw:rounded-[6px] tw:bg-[color:color-mix(in_srgb,_var(--accent)_30%,_var(--transparent))] tw:text-[color:inherit] tw:font-[number:inherit]",
   // The scratchpad's group sits first, above the sessions table.
   scratchpad: "tw:pt-[14px] tw:mb-[16px]",
   cards:
     "tw:grid tw:grid-cols-[minmax(0,_336px)] tw:[grid-auto-rows:1fr] tw:gap-[18px] tw:[justify-content:start] tw:mt-[24px]",
   cardShell: "tw:relative tw:min-w-0",
-  card: "tw:flex tw:flex-col tw:justify-between tw:gap-[12px] tw:w-full tw:min-w-0 tw:h-full tw:min-h-[128px] tw:p-[16px_16px_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:focus-visible]:border-[color:var(--accent)] tw:[&:hover:not(:disabled)]:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:text-[color:inherit] tw:bg-[color:var(--surface)] tw:text-left tw:[transition:border-color_120ms_ease,_box-shadow_120ms_ease] tw:[&:focus-visible]:[box-shadow:0_0_0_3px_var(--marker-tint)] tw:[&:focus-visible]:[outline:none] tw:[&:disabled]:[cursor:not-allowed] tw:[&:disabled]:opacity-[0.5]",
+  card: "tw:flex tw:flex-col tw:justify-between tw:gap-[12px] tw:w-full tw:min-w-0 tw:h-full tw:min-h-[128px] tw:p-[16px_16px_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:focus-visible]:border-[color:var(--accent)] tw:[&:hover:not(:disabled)]:border-[color:var(--rule-soft)] tw:rounded-[10px] tw:text-[color:inherit] tw:bg-[color:var(--surface)] tw:text-left tw:[transition:border-color_120ms_ease,_box-shadow_120ms_ease] tw:[&:focus-visible]:[box-shadow:0_0_0_3px_var(--marker-tint)] tw:[&:focus-visible]:[outline:none] tw:[&:disabled]:[cursor:not-allowed] tw:[&:disabled]:opacity-[0.5]",
   cardMain: "tw:flex tw:flex-col tw:gap-[7px] tw:min-w-0",
   title:
     "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:17px] tw:font-medium tw:leading-[22px] tw:text-ellipsis tw:whitespace-nowrap",
@@ -1032,7 +1032,7 @@ const styles = {
   dismissedCount: "tw:font-medium tw:tracking-[0]",
   dismissedRows: "tw:flex tw:flex-col tw:gap-[6px]",
   dismissedRow:
-    "tw:flex tw:items-center tw:gap-[14px] tw:p-[10px_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[8px]",
+    "tw:flex tw:items-center tw:gap-[14px] tw:p-[10px_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[10px]",
   dismissedOpen:
     "tw:overflow-hidden tw:flex-[1_1_auto] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:var(--transparent)] tw:text-[color:var(--ink-muted)] tw:text-[length:13px] tw:text-left tw:text-ellipsis tw:whitespace-nowrap",
   dismissedClock:
@@ -1059,7 +1059,7 @@ const styles = {
   menuIcon:
     "tw:size-[14px] tw:shrink-0 tw:fill-[none] tw:stroke-[currentColor] tw:stroke-[1.8] tw:[stroke-linecap:round] tw:[stroke-linejoin:round]",
   tableScroll:
-    "tw:overflow-x-auto tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px]",
+    "tw:overflow-x-auto tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[10px]",
   table:
     "tw:w-full tw:min-w-[840px] tw:border-collapse tw:table-fixed tw:font-[family-name:var(--font-sans)] tw:text-[length:12px] tw:font-normal tw:leading-[18px]",
   colBranch:

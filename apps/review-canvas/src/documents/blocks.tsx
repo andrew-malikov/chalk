@@ -331,7 +331,7 @@ export class BlockErrorBoundary extends Component<
 
 const styles = {
   callout:
-    "tw:[&:is(.canvas-document:is(*)_*)]:m-[18px_0] tw:[&:is(.canvas-document:is(*)_*)]:p-[12px_16px] tw:[&:is(.canvas-document:is(*)_*)]:[border-left-width:2px] tw:[&:is(.canvas-document:is(*)_*)]:[border-left-style:solid] tw:[&:is(.canvas-document:is(*)_*)]:[border-left-color:var(--ink-faint)] tw:[&:is(.canvas-document:is(*)_*)]:rounded-[0_6px_6px_0] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--tray)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:15px] tw:[&:is(.canvas-document:is(*)_*)]:leading-[22px]",
+    "tw:[&:is(.canvas-document:is(*)_*)]:m-[18px_0] tw:[&:is(.canvas-document:is(*)_*)]:p-[12px_16px] tw:[&:is(.canvas-document:is(*)_*)]:[border-left-width:2px] tw:[&:is(.canvas-document:is(*)_*)]:[border-left-style:solid] tw:[&:is(.canvas-document:is(*)_*)]:[border-left-color:var(--ink-faint)] tw:[&:is(.canvas-document:is(*)_*)]:rounded-[0_8px_8px_0] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--tray)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:15px] tw:[&:is(.canvas-document:is(*)_*)]:leading-[22px]",
   info: "tw:[&:is(.canvas-document:is(*)_*)]:[border-left-color:var(--accent)] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--marker-tint)]",
   warning:
     "tw:[&:is(.canvas-document:is(*)_*)]:[border-left-color:var(--change-modified)] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--diff-modified-bg)]",

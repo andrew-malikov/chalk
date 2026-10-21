@@ -301,7 +301,7 @@ const styles = {
     "tw:block tw:size-[14px] tw:fill-[none] tw:stroke-[var(--ink-faint)] tw:stroke-[1.5]",
   timeline:
     "tw:relative tw:ml-[6px] tw:pl-[22px] tw:[&::before]:absolute tw:[&::before]:top-[-8px] tw:[&::before]:bottom-0 tw:[&::before]:left-0 tw:[&::before]:w-[1px] tw:[&::before]:bg-[color:var(--rule-soft)] tw:[&::before]:[content:'']",
-  card: "tw:mb-[6px] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[box-shadow:none]",
+  card: "tw:mb-[6px] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[10px] tw:bg-[color:var(--surface)] tw:[box-shadow:none]",
   cardExpanded: "tw:border-[color:var(--rule-soft)]",
   // Subject over who, when and how much; the commit's actions centered at
   // the right. The toggle's hit area covers the whole header, under the

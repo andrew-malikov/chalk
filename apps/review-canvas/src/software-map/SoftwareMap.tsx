@@ -1698,7 +1698,7 @@ function C4MapCanvas({
                       style={{
                         backgroundColor: "var(--surface)",
                         border: "1px solid var(--rule)",
-                        borderRadius: 8,
+                        borderRadius: 10,
                       }}
                     />
                   )}
@@ -2685,7 +2685,7 @@ const styles = {
   overlay:
     "tw:fixed tw:inset-0 tw:z-[var(--review-debug-layer,_2147483000)] tw:grid tw:box-border tw:min-w-0 tw:min-h-0 tw:overflow-hidden tw:p-0 tw:bg-[color:var(--bg)]",
   frame:
-    "tw:relative tw:grid tw:grid-rows-[auto_minmax(0,_1fr)] tw:h-[var(--software-map-height,_520px)] tw:min-h-[340px] tw:m-0 tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--surface)] tw:[box-shadow:none] tw:font-[family-name:var(--font-sans)]",
+    "tw:relative tw:grid tw:grid-rows-[auto_minmax(0,_1fr)] tw:h-[var(--software-map-height,_520px)] tw:min-h-[340px] tw:m-0 tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[box-shadow:none] tw:font-[family-name:var(--font-sans)]",
   frameExpanded:
     "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:box-border tw:w-full tw:h-full tw:min-w-0 tw:min-h-0",
   frameChromeHidden:
@@ -2699,7 +2699,7 @@ const styles = {
   title: "tw:m-0 tw:text-[length:13px] tw:font-semibold",
   actions: "tw:flex tw:flex-[0_0_auto] tw:items-center tw:min-w-0 tw:gap-[4px]",
   floatingActions:
-    "tw:absolute tw:top-[10px] tw:right-[10px] tw:z-[20] tw:flex tw:[&:is(.canvas-app[data-peek-open]_*)]:hidden tw:gap-[8px] tw:p-[2px] tw:rounded-[6px]",
+    "tw:absolute tw:top-[10px] tw:right-[10px] tw:z-[20] tw:flex tw:[&:is(.canvas-app[data-peek-open]_*)]:hidden tw:gap-[8px] tw:p-[2px] tw:rounded-[8px]",
   refreshing: "tw:text-[color:var(--accent)]",
   // Shows while the pointer is over the map.
   expandButton:
@@ -2715,7 +2715,7 @@ const styles = {
   canvas:
     "tw:relative tw:grid tw:min-w-0 tw:min-h-0 tw:overflow-hidden tw:p-0 tw:bg-[color:var(--bg)] tw:font-[family-name:var(--font-sans)]",
   status:
-    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:absolute tw:top-[14px] tw:left-[14px] tw:z-[8] tw:w-max tw:max-w-[min(420px,_calc(100%_-_28px))] tw:m-0 tw:p-[8px_10px] tw:rounded-[6px] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:text-[color:var(--ink-muted)] tw:text-[length:12px] tw:leading-[17px]",
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:absolute tw:top-[14px] tw:left-[14px] tw:z-[8] tw:w-max tw:max-w-[min(420px,_calc(100%_-_28px))] tw:m-0 tw:p-[8px_10px] tw:rounded-[8px] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:text-[color:var(--ink-muted)] tw:text-[length:12px] tw:leading-[17px]",
   statusError:
     "tw:border-[color:var(--diff-removed)] tw:bg-[color:var(--diff-removed-bg)] tw:text-[color:var(--diff-removed)]",
   inspectorResizer:
@@ -2723,7 +2723,7 @@ const styles = {
   inspectorBackdrop:
     "tw:hidden tw:[@media_(max-width:_720px)]:block tw:[@media_(max-width:_720px)]:absolute tw:[@media_(max-width:_720px)]:inset-0 tw:[@media_(max-width:_720px)]:z-[48] tw:[@media_(max-width:_720px)]:p-0 tw:[@media_(max-width:_720px)]:border-[0] tw:[@media_(max-width:_720px)]:border-none tw:[@media_(max-width:_720px)]:border-[color:currentcolor] tw:[@media_(max-width:_720px)]:bg-[color:var(--backdrop)]",
   inspector:
-    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[@media_(max-width:_720px)]:absolute tw:[@media_(max-width:_720px)]:right-[8px] tw:[@media_(max-width:_720px)]:bottom-[8px] tw:[@media_(max-width:_720px)]:left-[8px] tw:[@media_(max-width:_720px)]:z-[49] tw:grid tw:grid-rows-[auto_minmax(0,_1fr)] tw:min-w-0 tw:[@media_(max-width:_720px)]:h-[min(72%,_560px)] tw:min-h-0 tw:[@media_(max-width:_720px)]:min-h-[240px] tw:overflow-hidden tw:[@media_(max-width:_720px)]:rounded-[8px] tw:bg-[color:var(--bg)] tw:[box-shadow:none]",
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[@media_(max-width:_720px)]:absolute tw:[@media_(max-width:_720px)]:right-[8px] tw:[@media_(max-width:_720px)]:bottom-[8px] tw:[@media_(max-width:_720px)]:left-[8px] tw:[@media_(max-width:_720px)]:z-[49] tw:grid tw:grid-rows-[auto_minmax(0,_1fr)] tw:min-w-0 tw:[@media_(max-width:_720px)]:h-[min(72%,_560px)] tw:min-h-0 tw:[@media_(max-width:_720px)]:min-h-[240px] tw:overflow-hidden tw:[@media_(max-width:_720px)]:rounded-[10px] tw:bg-[color:var(--bg)] tw:[box-shadow:none]",
   inspectorHeader:
     "tw:[@media_(max-width:_720px)]:sticky tw:[@media_(max-width:_720px)]:top-0 tw:[@media_(max-width:_720px)]:z-[2] tw:flex tw:gap-[10px] tw:items-center tw:justify-between tw:min-w-0 tw:p-[7px_8px_3px] tw:[@media_(max-width:_720px)]:p-[8px] tw:[@media_(max-width:_720px)]:[border-bottom-width:1px] tw:[@media_(max-width:_720px)]:[border-bottom-style:solid] tw:[@media_(max-width:_720px)]:[border-bottom-color:var(--rule)] tw:bg-[color:var(--bg)]",
   inspectorTitle:
@@ -2746,7 +2746,7 @@ const styles = {
     "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:[transition:transform_200ms_cubic-bezier(0.2,_0.8,_0.2,_1),_width_200ms_cubic-bezier(0.2,_0.8,_0.2,_1),_height_200ms_cubic-bezier(0.2,_0.8,_0.2,_1),_opacity_200ms_ease] tw:select-text",
   flowEdge: "tw:z-[1]",
   codeStatus:
-    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:absolute tw:right-[14px] tw:bottom-[14px] tw:z-[8] tw:max-w-[min(380px,_calc(100%_-_28px))] tw:p-[8px_10px] tw:rounded-[6px] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:text-[color:var(--ink-muted)] tw:text-[length:12px] tw:leading-[17px]",
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:absolute tw:right-[14px] tw:bottom-[14px] tw:z-[8] tw:max-w-[min(380px,_calc(100%_-_28px))] tw:p-[8px_10px] tw:rounded-[8px] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:text-[color:var(--ink-muted)] tw:text-[length:12px] tw:leading-[17px]",
   edgeHighlight:
     "tw:fill-[none] tw:[stroke-linecap:round] tw:[stroke-linejoin:round] tw:pointer-events-none",
   edgeHighlightActive: "tw:stroke-[var(--selection-shadow)] tw:stroke-[10px]",
@@ -2759,7 +2759,7 @@ const styles = {
   edgeLabelAnchor:
     "tw:absolute tw:z-[40] tw:inline-flex tw:items-center tw:justify-center tw:min-w-[20px] tw:min-h-[20px] tw:[pointer-events:all]",
   edgeLabel:
-    "tw:box-border tw:max-w-[132px] tw:p-[4px_10px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--surface)] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-medium tw:tracking-[0] tw:leading-[15px] tw:text-center tw:whitespace-normal tw:[overflow-wrap:anywhere]",
+    "tw:box-border tw:max-w-[132px] tw:p-[4px_10px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:text-[color:var(--ink-muted)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-medium tw:tracking-[0] tw:leading-[15px] tw:text-center tw:whitespace-normal tw:[overflow-wrap:anywhere]",
   edgeLabelButton: "tw:cursor-pointer",
   edgeLabelSelectedNode: "tw:border-[color:var(--accent)]",
   // Off screen, so the layout can size each card before placing it.
@@ -2771,7 +2771,7 @@ const styles = {
   nodeShell:
     "tw:relative tw:w-full tw:h-full tw:[animation-name:-software-map-card-bloom] tw:[animation-duration:200ms] tw:[animation-timing-function:cubic-bezier(0.2,_0.8,_0.2,_1)]",
   groupShell:
-    "tw:relative tw:box-border tw:w-full tw:h-full tw:p-[14px_16px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:hover]:border-[color:var(--rule-soft)] tw:[&:focus-visible]:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--marker-tint)] tw:[&:focus-visible]:bg-[color:var(--marker-tint)] tw:[box-shadow:none] tw:[&:hover]:[outline:none] tw:[&:focus-visible]:[outline:none] tw:cursor-pointer tw:font-[family-name:var(--font-sans)] tw:[animation-name:-software-map-group-bloom] tw:[animation-duration:200ms] tw:[animation-timing-function:cubic-bezier(0.2,_0.8,_0.2,_1)]",
+    "tw:relative tw:box-border tw:w-full tw:h-full tw:p-[14px_16px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:hover]:border-[color:var(--rule-soft)] tw:[&:focus-visible]:border-[color:var(--rule-soft)] tw:rounded-[10px] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--marker-tint)] tw:[&:focus-visible]:bg-[color:var(--marker-tint)] tw:[box-shadow:none] tw:[&:hover]:[outline:none] tw:[&:focus-visible]:[outline:none] tw:cursor-pointer tw:font-[family-name:var(--font-sans)] tw:[animation-name:-software-map-group-bloom] tw:[animation-duration:200ms] tw:[animation-timing-function:cubic-bezier(0.2,_0.8,_0.2,_1)]",
   // Hover outranks a change's border; selection outranks hover.
   groupAdded:
     "tw:border-[color:var(--change-added)] tw:[&:hover]:border-[color:var(--rule-soft)] tw:[&:focus-visible]:border-[color:var(--rule-soft)]",
@@ -2792,7 +2792,7 @@ const styles = {
   hidden: "tw:hidden",
   handle:
     "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:size-[1px] tw:bg-[color:var(--transparent)] tw:opacity-0 tw:pointer-events-none",
-  node: "tw:relative tw:box-border tw:grid tw:gap-[7px] tw:w-full tw:max-w-none tw:min-h-[104px] tw:p-[12px_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--marker-tint)] tw:[&:focus-visible]:bg-[color:var(--marker-tint)] tw:[box-shadow:none] tw:[&:hover]:[outline:none] tw:[&:focus-visible]:[outline:none] tw:[&:hover]:[transform:translateY(-1px)] tw:[&:focus-visible]:[transform:translateY(-1px)] tw:appearance-none tw:text-[color:var(--ink)] tw:cursor-pointer tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:font-[family-name:var(--font-sans)] tw:text-left tw:[transition:border-color_120ms_ease,_background_120ms_ease,_box-shadow_120ms_ease,_transform_120ms_ease]",
+  node: "tw:relative tw:box-border tw:grid tw:gap-[7px] tw:w-full tw:max-w-none tw:min-h-[104px] tw:p-[12px_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[10px] tw:bg-[color:var(--surface)] tw:[&:hover]:bg-[color:var(--marker-tint)] tw:[&:focus-visible]:bg-[color:var(--marker-tint)] tw:[box-shadow:none] tw:[&:hover]:[outline:none] tw:[&:focus-visible]:[outline:none] tw:[&:hover]:[transform:translateY(-1px)] tw:[&:focus-visible]:[transform:translateY(-1px)] tw:appearance-none tw:text-[color:var(--ink)] tw:cursor-pointer tw:font-[family-name:inherit] tw:text-[length:inherit] tw:font-[number:inherit] tw:leading-[inherit] tw:[font-style:inherit] tw:font-[family-name:var(--font-sans)] tw:text-left tw:[transition:border-color_120ms_ease,_background_120ms_ease,_box-shadow_120ms_ease,_transform_120ms_ease]",
   nodeTight: "tw:gap-0",
   // A code card draws its ring inset, above its content.
   nodeCode:
@@ -2825,7 +2825,7 @@ const styles = {
     "tw:flex tw:gap-[8px] tw:items-center tw:w-max tw:max-w-full tw:min-w-0",
   // A document's code chip keeps its own padding and wash here.
   codeLabel:
-    "tw:block tw:flex-[0_1_auto] tw:min-w-0 tw:overflow-hidden tw:[&:is(.canvas-document:is(*)_*)]:p-[2px_5px] tw:[&:is(.canvas-document:is(*)_*)]:rounded-[4px] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)] tw:text-[length:15px] tw:font-semibold tw:leading-[18px] tw:text-ellipsis tw:whitespace-nowrap",
+    "tw:block tw:flex-[0_1_auto] tw:min-w-0 tw:overflow-hidden tw:[&:is(.canvas-document:is(*)_*)]:p-[2px_5px] tw:[&:is(.canvas-document:is(*)_*)]:rounded-[6px] tw:[&:is(.canvas-document:is(*)_*)]:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)] tw:text-[length:15px] tw:font-semibold tw:leading-[18px] tw:text-ellipsis tw:whitespace-nowrap",
   // Counts sit in the title row as plain text: the one +n −n pair, no pill.
   badge:
     "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:inline-flex tw:flex-[0_0_auto] tw:items-center tw:justify-end tw:gap-[6px] tw:w-auto tw:max-w-[140px] tw:min-h-0 tw:overflow-hidden tw:p-0 tw:bg-[color:var(--transparent)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-medium tw:leading-[15px] tw:text-ellipsis tw:whitespace-nowrap",
@@ -2855,13 +2855,13 @@ const styles = {
   storageFolder:
     "tw:absolute tw:inset-0 tw:z-0 tw:hidden tw:pointer-events-none tw:[&::after]:absolute tw:[&::after]:top-[46px] tw:[&::after]:right-[10px] tw:[&::after]:left-[min(190px,_68%)] tw:[&::after]:[border-top-width:2px] tw:[&::after]:[border-top-style:solid] tw:[&::after]:[border-top-color:var(--software-map-storage-border)] tw:[&::after]:[content:'']",
   storageFolderBody:
-    "tw:absolute tw:top-[46px] tw:right-0 tw:bottom-0 tw:left-0 tw:border-[0_2px_2px] tw:[border-style:none_solid_solid] tw:border-[color:currentcolor_var(--software-map-storage-border)_var(--software-map-storage-border)] tw:rounded-[0_8px_8px_8px] tw:bg-[color:var(--software-map-storage-fill)]",
+    "tw:absolute tw:top-[46px] tw:right-0 tw:bottom-0 tw:left-0 tw:border-[0_2px_2px] tw:[border-style:none_solid_solid] tw:border-[color:currentcolor_var(--software-map-storage-border)_var(--software-map-storage-border)] tw:rounded-[0_10px_10px_10px] tw:bg-[color:var(--software-map-storage-fill)]",
   storageFolderTab:
     "tw:absolute tw:top-0 tw:left-0 tw:w-[min(190px,_68%)] tw:h-[48px] tw:overflow-visible",
   schema: "tw:relative tw:z-[1] tw:grid tw:gap-[8px] tw:m-[12px_-2px_0]",
   schemaFlush: "tw:m-0",
   schemaSection:
-    "tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[4px] tw:bg-[color:var(--surface)]",
+    "tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--surface)]",
   schemaSectionSelected:
     "tw:border-[color:var(--selection)] tw:[box-shadow:none]",
   schemaHeader:

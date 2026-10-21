@@ -22,7 +22,7 @@ export function TextField({ className, ...props }: TextFieldProps) {
 // Exported for fields that are not a bare input: a textarea, a select, or a
 // shell around an input and its buttons.
 export const fieldStyles = {
-  box: "tw:box-border tw:min-w-0 tw:h-[26px] tw:p-[0_8px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:focus]:border-[color:var(--accent)] tw:rounded-[4px] tw:bg-[color:var(--control-bg)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--chrome-font)] tw:text-[length:12px] tw:[outline:none] tw:[&:disabled]:opacity-[0.5]",
+  box: "tw:box-border tw:min-w-0 tw:h-[26px] tw:p-[0_8px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:focus]:border-[color:var(--accent)] tw:rounded-[6px] tw:bg-[color:var(--control-bg)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--chrome-font)] tw:text-[length:12px] tw:[outline:none] tw:[&:disabled]:opacity-[0.5]",
   // The input inside draws no box of its own.
   shell:
     "tw:border-[color:var(--rule)] tw:[&:focus-within]:border-[color:var(--accent)]",

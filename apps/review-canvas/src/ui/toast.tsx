@@ -44,7 +44,7 @@ function Toast({ message }: { message: ToastMessage }) {
 const styles = {
   // Notification colors on purpose: it reads as the host's own toast.
   toast:
-    "tw:fixed tw:z-[10001] tw:right-[18px] tw:bottom-[18px] tw:max-w-[380px] tw:border-[0] tw:[&:is(.canvas-app:is(*)_*)]:border-[1px] tw:border-none tw:[&:is(.canvas-app:is(*)_*)]:border-solid tw:rounded-[8px] tw:p-[10px_12px] tw:bg-[color:var(--vscode-notifications-background,_var(--tray))] tw:[box-shadow:0_8px_24px_var(--shadow-color-strong)] tw:text-[color:var(--vscode-notifications-foreground,_var(--ink))] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[1.4]",
+    "tw:fixed tw:z-[10001] tw:right-[18px] tw:bottom-[18px] tw:max-w-[380px] tw:border-[0] tw:[&:is(.canvas-app:is(*)_*)]:border-[1px] tw:border-none tw:[&:is(.canvas-app:is(*)_*)]:border-solid tw:rounded-[10px] tw:p-[10px_12px] tw:bg-[color:var(--vscode-notifications-background,_var(--tray))] tw:[box-shadow:0_8px_24px_var(--shadow-color-strong)] tw:text-[color:var(--vscode-notifications-foreground,_var(--ink))] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[1.4]",
   success: "tw:border-[color:var(--diff-added)]",
   error: "tw:border-[color:var(--diff-modified)]",
 };

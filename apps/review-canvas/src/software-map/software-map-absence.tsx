@@ -87,7 +87,7 @@ function softwareMapSideLabel(
 
 const styles = {
   unavailable: "tw:min-h-[var(--software-map-empty-height,_520px)]",
-  code: "tw:p-[2px_5px] tw:rounded-[4px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)] tw:text-[length:0.85em] tw:font-bold",
+  code: "tw:p-[2px_5px] tw:rounded-[6px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-mono)] tw:text-[length:0.85em] tw:font-bold",
   topologyUnavailable:
     "tw:flex-[none] tw:m-0 tw:p-[7px_12px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule)] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:leading-[16px]",
 };

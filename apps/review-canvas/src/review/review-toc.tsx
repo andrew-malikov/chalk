@@ -414,7 +414,7 @@ function isVisibleHeadingForActiveTracking(heading: HTMLElement): boolean {
 // On a narrow shell the nav is the pill and the card in one: a 32px square at
 // the pill's anchor that grows in place, top-left corner pinned, into the
 // 248px contents card. Width and height animate; the list only fades, late in
-// and early out, so no frame shows stretching text. The radius holds at 8px
+// and early out, so no frame shows stretching text. The radius holds at 10px
 // so the eye tracks one shape. On a wide shell the same nav is the rail:
 // always open, no button, no card chrome.
 const styles = {

@@ -1,22 +1,19 @@
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@canvas/components/ui/popover";
-import { Switch } from "@canvas/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@canvas/components/ui/radio-group";
 import { useReviewSession } from "@canvas/host/review-session";
 import { useTooltip } from "@canvas/lib/use-tooltip";
 import { cn } from "@canvas/lib/utils";
-import { Choice } from "@canvas/settings/settings-choice";
-import { controlStyles } from "@canvas/styles/controls-styles";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import { IconButton } from "@canvas/ui/button";
-import { SlidersIcon } from "@canvas/ui/icons";
 import type { ReviewDiffPreferences } from "@chalk/review-contracts";
-import { BracesIcon, Columns2Icon, WrapTextIcon } from "lucide-react";
+import {
+  ArrowRightToLineIcon,
+  BracesIcon,
+  Columns2Icon,
+  Rows2Icon,
+  TextAlignStartIcon,
+  WrapTextIcon,
+} from "lucide-react";
 import {
   type ReactElement,
-  type ReactNode,
   useCallback,
   useEffect,
   useState,
@@ -63,87 +60,105 @@ export function useDiffPreference<K extends keyof ReviewDiffPreferences>(
 }
 
 export function DiffSettingsControl(): ReactElement {
-  const tooltip = useTooltip("Diff settings");
   const [layout, setLayout] = useDiffPreference("layout");
   const [mode, setMode] = useDiffPreference("mode");
   const [wrap, setWrap] = useDiffPreference("wrap");
 
   return (
-    <div className={cn(shellStyles.topbarItem, styles.settings)}>
-      <Popover>
-        <PopoverTrigger asChild>
-          <IconButton aria-label="Diff settings" ref={tooltip}>
-            <SlidersIcon className={controlStyles.chromeIcon} />
-          </IconButton>
-        </PopoverTrigger>
-        <PopoverContent
-          align="end"
-          aria-label="Diff settings"
-          className="tw:w-[300px] tw:p-1.5"
-        >
-          <SettingRow icon={<Columns2Icon />} label="Layout">
-            <Choice
-              label="Diff layout"
-              value={layout}
-              labels={{ unified: "Unified", split: "Split" }}
-              disabled={false}
-              onChange={setLayout}
-            />
-          </SettingRow>
-          <SettingRow
-            icon={<BracesIcon />}
-            label="Structural diff"
-            detail="Group by function, skip formatting"
-          >
-            <Switch
-              aria-label="Structural diff"
-              checked={mode === "structural"}
-              onCheckedChange={(on) => setMode(on ? "structural" : "text")}
-            />
-          </SettingRow>
-          <SettingRow icon={<WrapTextIcon />} label="Wrap lines">
-            <Switch
-              aria-label="Wrap lines"
-              checked={wrap}
-              onCheckedChange={setWrap}
-            />
-          </SettingRow>
-        </PopoverContent>
-      </Popover>
-    </div>
+    <>
+      <SettingSwitch
+        label="Diff layout"
+        value={layout}
+        options={[
+          { value: "unified", label: "Unified", icon: <Rows2Icon /> },
+          { value: "split", label: "Split", icon: <Columns2Icon /> },
+        ]}
+        onChange={setLayout}
+      />
+      <SettingSwitch
+        label="Diff mode"
+        value={mode}
+        options={[
+          { value: "text", label: "Text diff", icon: <TextAlignStartIcon /> },
+          {
+            value: "structural",
+            label: "Structural diff",
+            detail: "Group by function, skip formatting",
+            icon: <BracesIcon />,
+          },
+        ]}
+        onChange={setMode}
+      />
+      <SettingSwitch
+        label="Line wrapping"
+        value={wrap ? "wrap" : "nowrap"}
+        options={[
+          { value: "nowrap", label: "No wrap", icon: <ArrowRightToLineIcon /> },
+          { value: "wrap", label: "Wrap lines", icon: <WrapTextIcon /> },
+        ]}
+        onChange={(next) => setWrap(next === "wrap")}
+      />
+    </>
   );
 }
 
-function SettingRow({
-  icon,
-  label,
-  detail,
-  children,
-}: {
-  icon: ReactElement;
+type SwitchOption<T extends string> = {
+  value: T;
   label: string;
   detail?: string;
-  children: ReactNode;
+  icon: ReactElement;
+};
+
+// Both sides stay visible, so the setting reads as where it is and where a
+// click takes it, rather than a lone icon that is either lit or not.
+function SettingSwitch<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: SwitchOption<T>[];
+  onChange: (value: T) => void;
 }): ReactElement {
   return (
-    <div className="tw:flex tw:min-h-11 tw:items-center tw:gap-3 tw:rounded-md tw:px-2.5 tw:py-2 tw:text-[13px]">
-      <span
-        className="tw:text-muted-foreground tw:[&_svg]:size-4"
-        aria-hidden="true"
-      >
-        {icon}
-      </span>
-      <span className="tw:grid tw:flex-1 tw:gap-0.5">
-        <span>{label}</span>
-        {detail && (
-          <span className="tw:text-xs tw:text-muted-foreground">{detail}</span>
-        )}
-      </span>
-      {children}
-    </div>
+    <RadioGroup
+      aria-label={label}
+      orientation="horizontal"
+      value={value}
+      className={cn(
+        shellStyles.topbarItem,
+        "tw:inline-flex tw:gap-0.5 tw:rounded-lg tw:bg-muted tw:p-0.5",
+      )}
+      onValueChange={(next) => {
+        const option = options.find((option) => option.value === next);
+
+        if (option) onChange(option.value);
+      }}
+    >
+      {options.map((option) => (
+        <SwitchItem key={option.value} option={option} />
+      ))}
+    </RadioGroup>
   );
 }
 
-const styles = {
-  settings: "tw:relative",
-};
+function SwitchItem<T extends string>({
+  option,
+}: {
+  option: SwitchOption<T>;
+}): ReactElement {
+  const tooltipRef = useTooltip(option.label, { detail: option.detail });
+
+  return (
+    <RadioGroupItem
+      ref={tooltipRef}
+      value={option.value}
+      aria-label={option.label}
+      className="tw:inline-flex tw:aspect-auto tw:size-6 tw:items-center tw:justify-center tw:rounded-md tw:border-0 tw:text-muted-foreground tw:shadow-none tw:hover:text-foreground tw:data-[state=checked]:bg-background tw:data-[state=checked]:text-foreground tw:data-[state=checked]:shadow-xs tw:[&_svg]:size-[var(--chrome-icon-size)]"
+    >
+      {option.icon}
+    </RadioGroupItem>
+  );
+}

@@ -258,7 +258,7 @@ export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
 
 const styles = {
   figure:
-    "tw:m-[14px_0] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:overflow-hidden tw:bg-[color:var(--surface)]",
+    "tw:m-[14px_0] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[10px] tw:overflow-hidden tw:bg-[color:var(--surface)]",
   tree: "tw:min-w-full tw:w-full tw:p-[6px_0_12px]",
   // A hovered or focused call-site edge paints over the rows below it.
   entry:

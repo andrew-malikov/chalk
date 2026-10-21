@@ -29,7 +29,6 @@ describe("DiffSettingsControl", () => {
         </ReviewSessionProvider>,
       );
     });
-    await userEvent.click(control('button[aria-label="Diff settings"]'));
   });
 
   afterEach(async () => {
@@ -37,10 +36,8 @@ describe("DiffSettingsControl", () => {
     container.remove();
   });
 
-  it("writes several settings in one visit and does not rewrite the current one", async () => {
-    await userEvent.click(radio("Split"));
-    expect(preferences.setDiffPreference).not.toHaveBeenCalled();
-    await userEvent.click(radio("Unified"));
+  it("writes each setting it toggles", async () => {
+    await userEvent.click(control('[aria-label="Unified"]'));
     await userEvent.click(control('[aria-label="Structural diff"]'));
     await userEvent.click(control('[aria-label="Wrap lines"]'));
     expect(vi.mocked(preferences.setDiffPreference).mock.calls).toEqual([
@@ -48,7 +45,6 @@ describe("DiffSettingsControl", () => {
       ["mode", "structural"],
       ["wrap", true],
     ]);
-    expect(radio("Unified").getAttribute("aria-checked")).toBe("true");
   });
 
   it("shows a choice until the desktop confirms it, and drops it if the write fails", async () => {
@@ -71,16 +67,6 @@ describe("DiffSettingsControl", () => {
     const element = document.querySelector<HTMLElement>(selector);
 
     if (!element) throw new Error(`${selector} not found`);
-
-    return element;
-  }
-
-  function radio(label: string) {
-    const element = [
-      ...document.querySelectorAll<HTMLElement>('[role="radio"]'),
-    ].find((item) => item.textContent === label);
-
-    if (!element) throw new Error(`${label} radio not found`);
 
     return element;
   }

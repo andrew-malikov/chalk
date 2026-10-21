@@ -1004,7 +1004,7 @@ const styles = {
   // Inline, a sequence takes the document's block measure, lanes spreading to
   // fill it. The fullscreen tour is the escape hatch.
   figure:
-    "tw:relative tw:grid tw:grid-rows-[auto_minmax(0,_1fr)] tw:w-full tw:[@media_(max-width:_720px)]:w-full tw:[@media_(max-width:_720px)]:[&:is(.canvas-document:is(*)_*)]:w-[calc(100cqi_-_16px)] tw:min-w-0 tw:max-w-full tw:[&:is(.canvas-document:is(*)_*)]:max-w-[min(var(--review-block-max-width),_calc(100cqi_-_var(--review-document-padding-inline)_-_var(--review-document-padding-inline)))] tw:h-auto tw:min-h-[min(var(--sequence-height),_260px)] tw:max-h-[3200px] tw:my-[24px] tw:mx-0 tw:[&:is(.canvas-document:is(*)_*)]:mx-[auto] tw:pt-0 tw:overflow-hidden tw:[&:is(.canvas-app:is(*)_*)]:border-[1px] tw:[&:is(.canvas-app:is(*)_*)]:border-solid tw:[&:is(.canvas-app:is(*)_*)]:border-[color:var(--diagram-border)] tw:rounded-[6px] tw:bg-[color:var(--diagram-surface)] tw:[box-shadow:none] tw:cursor-pointer",
+    "tw:relative tw:grid tw:grid-rows-[auto_minmax(0,_1fr)] tw:w-full tw:[@media_(max-width:_720px)]:w-full tw:[@media_(max-width:_720px)]:[&:is(.canvas-document:is(*)_*)]:w-[calc(100cqi_-_16px)] tw:min-w-0 tw:max-w-full tw:[&:is(.canvas-document:is(*)_*)]:max-w-[min(var(--review-block-max-width),_calc(100cqi_-_var(--review-document-padding-inline)_-_var(--review-document-padding-inline)))] tw:h-auto tw:min-h-[min(var(--sequence-height),_260px)] tw:max-h-[3200px] tw:my-[24px] tw:mx-0 tw:[&:is(.canvas-document:is(*)_*)]:mx-[auto] tw:pt-0 tw:overflow-hidden tw:[&:is(.canvas-app:is(*)_*)]:border-[1px] tw:[&:is(.canvas-app:is(*)_*)]:border-solid tw:[&:is(.canvas-app:is(*)_*)]:border-[color:var(--diagram-border)] tw:rounded-[8px] tw:bg-[color:var(--diagram-surface)] tw:[box-shadow:none] tw:cursor-pointer",
   active:
     "tw:border-[color:var(--selection)] tw:[box-shadow:0_0_0_2px_var(--selection-shadow)]",
   // The tour stage: the figure fills the overlay without its card chrome.
@@ -1028,7 +1028,7 @@ const styles = {
   participantLabelAnchor:
     "tw:relative tw:z-[40] tw:w-fit tw:min-w-[min(148px,_100%)] tw:max-w-[calc(100%_-_16px)] tw:m-[24px_auto_0] tw:[pointer-events:all]",
   participantLabel:
-    "tw:block tw:box-border tw:w-full tw:p-[6px_10px] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[6px] tw:bg-[color:var(--surface)] tw:[box-shadow:none] tw:[&:hover]:[box-shadow:0_0_0_2px_var(--accent-shadow),_0_6px_14px_var(--shadow-color-strong)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-bold tw:text-center tw:text-ellipsis tw:whitespace-nowrap tw:[pointer-events:all]",
+    "tw:block tw:box-border tw:w-full tw:p-[6px_10px] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:bg-[color:var(--surface)] tw:[box-shadow:none] tw:[&:hover]:[box-shadow:0_0_0_2px_var(--accent-shadow),_0_6px_14px_var(--shadow-color-strong)] tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-bold tw:text-center tw:text-ellipsis tw:whitespace-nowrap tw:[pointer-events:all]",
   lifeline:
     "tw:absolute tw:top-[62px] tw:bottom-[18px] tw:left-[50%] tw:ml-[-0.5px] tw:[border-left-width:1px] tw:[border-left-style:dashed] tw:[border-left-color:var(--rule-soft)]",
   // Edge endpoints sit exactly on the lane: left: 50% places the handle's

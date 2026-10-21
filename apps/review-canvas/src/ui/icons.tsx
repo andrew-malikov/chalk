@@ -44,16 +44,6 @@ export function CloseIcon({ className }: IconProps = {}): ReactElement {
   );
 }
 
-export function SlidersIcon({ className }: IconProps = {}): ReactElement {
-  return (
-    <SlidersHorizontal
-      aria-hidden="true"
-      focusable="false"
-      className={cn(styles.icon, className)}
-    />
-  );
-}
-
 export function StackIcon({ className }: IconProps = {}): ReactElement {
   return (
     <Layers

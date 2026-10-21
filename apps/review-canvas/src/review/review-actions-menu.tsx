@@ -66,9 +66,8 @@ export function ReviewActionsMenu({
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <ButtonPrimitive
-            variant="outline"
+            variant="ghost"
             size="icon-sm"
-            className="tw:border-border"
             aria-label="Review actions"
             aria-busy={busy || undefined}
             disabled={busy}

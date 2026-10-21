@@ -618,7 +618,7 @@ const styles = {
   // The workbench keeps a 10px strip under the canvas, so 8px here reads as
   // the same 18px gap from the window edge as the right side.
   guide:
-    "tw:absolute tw:right-[18px] tw:bottom-[8px] tw:flex tw:flex-col tw:w-[min(292px,_calc(100%_-_36px))] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--tutorial-guide-border)] tw:rounded-[8px] tw:bg-[color:var(--tutorial-guide-bg)] tw:text-[color:var(--ink)] tw:[box-shadow:0_8px_24px_var(--shadow-color-strong)] tw:pointer-events-auto tw:[backdrop-filter:blur(16px)]",
+    "tw:absolute tw:right-[18px] tw:bottom-[8px] tw:flex tw:flex-col tw:w-[min(292px,_calc(100%_-_36px))] tw:overflow-hidden tw:border-[1px] tw:border-solid tw:border-[color:var(--tutorial-guide-border)] tw:rounded-[10px] tw:bg-[color:var(--tutorial-guide-bg)] tw:text-[color:var(--ink)] tw:[box-shadow:0_8px_24px_var(--shadow-color-strong)] tw:pointer-events-auto tw:[backdrop-filter:blur(16px)]",
   guideHeader:
     "tw:flex tw:items-center tw:justify-between tw:p-[10px_12px_8px]",
   guideChapter:
@@ -647,6 +647,6 @@ const styles = {
   ring: "tw:absolute tw:border-[2px] tw:border-solid tw:border-[color:var(--tutorial-ring)] tw:[box-shadow:0_0_0_4px_var(--tutorial-ring-glow)] tw:pointer-events-none tw:[animation-name:tutorial-experience-target-pulse] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none] tw:[animation-duration:1.6s] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-duration:0s] tw:[animation-timing-function:ease-in-out] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-timing-function:ease] tw:[animation-iteration-count:infinite] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-iteration-count:1]",
   // An inline link reads as marked text: one wash box per line.
   ringInline:
-    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-[4px] tw:bg-[color:var(--tutorial-ring-glow)] tw:[box-shadow:none] tw:[animation-name:tutorial-experience-link-pulse] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none]",
+    "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:rounded-[6px] tw:bg-[color:var(--tutorial-ring-glow)] tw:[box-shadow:none] tw:[animation-name:tutorial-experience-link-pulse] tw:[@media_(prefers-reduced-motion:_reduce)]:[animation-name:none]",
   pillIcon: "tw:size-[22px] tw:pointer-events-none tw:stroke-[1.6px]",
 };

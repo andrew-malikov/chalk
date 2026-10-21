@@ -59,7 +59,7 @@ const styles = {
   inline:
     "tw:flex tw:flex-col tw:gap-[4px] tw:py-[16px] tw:text-[color:var(--ink-muted)] tw:text-[length:13px] tw:leading-[1.55]",
   boxed:
-    "tw:box-border tw:grid tw:place-content-center tw:justify-items-center tw:p-[32px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[8px] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink-muted)] tw:text-center",
+    "tw:box-border tw:grid tw:place-content-center tw:justify-items-center tw:p-[32px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule-soft)] tw:rounded-[10px] tw:bg-[color:var(--tray)] tw:text-[color:var(--ink-muted)] tw:text-center",
   title: "tw:m-0 tw:text-[color:var(--ink)] tw:font-medium",
   message: "tw:m-0",
   boxedTitle: "tw:mb-[8px] tw:text-[length:15px] tw:leading-[1.3]",

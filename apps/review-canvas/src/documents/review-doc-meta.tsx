@@ -199,7 +199,7 @@ const styles = {
   details: "tw:gap-[8px_10px] tw:pt-[12px]",
   dot: "tw:flex-[0_0_3px] tw:size-[3px] tw:rounded-[50%] tw:bg-[color:var(--ink-faint)]",
   branch:
-    "tw:inline-flex tw:items-center tw:gap-[7px] tw:box-border tw:min-w-0 tw:min-h-[26px] tw:max-w-full tw:p-[3px_10px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:[overflow-wrap:anywhere]",
+    "tw:inline-flex tw:items-center tw:gap-[7px] tw:box-border tw:min-w-0 tw:min-h-[26px] tw:max-w-full tw:p-[3px_10px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--well)] tw:text-[color:var(--ink)] tw:[overflow-wrap:anywhere]",
   branchIcon: "tw:text-[color:var(--ink-faint)]",
   branchName: "tw:min-w-0 tw:[overflow-wrap:anywhere]",
   stats: "tw:gap-[10px] tw:flex-nowrap tw:shrink-0",

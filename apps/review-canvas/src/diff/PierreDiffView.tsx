@@ -7,6 +7,7 @@ import {
   useCommentDrafts,
 } from "@canvas/comments/comments-panel";
 import { useReviewSession } from "@canvas/host/review-session";
+import { useTooltip } from "@canvas/lib/use-tooltip";
 import { cn } from "@canvas/lib/utils";
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
 import {
@@ -923,9 +924,8 @@ function Comparison({
         renderHeaderMetadata={(item) => (
           <div className={styles.headerActions}>
             {viewed(item.id)}
-            <Button
-              variant="ghost"
-              aria-label={`Open source: ${item.id}`}
+            <OpenSourceButton
+              path={item.id}
               onClick={() => {
                 const entry = entries.find(
                   (entry) => entry.file.path === item.id,
@@ -933,10 +933,7 @@ function Comparison({
 
                 void openSource(entry.file);
               }}
-            >
-              <ExternalLinkIcon size={14} aria-hidden="true" />
-              Open
-            </Button>
+            />
           </div>
         )}
         onScroll={(scrollTop, instance) => {
@@ -1003,6 +1000,26 @@ const savedViewSchema = z.object({
     .optional()
     .catch(undefined),
 });
+
+function OpenSourceButton({
+  path,
+  onClick,
+}: {
+  path: string;
+  onClick(): void;
+}) {
+  const tooltip = useTooltip("Open source", { instant: true });
+
+  return (
+    <IconButton
+      ref={tooltip}
+      aria-label={`Open source: ${path}`}
+      onClick={onClick}
+    >
+      <ExternalLinkIcon size={14} aria-hidden="true" />
+    </IconButton>
+  );
+}
 
 function readSavedView(key: string): SavedView {
   return (

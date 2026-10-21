@@ -464,6 +464,7 @@ function ReviewLayoutContent({
       className={cn(
         shellStyles.topbar,
         activeView === "diff" && "tw:col-span-full",
+        chrome && shellStyles.pageToolbar,
         chrome && !pageToolbarShown && shellStyles.topbarHidden,
       )}
     >
@@ -504,9 +505,6 @@ function ReviewLayoutContent({
           themeStyles.vars,
           themeStyles.app,
           activeView === "diff" && shellStyles.diffApp,
-          chrome &&
-            activeView === "diff" &&
-            "tw:border-t tw:border-t-[var(--rule)]",
           debugSettings.theme === "light" && themeStyles.light,
           rightPanelOpen && shellStyles.appPeekOpen,
           sidePeekResize.isResizing && shellStyles.appResizing,

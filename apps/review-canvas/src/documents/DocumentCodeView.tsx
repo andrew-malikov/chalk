@@ -352,7 +352,7 @@ function estimatedHeight(
 
 const styles = {
   editor:
-    "tw:relative tw:w-full tw:min-w-0 tw:overflow-hidden tw:[content-visibility:auto] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[6px] tw:bg-[color:var(--bg)]",
+    "tw:relative tw:w-full tw:min-w-0 tw:overflow-hidden tw:[content-visibility:auto] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[8px] tw:bg-[color:var(--bg)]",
   error:
     "tw:flex tw:items-center tw:p-[0_10px] tw:border-[color:var(--rule-soft)] tw:bg-[color:var(--surface)] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[1]",
 };

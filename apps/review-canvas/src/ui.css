@@ -7,6 +7,13 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-review-theme="dark"], [data-review-theme="dark"] *));
 
 @theme {
+  /* One step softer than Tailwind's defaults. */
+  --radius-xs: 0.1875rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.25rem;
   --z-index-popover: 120;
   --z-index-dialog: 10000;
 }
