@@ -32,6 +32,7 @@ import { defineText } from "prosekit/extensions/text";
 import { TextSelection } from "prosekit/pm/state";
 import { ProseKit, useDocChange, useExtension } from "prosekit/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { setup } from "xstate";
 
 import {
@@ -166,6 +167,7 @@ export function CommentEditor({
   focused,
   placeholder,
   labelledBy,
+  tabsContainer,
   inline,
 }: {
   /** Followed when it changes elsewhere, e.g. the same draft open in two places. */
@@ -176,6 +178,7 @@ export function CommentEditor({
   focused: boolean;
   placeholder: string;
   labelledBy: string;
+  tabsContainer?: HTMLElement | null;
   inline?: boolean;
 }) {
   const [editor] = useState(() =>
@@ -251,28 +254,32 @@ export function CommentEditor({
     "tw:max-h-[480px]",
   );
 
+  const tabs = (
+    <div className="tw:flex tw:gap-0.5">
+      {(["write", "preview"] as const).map((tab) => (
+        <Button
+          key={tab}
+          variant="ghost"
+          aria-pressed={snapshot.matches(tab)}
+          className={
+            snapshot.matches(tab)
+              ? "tw:bg-[var(--chrome-hover-bg)] tw:text-[var(--ink)]"
+              : "tw:text-[var(--ink-faint)]"
+          }
+          onClick={() => send({ type: tab })}
+        >
+          {tab === "write" ? "Write" : "Preview"}
+        </Button>
+      ))}
+    </div>
+  );
+
   return (
     <ProseKit editor={editor}>
       {/* Bleeds through the card padding; its background sets it apart, and the card shows focus. */}
       <div className="tw:-mx-3 tw:flex tw:min-w-0 tw:flex-col tw:bg-[var(--bg)]">
         <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-1 tw:px-2 tw:py-1">
-          <div className="tw:flex tw:gap-0.5">
-            {(["write", "preview"] as const).map((tab) => (
-              <Button
-                key={tab}
-                variant="ghost"
-                aria-pressed={snapshot.matches(tab)}
-                className={
-                  snapshot.matches(tab)
-                    ? "tw:bg-[var(--chrome-hover-bg)] tw:text-[var(--ink)]"
-                    : "tw:text-[var(--ink-faint)]"
-                }
-                onClick={() => send({ type: tab })}
-              >
-                {tab === "write" ? "Write" : "Preview"}
-              </Button>
-            ))}
-          </div>
+          {tabsContainer ? createPortal(tabs, tabsContainer) : tabs}
           {!previewing && (
             <div
               role="toolbar"

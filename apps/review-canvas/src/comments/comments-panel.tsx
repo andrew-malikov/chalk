@@ -35,9 +35,10 @@ export function CommentsPanel() {
 
   return (
     <ReviewPanelFrame
+      scrollHeader
       title={
         comments.state
-          ? `Comments · ${commentThreads(drafts, comments.state.gitlab?.discussions ?? []).open.length}`
+          ? `Comments ${commentThreads(drafts, comments.state.gitlab?.discussions ?? []).open.length}`
           : "Comments"
       }
       onClose={comments.toggle}
@@ -629,6 +630,11 @@ function DraftEditor({
   const ref = useRef<HTMLDivElement>(null);
   const editor = comments.editors[draft.id];
   const labelId = useId();
+
+  const [tabsContainer, setTabsContainer] = useState<HTMLDivElement | null>(
+    null,
+  );
+
   const collapsed = comments.collapsed[draft.id] ?? false;
   const [verified, setVerified] = useState(false);
   const [noteId, setNoteId] = useState("");
@@ -694,12 +700,19 @@ function DraftEditor({
           {targetLabel(editor?.target ?? draft.target)}
         </span>
         {draft.author === "agent" && <Chip className="tw:me-auto">Agent</Chip>}
+        <div
+          ref={setTabsContainer}
+          className={cn(
+            "tw:ms-auto tw:shrink-0",
+            collapsed && "tw:[&>*]:hidden",
+          )}
+        />
         <IconButton
           aria-label={collapsed ? "Expand discussion" : "Collapse discussion"}
           title={collapsed ? "Expand discussion" : "Collapse discussion"}
           aria-expanded={!collapsed}
           aria-controls={`${labelId}-body`}
-          className={cn("tw:ms-auto", collapsed && stretched)}
+          className={cn("tw:shrink-0", collapsed && stretched)}
           onClick={() => comments.collapse(draft.id, !collapsed)}
         >
           {collapsed ? (
@@ -737,6 +750,7 @@ function DraftEditor({
           focused={!collapsed && comments.selected === draft.id}
           placeholder="Write your comment…"
           labelledBy={labelId}
+          tabsContainer={tabsContainer}
           inline={inline}
         />
         {(editor?.error || draft.error) && (

@@ -66,6 +66,7 @@ export function ReviewPanelFrame({
   closeLabel,
   titleAccessory,
   headerActions,
+  scrollHeader = false,
   floatingFooter,
   bodyRef,
   onBodyScroll,
@@ -81,6 +82,8 @@ export function ReviewPanelFrame({
   titleAccessory?: ReactNode;
   /** Buttons beside the close button. */
   headerActions?: ReactNode;
+  /** Scroll the header with the body, as the comments sidebar does. */
+  scrollHeader?: boolean;
   floatingFooter?: ReactNode;
   bodyRef?: Ref<HTMLDivElement>;
   onBodyScroll?: () => void;
@@ -118,6 +121,37 @@ export function ReviewPanelFrame({
     "--side-panel-bottom-fraction": sheet.fraction,
   } as CSSProperties;
 
+  const header = (
+    <header className={cn(panelStyles.header, tray && panelStyles.tray)}>
+      <div className={panelStyles.title}>
+        {label && (
+          <span
+            className={cn(
+              textStyles.eyebrow,
+              panelStyles.kicker,
+              tray && panelStyles.trayKicker,
+            )}
+          >
+            {label}
+          </span>
+        )}
+        {title && <h2 className={panelStyles.heading}>{title}</h2>}
+        {titleAccessory}
+      </div>
+      <div className={panelStyles.actions}>
+        {headerActions}
+        <IconButton
+          size="large"
+          className={panelStyles.close}
+          onClick={onClose}
+          aria-label={closeLabel}
+        >
+          <CloseIcon className={controlStyles.inertIcon} />
+        </IconButton>
+      </div>
+    </header>
+  );
+
   return (
     <aside
       className={cn(
@@ -133,39 +167,13 @@ export function ReviewPanelFrame({
       style={panelStyle}
     >
       <div className={shellStyles.sheetResizer} {...sheet.separatorProps} />
-      <header className={cn(panelStyles.header, tray && panelStyles.tray)}>
-        <div className={panelStyles.title}>
-          {label && (
-            <span
-              className={cn(
-                textStyles.eyebrow,
-                panelStyles.kicker,
-                tray && panelStyles.trayKicker,
-              )}
-            >
-              {label}
-            </span>
-          )}
-          {title && <h2 className={panelStyles.heading}>{title}</h2>}
-          {titleAccessory}
-        </div>
-        <div className={panelStyles.actions}>
-          {headerActions}
-          <IconButton
-            size="large"
-            className={panelStyles.close}
-            onClick={onClose}
-            aria-label={closeLabel}
-          >
-            <CloseIcon className={controlStyles.inertIcon} />
-          </IconButton>
-        </div>
-      </header>
+      {!scrollHeader && header}
       <div
         ref={bodyRef}
         className={cn(panelStyles.body, tray && panelStyles.trayBody)}
         onScroll={onBodyScroll}
       >
+        {scrollHeader && header}
         {children}
       </div>
       {floatingFooter}

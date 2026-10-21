@@ -463,6 +463,41 @@ function ReviewLayoutContent({
     </div>
   );
 
+  const topbar = (
+    <header
+      className={cn(
+        shellStyles.topbar,
+        activeView === "diff" && "tw:col-span-full",
+        chrome && !pageToolbarShown && shellStyles.topbarHidden,
+      )}
+    >
+      <div className={shellStyles.topbarLeft}>
+        <div ref={setToolbarStart} className={shellStyles.topbarLeft} />
+        {chrome ? createPortal(viewTabs, chrome.views) : viewTabs}
+        {chrome && createPortal(actionsMenu, chrome.actions)}
+      </div>
+      <div className={cn(shellStyles.topbarActions, topbarActionsMarker)}>
+        <div className={cn(shellStyles.topbarItem, shellStyles.topbarContext)}>
+          <AuthoringActivityBadge
+            onLocate={(view) => {
+              showView(view);
+            }}
+          />
+        </div>
+        <ReviewBatonChip outcome={review.submissionOutcome} />
+        <div ref={setToolbarEnd} className="tw:contents" />
+        {!chrome && (
+          <>
+            <div
+              className={cn(shellStyles.topbarItem, shellStyles.actionsDivider)}
+            />
+            {actionsMenu}
+          </>
+        )}
+      </div>
+    </header>
+  );
+
   return (
     <PageSlotsContext.Provider value={pageSlots}>
       <div
@@ -472,6 +507,10 @@ function ReviewLayoutContent({
           appMarker,
           themeStyles.vars,
           themeStyles.app,
+          activeView === "diff" && shellStyles.diffApp,
+          chrome &&
+            activeView === "diff" &&
+            "tw:border-t tw:border-t-[var(--rule)]",
           debugSettings.theme === "light" && themeStyles.light,
           rightPanelOpen && shellStyles.appPeekOpen,
           sidePeekResize.isResizing && shellStyles.appResizing,
@@ -484,59 +523,22 @@ function ReviewLayoutContent({
         data-database-lens={document.databaseLens || undefined}
         data-document-width={document.width}
       >
+        {activeView === "diff" && topbar}
         <main
           ref={shellRef}
           className={cn(
             "review-document-shell",
             shellStyles.documentShell,
             !!banner && shellStyles.documentShellBanner,
+            activeView === "diff" &&
+              (banner ? shellStyles.diffShellBanner : shellStyles.diffShell),
           )}
         >
           <TutorialExperienceProvider
             shellRef={shellRef}
             scrollRegionRef={scrollRegionRef}
           >
-            <header
-              className={cn(
-                shellStyles.topbar,
-                chrome && !pageToolbarShown && shellStyles.topbarHidden,
-              )}
-            >
-              <div className={shellStyles.topbarLeft}>
-                <div ref={setToolbarStart} className={shellStyles.topbarLeft} />
-                {chrome ? createPortal(viewTabs, chrome.views) : viewTabs}
-                {chrome && createPortal(actionsMenu, chrome.actions)}
-              </div>
-              <div
-                className={cn(shellStyles.topbarActions, topbarActionsMarker)}
-              >
-                <div
-                  className={cn(
-                    shellStyles.topbarItem,
-                    shellStyles.topbarContext,
-                  )}
-                >
-                  <AuthoringActivityBadge
-                    onLocate={(view) => {
-                      showView(view);
-                    }}
-                  />
-                </div>
-                <ReviewBatonChip outcome={review.submissionOutcome} />
-                <div ref={setToolbarEnd} className="tw:contents" />
-                {!chrome && (
-                  <>
-                    <div
-                      className={cn(
-                        shellStyles.topbarItem,
-                        shellStyles.actionsDivider,
-                      )}
-                    />
-                    {actionsMenu}
-                  </>
-                )}
-              </div>
-            </header>
+            {activeView !== "diff" && topbar}
             {banner}
             <div ref={setPageOverlay} className="tw:contents" />
             <section
@@ -575,13 +577,9 @@ function ReviewLayoutContent({
           <div
             className={cn(
               shellStyles.resizer,
-              shellStyles.peekResizer,
+              activeView !== "diff" && shellStyles.peekResizer,
               shellStyles.resizerGrabPanel,
-              activeView === "diff" && shellStyles.resizerDots,
               sidePeekResize.isResizing && shellStyles.peekResizerActive,
-              activeView === "diff" &&
-                sidePeekResize.isResizing &&
-                shellStyles.resizerDotsActive,
             )}
             {...sidePeekResize.separatorProps}
           />

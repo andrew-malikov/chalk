@@ -14,6 +14,10 @@ export const shellStyles = {
   documentShell:
     "tw:relative tw:grid tw:grid-cols-[minmax(0,_1fr)] tw:grid-rows-[auto_minmax(0,_1fr)] tw:min-w-0 tw:h-full tw:overflow-hidden tw:[container:review-content_/_inline-size]",
   documentShellBanner: "tw:grid-rows-[auto_auto_minmax(0,_1fr)]",
+  // The diff toolbar spans both panes, keeping its controls at the window edge.
+  diffApp: "tw:grid-rows-[auto_minmax(0,_1fr)]",
+  diffShell: "tw:grid-rows-[minmax(0,_1fr)]",
+  diffShellBanner: "tw:grid-rows-[auto_minmax(0,_1fr)]",
   // The host's own box lives in the collapsed third grid column on narrow
   // layouts; dissolving it lets the sheet position against the app instead
   // of a 0-width, overflow-hidden ancestor.
@@ -34,14 +38,6 @@ export const shellStyles = {
   // divider owns resizing.
   sheetResizer:
     "tw:relative tw:hidden tw:[@container_review-canvas_(max-width:_929px)]:block tw:[@media_(max-width:_720px)]:block tw:flex-[0_0_auto] tw:h-[10px] tw:min-h-[10px] tw:[cursor:row-resize] tw:bg-[color:var(--transparent)] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[touch-action:none] tw:[&:focus-visible]:[outline:1px_solid_var(--rule-soft)] tw:[&:focus-visible]:outline-offset-[-1px] tw:[&::before]:absolute tw:[&::before]:top-[50%] tw:[&::before]:right-0 tw:[&::before]:left-0 tw:[&::before]:h-[1px] tw:[&::before]:bg-[color:var(--rule)] tw:[&:hover::before]:bg-[color:var(--ink-faint)] tw:[&:focus-visible::before]:bg-[color:var(--ink-faint)] tw:[&::before]:[transform:translateY(-50%)] tw:[&::before]:[content:'']",
-  // Three dots stand in for a divider's rule, hidden until hover or drag.
-  resizerDots:
-    "tw:[&::before]:top-[50%] tw:[&::before]:bottom-[auto] tw:[&::before]:left-[50%] tw:[&::before]:right-[auto] tw:[&::before]:w-[3px] tw:[&::before]:h-[18px] tw:[&::before]:[transform:translate(-50%,-50%)] tw:[&::before]:bg-[color:var(--transparent)] tw:[&::before]:[mask:radial-gradient(circle,#000_1px,transparent_1.5px)_0_0/3px_6px]",
-  sheetResizerDots:
-    "tw:[&::before]:top-[50%] tw:[&::before]:left-[50%] tw:[&::before]:right-[auto] tw:[&::before]:w-[18px] tw:[&::before]:h-[3px] tw:[&::before]:[transform:translate(-50%,-50%)] tw:[&::before]:bg-[color:var(--transparent)] tw:[&::before]:[mask:radial-gradient(circle,#000_1px,transparent_1.5px)_0_0/6px_3px]",
-  // Dragged dots grow and darken; important beats the hover tint.
-  resizerDotsActive:
-    "tw:[&::before]:bg-[color:var(--ink)]! tw:[&::before]:[scale:1.5]",
   // With the tabs and actions in the host's command bar, only the diff view
   // keeps a toolbar. Collapsed rather than unmounted, so its portals stay.
   topbarHidden: "tw:h-0 tw:invisible tw:[border-bottom-width:0]",
