@@ -174,7 +174,7 @@ Then(
     await openDiffNavigation(page);
     await expect(
       page
-        .getByRole("dialog", { name: "Lenses and files" })
+        .getByRole("dialog", { name: "Lenses" })
         .getByText("Remaining", { exact: false }),
     ).toContainText(`+${total - viewed}`);
   },
@@ -232,9 +232,7 @@ When("I reload the changed review", async ({ storedReview }) => {
 When("I close and reopen diff navigation", async ({ page }) => {
   const diff = await page.locator("[data-pierre-diff]:visible").elementHandle();
   await page.keyboard.press("Escape");
-  await expect(
-    page.getByRole("dialog", { name: "Lenses and files" }),
-  ).toBeHidden();
+  await expect(page.getByRole("dialog", { name: "Lenses" })).toBeHidden();
   expect(await diff?.evaluate((element) => element.isConnected)).toBe(true);
   await expect(page.locator("[data-pierre-diff]:visible")).toBeVisible();
   await openDiffNavigation(page);

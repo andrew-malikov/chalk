@@ -12,7 +12,6 @@ import { useTooltip } from "@canvas/lib/use-tooltip";
 import { cn } from "@canvas/lib/utils";
 import { useReviewDiffFiles } from "@canvas/review/review-diff-files-context";
 import { useReviewLenses } from "@canvas/review/review-lenses";
-import { Choice } from "@canvas/settings/settings-choice";
 import { diffWorkspaceMarker, lensToggleMarker } from "@canvas/styles/markers";
 import { Button } from "@canvas/ui/button";
 import { textStyles } from "@canvas/ui/text";
@@ -23,7 +22,12 @@ import {
   coverageSources,
 } from "@review/documents/viewed-coverage";
 import type { ClassValue } from "clsx";
-import { ChevronDownIcon, ListFilterIcon, X } from "lucide-react";
+import {
+  ChevronDownIcon,
+  FolderTreeIcon,
+  ListFilterIcon,
+  X,
+} from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -121,7 +125,7 @@ export function DiffCounts({
   );
 }
 
-/** Where the shown diff puts its navigation button, in the canvas toolbar. */
+/** Where the shown diff puts its navigation buttons, in the canvas toolbar. */
 export const DiffNavigationSlot = createContext<HTMLElement | null>(null);
 
 export function ReviewDiffView({
@@ -135,8 +139,9 @@ export function ReviewDiffView({
   /** A saved diff position wins over `revealFile`. */
   restoreFile?: boolean;
 }) {
-  const [navigationOpen, setNavigationOpen] = useState(false);
-  const [navigation, setNavigation] = useState<"lenses" | "files">("lenses");
+  const [navigationOpen, setNavigationOpen] = useState<
+    "lenses" | "files" | null
+  >(null);
 
   const lenses = useReviewLenses();
   const diffFiles = useReviewDiffFiles();
@@ -223,22 +228,28 @@ export function ReviewDiffView({
       />
     );
   const global = lenses.stats();
-  const open = navigationOpen && !!toolbarSlot;
+  const openNavigation = (section: "lenses" | "files") => (open: boolean) =>
+    setNavigationOpen(open ? section : null);
+  // Switching popovers: returning focus to the old trigger would close the new one.
+  const keepFocus = (event: Event) => navigationOpen && event.preventDefault();
 
   // diff-workspace is a marker global.css keys on.
   return (
     <div
       className={cn("diff-workspace", styles.workspace, diffWorkspaceMarker)}
     >
-      <Popover open={open} onOpenChange={setNavigationOpen}>
+      <Popover
+        open={navigationOpen === "lenses" && !!toolbarSlot}
+        onOpenChange={openNavigation("lenses")}
+      >
         {toolbarSlot &&
           createPortal(
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
                 className="tw:max-w-[240px]"
-                aria-label="Lenses and files"
-                data-diff-navigation
+                aria-label="Lenses"
+                data-diff-navigation="lenses"
               >
                 <ListFilterIcon aria-hidden="true" />
                 <span className="tw:truncate">{lens?.title ?? "No lens"}</span>
@@ -249,18 +260,10 @@ export function ReviewDiffView({
           )}
         <PopoverContent
           align="start"
-          aria-label="Lenses and files"
+          aria-label="Lenses"
           className={styles.popover}
+          onCloseAutoFocus={keepFocus}
         >
-          <div className={styles.navigation}>
-            <Choice
-              label="Browse diff"
-              value={navigation}
-              labels={{ lenses: "Lenses", files: "Files" }}
-              disabled={false}
-              onChange={setNavigation}
-            />
-          </div>
           <div className={styles.progress}>
             <span className={styles.progressLabel}>
               {lenses.error &&
@@ -285,11 +288,7 @@ export function ReviewDiffView({
           </div>
 
           <div
-            className={cn(
-              "diff-lenses",
-              styles.lenses,
-              navigation !== "lenses" && "tw:hidden",
-            )}
+            className={cn("diff-lenses", styles.lenses)}
             aria-label="Lenses"
             ref={setLensList}
           >
@@ -425,9 +424,34 @@ export function ReviewDiffView({
               find={lensRowElement}
             />
           </div>
-          <div
-            className={cn(styles.files, navigation !== "files" && "tw:hidden")}
-          >
+        </PopoverContent>
+      </Popover>
+      <Popover
+        open={navigationOpen === "files" && !!toolbarSlot}
+        onOpenChange={openNavigation("files")}
+      >
+        {toolbarSlot &&
+          createPortal(
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                aria-label="Files"
+                data-diff-navigation="files"
+              >
+                <FolderTreeIcon aria-hidden="true" />
+                Files
+                <ChevronDownIcon aria-hidden="true" />
+              </Button>
+            </PopoverTrigger>,
+            toolbarSlot,
+          )}
+        <PopoverContent
+          align="start"
+          aria-label="Files"
+          className={styles.popover}
+          onCloseAutoFocus={keepFocus}
+        >
+          <div className={styles.files}>
             <div
               className={cn(
                 textStyles.eyebrow,
@@ -512,7 +536,6 @@ const styles = {
     "tw:flex tw:min-h-0 tw:h-full tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[1.5]",
   popover:
     "tw:w-[380px] tw:max-w-[calc(100vw-24px)] tw:max-h-[min(520px,var(--radix-popover-content-available-height))] tw:flex tw:flex-col tw:p-2 tw:text-[length:12px]",
-  navigation: "tw:px-1 tw:pb-2",
   progress: "tw:shrink-0 tw:px-2 tw:py-2 tw:text-muted-foreground tw:text-xs",
   progressLabel: "tw:flex tw:items-baseline tw:gap-2",
   noLens: "tw:mb-1 tw:w-full tw:justify-start tw:px-3 tw:h-8",

@@ -168,7 +168,7 @@ export class StoredReview {
     );
     await this.page.getByRole("button", { name: "Diff", exact: true }).click();
     await this.page
-      .getByRole("button", { name: "Lenses and files", exact: true })
+      .getByRole("button", { name: "Lenses", exact: true })
       .click();
     await expect(
       this.page

@@ -240,6 +240,8 @@ export class GitLabReview {
         window.reviewHarness.openStored(JSON.parse(snapshot), current),
       { snapshot: JSON.stringify(snapshot), current: version === undefined },
     );
+    // Comments live in the diff's toolbar.
+    await this.page.getByRole("button", { name: "Diff", exact: true }).click();
     await this.page
       .getByRole("button", { name: "Comments", exact: true })
       .click();

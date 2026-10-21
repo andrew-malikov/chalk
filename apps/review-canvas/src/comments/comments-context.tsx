@@ -27,9 +27,12 @@ type CommentsContextValue = Pick<
   editable: boolean;
   busy: boolean;
   open: boolean;
-  /** Discussions and drafts the user collapsed or expanded; unset threads follow `resolved`. */
+  /** Discussions and drafts the user collapsed or expanded in the diff; unset threads follow `resolved`. */
   collapsed: Record<string, boolean>;
   collapse(id: string, value: boolean): void;
+  /** The same for the comments popover, which folds apart from the diff. */
+  panelCollapsed: Record<string, boolean>;
+  collapsePanel(id: string, value: boolean): void;
   toggle(): void;
   edit(id: string, text: string): void;
   compose(target: CommentTarget, placement?: "inline" | "panel"): void;
@@ -96,6 +99,10 @@ export function CommentsProvider({ children }: { children: ReactNode }) {
 
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  const [panelCollapsed, setPanelCollapsed] = useState<Record<string, boolean>>(
+    {},
+  );
   const [reveal, setReveal] = useState<CommentsContextValue["reveal"]>(null);
 
   useEffect(() => {
@@ -154,6 +161,9 @@ export function CommentsProvider({ children }: { children: ReactNode }) {
     collapsed,
     collapse: (id, value) =>
       setCollapsed((current) => ({ ...current, [id]: value })),
+    panelCollapsed,
+    collapsePanel: (id, value) =>
+      setPanelCollapsed((current) => ({ ...current, [id]: value })),
     reveal,
     toggle: () => {
       const panelState = panels?.getSnapshot().context;

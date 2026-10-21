@@ -4,7 +4,7 @@ import type { DataTable } from "playwright-bdd";
 import { Given, Then, When } from "../support/fixtures";
 
 const panel = (page: Page) =>
-  page.getByRole("complementary", { name: "Comments", exact: true });
+  page.getByRole("dialog", { name: "Comments", exact: true });
 
 const editor = (page: Page) => page.getByRole("textbox").last();
 
@@ -86,6 +86,11 @@ When(
 Then(
   "the {string} draft still says {string} at its original target",
   async ({ page, gitlabReview }, kind: string, text: string) => {
+    // The popover folds code drafts.
+    if (kind === "inline")
+      await panel(page)
+        .getByRole("button", { name: "Expand discussion", exact: true })
+        .click();
     await expect(panel(page).getByRole("textbox")).toHaveText(text);
 
     const draft = (await gitlabReview.state()).comments.find(

@@ -2,7 +2,7 @@ import { Checkbox } from "@canvas/components/ui/checkbox";
 import { Input } from "@canvas/components/ui/input";
 import { MarkdownContent } from "@canvas/documents/agent-markdown";
 import { cn } from "@canvas/lib/utils";
-import { ReviewPanelFrame } from "@canvas/review/review-components";
+import { panelStyles } from "@canvas/review/side-panel-styles";
 import { loadingStyles } from "@canvas/styles/loading";
 import { Button, IconButton } from "@canvas/ui/button";
 import { Chip } from "@canvas/ui/chip";
@@ -34,17 +34,14 @@ export function CommentsPanel() {
   const refreshing = comments.pending?.action === "refresh";
 
   return (
-    <ReviewPanelFrame
-      scrollHeader
-      title={
-        comments.state
-          ? `Comments ${commentThreads(drafts, comments.state.gitlab?.discussions ?? []).open.length}`
-          : "Comments"
-      }
-      onClose={comments.toggle}
-      closeLabel="Close comments"
-      headerActions={
-        <>
+    <>
+      <header className={panelStyles.header}>
+        <h2 className={panelStyles.heading}>
+          {comments.state
+            ? `Comments ${commentThreads(drafts, comments.state.gitlab?.discussions ?? []).open.length}`
+            : "Comments"}
+        </h2>
+        <div className={panelStyles.actions}>
           <IconButton
             size="large"
             aria-label="New comment"
@@ -90,11 +87,10 @@ export function CommentsPanel() {
               <RefreshIcon />
             </IconButton>
           )}
-        </>
-      }
-    >
+        </div>
+      </header>
       <CommentsContent />
-    </ReviewPanelFrame>
+    </>
   );
 }
 
@@ -455,9 +451,13 @@ function Discussion({
   }, [comments.selected, discussion.id, inline]);
 
   // Inline threads render only when expanded; collapsed ones become line chips.
+  // The popover folds code threads too, leaving general ones open.
   const collapsed =
     !inline &&
-    (comments.collapsed[discussion.id] ?? (discussion.resolved && !replying));
+    (comments.panelCollapsed[discussion.id] ??
+      ((discussion.resolved || !!discussion.position) && !replying));
+
+  const collapse = inline ? comments.collapse : comments.collapsePanel;
 
   const first = discussion.comments[0];
 
@@ -507,7 +507,7 @@ function Discussion({
             title="Expand discussion"
             aria-expanded={false}
             className={stretched}
-            onClick={() => comments.collapse(discussion.id, false)}
+            onClick={() => collapse(discussion.id, false)}
           >
             <ChevronRightIcon aria-hidden="true" />
           </IconButton>
@@ -551,7 +551,7 @@ function Discussion({
                       aria-label="Collapse discussion"
                       title="Collapse discussion"
                       className="tw:ms-auto"
-                      onClick={() => comments.collapse(discussion.id, true)}
+                      onClick={() => collapse(discussion.id, true)}
                     >
                       <ChevronsDownUpIcon aria-hidden="true" />
                     </IconButton>
@@ -635,7 +635,13 @@ function DraftEditor({
     null,
   );
 
-  const collapsed = comments.collapsed[draft.id] ?? false;
+  // The popover folds code drafts until one is being written.
+  const collapsed = inline
+    ? (comments.collapsed[draft.id] ?? false)
+    : (comments.panelCollapsed[draft.id] ??
+      (draft.target.kind === "inline" && comments.selected !== draft.id));
+
+  const collapse = inline ? comments.collapse : comments.collapsePanel;
   const [verified, setVerified] = useState(false);
   const [noteId, setNoteId] = useState("");
   const locked = !["saved", "failed"].includes(draft.status);
@@ -713,7 +719,7 @@ function DraftEditor({
           aria-expanded={!collapsed}
           aria-controls={`${labelId}-body`}
           className={cn("tw:shrink-0", collapsed && stretched)}
-          onClick={() => comments.collapse(draft.id, !collapsed)}
+          onClick={() => collapse(draft.id, !collapsed)}
         >
           {collapsed ? (
             <ChevronRightIcon aria-hidden="true" />

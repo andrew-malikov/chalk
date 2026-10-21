@@ -1,6 +1,11 @@
 import { useComments } from "@canvas/comments/comments-context";
 import { CommentsPanel } from "@canvas/comments/comments-panel";
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@canvas/components/ui/popover";
 import { DiffSettingsControl } from "@canvas/diff/diff-settings";
 import { DiffNavigationSlot, ReviewDiffView } from "@canvas/diff/DiffView";
 import { useTooltip } from "@canvas/lib/use-tooltip";
@@ -18,7 +23,7 @@ import type { ReviewCommitSummary } from "@chalk/review-contracts";
 import { ArrowLeft } from "lucide-react";
 import { type ReactElement, useLayoutEffect, useRef, useState } from "react";
 
-import { PageSidebar, PageToolbar, usePageSlots } from "./page-slots";
+import { PageToolbar, usePageSlots } from "./page-slots";
 
 export function DiffPage({ active }: { active: boolean }): ReactElement {
   const panelActor = useReviewPanelActor();
@@ -26,6 +31,7 @@ export function DiffPage({ active }: { active: boolean }): ReactElement {
   const activePanel = useReviewPanel((state) => state.context.active);
   const comments = useComments();
   const slots = usePageSlots();
+  const commentsTooltip = useTooltip("Comments");
 
   const commentsShown = !!comments?.open && activePanel === null;
 
@@ -59,17 +65,29 @@ export function DiffPage({ active }: { active: boolean }): ReactElement {
         <PageToolbar>
           <DiffSettingsControl />
           {comments && (
-            <CommentsButton
-              expanded={commentsShown}
-              onClick={comments.toggle}
-            />
+            <Popover open={commentsShown} onOpenChange={comments.toggle}>
+              <PopoverTrigger asChild>
+                <IconButton
+                  ref={commentsTooltip}
+                  className={[
+                    shellStyles.topbarItem,
+                    "tw:aria-expanded:bg-accent tw:aria-expanded:text-accent-foreground",
+                  ]}
+                  aria-label="Comments"
+                >
+                  <ChatIcon className={controlStyles.chromeIcon} />
+                </IconButton>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                aria-label="Comments"
+                className={styles.comments}
+              >
+                <CommentsPanel />
+              </PopoverContent>
+            </Popover>
           )}
         </PageToolbar>
-      )}
-      {active && commentsShown && (
-        <PageSidebar>
-          <CommentsPanel />
-        </PageSidebar>
       )}
       <div
         ref={diffHostRef}
@@ -114,31 +132,6 @@ export function DiffPage({ active }: { active: boolean }): ReactElement {
   );
 }
 
-function CommentsButton({
-  expanded,
-  onClick,
-}: {
-  expanded: boolean;
-  onClick(): void;
-}): ReactElement {
-  const tooltip = useTooltip("Comments");
-
-  return (
-    <IconButton
-      ref={tooltip}
-      className={[
-        shellStyles.topbarItem,
-        "tw:aria-expanded:bg-accent tw:aria-expanded:text-accent-foreground",
-      ]}
-      aria-label="Comments"
-      aria-expanded={expanded}
-      onClick={onClick}
-    >
-      <ChatIcon className={controlStyles.chromeIcon} />
-    </IconButton>
-  );
-}
-
 function CommitDiffScopeBar({
   commit,
   onBack,
@@ -172,6 +165,11 @@ function CommitDiffScopeBar({
     </div>
   );
 }
+
+const styles = {
+  comments:
+    "tw:w-[440px] tw:max-w-[calc(100vw-24px)] tw:max-h-[min(640px,var(--radix-popover-content-available-height))] tw:overflow-x-hidden tw:overflow-y-auto tw:overscroll-contain tw:p-0",
+};
 
 const scopeBarStyles = {
   bar: "tw:flex tw:h-[30px] tw:flex-[0_0_30px] tw:items-center tw:gap-[12px] tw:p-[0_12px] tw:[border-bottom-width:1px] tw:[border-bottom-style:solid] tw:[border-bottom-color:var(--rule-soft)] tw:bg-[color:var(--surface)]",

@@ -89,12 +89,8 @@ export async function openDiffNavigation(
   page: Page,
   section: "Lenses" | "Files" = "Lenses",
 ) {
-  const trigger = page.getByRole("button", {
-    name: "Lenses and files",
-    exact: true,
-  });
+  const trigger = page.getByRole("button", { name: section, exact: true });
 
   if ((await trigger.getAttribute("aria-expanded")) === "false")
     await trigger.click();
-  await page.getByRole("radio", { name: section, exact: true }).click();
 }

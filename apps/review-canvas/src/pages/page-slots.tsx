@@ -8,15 +8,13 @@ import {
 import { createPortal } from "react-dom";
 
 // The shell frames every page; these are the places a page fills with its own
-// toolbar, overlays and sidebar.
+// toolbar and overlays.
 export interface PageSlots {
   toolbarStart: HTMLElement | null;
   toolbarEnd: HTMLElement | null;
   // Above the scroll region, so what sits there doesn't scroll with the page.
   overlay: HTMLElement | null;
-  sidebar: HTMLElement | null;
   showToolbar(shown: boolean): void;
-  showSidebar(shown: boolean): void;
 }
 
 export const PageSlotsContext = createContext<PageSlots | null>(null);
@@ -36,18 +34,6 @@ export function PageToolbar({
   useShown(slots?.showToolbar);
 
   return slots?.toolbarEnd ? createPortal(children, slots.toolbarEnd) : null;
-}
-
-export function PageSidebar({
-  children,
-}: {
-  children: ReactNode;
-}): ReactElement | null {
-  const slots = usePageSlots();
-
-  useShown(slots?.showSidebar);
-
-  return slots?.sidebar ? createPortal(children, slots.sidebar) : null;
 }
 
 export function PageOverlay({

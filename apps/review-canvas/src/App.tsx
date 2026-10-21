@@ -273,23 +273,19 @@ function ReviewLayoutContent({
   const [toolbarStart, setToolbarStart] = useState<HTMLElement | null>(null);
   const [toolbarEnd, setToolbarEnd] = useState<HTMLElement | null>(null);
   const [pageOverlay, setPageOverlay] = useState<HTMLElement | null>(null);
-  const [pageSidebar, setPageSidebar] = useState<HTMLElement | null>(null);
   const [pageToolbarShown, setPageToolbarShown] = useState(false);
-  const [pageSidebarShown, setPageSidebarShown] = useState(false);
 
   const pageSlots = useMemo(
     () => ({
       toolbarStart,
       toolbarEnd,
       overlay: pageOverlay,
-      sidebar: pageSidebar,
       showToolbar: setPageToolbarShown,
-      showSidebar: setPageSidebarShown,
     }),
-    [toolbarStart, toolbarEnd, pageOverlay, pageSidebar],
+    [toolbarStart, toolbarEnd, pageOverlay],
   );
 
-  const rightPanelOpen = activePanel !== null || pageSidebarShown;
+  const rightPanelOpen = activePanel !== null;
 
   const sidePeekResize = useRightPanelResize({
     stateKey: "side-peek-width",
@@ -585,7 +581,6 @@ function ReviewLayoutContent({
           />
         )}
         <div className={cn(shellStyles.detailHost, detailHostMarker)}>
-          <div ref={setPageSidebar} className="tw:contents" />
           <ReviewPanelHost />
         </div>
       </div>

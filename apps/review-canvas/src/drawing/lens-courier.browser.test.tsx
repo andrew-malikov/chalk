@@ -233,7 +233,9 @@ const lensEdit = (
 });
 
 const navigationButton = () =>
-  toggleSlot.querySelector<HTMLButtonElement>("[data-diff-navigation]")!;
+  toggleSlot.querySelector<HTMLButtonElement>(
+    '[data-diff-navigation="lenses"]',
+  )!;
 
 const openNavigation = async () => {
   if (navigationButton().getAttribute("aria-expanded") === "false")
@@ -376,7 +378,7 @@ it("sends the top-bar badge to the Diffs page while only lenses are written", as
   scroll.mockRestore();
 });
 
-it("keeps the lens filter when navigation closes, switches to files, and clears with No lens", async () => {
+it("keeps the lens filter when navigation closes, opens files, and clears with No lens", async () => {
   await render({ lenses: [api, docs], version: 1, lensCursor: null });
   await openNavigation();
   await vi.waitFor(() => expect(row(api.id)).not.toBeNull());
@@ -397,21 +399,17 @@ it("keeps the lens filter when navigation closes, switches to files, and clears 
   ).toBe("true");
 
   await act(async () =>
-    app
-      .querySelector<HTMLButtonElement>('[role="radio"][value="files"]')!
+    toggleSlot
+      .querySelector<HTMLButtonElement>('[data-diff-navigation="files"]')!
       .click(),
   );
-  expect(row(api.id)!.checkVisibility()).toBe(false);
+  expect(row(api.id)).toBeNull();
   expect(
     app
       .querySelector<HTMLElement>(".diff-native-tree")
       ?.parentElement?.checkVisibility(),
   ).toBe(true);
-  await act(async () =>
-    app
-      .querySelector<HTMLButtonElement>('[role="radio"][value="lenses"]')!
-      .click(),
-  );
+  await openNavigation();
   await act(async () =>
     [...app.querySelectorAll<HTMLButtonElement>("button")]
       .find((button) => button.textContent?.includes("No lens"))!

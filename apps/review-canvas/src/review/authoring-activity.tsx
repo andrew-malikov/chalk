@@ -59,13 +59,10 @@ export function AuthoringActivityBadge({
     requestAnimationFrame(() => {
       if (toLenses) {
         const trigger = roots?.appRef.current?.querySelector<HTMLButtonElement>(
-          "[data-diff-navigation]",
+          '[data-diff-navigation="lenses"]',
         );
 
         if (trigger?.getAttribute("aria-expanded") === "false") trigger.click();
-        roots?.appRef.current
-          ?.querySelector<HTMLButtonElement>('[role="radio"][value="lenses"]')
-          ?.click();
       }
 
       if (!cursor) return;

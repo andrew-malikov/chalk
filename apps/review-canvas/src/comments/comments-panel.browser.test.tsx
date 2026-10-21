@@ -880,3 +880,113 @@ it("centers a collapsed draft title, agent badge and toggle on the same row", as
     container.remove();
   }
 });
+
+it("folds code threads and drafts in the popover, leaving general ones open", async () => {
+  const refs = {
+    baseSha: "a".repeat(40),
+    startSha: "a".repeat(40),
+    headSha: "b".repeat(40),
+  };
+
+  const note = (id: number, body: string) => ({
+    id,
+    body,
+    author: { id: 8, username: "markup", name: "Markup" },
+    createdAt: "2026-10-07T10:00:00Z",
+  });
+
+  const position = {
+    ...refs,
+    oldPath: "a.ts",
+    newPath: "a.ts",
+    side: "head" as const,
+    from: 1,
+    to: 1,
+  };
+
+  const state: CommentsState = {
+    comments: [
+      {
+        id: crypto.randomUUID(),
+        text: "Code draft",
+        author: "user",
+        target: { kind: "inline", position },
+        version: 1,
+        status: "saved",
+        createdAt: "2026-10-08T10:00:00.000Z",
+      },
+    ],
+    gitlab: {
+      identity: {
+        host: "gitlab.test",
+        url: "https://gitlab.test/a/b/-/merge_requests/1",
+        projectId: 1,
+        projectPath: "a/b",
+        iid: 1,
+        cloneUrl: "https://gitlab.test/a/b.git",
+      },
+      account: { id: 7, username: "andrew", name: "Andrew" },
+      refs,
+      discussions: [
+        {
+          id: "general",
+          resolvable: true,
+          resolved: false,
+          comments: [note(1, "General thread"), note(2, "General reply")],
+        },
+        {
+          id: "code",
+          resolvable: true,
+          resolved: false,
+          position,
+          comments: [note(3, "Code thread"), note(4, "Code reply")],
+        },
+      ],
+    },
+  };
+
+  const session = testReviewSession();
+  session.fetch = async () => Response.json(state);
+
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+
+  try {
+    await act(async () =>
+      root.render(
+        <TestCanvasQuery>
+          <ReviewSessionProvider session={session}>
+            <CommentsProvider>
+              <CommentsContent />
+            </CommentsProvider>
+          </ReviewSessionProvider>
+        </TestCanvasQuery>,
+      ),
+    );
+
+    await vi.waitFor(() =>
+      expect(container.textContent).toContain("General reply"),
+    );
+    expect(container.textContent).toContain("Code thread");
+    expect(container.textContent).not.toContain("Code reply");
+    const draft = [...container.querySelectorAll('[role="textbox"]')].find(
+      (e) => e.textContent === "Code draft",
+    )!;
+    expect(draft.getBoundingClientRect().height).toBe(0);
+
+    const expand = () =>
+      container.querySelectorAll<HTMLElement>(
+        '[aria-label="Expand discussion"]',
+      );
+
+    // The draft's toggle comes first, then the thread's.
+    await userEvent.click(expand()[0]!);
+    expect(draft.getBoundingClientRect().height).toBeGreaterThan(0);
+    await userEvent.click(expand()[0]!);
+    expect(container.textContent).toContain("Code reply");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
