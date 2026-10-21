@@ -64,30 +64,30 @@ export function DiffPage({ active }: { active: boolean }): ReactElement {
       {active && (
         <PageToolbar>
           <DiffSettingsControl />
-          {comments && (
-            <Popover open={commentsShown} onOpenChange={comments.toggle}>
-              <PopoverTrigger asChild>
-                <IconButton
-                  ref={commentsTooltip}
-                  className={[
-                    shellStyles.topbarItem,
-                    "tw:aria-expanded:bg-accent tw:aria-expanded:text-accent-foreground",
-                  ]}
-                  aria-label="Comments"
-                >
-                  <ChatIcon className={controlStyles.chromeIcon} />
-                </IconButton>
-              </PopoverTrigger>
-              <PopoverContent
-                align="end"
-                aria-label="Comments"
-                className={styles.comments}
-              >
-                <CommentsPanel />
-              </PopoverContent>
-            </Popover>
-          )}
         </PageToolbar>
+      )}
+      {active && comments && (
+        <div className={styles.bottomBar}>
+          <Popover open={commentsShown} onOpenChange={comments.toggle}>
+            <PopoverTrigger asChild>
+              <IconButton
+                ref={commentsTooltip}
+                size="large"
+                className="tw:aria-expanded:bg-accent tw:aria-expanded:text-accent-foreground"
+                aria-label="Comments"
+              >
+                <ChatIcon className={controlStyles.chromeIcon} />
+              </IconButton>
+            </PopoverTrigger>
+            <PopoverContent
+              side="top"
+              aria-label="Comments"
+              className={styles.comments}
+            >
+              <CommentsPanel />
+            </PopoverContent>
+          </Popover>
+        </div>
       )}
       <div
         ref={diffHostRef}
@@ -167,6 +167,8 @@ function CommitDiffScopeBar({
 }
 
 const styles = {
+  bottomBar:
+    "tw:absolute tw:bottom-4 tw:left-1/2 tw:z-3 tw:flex tw:-translate-x-1/2 tw:items-center tw:gap-1 tw:rounded-lg tw:border tw:border-input tw:bg-[var(--tray)] tw:p-1 tw:shadow-md",
   comments:
     "tw:w-[440px] tw:max-w-[calc(100vw-24px)] tw:max-h-[min(640px,var(--radix-popover-content-available-height))] tw:overflow-x-hidden tw:overflow-y-auto tw:overscroll-contain tw:p-0",
 };
