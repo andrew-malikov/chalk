@@ -32,6 +32,7 @@ import {
   isInstallTarget,
 } from "@review/node/install";
 import { processIsAlive } from "@review/node/lib/with-file-lock";
+import { log } from "@review/node/log";
 import {
   findPackageRoot,
   readPackageVersion,
@@ -48,7 +49,7 @@ import {
   reviewServerStateDir,
   serverNotReady,
 } from "@review/node/server-discovery";
-import { CHALK_REVIEW_HOME_ENV } from "@review/node/storage/review-home-paths";
+import { CHALK_HOME_ENV } from "@review/node/storage/chalk-paths";
 import { Argument, Command, CommanderError, Option } from "commander";
 
 import { reviewAgentCliHelp } from "./agent-cli";
@@ -59,6 +60,7 @@ import {
   listReviewInstancesCommand,
   useReviewInstance,
 } from "./review-instances";
+import { showReviewLogs } from "./review-logs";
 
 interface ReviewCliRuntime {
   runReviewAppLaunch: typeof runReviewAppLaunch;
@@ -156,9 +158,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
   const authoringEnv = (
     stateDir = program.opts<{ stateDir?: string }>().stateDir,
   ) =>
-    stateDir
-      ? { ...env, CHALK_REVIEW_SERVER_DIR: path.resolve(cwd, stateDir) }
-      : env;
+    stateDir ? { ...env, CHALK_SERVER_DIR: path.resolve(cwd, stateDir) } : env;
 
   const serverCommand = configureOutput(
     program
@@ -291,7 +291,7 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     // Any live Desktop holds the store, attached window or not. Only a gone
     // process counts as stopped: a paused or busy one may not answer /health.
     const desktops = await readReviewInstances({
-      env: { ...env, [CHALK_REVIEW_HOME_ENV]: stateDir },
+      env: { ...env, [CHALK_HOME_ENV]: stateDir },
     });
 
     const [problem] = desktops.broken.values();
@@ -487,6 +487,30 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     stderr: input.stderr,
     json: command.optsWithGlobals<{ json?: boolean }>().json,
   });
+
+  configureJsonOutput(
+    program
+      .command("logs")
+      .description("Show Chalk's local logs from every process, oldest first")
+      .option("--level <level>", "lowest level: debug, info, warn or error")
+      .option("--since <duration>", "only newer records, e.g. 10m, 2h, 1d")
+      .option("-n, --lines <count>", "records to show before following", "200")
+      .option("-f, --follow", "keep printing new records"),
+    "plain",
+  ).action(
+    async (
+      options: {
+        level?: string;
+        since?: string;
+        lines: string;
+        follow?: boolean;
+      },
+      command: Command,
+    ) => {
+      await showReviewLogs({ ...options, ...instanceOutput(command) });
+      state.exitCode = 0;
+    },
+  );
 
   const instances = configureJsonOutput(
     program
@@ -685,6 +709,8 @@ export async function runReviewCli(input: ReviewCliInput): Promise<number> {
     } else {
       input.stderr.write(ensureTrailingNewline(formatCliError(error)));
     }
+
+    log.error("cli", "Command failed", { command: input.argv[0], error });
 
     return 1;
   }

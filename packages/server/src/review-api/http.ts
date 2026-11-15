@@ -15,6 +15,7 @@ import {
 } from "@review/documents/document.js";
 import { scopedCoverage } from "@review/documents/viewed-coverage.js";
 import { errorMessage } from "@review/node/lib/error-message";
+import { log } from "@review/node/log.js";
 import {
   type AgentSelection,
   AgentSelectionSchema,
@@ -101,17 +102,19 @@ export function createReviewApi(
         400,
       );
 
-    // Provider failures may contain local paths/subprocess output: the server
-    // log gets the cause, the response only its kind. Desktop routes this
-    // process's stderr to its main log.
-    console.error(
-      `[Review API] ${context.req.method} ${context.req.path} failed:`,
-      error,
+    // Provider failures may contain local paths/subprocess output: the local
+    // log gets the cause, the response only its kind.
+    log.error(
+      "review-api",
+      `${context.req.method} ${context.req.path} failed`,
+      {
+        error,
+      },
     );
 
     return context.json(
       {
-        error: `Chalk operation failed (${failureKind(error)}). The server logged the cause; Chalk Desktop writes it to main.log in its logs folder.`,
+        error: `Chalk operation failed (${failureKind(error)}). Run chalk logs for the cause.`,
       },
       500,
     );

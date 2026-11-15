@@ -24,7 +24,7 @@ export function windowsCliShim(
 
   if (devHome)
     lines.push(
-      `if not defined CHALK_REVIEW_HOME set "CHALK_REVIEW_HOME=${batchPath(devHome)}"`,
+      `if not defined CHALK_HOME set "CHALK_HOME=${batchPath(devHome)}"`,
     );
   lines.push(
     `"${batchPath(runtimePath)}" "${batchPath(cliPath)}" %*`,

@@ -72,9 +72,9 @@ try {
   const env = {
     ...process.env,
     PATH: `${path.join(prefix, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`,
-    CHALK_REVIEW_CLI_NO_DELEGATE: "1",
-    CHALK_REVIEW_HOME: path.join(root, "profile"),
-    CHALK_REVIEW_SERVER_DIR: path.join(root, "server"),
+    CHALK_CLI_NO_DELEGATE: "1",
+    CHALK_HOME: path.join(root, "profile"),
+    CHALK_SERVER_DIR: path.join(root, "server"),
     HOME: path.join(root, "home"),
     XDG_CONFIG_HOME: path.join(root, "config"),
   };

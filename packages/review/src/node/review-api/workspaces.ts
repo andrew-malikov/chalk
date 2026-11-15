@@ -8,6 +8,7 @@ import { git, gitCommonDir } from "@chalk/local-vcs";
 import { type Pins, ReviewInputError } from "@review/documents/document.js";
 import { errorMessage } from "@review/node/lib/error-message";
 import { processIsAlive } from "@review/node/lib/with-file-lock";
+import { log } from "@review/node/log";
 import { reviewManagedCheckoutRoot } from "@review/node/vcs/review-checkout-paths.js";
 import {
   ensureReviewPinnedCheckout,
@@ -163,10 +164,10 @@ export class ReviewWorkspaces {
         await this.releaseCheckouts(reviewId, await repositories);
       })
       .catch((error) => {
-        console.error(
-          `Could not free the pinned checkouts of dismissed review ${reviewId}:`,
+        log.error("workspaces", "Could not free pinned checkouts", {
+          reviewId,
           error,
-        );
+        });
       })
       .finally(() => {
         if (this.releasing.get(reviewId) === done)

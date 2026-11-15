@@ -7,7 +7,7 @@ This page describes local product data and the optional hosted trace store.
 
 Chalk stores authored chalks in `~/.chalk/review-api.db` and desktop
 discovery under `~/.chalk/review-desktop/`. Development builds of the
-desktop use `~/.dev-fast/review-electrobun` instead; `CHALK_REVIEW_HOME`
+desktop use `~/.dev-fast/review-electrobun` instead; `CHALK_HOME`
 selects another profile.
 
 The canvas talks to Chalk's local server. Chalk does not collect or
@@ -15,7 +15,7 @@ send product usage telemetry, automatic error reports, or crash dumps.
 Existing telemetry files from older versions are no longer read or sent.
 
 Diagnostic logs remain local. Command profiling is off by default; setting
-`CHALK_REVIEW_TRACE` or `CHALK_REVIEW_TRACE_DIR` writes profiling data to
+`CHALK_TRACE` or `CHALK_TRACE_DIR` writes profiling data to
 local files. These files can contain command arguments, paths, and error
 messages. Chalk does not upload them.
 

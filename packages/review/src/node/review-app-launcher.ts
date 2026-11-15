@@ -28,7 +28,7 @@ const RELEASE_APPS = {
 };
 
 /** "1" on launches without --focus; Desktop opens inactive. */
-export const REVIEW_DESKTOP_BACKGROUND_ENV = "CHALK_REVIEW_DESKTOP_BACKGROUND";
+export const REVIEW_DESKTOP_BACKGROUND_ENV = "CHALK_DESKTOP_BACKGROUND";
 
 const DEFAULT_LAUNCH_TIMEOUT_MS = 90_000;
 
@@ -259,9 +259,9 @@ export function launchDesktopApplication(
   delete env.ELECTRON_RUN_AS_NODE;
 
   // An installed app must never inherit a dev Desktop's identity.
-  delete env.CHALK_REVIEW_CHECKOUT;
+  delete env.CHALK_CHECKOUT;
   const release = RELEASE_APPS[input.instance?.key ?? "stable"];
-  const stateRoot = env.CHALK_REVIEW_DESKTOP_STATE_ROOT?.trim();
+  const stateRoot = env.CHALK_DESKTOP_STATE_ROOT?.trim();
 
   const profileArgs = stateRoot
     ? [
@@ -279,11 +279,11 @@ export function launchDesktopApplication(
     delete env.VSCODE_CLI;
     // With no selection, the Fedora CLI wrappers name their own channel's launcher.
     command =
-      (input.instance ? "" : env.CHALK_REVIEW_DESKTOP_COMMAND?.trim()) ||
+      (input.instance ? "" : env.CHALK_DESKTOP_COMMAND?.trim()) ||
       release.linuxLauncher;
     method = `the installed Linux launcher at "${command}"`;
 
-    if (electron && !env.CHALK_REVIEW_DESKTOP_COMMAND?.trim()) {
+    if (electron && !env.CHALK_DESKTOP_COMMAND?.trim()) {
       command = execPath;
       method = `the Desktop-managed bundle at "${command}"`;
     }

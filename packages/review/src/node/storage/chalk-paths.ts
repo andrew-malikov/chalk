@@ -24,7 +24,7 @@ export function safeStorageSegment(value: string): string {
 export function reviewDesktopRoot(
   env: NodeJS.ProcessEnv = process.env,
 ): string {
-  return path.join(devReviewHome(env), "review-desktop");
+  return path.join(chalkHome(env), "review-desktop");
 }
 
 /** Written by Desktops that predate instance selection. */
@@ -64,19 +64,19 @@ export function reviewDesktopStateDir(
   return path.join(reviewDesktopRoot(env), "state");
 }
 
-export const CHALK_REVIEW_HOME_ENV = "CHALK_REVIEW_HOME";
+export const CHALK_HOME_ENV = "CHALK_HOME";
 
 /**
  * The one resolver for the Review home directory. Every reader of
- * CHALK_REVIEW_HOME calls this, so an untrimmed or empty value cannot make two
+ * CHALK_HOME calls this, so an untrimmed or empty value cannot make two
  * modules disagree about the directory. An empty value means "use the
  * default".
  */
-export function devReviewHome(
+export function chalkHome(
   env: NodeJS.ProcessEnv = process.env,
   homeDir: string = os.homedir(),
 ): string {
-  const override = env[CHALK_REVIEW_HOME_ENV]?.trim();
+  const override = env[CHALK_HOME_ENV]?.trim();
 
   return override ? path.resolve(override) : path.join(homeDir, ".chalk");
 }

@@ -35,6 +35,8 @@ async function runCli(effectivePath: string): Promise<number> {
     return 1;
   }
 
+  const { openLog } = await import("@review/node/log");
+  openLog(argv.includes("mcp") ? "mcp" : "cli");
   const { runReviewCli } = await import("./cli-runner.js");
 
   return runReviewCli({
@@ -61,8 +63,7 @@ async function maybeDelegateToDesktopCli(
 ): Promise<number | null> {
   const env = process.env;
 
-  if (env.CHALK_REVIEW_CLI_NO_DELEGATE || env.CHALK_REVIEW_CLI_DELEGATED)
-    return null;
+  if (env.CHALK_CLI_NO_DELEGATE || env.CHALK_CLI_DELEGATED) return null;
 
   // api and mcp are thin HTTP clients whose tool catalog comes from the
   // server, so they cannot skew from it and must not be handed to a bundled
@@ -73,7 +74,7 @@ async function maybeDelegateToDesktopCli(
         ["api", "mcp", "server", "instances"].includes(argument) ||
         /^--state-dir(?:=|$)/.test(argument),
     ) ||
-    env.CHALK_REVIEW_SERVER_DIR?.trim()
+    env.CHALK_SERVER_DIR?.trim()
   )
     return null;
   const ownPath = fileURLToPath(import.meta.url);
@@ -81,9 +82,9 @@ async function maybeDelegateToDesktopCli(
   if (!/[\\/]dist[\\/]cli\.js$/.test(ownPath)) return null;
 
   // Keep bootstrap independent of the server module graph until runtime validation.
-  // Keep this selection in step with devReviewHome().
-  const devHome = env.CHALK_REVIEW_HOME?.trim()
-    ? path.resolve(env.CHALK_REVIEW_HOME.trim())
+  // Keep this selection in step with chalkHome().
+  const devHome = env.CHALK_HOME?.trim()
+    ? path.resolve(env.CHALK_HOME.trim())
     : path.join(os.homedir(), ".chalk");
 
   let cliPath: string;
@@ -119,7 +120,7 @@ async function maybeDelegateToDesktopCli(
   // Prefer the app runtime so the CLI matches the selected server.
   const childEnv: NodeJS.ProcessEnv = {
     ...env,
-    CHALK_REVIEW_CLI_DELEGATED: "1",
+    CHALK_CLI_DELEGATED: "1",
   };
 
   // Older desktops advertise Electron as their CLI runtime; Bun ignores this flag.
@@ -150,13 +151,13 @@ async function maybeDelegateToDesktopCli(
 
 /**
  * The shim's selection, kept in step with it and with selectReviewInstance:
- * CHALK_REVIEW_INSTANCE, the machine default, the only live Desktop, then
+ * CHALK_INSTANCE, the machine default, the only live Desktop, then
  * stable, then the pre-instance server.json.
  */
 function selectedDiscoveryFile(devHome: string, env: NodeJS.ProcessEnv) {
   const desktop = path.join(devHome, "review-desktop");
   const instances = path.join(desktop, "instances");
-  let key = env.CHALK_REVIEW_INSTANCE?.trim();
+  let key = env.CHALK_INSTANCE?.trim();
 
   try {
     key ||= readFileSync(path.join(desktop, "default-instance"), "utf8").trim();

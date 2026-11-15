@@ -23,8 +23,8 @@ const env = {
   PATH: `${path.dirname(process.execPath)}:${process.env.PATH ?? ""}`,
   HUTCH_NO_UPDATE_CHECK: "1",
   REVIEW_ELECTROBUN_BUN: process.execPath,
-  CHALK_REVIEW_CHECKOUT: checkout,
-  CHALK_REVIEW_SERVER_ENTRY: path.join(
+  CHALK_CHECKOUT: checkout,
+  CHALK_SERVER_ENTRY: path.join(
     checkout,
     "apps/review-electrobun/runtime/dist/desktop-host.js",
   ),

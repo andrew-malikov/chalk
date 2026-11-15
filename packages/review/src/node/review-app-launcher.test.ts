@@ -336,9 +336,9 @@ describe("Review Desktop launcher", () => {
         "-a",
         "/tmp/Review.app",
         "--env",
-        "CHALK_REVIEW_HOME=/tmp/home",
+        "CHALK_HOME=/tmp/home",
         "--env",
-        "CHALK_REVIEW_DESKTOP_BACKGROUND=1",
+        "CHALK_DESKTOP_BACKGROUND=1",
       ],
     ],
     [
@@ -349,7 +349,7 @@ describe("Review Desktop launcher", () => {
         "-a",
         "/tmp/Review.app",
         "--env",
-        "CHALK_REVIEW_HOME=/tmp/home",
+        "CHALK_HOME=/tmp/home",
       ],
     ],
   ])(
@@ -367,8 +367,8 @@ describe("Review Desktop launcher", () => {
         execPath: "/tmp/Review.app/Contents/MacOS/Review",
         env: {
           ELECTRON_RUN_AS_NODE: "1",
-          CHALK_REVIEW_HOME: "/tmp/home",
-          CHALK_REVIEW_CHECKOUT: "/tmp/checkout",
+          CHALK_HOME: "/tmp/home",
+          CHALK_CHECKOUT: "/tmp/checkout",
           PATH: "/usr/bin",
         },
         focus,
@@ -394,7 +394,7 @@ describe("Review Desktop launcher", () => {
       electron: true,
       focus: true,
       execPath: "/tmp/Review.app/Contents/MacOS/Review",
-      env: { CHALK_REVIEW_DESKTOP_STATE_ROOT: "/tmp/review-state" },
+      env: { CHALK_DESKTOP_STATE_ROOT: "/tmp/review-state" },
       spawn,
     });
     expect(spawn.mock.calls[0]?.[1]).toEqual([
@@ -403,7 +403,7 @@ describe("Review Desktop launcher", () => {
       "-a",
       "/tmp/Review.app",
       "--env",
-      "CHALK_REVIEW_DESKTOP_STATE_ROOT=/tmp/review-state",
+      "CHALK_DESKTOP_STATE_ROOT=/tmp/review-state",
       "--args",
       "--user-data-dir=/tmp/review-state/user-data",
       "--extensions-dir=/tmp/review-state/extensions",
@@ -471,7 +471,7 @@ describe("Review Desktop launcher", () => {
 
       const environment = {
         ELECTRON_RUN_AS_NODE: "1",
-        CHALK_REVIEW_DESKTOP_STATE_ROOT: "/tmp/linux-profile",
+        CHALK_DESKTOP_STATE_ROOT: "/tmp/linux-profile",
         VSCODE_DEV: "1",
         VSCODE_CLI: "1",
       };
@@ -494,8 +494,8 @@ describe("Review Desktop launcher", () => {
         ],
         expect.objectContaining({
           env: {
-            CHALK_REVIEW_DESKTOP_STATE_ROOT: "/tmp/linux-profile",
-            CHALK_REVIEW_DESKTOP_BACKGROUND: "1",
+            CHALK_DESKTOP_STATE_ROOT: "/tmp/linux-profile",
+            CHALK_DESKTOP_BACKGROUND: "1",
           },
           detached: true,
           stdio: ["ignore", "ignore", expect.any(Number)],
@@ -518,7 +518,7 @@ describe("Review Desktop launcher", () => {
         platform: "linux",
         electron,
         env: {
-          CHALK_REVIEW_DESKTOP_COMMAND: "/usr/bin/review-preview-desktop",
+          CHALK_DESKTOP_COMMAND: "/usr/bin/review-preview-desktop",
         },
         spawn,
       });
@@ -558,8 +558,8 @@ describe("Review Desktop launcher", () => {
         electron: false,
         instance,
         env: {
-          CHALK_REVIEW_DESKTOP_COMMAND: "/usr/bin/review-desktop",
-          CHALK_REVIEW_CHECKOUT: "/src/review",
+          CHALK_DESKTOP_COMMAND: "/usr/bin/review-desktop",
+          CHALK_CHECKOUT: "/src/review",
         },
         spawn,
       });
@@ -567,7 +567,7 @@ describe("Review Desktop launcher", () => {
       const [spawned, spawnedArgs, options] = spawn.mock.calls[0]!;
       expect(spawned).toBe(command);
       expect(spawnedArgs.slice(0, args.length)).toEqual(args);
-      expect(options.env?.CHALK_REVIEW_CHECKOUT).toBeUndefined();
+      expect(options.env?.CHALK_CHECKOUT).toBeUndefined();
     },
   );
 
@@ -582,11 +582,11 @@ describe("Review Desktop launcher", () => {
       platform: "linux",
       electron: false,
       focus: true,
-      env: { CHALK_REVIEW_DESKTOP_BACKGROUND: "1" },
+      env: { CHALK_DESKTOP_BACKGROUND: "1" },
       spawn,
     });
     const options = spawn.mock.calls[0]?.[2];
-    expect(options?.env).not.toHaveProperty("CHALK_REVIEW_DESKTOP_BACKGROUND");
+    expect(options?.env).not.toHaveProperty("CHALK_DESKTOP_BACKGROUND");
   });
 
   it("releases captured output while Desktop is still running", async () => {

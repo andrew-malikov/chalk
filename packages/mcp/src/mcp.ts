@@ -9,6 +9,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { log } from "@review/node/log.js";
 import { authoringTools } from "@review/node/review-api/authoring-tools.js";
 import { REVIEW_STATUS_TOOL } from "@review/node/review-api/status-tool.js";
 
@@ -94,6 +95,7 @@ export async function serveReviewMcp(
       ({ tools } = await load(extra.signal));
       listedWhileDown = false;
     } catch (error) {
+      log.warn("mcp", "Tool catalog unavailable", { error });
       announceCatalog = true;
       listedWhileDown = true;
       stderr.write(
@@ -122,6 +124,8 @@ export async function serveReviewMcp(
     };
   });
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+    log.debug("mcp", "Tool call", { tool: request.params.name });
+
     try {
       let client: ReviewApiClient;
       let tools: AuthoringTool[];
@@ -179,6 +183,8 @@ export async function serveReviewMcp(
         ],
       };
     } catch (error) {
+      log.warn("mcp", "Tool failed", { tool: request.params.name, error });
+
       return {
         isError: true,
         content: [

@@ -13,7 +13,8 @@ import {
   REVIEW_INSTANCE_ENV,
   selectReviewInstance,
 } from "@review/node/desktop-discovery.js";
-import { devReviewHome } from "@review/node/storage/review-home-paths.js";
+import { log } from "@review/node/log.js";
+import { chalkHome } from "@review/node/storage/chalk-paths.js";
 
 interface AgentCliInput {
   argv: string[];
@@ -24,7 +25,7 @@ interface AgentCliInput {
 }
 
 export const reviewAgentCliHelp =
-  "chalk api tools\nchalk api <tool-name> '<json>'\nchalk api <tool-name> -  (read JSON from stdin)\nchalk mcp  (stdio MCP adapter; Chalk Desktop or chalk server start must be running)\nSelect headless state with CHALK_REVIEW_SERVER_DIR or chalk --state-dir <path> api/mcp.\n";
+  "chalk api tools\nchalk api <tool-name> '<json>'\nchalk api <tool-name> -  (read JSON from stdin)\nchalk mcp  (stdio MCP adapter; Chalk Desktop or chalk server start must be running)\nSelect headless state with CHALK_SERVER_DIR or chalk --state-dir <path> api/mcp.\n";
 
 export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
   const env = input.env ?? process.env;
@@ -60,7 +61,7 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
         input.stdin ?? process.stdin,
         input.stdout,
         input.stderr,
-        env.CHALK_REVIEW_SERVER_DIR?.trim()
+        env.CHALK_SERVER_DIR?.trim()
           ? undefined
           : async (problem) => {
               const selection = await selectReviewInstance({ env });
@@ -72,7 +73,7 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
                 running: selection.instances
                   .filter((instance) => instance.healthy)
                   .map((instance) => instance.key),
-                home: devReviewHome(env),
+                home: chalkHome(env),
                 problem,
               };
             },
@@ -136,6 +137,7 @@ export async function runReviewAgentCli(input: AgentCliInput): Promise<number> {
 
     return 0;
   } catch (error) {
+    log.error("cli", "Agent command failed", { error });
     input.stderr.write(
       (error instanceof Error ? error.message : String(error)) + "\n",
     );

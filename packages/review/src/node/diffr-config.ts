@@ -21,6 +21,7 @@ import {
 } from "@chalk/review-contracts";
 import { stringify } from "smol-toml";
 
+import { log } from "./log";
 import { invalidateStructuralComparisons } from "./structural-comparisons.js";
 import { diffrExecutable, diffrMissingError } from "./structural-diff";
 
@@ -310,7 +311,7 @@ export async function migrateDiffrConfig(
 
     return result.changed === true;
   } catch (error) {
-    console.warn("[Review] diffr config migration failed:", error);
+    log.warn("diffr", "Config migration failed", { error });
 
     return false;
   }

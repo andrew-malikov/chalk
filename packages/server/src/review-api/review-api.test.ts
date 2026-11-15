@@ -14,6 +14,7 @@ import { createGlobalReviewServer } from "@chalk/server/desktop-server.js";
 import { GlobalReviewDesktopVerbRelay } from "@chalk/server/global-verb-relay.js";
 import { ReviewInputError } from "@review/documents/document.js";
 import { selectSource } from "@review/documents/lens-selection.js";
+import { log } from "@review/node/log.js";
 import { authoringTools } from "@review/node/review-api/authoring-tools.js";
 import { documentText } from "@review/node/review-api/document-text.js";
 import { LocalReviewData } from "@review/node/review-api/local-data";
@@ -68,7 +69,7 @@ const writeLens = <Edit>(reviewId: string, value: Edit, leaseId?: string) =>
 beforeEach(() => {
   directory = mkdtempSync(path.join(tmpdir(), "review-lean-"));
   database = path.join(directory, "reviews.db");
-  vi.stubEnv("CHALK_REVIEW_HOME", directory);
+  vi.stubEnv("CHALK_HOME", directory);
   providers = {
     validatePins: vi.fn<ReviewProviders["validatePins"]>(async () => {}),
     validateSource: vi.fn<ReviewProviders["validateSource"]>(async () => {}),
@@ -2410,7 +2411,7 @@ it("logs a provider failure and names its kind without returning its local detai
   );
 
   vi.spyOn(data, "changes").mockRejectedValue(failure);
-  const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+  const logged = vi.spyOn(log, "error").mockImplementation(() => {});
   const api = createReviewApi(store, data);
   const route = `/${reviewId}/progress?version=0&mode=textual&wait=false`;
 
@@ -2421,11 +2422,12 @@ it("logs a provider failure and names its kind without returning its local detai
     expect(response.status).toBe(500);
     const { error } = await response.json();
     expect(error).toContain("EACCES");
-    expect(error).toContain("main.log");
+    expect(error).toContain("chalk logs");
     expect(error).not.toContain("/Users/someone");
     expect(logged).toHaveBeenCalledWith(
+      "review-api",
       expect.stringContaining(`/${reviewId}/progress`),
-      failure,
+      { error: failure },
     );
   } finally {
     logged.mockRestore();

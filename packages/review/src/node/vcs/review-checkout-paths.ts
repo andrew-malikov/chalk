@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { safeStorageSegment } from "@review/node/storage/review-home-paths";
+import { safeStorageSegment } from "@review/node/storage/chalk-paths";
 
 import { chalkGitDir } from "./repository-paths";
 

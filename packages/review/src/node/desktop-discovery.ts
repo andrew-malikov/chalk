@@ -16,7 +16,7 @@ import {
   reviewDevInstanceKey,
   reviewInstancesDir,
   reviewLegacyDiscoveryPath,
-} from "@review/node/storage/review-home-paths";
+} from "@review/node/storage/chalk-paths";
 
 export class ReviewDesktopProtocolMismatchError extends Error {
   readonly name = "ReviewDesktopProtocolMismatchError";
@@ -132,7 +132,7 @@ export async function requireHealthyReviewDesktop(
 }
 
 /** Shell-session override; agents inherit it through the bare shim. */
-export const REVIEW_INSTANCE_ENV = "CHALK_REVIEW_INSTANCE";
+export const REVIEW_INSTANCE_ENV = "CHALK_INSTANCE";
 
 // Keys name files, so nothing else may select one.
 function checkedInstanceKey(key: string, origin = "") {
@@ -151,11 +151,11 @@ export type ReviewInstanceIdentity = Required<
 export function reviewInstanceIdentity(
   env: NodeJS.ProcessEnv,
 ): ReviewInstanceIdentity {
-  const checkout = env.CHALK_REVIEW_CHECKOUT?.trim();
+  const checkout = env.CHALK_CHECKOUT?.trim();
 
   const channel = checkout
     ? "dev"
-    : env.CHALK_REVIEW_RELEASE_CHANNEL === "preview"
+    : env.CHALK_RELEASE_CHANNEL === "preview"
       ? "preview"
       : "stable";
 
@@ -164,7 +164,7 @@ export function reviewInstanceIdentity(
     channel,
   };
 
-  const override = env.CHALK_REVIEW_INSTANCE_KEY?.trim();
+  const override = env.CHALK_INSTANCE_KEY?.trim();
 
   if (override) {
     if (!checkout || !override.startsWith("dev-")) {
@@ -177,10 +177,10 @@ export function reviewInstanceIdentity(
   }
 
   if (checkout) identity.checkout = path.resolve(checkout);
-  const appPath = env.CHALK_REVIEW_APP_PATH?.trim();
+  const appPath = env.CHALK_APP_PATH?.trim();
 
   if (appPath) identity.appPath = appPath;
-  const appVersion = env.CHALK_REVIEW_APP_VERSION?.trim();
+  const appVersion = env.CHALK_APP_VERSION?.trim();
 
   if (appVersion) identity.appVersion = appVersion;
 
@@ -283,7 +283,7 @@ export interface ReviewInstanceSelection {
   problem?: Error;
 }
 
-/** CHALK_REVIEW_INSTANCE, then the machine default, then the only running Desktop, then stable. */
+/** CHALK_INSTANCE, then the machine default, then the only running Desktop, then stable. */
 export async function selectReviewInstance(
   dependencies: ReviewInstanceDependencies = {},
 ): Promise<ReviewInstanceSelection> {

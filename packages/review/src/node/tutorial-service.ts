@@ -7,7 +7,7 @@ import { documentSchema, resourceReferences } from "@review/documents/document";
 import { writePrivateJsonAtomic } from "@review/node/lib/atomic-write";
 import type { LocalReviewData } from "@review/node/review-api/local-data";
 import type { ReviewStore, Snapshot } from "@review/node/review-api/store";
-import { devReviewHome } from "@review/node/storage/review-home-paths";
+import { chalkHome } from "@review/node/storage/chalk-paths";
 import { z } from "zod";
 
 const authoredSchema = z.strictObject({
@@ -99,7 +99,7 @@ export function createTutorialService(input: {
   store: ReviewStore;
   data: LocalReviewData;
 }) {
-  const tutorialRoot = path.join(devReviewHome(), "tutorial");
+  const tutorialRoot = path.join(chalkHome(), "tutorial");
   const sampleRoot = path.join(tutorialRoot, "sample-service");
   const stampPath = path.join(tutorialRoot, "stamp.json");
   const assetsRoot = input.assetsRoot;

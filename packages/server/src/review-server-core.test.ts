@@ -23,7 +23,7 @@ const stops: (() => Promise<void>)[] = [];
 
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), "review-server-core-"));
-  vi.stubEnv("CHALK_REVIEW_HOME", root);
+  vi.stubEnv("CHALK_HOME", root);
 });
 
 afterEach(async () => {
@@ -280,15 +280,15 @@ describe.each(["desktop", "headless"] as const)("the %s server", (kind) => {
 const processes = {
   desktop: (home: string) =>
     spawnSource("../../apps/review-electrobun/src/desktop-host.ts", [], {
-      CHALK_REVIEW_HOME: home,
-      CHALK_REVIEW_SERVER_PORT: "0",
-      CHALK_REVIEW_APP_PID: String(process.pid),
+      CHALK_HOME: home,
+      CHALK_SERVER_PORT: "0",
+      CHALK_APP_PID: String(process.pid),
     }),
   headless: (home: string, stateDir = path.join(home, "server")) =>
     spawnSource(
       "../cli/src/cli.ts",
       ["server", "start", "--json", "--state-dir", stateDir],
-      { CHALK_REVIEW_HOME: home },
+      { CHALK_HOME: home },
     ),
 };
 
@@ -412,7 +412,7 @@ it("refuses to reset the id while a paused headless server holds the store", asy
   const reset = spawnSource(
     "../cli/src/cli.ts",
     ["--state-dir", stateDir, "server", "reset-id", "--json"],
-    { CHALK_REVIEW_HOME: root },
+    { CHALK_HOME: root },
   );
 
   let output = "";
@@ -443,7 +443,7 @@ function spawnSource(
     env: {
       ...process.env,
       ...env,
-      CHALK_REVIEW_CLI_NO_DELEGATE: "1",
+      CHALK_CLI_NO_DELEGATE: "1",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });

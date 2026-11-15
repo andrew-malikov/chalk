@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import type { Pins } from "@review/documents/document.js";
+import { log } from "@review/node/log.js";
 import { openLocalReviewStore } from "@review/node/review-api/local-data.js";
 import type { commandSchema } from "@review/node/review-api/store.js";
 import { runPrepareCommand } from "@review/node/vcs/review-prepare.js";
@@ -492,7 +493,7 @@ it.skipIf(process.getuid?.() === 0)(
 
     const base = await local.data.workspaces.source(reviewId, pins, "base");
     const head = await local.data.workspaces.source(reviewId, pins, "head");
-    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const error = vi.spyOn(log, "error").mockImplementation(() => {});
     chmodSync(head.rootPath!, 0o500);
 
     try {

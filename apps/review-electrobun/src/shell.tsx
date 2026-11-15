@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@canvas/components/ui/dialog";
 import { NativeSelect } from "@canvas/components/ui/native-select";
+import { Switch } from "@canvas/components/ui/switch";
 import {
   mountReviewCanvas,
   reviewCanvasThemeClass,
@@ -1245,6 +1246,14 @@ function SettingsDialog({
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </NativeSelect>
+          </label>
+          <label htmlFor="shell-debug-logging">
+            <span>Debug logging</span>
+            <Switch
+              id="shell-debug-logging"
+              checked={preferences.debugLogging}
+              onCheckedChange={(debugLogging) => save({ debugLogging })}
+            />
           </label>
         </div>
         <DialogFooter>

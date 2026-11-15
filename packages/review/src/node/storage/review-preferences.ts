@@ -8,7 +8,7 @@ import {
 } from "@chalk/review-contracts";
 import { writePrivateJsonAtomic } from "@review/node/lib/atomic-write";
 
-import { devReviewHome } from "./review-home-paths";
+import { chalkHome } from "./chalk-paths";
 
 /**
  * Machine-wide Review preferences the server itself needs. Workbench settings
@@ -27,7 +27,7 @@ const DEFAULT_REVIEW_PREFERENCES: ReviewPreferences = {
   scratchpadEnabled: false,
 };
 
-function reviewPreferencesPath(devHome = devReviewHome()): string {
+function reviewPreferencesPath(devHome = chalkHome()): string {
   return path.join(devHome, "preferences.json");
 }
 

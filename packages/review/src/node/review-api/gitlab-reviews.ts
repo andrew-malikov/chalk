@@ -10,7 +10,7 @@ import type {
   GitLabState,
 } from "@chalk/review-contracts";
 import { type Pins, ReviewInputError } from "@review/documents/document.js";
-import { devReviewHome } from "@review/node/storage/review-home-paths.js";
+import { chalkHome } from "@review/node/storage/chalk-paths.js";
 
 import {
   GitLabClient,
@@ -38,7 +38,7 @@ export class GitLabReviews {
     this.root = path.resolve(
       options.cloneRoot ??
         process.env.CHALK_GITLAB_CLONES_DIR ??
-        path.join(devReviewHome(), "gitlab-clones"),
+        path.join(chalkHome(), "gitlab-clones"),
     );
   }
   private client(host: string) {

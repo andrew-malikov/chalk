@@ -217,7 +217,7 @@ let directory: string, store: ReviewStore;
 
 beforeEach(() => {
   directory = mkdtempSync(path.join(tmpdir(), "review-folded-"));
-  vi.stubEnv("CHALK_REVIEW_HOME", directory);
+  vi.stubEnv("CHALK_HOME", directory);
 
   const providers: ReviewProviders = {
     validatePins: vi.fn<ReviewProviders["validatePins"]>(async () => {}),

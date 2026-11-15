@@ -1,7 +1,7 @@
 // CLI profiling instrumentation. Enabled when either variable is set:
 //
-//   CHALK_REVIEW_TRACE=<file>     write this process's span tree to <file>
-//   CHALK_REVIEW_TRACE_DIR=<dir>  write one file per process into <dir>
+//   CHALK_TRACE=<file>     write this process's span tree to <file>
+//   CHALK_TRACE_DIR=<dir>  write one file per process into <dir>
 //
 // Otherwise every helper is a zero-cost passthrough. Spans are wall-clock
 // intervals (ms since process start, i.e. performance.timeOrigin) with parent
@@ -30,9 +30,9 @@ interface TraceSpanRecord {
   ok?: boolean;
 }
 
-const TRACE_FILE_ENV = "CHALK_REVIEW_TRACE";
+const TRACE_FILE_ENV = "CHALK_TRACE";
 
-const TRACE_DIR_ENV = "CHALK_REVIEW_TRACE_DIR";
+const TRACE_DIR_ENV = "CHALK_TRACE_DIR";
 
 const traceFile = resolveTraceFile(process.env);
 
@@ -161,7 +161,7 @@ function flushTrace(): void {
         ppid: process.ppid,
         argv: process.argv,
         cwd: process.cwd(),
-        delegated: Boolean(process.env.CHALK_REVIEW_CLI_DELEGATED),
+        delegated: Boolean(process.env.CHALK_CLI_DELEGATED),
         attributes,
         durationMs: now,
         spans: spans.map((record) => ({

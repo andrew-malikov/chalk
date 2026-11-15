@@ -13,7 +13,7 @@ export default defineConfig({
       deps: { inline: ["zod", "eventsource-parser", "@dev.fast/diffr"] },
     },
     env: {
-      CHALK_REVIEW_HOME: path.join(
+      CHALK_HOME: path.join(
         os.tmpdir(),
         `progressive-review-tests-${process.pid}`,
       ),

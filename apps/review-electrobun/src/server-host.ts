@@ -8,6 +8,7 @@ import {
   type ReviewDesktopDiscovery,
   ReviewDesktopDiscoverySchema,
 } from "@chalk/review-contracts";
+import { log } from "@review/node/log";
 
 export interface ServerOptions {
   runtimePath: string;
@@ -120,20 +121,20 @@ export async function startServer(
     stdio: ["ignore", "pipe", "pipe"],
     env: {
       ...env,
-      CHALK_REVIEW_HOME: options.profile,
+      CHALK_HOME: options.profile,
       ...(options.checkout && {
-        CHALK_REVIEW_CHECKOUT: options.checkout,
-        CHALK_REVIEW_INSTANCE_KEY: options.key,
-        CHALK_REVIEW_CLI_ROOT: path.join(options.checkout, "packages/cli"),
+        CHALK_CHECKOUT: options.checkout,
+        CHALK_INSTANCE_KEY: options.key,
+        CHALK_CLI_ROOT: path.join(options.checkout, "packages/cli"),
       }),
-      CHALK_REVIEW_SERVER_PORT: "0",
-      CHALK_REVIEW_APP_PID: String(process.pid),
-      CHALK_REVIEW_SERVER_TOKEN: token,
-      CHALK_REVIEW_INSTANCE_ID: instanceId,
-      CHALK_REVIEW_DESKTOP_HOST_AUTOSTART: "1",
-      CHALK_REVIEW_CLI_RUNTIME: options.runtimePath,
-      CHALK_REVIEW_RELEASE_CHANNEL: options.checkout ? "dev" : "stable",
-      CHALK_REVIEW_APP_VERSION: options.appVersion,
+      CHALK_SERVER_PORT: "0",
+      CHALK_APP_PID: String(process.pid),
+      CHALK_SERVER_TOKEN: token,
+      CHALK_INSTANCE_ID: instanceId,
+      CHALK_DESKTOP_HOST_AUTOSTART: "1",
+      CHALK_CLI_RUNTIME: options.runtimePath,
+      CHALK_RELEASE_CHANNEL: options.checkout ? "dev" : "stable",
+      CHALK_APP_VERSION: options.appVersion,
     },
   });
 
@@ -200,8 +201,14 @@ export async function startServer(
             `Review server exited (${signal ?? code}). ${stderr}`.trim();
 
           if (!ready) fail(new Error(message));
-          else if (!stopping)
+          else if (!stopping) {
+            log.error("server-host", "Review server exited", {
+              code,
+              signal,
+              stderr,
+            });
             options.onState?.({ status: "disconnected", message });
+          }
         });
         child.stderr!.on("data", (chunk) => {
           stderr = (stderr + String(chunk)).slice(-8000);

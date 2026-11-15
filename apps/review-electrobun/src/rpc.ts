@@ -22,6 +22,8 @@ export const preferencesSchema = z.strictObject({
   reviewIds: z.array(z.string().min(1)),
   activeReviewId: z.string().min(1).nullable(),
   keymap: z.enum(REVIEW_KEYMAP_CHOICES).default("none"),
+  // Every Chalk process reads this from preferences.json; see log.ts.
+  debugLogging: z.boolean().default(false),
   tutorialProgress: z
     .strictObject({
       version: z.literal(1),
@@ -41,6 +43,7 @@ export const defaultPreferences: ShellPreferences = {
   reviewIds: [],
   activeReviewId: null,
   keymap: "none",
+  debugLogging: false,
   tutorialProgress: { version: 1, checked: [], dismissed: false },
 };
 

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
+import { log, logsDir, openLog } from "@review/node/log";
 import * as ApplicationMenu from "electrobun/main/app-menu";
 import { BrowserView } from "electrobun/main/browser-view";
 import { BrowserWindow } from "electrobun/main/browser-window";
@@ -21,12 +22,12 @@ import { createPreferencesStore } from "./preferences";
 import type { AppRPC, HostState } from "./rpc";
 import { desktopEnvironment, startServer } from "./server-host";
 
-const checkout = process.env.CHALK_REVIEW_CHECKOUT;
+const checkout = process.env.CHALK_CHECKOUT;
 
 // Keep the existing dev profile so the rename preserves reviews and
 // preferences; installed builds use the CLI's default home so it finds them.
 const profile = path.resolve(
-  process.env.CHALK_REVIEW_HOME ??
+  process.env.CHALK_HOME ??
     (checkout
       ? path.join(homedir(), ".dev-fast/review-electrobun")
       : path.join(homedir(), ".chalk")),
@@ -39,13 +40,17 @@ const key = checkout
       .slice(0, 12)}`
   : "stable";
 
+const logEnv = { ...process.env, CHALK_HOME: profile };
+
+openLog("desktop", { env: logEnv, echo: true });
+
 // Installed builds carry their own Bun and host, staged by scripts/dev.mjs.
 const runtime = path.join(RESOURCES_FOLDER, "app/runtime");
 
 const sidecar = checkout
   ? {
       runtimePath: process.env.REVIEW_ELECTROBUN_BUN,
-      entry: process.env.CHALK_REVIEW_SERVER_ENTRY,
+      entry: process.env.CHALK_SERVER_ENTRY,
     }
   : {
       runtimePath: path.join(runtime, "bin/bun"),
@@ -79,7 +84,7 @@ events.on(
 
       for (const result of results)
         if (result.status === "rejected")
-          console.error("Review shutdown", String(result.reason));
+          log.error("desktop", "Shutdown failed", { error: result.reason });
     },
     () => Utils.quit(),
   ),
@@ -127,7 +132,10 @@ async function run() {
             })
             .parse(input);
 
-          console.error(`Review renderer ${value.level}: ${value.message}`);
+          log[value.level === "error" ? "error" : "warn"](
+            "renderer",
+            value.message,
+          );
         },
       },
     },
@@ -160,7 +168,7 @@ async function run() {
 
       Utils.openExternal(newWindowURL(data.detail));
     } catch (cause) {
-      console.error("Cannot open external review link:", cause);
+      log.warn("desktop", "Cannot open external review link", { error: cause });
     }
   });
 
@@ -175,6 +183,7 @@ async function run() {
       label: "Chalk",
       submenu: [
         { label: "Settings…", action: "settings", accelerator: "CmdOrCtrl+," },
+        { label: "Reveal Logs", action: "revealLogs" },
         { type: "divider" },
         { role: "quit", label: "Quit Chalk", accelerator: "CmdOrCtrl+Q" },
       ],
@@ -216,6 +225,7 @@ async function run() {
       action === "closeTab"
     )
       rpc.send.command(action);
+    else if (action === "revealLogs") Utils.openPath(logsDir(logEnv));
   });
 
   if (state.status === "error") return;
@@ -229,7 +239,7 @@ async function run() {
     return;
   }
 
-  console.log(`Review profile: ${profile}; CHALK_REVIEW_INSTANCE=${key}`);
+  log.info("desktop", "Starting", { profile, instance: key, appVersion });
   server = startServer({
     profile,
     key,
@@ -248,10 +258,10 @@ async function run() {
       discovery: host.discovery,
       preferences: preferences!.get(),
     });
-    console.log(`Review server: ${host.discovery.url}`);
+    log.info("desktop", "Server ready", { url: host.discovery.url });
   } catch (error) {
     setState({ status: "error", message: String(error) });
   }
 }
 
-void run().catch((error) => console.error("Review startup", String(error)));
+void run().catch((error) => log.error("desktop", "Startup failed", { error }));

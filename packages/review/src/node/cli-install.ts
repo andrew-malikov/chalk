@@ -16,8 +16,8 @@ import {
 } from "@review/node/lib/atomic-write";
 import { isDirectory, isFile } from "@review/node/lib/fs-utils";
 import { withFileLock } from "@review/node/lib/with-file-lock";
-import { devReviewHome } from "@review/node/storage/review-home-paths";
-import { reviewDesktopStateDir } from "@review/node/storage/review-home-paths";
+import { chalkHome } from "@review/node/storage/chalk-paths";
+import { reviewDesktopStateDir } from "@review/node/storage/chalk-paths";
 
 import {
   CLAUDE_WINDOWS_MCP_ADD,
@@ -600,8 +600,8 @@ export async function writePathShim(
 FALLBACK_CLI=${shSingleQuote(cliPath)}
 FALLBACK_RUNTIME=${shSingleQuote(runtimePath ?? "")}
 DEFAULT_HOME=${shSingleQuote(devHome)}
-export CHALK_REVIEW_HOME="\${CHALK_REVIEW_HOME:-$DEFAULT_HOME}"
-DESKTOP="$CHALK_REVIEW_HOME/review-desktop"
+export CHALK_HOME="\${CHALK_HOME:-$DEFAULT_HOME}"
+DESKTOP="$CHALK_HOME/review-desktop"
 
 # A record counts only while its server process is alive.
 live() {
@@ -610,13 +610,13 @@ live() {
   [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
 }
 
-# Same order as the CLI: CHALK_REVIEW_INSTANCE, the machine default, the only
+# Same order as the CLI: CHALK_INSTANCE, the machine default, the only
 # live Desktop, then stable. A stable Desktop that predates instances wrote
 # only server.json; it never stands in for any other key.
 LEGACY="$DESKTOP/server.json"
 STABLE="$DESKTOP/instances/stable.json"
 [ -f "$STABLE" ] || STABLE="$LEGACY"
-key="\${CHALK_REVIEW_INSTANCE:-}"
+key="\${CHALK_INSTANCE:-}"
 if [ -z "$key" ] && [ -f "$DESKTOP/default-instance" ]; then
   key=$(head -n 1 "$DESKTOP/default-instance" | tr -d '[:space:]')
 fi
@@ -645,7 +645,7 @@ manage_instances=""
 for arg in "$@"; do
   if [ "$arg" = "instances" ]; then manage_instances=1; break; fi
 done
-if [ -z "$manage_instances" ] && [ -z "\${CHALK_REVIEW_CLI_NO_DELEGATE:-}" ] && live "$DISCOVERY"; then
+if [ -z "$manage_instances" ] && [ -z "\${CHALK_CLI_NO_DELEGATE:-}" ] && live "$DISCOVERY"; then
   cli=$(sed -n 's/.*"cliPath"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$DISCOVERY" | head -n 1)
   delegated="1"
   runtime=$(sed -n 's/.*"cliRuntimePath"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$DISCOVERY" | head -n 1)
@@ -662,8 +662,8 @@ if [ ! -f "$cli" ]; then
 fi
 
 # Prevent bootstrap from overriding this selection.
-export CHALK_REVIEW_CLI_NO_DELEGATE=1
-export CHALK_REVIEW_CLI_DELEGATED="$delegated"
+export CHALK_CLI_NO_DELEGATE=1
+export CHALK_CLI_DELEGATED="$delegated"
 
 # Use the selected app's runtime so the CLI and server stay in sync.
 if [ -n "$runtime" ] && [ -x "$runtime" ]; then
@@ -710,7 +710,7 @@ export async function installReviewCommand(input: {
     shimPath,
     input.cliPath,
     input.cliRuntimePath,
-    devReviewHome(env, homeDir),
+    chalkHome(env, homeDir),
   );
 
   const profileOutput = await ensureShellProfilePath({ homeDir, env });

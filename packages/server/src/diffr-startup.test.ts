@@ -12,7 +12,7 @@ it("migrates diffr settings before listening, and starts despite invalid ones", 
   const root = await mkdtemp(path.join(os.tmpdir(), "review-diffr-startup-"));
   const devHome = path.join(root, "review");
   const file = path.join(root, "diffr", "config.toml");
-  vi.stubEnv("CHALK_REVIEW_HOME", devHome);
+  vi.stubEnv("CHALK_HOME", devHome);
   vi.stubEnv("XDG_CONFIG_HOME", root);
   await mkdir(devHome, { recursive: true });
   await mkdir(path.dirname(file));

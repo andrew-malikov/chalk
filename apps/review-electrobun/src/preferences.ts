@@ -1,6 +1,8 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { log } from "@review/node/log";
+
 import {
   type ShellPreferences,
   defaultPreferences,
@@ -17,9 +19,9 @@ export async function createPreferencesStore(file: string) {
       throw error;
 
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT"))
-      console.warn(
-        "Review preferences were invalid; using system theme and split layout.",
-      );
+      log.warn("preferences", "Invalid preferences; using defaults", {
+        error,
+      });
   }
 
   let queue = Promise.resolve(value);

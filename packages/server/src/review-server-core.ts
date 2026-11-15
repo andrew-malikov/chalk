@@ -14,6 +14,7 @@ import {
 import { HttpJsonError, ReviewServerError } from "@chalk/server/http-json";
 import type { AuthoringCapabilities } from "@chalk/server/review-api/http.js";
 import { ReviewInputError } from "@review/documents/document.js";
+import { log } from "@review/node/log.js";
 import {
   readBuildCommit,
   readPackageVersion,
@@ -41,8 +42,13 @@ export function createReviewServerApp(input: {
 }): Hono<ReviewHonoEnv> {
   const app = new Hono<ReviewHonoEnv>();
   app.use("*", async (context, next) => {
+    const started = performance.now();
     await next();
     applyCorsHeaders(context.req.raw, context.res);
+    log.debug("http", `${context.req.method} ${context.req.path}`, {
+      status: context.res.status,
+      ms: Math.round(performance.now() - started),
+    });
   });
   app.options("*", (context) => corsPreflightResponse(context.req.raw));
   // Open to any caller, but the stable ids only to one holding the token.
@@ -86,9 +92,12 @@ export function createReviewServerApp(input: {
     const serverError = error instanceof ReviewServerError ? error : undefined;
 
     const message = toError(error).message;
+    const status = serverError?.statusCode ?? httpJsonStatus(error);
+
+    if (status >= 500) log.error("http", "Request failed", { error });
 
     return serverJson(
-      serverError?.statusCode ?? httpJsonStatus(error),
+      status,
       serverError?.code
         ? { ok: false, code: serverError.code, error: message }
         : { ok: false, error: message },

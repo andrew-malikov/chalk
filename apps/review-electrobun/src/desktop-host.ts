@@ -5,9 +5,10 @@ import path from "node:path";
 
 import { createGlobalReviewServer } from "@chalk/server/desktop-server";
 import { reviewInstanceIdentity } from "@review/node/desktop-discovery";
+import { openLog } from "@review/node/log";
 import { findPackageRoot } from "@review/node/package-paths";
 import { openReviewProfile } from "@review/node/review-api/profile";
-import { devReviewHome } from "@review/node/storage/review-home-paths";
+import { chalkHome } from "@review/node/storage/chalk-paths";
 
 import { mountCliInstallRoutes } from "./cli-install-routes";
 import { listenForDesktopHostShutdown } from "./desktop-host-shutdown";
@@ -16,29 +17,28 @@ export async function runDesktopHost(
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<void> {
   // Port 0 lets the OS choose; the ready event below reports what was bound.
-  const port = requiredPort(env.CHALK_REVIEW_SERVER_PORT);
+  const port = requiredPort(env.CHALK_SERVER_PORT);
 
-  const appPid = requiredPositiveInteger(
-    env.CHALK_REVIEW_APP_PID,
-    "CHALK_REVIEW_APP_PID",
-  );
+  const appPid = requiredPositiveInteger(env.CHALK_APP_PID, "CHALK_APP_PID");
 
   const packageRoot = findPackageRoot(import.meta.url);
-  const toolingRoot = env.CHALK_REVIEW_TOOLING_ROOT || packageRoot;
+  const toolingRoot = env.CHALK_TOOLING_ROOT || packageRoot;
 
   const serverInput = {
     appPid,
     packageRoot,
-    cliPackageRoot: env.CHALK_REVIEW_CLI_ROOT,
+    cliPackageRoot: env.CHALK_CLI_ROOT,
     toolingRoot,
     port,
-    token: env.CHALK_REVIEW_SERVER_TOKEN,
-    instanceId: env.CHALK_REVIEW_INSTANCE_ID,
+    token: env.CHALK_SERVER_TOKEN,
+    instanceId: env.CHALK_INSTANCE_ID,
     identity: reviewInstanceIdentity(env),
   };
 
-  const home = devReviewHome(env);
+  const home = chalkHome(env);
   await mkdir(home, { recursive: true });
+  // Desktop keeps this process's stderr tail for crash reports.
+  openLog("server", { env, echo: true });
 
   const local = await openReviewProfile(home, { manageWorkspaces: true });
 
@@ -49,13 +49,9 @@ export async function runDesktopHost(
     ...serverInput,
     reviewStore: local.store,
     reviewData: local.data,
-    cliRuntimePath: env.CHALK_REVIEW_CLI_RUNTIME,
+    cliRuntimePath: env.CHALK_CLI_RUNTIME,
     mountDesktopRoutes: (app, discovery) =>
-      mountCliInstallRoutes(
-        app,
-        discovery,
-        env.CHALK_REVIEW_CLI_ROOT ?? packageRoot,
-      ),
+      mountCliInstallRoutes(app, discovery, env.CHALK_CLI_ROOT ?? packageRoot),
   });
 
   try {
@@ -98,9 +94,7 @@ function requiredPort(value: string | undefined): number {
   const parsed = Number(value);
 
   if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 65_535) {
-    throw new Error(
-      "CHALK_REVIEW_SERVER_PORT must be a port between 0 and 65535.",
-    );
+    throw new Error("CHALK_SERVER_PORT must be a port between 0 and 65535.");
   }
 
   return parsed;
@@ -119,7 +113,7 @@ function requiredPositiveInteger(
   return parsed;
 }
 
-if (process.env.CHALK_REVIEW_DESKTOP_HOST_AUTOSTART !== "0") {
+if (process.env.CHALK_DESKTOP_HOST_AUTOSTART !== "0") {
   void runDesktopHost().catch((error) => {
     process.stderr.write(
       `${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,

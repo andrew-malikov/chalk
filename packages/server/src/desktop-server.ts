@@ -33,10 +33,10 @@ import { readPackageVersion } from "@review/node/package-paths";
 import type { LocalReviewData } from "@review/node/review-api/local-data.js";
 import type { ReviewStore } from "@review/node/review-api/store.js";
 import {
-  devReviewHome,
+  chalkHome,
   reviewInstanceDiscoveryPath,
   reviewLegacyDiscoveryPath,
-} from "@review/node/storage/review-home-paths";
+} from "@review/node/storage/chalk-paths";
 import {
   readScratchpadEnabled,
   writeScratchpadEnabled,
@@ -174,7 +174,7 @@ export function createGlobalReviewServer(
           cliVersion: cliVersion ?? null,
           instanceId,
           url: urlForBoundPort(),
-          home: devReviewHome(),
+          home: chalkHome(),
         };
       },
     ),

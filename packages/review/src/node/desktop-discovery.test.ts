@@ -137,7 +137,7 @@ describe("Review instance selection", () => {
 
     return (env: NodeJS.ProcessEnv = {}) =>
       selectReviewInstance({
-        env: { CHALK_REVIEW_HOME: root, ...env },
+        env: { CHALK_HOME: root, ...env },
         fetch,
       });
   }
@@ -148,7 +148,7 @@ describe("Review instance selection", () => {
       { defaultInstance: "preview" },
     );
 
-    expect(await both({ CHALK_REVIEW_INSTANCE: "stable" })).toMatchObject({
+    expect(await both({ CHALK_INSTANCE: "stable" })).toMatchObject({
       key: "stable",
       source: "env",
     });
@@ -173,7 +173,7 @@ describe("Review instance selection", () => {
       { malformed: true },
     );
 
-    const selection = await select({ CHALK_REVIEW_INSTANCE: "preview" });
+    const selection = await select({ CHALK_INSTANCE: "preview" });
     expect(selection.instances.map((instance) => instance.key).sort()).toEqual([
       "preview",
       "stable",
@@ -197,9 +197,9 @@ describe("Review instance selection", () => {
   it("rejects a key that is not an instance name and says where it came from", async () => {
     const select = await home({});
     await expect(
-      select({ CHALK_REVIEW_INSTANCE: "../server" }),
+      select({ CHALK_INSTANCE: "../server" }),
     ).rejects.toThrow(
-      'Unknown Chalk instance "../server" from CHALK_REVIEW_INSTANCE',
+      'Unknown Chalk instance "../server" from CHALK_INSTANCE',
     );
 
     const stored = await home({}, { defaultInstance: "../server" });
@@ -210,7 +210,7 @@ describe("Review instance selection", () => {
 
   it("reports the selected key's broken record instead of skipping it", async () => {
     const select = await home({ stable: "broken", preview: true });
-    const selection = await select({ CHALK_REVIEW_INSTANCE: "stable" });
+    const selection = await select({ CHALK_INSTANCE: "stable" });
     expect(selection.instance).toBeUndefined();
     expect(selection.problem?.message).toMatch(
       /discovery is unreadable at .*stable\.json/,
@@ -218,7 +218,7 @@ describe("Review instance selection", () => {
     expect(reviewInstanceUnavailable(selection)).toBe(selection.problem);
 
     // A broken record that is not selected is only skipped.
-    const other = await select({ CHALK_REVIEW_INSTANCE: "preview" });
+    const other = await select({ CHALK_INSTANCE: "preview" });
     expect(other.problem).toBeUndefined();
     expect(other.instance?.healthy).toBe(true);
   });
@@ -240,7 +240,7 @@ describe("Review instance selection", () => {
 
   it("lets a stable record, even a broken one, hide the pre-instance server.json", async () => {
     const select = await home({ stable: "broken" }, { legacy: true });
-    const selection = await select({ CHALK_REVIEW_INSTANCE: "stable" });
+    const selection = await select({ CHALK_INSTANCE: "stable" });
     expect(selection.instance).toBeUndefined();
     expect(selection.problem?.message).toMatch(/stable\.json/);
   });
