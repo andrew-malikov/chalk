@@ -6,8 +6,7 @@ import { selectedPierreDiff } from "./pierre-selection";
 const parse = (body: string) =>
   parsePatchFiles(
     `diff --git a/old.ts b/new.ts\n--- a/old.ts\n+++ b/new.ts\n${body}`,
-    undefined,
-    true,
+    { throwOnError: true },
   )[0]!.files[0]!;
 
 it("includes both sides of a selected replacement and keeps the renamed paths", () => {

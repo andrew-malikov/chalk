@@ -938,7 +938,7 @@ function Comparison({
         }}
         // Room to scroll the last lines out from under the floating bottom bar.
         renderCodeViewFooter={() => <div className="tw:h-[72px]" />}
-        renderAnnotation={(annotation) => (
+        renderAnnotation={(...[annotation]) => (
           <InlineComments annotation={annotation.metadata} />
         )}
         renderHeaderPrefix={(item) => (

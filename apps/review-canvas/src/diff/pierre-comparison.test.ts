@@ -113,7 +113,7 @@ describe("Pierre comparison loading", () => {
 
 describe("committed comparison expansion", () => {
   it("loads both immutable source sides with the old rename name and comparison identity", async () => {
-    const diff = parsePatchFiles(patch, undefined, true)[0]!.files[0]!;
+    const diff = parsePatchFiles(patch, { throwOnError: true })[0]!.files[0]!;
     diff.name = "new.ts";
     diff.prevName = "old.ts";
     const requested: URL[] = [];
@@ -155,8 +155,7 @@ describe("committed comparison expansion", () => {
   it("hydrates a pure rename from only the head source", async () => {
     const diff = parsePatchFiles(
       "diff --git a/old.ts b/new.ts\nsimilarity index 100%\nrename from old.ts\nrename to new.ts\n",
-      undefined,
-      true,
+      { throwOnError: true },
     )[0]!.files[0]!;
     const request = vi.fn(async () => Response.json({ text: "unchanged\n" }));
     const result = await loadPierreFile(

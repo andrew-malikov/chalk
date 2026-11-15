@@ -52,7 +52,9 @@ async function mount(
   await act(async () =>
     root!.render(
       <TestCanvasQuery>
-        <ReviewSessionProvider session={testReviewSession({}, { diffView, request })}>
+        <ReviewSessionProvider
+          session={testReviewSession({}, { diffView, request })}
+        >
           {element}
         </ReviewSessionProvider>
       </TestCanvasQuery>,

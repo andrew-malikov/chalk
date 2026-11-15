@@ -173,8 +173,7 @@ export function structuralMetadata(
   // Names are assigned from the manifest after parsing, avoiding patch quoting ambiguity.
   const metadata = parsePatchFiles(
     `--- ${diff.lhs ? "a/source" : "/dev/null"}\n+++ ${diff.rhs ? "b/source" : "/dev/null"}\n${blocks.join("")}`,
-    undefined,
-    true,
+    { throwOnError: true },
   )[0]!.files[0]!;
 
   metadata.name = path;

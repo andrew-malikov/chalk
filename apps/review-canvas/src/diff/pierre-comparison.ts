@@ -84,11 +84,10 @@ export async function loadPierreComparison({
           const hash = Array.from(new Uint8Array(digest), (byte) =>
             byte.toString(16).padStart(2, "0"),
           ).join("");
-          const parsed = parsePatchFiles(
-            patch,
-            `${patchUrl.href}:${hash}`,
-            true,
-          ).flatMap((patch) => patch.files);
+          const parsed = parsePatchFiles(patch, {
+            cacheKeyPrefix: `${patchUrl.href}:${hash}`,
+            throwOnError: true,
+          }).flatMap((patch) => patch.files);
           if (parsed.length !== 1)
             throw new Error("Expected one complete file patch");
           entry.diff = parsed[0]!;

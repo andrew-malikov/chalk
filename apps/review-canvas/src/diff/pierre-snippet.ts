@@ -111,7 +111,7 @@ export function createPierreSnippet(
       )
       .join("");
 
-  const diff = parsePatchFiles(patch, undefined, true)[0]!.files[0]!;
+  const diff = parsePatchFiles(patch, { throwOnError: true })[0]!.files[0]!;
   diff.name = path;
   diff.prevName = full.prevName;
 

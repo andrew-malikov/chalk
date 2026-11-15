@@ -165,10 +165,10 @@ export function toolResultText(
 import { randomUUID } from "node:crypto";
 
 import {
+  type JsonValue,
   isBooleanValue,
   isNumberValue,
   isStringValue,
-  type JsonValue,
   parseJsonText,
 } from "@chalk/json";
 import type { CallToolRequest, Tool } from "@modelcontextprotocol/sdk/types.js";

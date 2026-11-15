@@ -20,11 +20,11 @@ import { useQuery } from "@tanstack/react-query";
 import { CircleSmall } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { useReviewTheme } from "./PierreDiffView";
 import { DiffCount } from "./diff-count";
 import { useDiffPreference } from "./diff-settings";
 import { FileMark } from "./file-mark";
 import { loadPierreComparison, loadPierreFile } from "./pierre-comparison";
+import { useReviewTheme } from "./PierreDiffView";
 
 type OpenCommitDiff = (commit: ReviewCommitSummary, file?: string) => void;
 

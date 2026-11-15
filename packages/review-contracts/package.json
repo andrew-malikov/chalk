@@ -21,13 +21,13 @@
   },
   "dependencies": {
     "@chalk/json": "workspace:*",
-    "@dev.fast/diffr": "0.1.20",
+    "@dev.fast/diffr": "0.1.23",
     "eventsource-parser": "3.1.1",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "vite-plus": "1.1.0",
-    "vitest": "5.0.3"
+    "vite-plus": "1.5.0",
+    "vitest": "5.1.0"
   },
   "engines": {
     "bun": ">=1.4.2"

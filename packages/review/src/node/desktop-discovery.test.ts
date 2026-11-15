@@ -196,7 +196,9 @@ describe("Review instance selection", () => {
 
   it("rejects a key that is not an instance name and says where it came from", async () => {
     const select = await home({});
-    await expect(select({ CHALK_REVIEW_INSTANCE: "../server" })).rejects.toThrow(
+    await expect(
+      select({ CHALK_REVIEW_INSTANCE: "../server" }),
+    ).rejects.toThrow(
       'Unknown Chalk instance "../server" from CHALK_REVIEW_INSTANCE',
     );
 
