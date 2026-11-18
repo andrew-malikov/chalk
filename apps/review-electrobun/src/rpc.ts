@@ -84,6 +84,11 @@ export type AppRPC = {
         params: Partial<ShellPreferences>;
         response: ShellPreferences;
       };
+      hasGitLabToken: { params: { host: string }; response: boolean };
+      saveGitLabToken: {
+        params: { host: string; token: string };
+        response: void;
+      };
       openSource: { params: NativeOpenRequest; response: void };
       openExternal: { params: { url: string }; response: void };
       focusWindow: { params: void; response: void };

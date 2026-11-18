@@ -1,12 +1,17 @@
-import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 
-import type { JsonValue } from "@chalk/json";
 import {
   type GitLabDiscussion,
   type GitLabPosition,
   gitLabAccountSchema,
+  gitLabRefsSchema,
 } from "@chalk/review-contracts";
+import {
+  type DiscussionNotePositionOptions,
+  GitbeakerRequestError,
+  Gitlab,
+} from "@gitbeaker/rest";
+import { gitLabToken } from "./gitlab-token.js";
 import { ReviewInputError } from "@review/documents/document.js";
 import { z } from "zod";
 
@@ -47,50 +52,6 @@ export function mergeRequestAddress(value: string) {
   };
 }
 
-export type GitLabRun = (
-  file: string,
-  args: string[],
-  options: { cwd?: string; timeoutMs: number; input?: string },
-) => Promise<string>;
-
-export const runGitLabCommand: GitLabRun = (file, args, options) =>
-  new Promise((resolve, reject) => {
-    const child = execFile(
-      file,
-      args,
-      {
-        cwd: options.cwd,
-        timeout: options.timeoutMs,
-        maxBuffer: 32 * 1024 * 1024,
-        env: {
-          ...process.env,
-          GIT_TERMINAL_PROMPT: "0",
-          GLAB_PROMPT_DISABLED: "1",
-          GIT_SSH_COMMAND:
-            process.env.GIT_SSH_COMMAND ?? "ssh -o BatchMode=yes",
-        },
-      },
-      (error, stdout, stderr) => {
-        if (!error) {
-          resolve(stdout);
-
-          return;
-        }
-
-        const status = /HTTP (\d{3})/.exec(String(stderr));
-        // Never forward arguments, token-bearing stdout, or subprocess diagnostics.
-        reject(
-          new GitLabRequestError(
-            status ? Number(status[1]) : undefined,
-            error.code === "ENOENT",
-          ),
-        );
-      },
-    );
-
-    child.stdin?.end(options.input);
-  });
-
 export class GitLabRequestError extends ReviewInputError {
   readonly uncertain: boolean;
   constructor(
@@ -99,9 +60,9 @@ export class GitLabRequestError extends ReviewInputError {
   ) {
     super(
       missing
-        ? "Install glab and Git on Chalk's PATH, then retry."
+        ? "Install Git on Chalk's PATH, then retry."
         : httpStatus === 401 || httpStatus === 403
-          ? "GitLab authentication or permission failed. Check glab auth status for this host and reconnect with an account that can access the MR."
+          ? "GitLab authentication or permission failed. Check the GitLab token for this host in Settings."
           : "GitLab could not confirm the request. Check the MR and your connection before retrying.",
       409,
     );
@@ -110,190 +71,133 @@ export class GitLabRequestError extends ReviewInputError {
   }
 }
 
-const remoteRefsSchema = z.object({
-  base_sha: z.string().regex(/^[a-f0-9]{40}$/i),
-  start_sha: z.string().regex(/^[a-f0-9]{40}$/i),
-  head_sha: z.string().regex(/^[a-f0-9]{40}$/i),
-});
+/** Desktop Settings keeps tokens per host in preferences.json, so a token never reaches another host. */
+export async function gitLabGitAuth(host: string): Promise<NodeJS.ProcessEnv> {
+  const token = await gitLabToken(host);
 
-const metadataSchema = z.object({
-  iid: z.number().int().positive(),
-  project_id: z.number().int().positive(),
-  title: z.string(),
-  diff_refs: remoteRefsSchema,
-});
-
-const projectSchema = z.object({
-  id: z.number().int().positive(),
-  path_with_namespace: z.string(),
-  http_url_to_repo: z.string(),
-  ssh_url_to_repo: z.string(),
-});
-
-const positionSchema = remoteRefsSchema.extend({
-  old_path: z.string(),
-  new_path: z.string(),
-  old_line: z.number().int().positive().nullable().optional(),
-  new_line: z.number().int().positive().nullable().optional(),
-  position_type: z.string().optional(),
-  line_range: z
-    .object({
-      start: z.object({
-        type: z.enum(["new", "old"]),
-        old_line: z.number().int().positive().nullable().optional(),
-        new_line: z.number().int().positive().nullable().optional(),
-      }),
-      end: z.object({
-        type: z.enum(["new", "old"]),
-        old_line: z.number().int().positive().nullable().optional(),
-        new_line: z.number().int().positive().nullable().optional(),
-      }),
-    })
-    .nullable()
-    .optional(),
-});
-
-const noteSchema = z.object({
-  id: z.number().int().positive(),
-  body: z.string(),
-  author: gitLabAccountSchema,
-  created_at: z.string(),
-  system: z.boolean().optional(),
-  resolved: z.boolean().optional(),
-  resolvable: z.boolean().optional(),
-  position: positionSchema.nullable().optional(),
-});
-
-const discussionSchema = z.object({
-  id: z.string(),
-  notes: z.array(noteSchema),
-});
+  return token
+    ? {
+        GIT_CONFIG_COUNT: "1",
+        GIT_CONFIG_KEY_0: `http.https://${host}/.extraHeader`,
+        GIT_CONFIG_VALUE_0: `Authorization: Basic ${Buffer.from(`oauth2:${token}`).toString("base64")}`,
+      }
+    : {};
+}
 
 export class GitLabClient {
-  constructor(
-    readonly host: string,
-    readonly run: GitLabRun = runGitLabCommand,
-  ) {}
-
-  async request(
-    endpoint: string,
-    method = "GET",
-    input?: Record<string, JsonValue>,
-  ) {
-    const args = ["api", "--hostname", this.host, "--method", method, endpoint];
-
-    if (input)
-      args.push("--input", "-", "--header", "Content-Type: application/json");
-
-    const text = await this.run("glab", args, {
-      timeoutMs: 30_000,
-      input: input ? JSON.stringify(input) : undefined,
+  private readonly api: Gitlab;
+  constructor(host: string, token?: string) {
+    this.api = new Gitlab({
+      host: `https://${host}`,
+      queryTimeout: 30_000,
+      ...(token ? { token } : {}),
     });
+  }
 
+  private async call<T>(request: (api: Gitlab) => Promise<T>) {
     try {
-      return JSON.parse(text);
-    } catch {
-      throw new GitLabRequestError(undefined);
+      return await request(this.api);
+    } catch (error) {
+      // Never forward request details: the token rides in its headers.
+      throw new GitLabRequestError(
+        error instanceof GitbeakerRequestError
+          ? error.cause?.response.status
+          : undefined,
+      );
     }
   }
 
   async account() {
-    return gitLabAccountSchema.parse(await this.request("user"));
+    return gitLabAccountSchema.parse(
+      await this.call((api) => api.Users.showCurrentUser()),
+    );
   }
 
   async metadata(project: string | number, iid: number) {
-    const mr = metadataSchema.parse(
-      await this.request(
-        `projects/${encodeURIComponent(project)}/merge_requests/${iid}`,
-      ),
-    );
+    const mr = await this.call((api) => api.MergeRequests.show(project, iid));
 
     return {
       title: mr.title,
       projectId: mr.project_id,
       iid: mr.iid,
-      refs: {
-        baseSha: mr.diff_refs.base_sha,
-        startSha: mr.diff_refs.start_sha,
-        headSha: mr.diff_refs.head_sha,
-      },
+      // SHAs flow into git arguments.
+      refs: gitLabRefsSchema.parse({
+        baseSha: mr.diff_refs?.base_sha,
+        startSha: mr.diff_refs?.start_sha,
+        headSha: mr.diff_refs?.head_sha,
+      }),
     };
   }
 
   async project(id: number) {
-    return projectSchema.parse(await this.request(`projects/${id}`));
+    return this.call((api) => api.Projects.show(id));
   }
 
   async discussions(
     projectId: number,
     iid: number,
   ): Promise<GitLabDiscussion[]> {
+    const discussions = await this.call((api) =>
+      api.MergeRequestDiscussions.all(projectId, iid, { perPage: 100 }),
+    );
+
     const result: GitLabDiscussion[] = [];
 
-    for (let page = 1; ; page++) {
-      const discussions = z
-        .array(discussionSchema)
-        .parse(
-          await this.request(
-            `projects/${projectId}/merge_requests/${iid}/discussions?per_page=100&page=${page}`,
-          ),
-        );
+    for (const discussion of discussions) {
+      const notes = (discussion.notes ?? []).filter((note) => !note.system);
 
-      for (const discussion of discussions) {
-        const notes = discussion.notes.filter((note) => !note.system);
+      if (!notes.length) continue;
+      const remote = notes.find((note) => note.position)?.position;
+      const text = remote?.position_type === "text" ? remote : undefined;
+      // gitbeaker types diff lines as strings; GitLab sends numbers.
+      const newLine = Number(text?.new_line) || undefined;
+      const line = newLine ?? (Number(text?.old_line) || undefined);
 
-        if (!notes.length) continue;
-        const remote = notes.find((note) => note.position)?.position;
+      const side = text?.line_range
+        ? text.line_range.end?.type === "new"
+          ? "head"
+          : "base"
+        : newLine
+          ? "head"
+          : "base";
 
-        const side = remote?.line_range
-          ? remote.line_range.end.type === "new"
-            ? "head"
-            : "base"
-          : remote?.new_line
-            ? "head"
-            : "base";
-
-        const line = remote?.new_line ?? remote?.old_line;
-        result.push({
-          id: discussion.id,
-          resolved:
-            notes
-              .filter((note) => note.resolvable)
-              .every((note) => note.resolved) &&
-            notes.some((note) => note.resolvable),
-          resolvable: notes.some((note) => note.resolvable),
-          position:
-            remote &&
-            line &&
-            (!remote.position_type || remote.position_type === "text")
-              ? {
-                  baseSha: remote.base_sha,
-                  startSha: remote.start_sha,
-                  headSha: remote.head_sha,
-                  oldPath: remote.old_path,
-                  newPath: remote.new_path,
-                  side,
-                  from:
-                    (side === "head"
-                      ? remote.line_range?.start.new_line
-                      : remote.line_range?.start.old_line) ?? line,
-                  to:
-                    (side === "head"
-                      ? remote.line_range?.end.new_line
-                      : remote.line_range?.end.old_line) ?? line,
-                }
-              : undefined,
-          comments: notes.map((note) => ({
-            id: note.id,
-            body: note.body,
-            author: note.author,
-            createdAt: note.created_at,
-          })),
-        });
-      }
-
-      if (discussions.length < 100) return result;
+      result.push({
+        id: discussion.id,
+        resolved:
+          notes
+            .filter((note) => note.resolvable)
+            .every((note) => note.resolved === true) &&
+          notes.some((note) => note.resolvable),
+        resolvable: notes.some((note) => note.resolvable),
+        position:
+          text && line && text.old_path && text.new_path
+            ? {
+                baseSha: text.base_sha,
+                startSha: text.start_sha,
+                headSha: text.head_sha,
+                oldPath: text.old_path,
+                newPath: text.new_path,
+                side,
+                from:
+                  (side === "head"
+                    ? text.line_range?.start?.new_line
+                    : text.line_range?.start?.old_line) ?? line,
+                to:
+                  (side === "head"
+                    ? text.line_range?.end?.new_line
+                    : text.line_range?.end?.old_line) ?? line,
+              }
+            : undefined,
+        comments: notes.map((note) => ({
+          id: note.id,
+          body: note.body,
+          author: gitLabAccountSchema.parse(note.author),
+          createdAt: note.created_at,
+        })),
+      });
     }
+
+    return result;
   }
 
   async post(
@@ -303,27 +207,23 @@ export class GitLabClient {
     discussionId?: string,
     position?: GitLabPosition,
   ) {
-    const route = `projects/${projectId}/merge_requests/${iid}/discussions`;
-
-    const input = {
-      body,
-      ...(position && { position: remotePosition(position) }),
-    };
-
-    const response = await this.request(
+    const note = await this.call(async (api) =>
       discussionId
-        ? `${route}/${encodeURIComponent(discussionId)}/notes`
-        : route,
-      "POST",
-      input,
+        ? api.MergeRequestDiscussions.addNote(
+            projectId,
+            iid,
+            discussionId,
+            body,
+          )
+        : (
+            await api.MergeRequestDiscussions.create(
+              projectId,
+              iid,
+              body,
+              position && { position: remotePosition(position) },
+            )
+          ).notes?.[0],
     );
-
-    const parsed = (discussionId ? noteSchema : discussionSchema).safeParse(
-      response,
-    );
-
-    if (!parsed.success) throw new GitLabRequestError(undefined);
-    const note = "notes" in parsed.data ? parsed.data.notes[0] : parsed.data;
 
     if (!note) throw new GitLabRequestError(undefined);
 
@@ -331,17 +231,21 @@ export class GitLabClient {
   }
 
   async resolve(projectId: number, iid: number, discussionId: string) {
-    const result = discussionSchema.parse(
-      await this.request(
-        `projects/${projectId}/merge_requests/${iid}/discussions/${encodeURIComponent(discussionId)}`,
-        "PUT",
-        { resolved: true },
-      ),
-    );
+    const notes =
+      (
+        await this.call((api) =>
+          api.MergeRequestDiscussions.resolve(
+            projectId,
+            iid,
+            discussionId,
+            true,
+          ),
+        )
+      ).notes ?? [];
 
     if (
-      !result.notes.some((note) => note.resolvable) ||
-      result.notes.some((note) => note.resolvable && !note.resolved)
+      !notes.some((note) => note.resolvable) ||
+      notes.some((note) => note.resolvable && note.resolved !== true)
     )
       throw new ReviewInputError(
         "GitLab did not confirm discussion resolution.",
@@ -353,38 +257,37 @@ export class GitLabClient {
 function remotePosition(position: GitLabPosition) {
   const file = position.side === "head" ? position.newPath : position.oldPath;
   const hash = createHash("sha1").update(file).digest("hex");
+  const type = position.side === "head" ? ("new" as const) : ("old" as const);
 
   const entry = (number: number, opposite: number | undefined) => ({
-    type: position.side === "head" ? "new" : "old",
-    line_code: `${hash}_${position.side === "base" ? number : (opposite ?? 0)}_${position.side === "head" ? number : (opposite ?? 0)}`,
+    type,
+    lineCode: `${hash}_${position.side === "base" ? number : (opposite ?? 0)}_${position.side === "head" ? number : (opposite ?? 0)}`,
     ...(position.side === "head"
-      ? { new_line: number, ...(opposite && { old_line: opposite }) }
-      : { old_line: number, ...(opposite && { new_line: opposite }) }),
+      ? { newLine: number, ...(opposite && { oldLine: opposite }) }
+      : { oldLine: number, ...(opposite && { newLine: opposite }) }),
   });
 
+  // GitLab coerces these; gitbeaker types them as strings.
+  const to = String(position.to);
+  const oppositeTo = position.oppositeTo && String(position.oppositeTo);
+
   return {
-    position_type: "text",
-    base_sha: position.baseSha,
-    start_sha: position.startSha,
-    head_sha: position.headSha,
-    old_path: position.oldPath,
-    new_path: position.newPath,
+    positionType: "text",
+    baseSha: position.baseSha,
+    startSha: position.startSha,
+    headSha: position.headSha,
+    oldPath: position.oldPath,
+    newPath: position.newPath,
     ...(position.side === "head"
-      ? {
-          new_line: position.to,
-          ...(position.oppositeTo && { old_line: position.oppositeTo }),
-        }
-      : {
-          old_line: position.to,
-          ...(position.oppositeTo && { new_line: position.oppositeTo }),
-        }),
+      ? { newLine: to, ...(oppositeTo && { oldLine: oppositeTo }) }
+      : { oldLine: to, ...(oppositeTo && { newLine: oppositeTo }) }),
     ...(position.from !== position.to && {
-      line_range: {
+      lineRange: {
         start: entry(position.from, position.oppositeFrom),
         end: entry(position.to, position.oppositeTo),
       },
     }),
-  };
+  } satisfies DiscussionNotePositionOptions;
 }
 
 /** Exact surrounding context must have one match; repeated/rewritten code stays unmapped. */

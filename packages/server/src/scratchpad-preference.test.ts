@@ -1,11 +1,10 @@
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import { SCRATCHPAD_REVIEW_ID } from "@chalk/review-contracts";
 import { createGlobalReviewServer } from "@chalk/server/desktop-server";
 import { openLocalReviewStore } from "@review/node/review-api/local-data";
-import { readReviewPreferences } from "@review/node/storage/review-preferences";
 import { afterEach, expect, it, vi } from "vitest";
 
 const token = "scratchpad-test-token";
@@ -42,16 +41,15 @@ it("makes and lists the scratchpad only while its preference is on", async () =>
   const get = async (url: string, route: string) =>
     fetch(`${url}${route}`, { headers });
 
-  const setEnabled = async (url: string, enabled: boolean) => {
-    const response = await fetch(`${url}/preferences/scratchpad`, {
-      method: "PUT",
-      headers,
-      body: JSON.stringify({ enabled }),
-    });
-
-    expect(response.status).toBe(200);
-
-    return response.json();
+  // Desktop owns preferences.json; a server reads it when it starts.
+  const restartWith = async (enabled: boolean) => {
+    await writeFile(
+      path.join(devHome, "preferences.json"),
+      JSON.stringify({ scratchpadEnabled: enabled }),
+    );
+    await server.close();
+    server = serve();
+    await server.listen();
   };
 
   let server = serve();
@@ -88,8 +86,7 @@ it("makes and lists the scratchpad only while its preference is on", async () =>
     expect(local.store.has(SCRATCHPAD_REVIEW_ID)).toBe(false);
 
     // On: the pad exists, is listed, and is accessible.
-    expect(await setEnabled(server.url, true)).toEqual({ enabled: true });
-    expect((await readReviewPreferences(devHome)).scratchpadEnabled).toBe(true);
+    await restartWith(true);
     expect(await (await get(server.url, "/reviews-api")).json()).toMatchObject([
       { reviewId: SCRATCHPAD_REVIEW_ID, kind: "scratchpad" },
     ]);
@@ -101,21 +98,12 @@ it("makes and lists the scratchpad only while its preference is on", async () =>
     ).toBe(200);
 
     // Off again: hidden and refused, but not deleted.
-    expect(await setEnabled(server.url, false)).toEqual({ enabled: false });
+    await restartWith(false);
     expect(await (await get(server.url, "/reviews-api")).json()).toEqual([]);
     expect(
       (await get(server.url, `/reviews-api/${SCRATCHPAD_REVIEW_ID}`)).status,
     ).toBe(409);
     expect(local.store.has(SCRATCHPAD_REVIEW_ID)).toBe(true);
-
-    // A new server starts from the saved preference.
-    await setEnabled(server.url, true);
-    await server.close();
-    server = serve();
-    await server.listen();
-    expect(await (await get(server.url, "/reviews-api")).json()).toMatchObject([
-      { reviewId: SCRATCHPAD_REVIEW_ID, kind: "scratchpad" },
-    ]);
   } finally {
     await server.close();
     await local.data.close();

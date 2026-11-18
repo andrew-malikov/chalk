@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@canvas/components/ui/dialog";
+import { Input } from "@canvas/components/ui/input";
 import { NativeSelect } from "@canvas/components/ui/native-select";
 import { Switch } from "@canvas/components/ui/switch";
 import {
@@ -1186,6 +1187,11 @@ function Shell(
           save={(patch) => {
             void save(patch).catch(fail);
           }}
+          hasGitLabToken={(host) => options.rpc.request.hasGitLabToken({ host })}
+          saveGitLabToken={(host, token) =>
+            options.rpc.request.saveGitLabToken({ host, token })
+          }
+          fail={fail}
           close={() => setSettings(false)}
         />
       )}
@@ -1197,14 +1203,35 @@ function SettingsDialog({
   container,
   preferences,
   save,
+  hasGitLabToken,
+  saveGitLabToken,
+  fail,
   close,
 }: {
   container: HTMLElement | null;
   preferences: ShellPreferences;
   save: (patch: Partial<ShellPreferences>) => void;
+  hasGitLabToken: (host: string) => Promise<boolean>;
+  saveGitLabToken: (host: string, token: string) => Promise<void>;
+  fail: (cause: unknown) => void;
   close: () => void;
 }) {
   const previousFocus = useRef(document.activeElement);
+
+  const [gitlabHost, setGitlabHost] = useState("gitlab.com");
+  const [gitlabSaved, setGitlabSaved] = useState(false);
+
+  useEffect(() => {
+    let current = true;
+    setGitlabSaved(false);
+    hasGitLabToken(gitlabHost).then((saved) => {
+      if (current) setGitlabSaved(saved);
+    }, fail);
+
+    return () => {
+      current = false;
+    };
+  }, [gitlabHost]);
 
   return (
     <Dialog
@@ -1253,6 +1280,37 @@ function SettingsDialog({
               id="shell-debug-logging"
               checked={preferences.debugLogging}
               onCheckedChange={(debugLogging) => save({ debugLogging })}
+            />
+          </label>
+          <label htmlFor="shell-gitlab-host">
+            <span>GitLab host</span>
+            <Input
+              id="shell-gitlab-host"
+              className="tw:max-w-[200px]"
+              value={gitlabHost}
+              onChange={(event) => setGitlabHost(event.target.value.trim())}
+            />
+          </label>
+          <label htmlFor="shell-gitlab-token">
+            <span>GitLab token</span>
+            <Input
+              id="shell-gitlab-token"
+              key={gitlabHost}
+              className="tw:max-w-[200px]"
+              type="password"
+              autoComplete="off"
+              placeholder={gitlabSaved ? "••••••••••••" : "Paste a token"}
+              onBlur={(event) => {
+                const input = event.target;
+                const token = input.value.trim();
+
+                // Blank keeps the saved token.
+                if (!token || !gitlabHost) return;
+                saveGitLabToken(gitlabHost, token).then(() => {
+                  input.value = "";
+                  setGitlabSaved(true);
+                }, fail);
+              }}
             />
           </label>
         </div>

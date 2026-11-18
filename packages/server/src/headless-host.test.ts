@@ -34,7 +34,6 @@ import {
   reviewServerDiscoveryPath,
   reviewServerIsHealthy,
 } from "@review/node/server-discovery.js";
-import { writeScratchpadEnabled } from "@review/node/storage/review-preferences.js";
 import sharp from "sharp";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
@@ -601,7 +600,10 @@ it("reports attached Desktops and sends each the reviews to open", async () => {
 it.each([false, true])(
   "never makes, lists or offers the scratchpad, with a Desktop attached: %s",
   async (attached) => {
-    await writeScratchpadEnabled(true);
+    await writeFile(
+      path.join(root, "preferences.json"),
+      JSON.stringify({ scratchpadEnabled: true }),
+    );
     const server = await start();
     const desktop = attached ? await attachDesktop(server.discovery) : null;
 

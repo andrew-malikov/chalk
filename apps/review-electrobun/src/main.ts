@@ -4,6 +4,10 @@ import { homedir } from "node:os";
 import path from "node:path";
 
 import { log, logsDir, openLog } from "@review/node/log";
+import {
+  gitLabToken,
+  saveGitLabToken,
+} from "@review/node/review-api/gitlab-token";
 import * as ApplicationMenu from "electrobun/main/app-menu";
 import { BrowserView } from "electrobun/main/browser-view";
 import { BrowserWindow } from "electrobun/main/browser-window";
@@ -114,6 +118,9 @@ async function run() {
 
           return value;
         },
+        hasGitLabToken: async ({ host }) =>
+          (await gitLabToken(host)) !== undefined,
+        saveGitLabToken: ({ host, token }) => saveGitLabToken(host, token),
         openSource: async (request) => openSource(request, await desktopEnv),
         openExternal: async (request) => {
           if (!Utils.openExternal(externalURL(request)))

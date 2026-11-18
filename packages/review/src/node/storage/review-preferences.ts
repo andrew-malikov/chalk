@@ -1,88 +1,25 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import {
-  type JsonValue,
-  isJsonObject,
-  parseJsonText,
-} from "@chalk/review-contracts";
-import { writePrivateJsonAtomic } from "@review/node/lib/atomic-write";
+import { isJsonObject, parseJsonText } from "@chalk/review-contracts";
 
 import { chalkHome } from "./chalk-paths";
 
 /**
- * Machine-wide Review preferences the server itself needs. Workbench settings
- * do not work here: the review server never reads the workbench
- * configuration.
+ * Whether the scratchpad exists on this machine. Off, the server neither
+ * makes nor lists it and Review's instructions do not offer it to agents.
+ * A missing or unreadable preferences file means off.
  */
-export interface ReviewPreferences {
-  /**
-   * Whether the scratchpad exists on this machine. Off, the server neither
-   * makes nor lists it and Review's instructions do not offer it to agents.
-   */
-  scratchpadEnabled: boolean;
-}
-
-const DEFAULT_REVIEW_PREFERENCES: ReviewPreferences = {
-  scratchpadEnabled: false,
-};
-
-function reviewPreferencesPath(devHome = chalkHome()): string {
-  return path.join(devHome, "preferences.json");
-}
-
-/** A missing or unreadable file falls back to the defaults; it never throws. */
-export async function readReviewPreferences(
-  devHome?: string,
-): Promise<ReviewPreferences> {
+export async function readScratchpadEnabled(
+  devHome = chalkHome(),
+): Promise<boolean> {
   try {
     const raw = parseJsonText(
-      await readFile(reviewPreferencesPath(devHome), "utf8"),
+      await readFile(path.join(devHome, "preferences.json"), "utf8"),
     );
 
-    return {
-      scratchpadEnabled: parseScratchpadEnabled(raw),
-    };
+    return isJsonObject(raw) && raw.scratchpadEnabled === true;
   } catch {
-    return { ...DEFAULT_REVIEW_PREFERENCES };
+    return false;
   }
-}
-
-export async function writeReviewPreferences(
-  preferences: ReviewPreferences,
-  devHome?: string,
-): Promise<ReviewPreferences> {
-  const next: ReviewPreferences = {
-    scratchpadEnabled: preferences.scratchpadEnabled === true,
-  };
-
-  await writePrivateJsonAtomic(reviewPreferencesPath(devHome), next);
-
-  return next;
-}
-
-/** Reads the scratchpad preference; a missing file means off. */
-export async function readScratchpadEnabled(
-  devHome?: string,
-): Promise<boolean> {
-  return (await readReviewPreferences(devHome)).scratchpadEnabled;
-}
-
-/** Sets the scratchpad preference, keeping the other preferences as they are. */
-export async function writeScratchpadEnabled(
-  enabled: boolean,
-  devHome?: string,
-): Promise<boolean> {
-  const current = await readReviewPreferences(devHome);
-
-  return (
-    await writeReviewPreferences(
-      { ...current, scratchpadEnabled: enabled },
-      devHome,
-    )
-  ).scratchpadEnabled;
-}
-
-function parseScratchpadEnabled(raw: JsonValue): boolean {
-  return isJsonObject(raw) && raw.scratchpadEnabled === true;
 }

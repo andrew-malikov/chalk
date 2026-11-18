@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 
+import { gitAt } from "@chalk/local-vcs";
 import type {
   GitLabIdentity,
   GitLabPosition,
@@ -15,37 +16,47 @@ import { chalkHome } from "@review/node/storage/chalk-paths.js";
 import {
   GitLabClient,
   GitLabRequestError,
-  type GitLabRun,
+  gitLabGitAuth,
   mergeRequestAddress,
   remapLineRange,
-  runGitLabCommand,
 } from "./gitlab.js";
+import { gitLabToken } from "./gitlab-token.js";
 import type { ReviewStore } from "./store.js";
 
 export interface GitLabOptions {
-  run?: GitLabRun;
   cloneRoot?: string;
 }
 
 export class GitLabReviews {
-  private readonly run: GitLabRun;
   private readonly root: string;
   constructor(
     private readonly store: ReviewStore,
     options: GitLabOptions = {},
   ) {
-    this.run = options.run ?? runGitLabCommand;
     this.root = path.resolve(
       options.cloneRoot ??
         process.env.CHALK_GITLAB_CLONES_DIR ??
         path.join(chalkHome(), "gitlab-clones"),
     );
   }
-  private client(host: string) {
-    return new GitLabClient(host, this.run);
+  private async client(host: string) {
+    return new GitLabClient(host, await gitLabToken(host));
   }
-  private git(cwd: string, args: string[]) {
-    return this.run("git", args, { cwd, timeoutMs: 120_000 });
+  private async git(cwd: string, args: string[], env?: NodeJS.ProcessEnv) {
+    try {
+      const { stdout } = await gitAt(cwd, args, {
+        env: { ...process.env, ...env, GIT_TERMINAL_PROMPT: "0" },
+        timeout: 120_000,
+      });
+
+      return stdout;
+    } catch (error) {
+      // Never forward arguments, environment, or subprocess diagnostics.
+      throw new GitLabRequestError(
+        undefined,
+        (error as NodeJS.ErrnoException).code === "ENOENT",
+      );
+    }
   }
   private directory(
     identity: Pick<GitLabIdentity, "host" | "projectId" | "iid">,
@@ -90,7 +101,7 @@ export class GitLabReviews {
   }
   async create(url: string) {
     const address = mergeRequestAddress(url);
-    const client = this.client(address.host);
+    const client = await this.client(address.host);
     const metadata = await client.metadata(address.projectPath, address.iid);
 
     if (metadata.iid !== address.iid)
@@ -99,22 +110,7 @@ export class GitLabReviews {
 
     if (project.id !== metadata.projectId)
       throw new ReviewInputError("GitLab returned a different project.");
-    let protocol = "https";
-
-    try {
-      protocol = (
-        await this.run(
-          "glab",
-          ["config", "get", "git_protocol", "--host", address.host],
-          { timeoutMs: 10_000 },
-        )
-      ).trim();
-    } catch {
-      /* HTTPS also works with Git credential helpers. */
-    }
-
-    const cloneUrl =
-      protocol === "ssh" ? project.ssh_url_to_repo : project.http_url_to_repo;
+    const cloneUrl = project.http_url_to_repo;
 
     this.validateClone(cloneUrl, address.host);
 
@@ -216,10 +212,11 @@ export class GitLabReviews {
 
     if (missing) {
       try {
-        await this.run(
-          "git",
+        // locked() made the parent directory.
+        await this.git(
+          path.dirname(cwd),
           ["clone", "--no-checkout", "--", identity.cloneUrl, cwd],
-          { timeoutMs: 120_000 },
+          await gitLabGitAuth(identity.host),
         );
       } catch (error) {
         await rm(cwd, { recursive: true, force: true });
@@ -252,7 +249,7 @@ export class GitLabReviews {
       "--",
       identity.cloneUrl,
       `refs/merge-requests/${identity.iid}/head`,
-    ]);
+    ], await gitLabGitAuth(identity.host));
 
     if (
       (await this.git(cwd, ["rev-parse", "FETCH_HEAD"])).trim() !== refs.headSha
@@ -272,7 +269,7 @@ export class GitLabReviews {
           "--",
           identity.cloneUrl,
           sha,
-        ]);
+        ], await gitLabGitAuth(identity.host));
       }
     }
 
@@ -285,7 +282,7 @@ export class GitLabReviews {
     const initial = this.store.gitlab.read(id);
 
     return this.locked(initial.identity, async () => {
-      const client = this.client(initial.identity.host);
+      const client = await this.client(initial.identity.host);
       let refs: GitLabRefs;
 
       try {
@@ -311,7 +308,7 @@ export class GitLabReviews {
       } catch {
         this.store.gitlab.update(id, (state) => {
           state.connectionError =
-            "Cannot refresh GitLab. Check glab authentication for this host and your connection.";
+            "Cannot refresh GitLab. Check the GitLab token for this host in Settings and your connection.";
         });
 
         return;
@@ -511,7 +508,7 @@ export class GitLabReviews {
     const state = this.store.gitlab.read(id);
 
     return this.locked(state.identity, async () => {
-      const client = this.client(state.identity.host);
+      const client = await this.client(state.identity.host);
       const account = await client.account();
 
       if (state.account && state.account.id !== account.id)
@@ -657,7 +654,7 @@ export class GitLabReviews {
     const state = this.store.gitlab.read(id);
 
     return this.locked(state.identity, async () => {
-      const client = this.client(state.identity.host);
+      const client = await this.client(state.identity.host);
       await client.resolve(
         state.identity.projectId,
         state.identity.iid,

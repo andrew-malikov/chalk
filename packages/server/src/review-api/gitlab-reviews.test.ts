@@ -4,15 +4,15 @@ import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import {
-  GitLabRequestError,
-  type GitLabRun,
-  runGitLabCommand,
-} from "@review/node/review-api/gitlab.js";
 import { openLocalReviewStore } from "@review/node/review-api/local-data.js";
-import { expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 
 import { createReviewApi } from "./http.js";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
 
 it("creates an isolated MR once, retains comments on partial posting and refuses dirty/committed advancement", async () => {
   const root = mkdtempSync(path.join(tmpdir(), "gitlab-mr-"));
@@ -45,69 +45,61 @@ it("creates an isolated MR once, retains comments on partial posting and refuses
     resolved: resolutions > 0,
   });
 
-  const run: GitLabRun = async (file, args, options) => {
-    if (file === "git") {
-      const rewritten = [...args];
+  // The MR ref follows the branch, and GitLab's clone URL resolves to origin.
+  git("symbolic-ref", "refs/merge-requests/1/head", git("symbolic-ref", "HEAD"));
+  const gitConfig = path.join(root, "gitconfig");
+  writeFileSync(
+    gitConfig,
+    `[url "${origin}"]\n\tinsteadOf = https://gitlab.test/team/repo.git\n`,
+  );
+  vi.stubEnv("GIT_CONFIG_GLOBAL", gitConfig);
 
-      if (args[0] === "clone") rewritten[rewritten.length - 2] = origin;
+  vi.stubGlobal("fetch", async (request: Request) => {
+    const endpoint = new URL(request.url).pathname.replace("/api/v4/", "");
 
-      if (args[0] === "fetch") {
-        rewritten[rewritten.length - 2] = origin;
-
-        if (rewritten.at(-1)?.startsWith("refs/merge-requests/"))
-          rewritten[rewritten.length - 1] = head;
-      }
-
-      return runGitLabCommand(file, rewritten, options);
-    }
-
-    if (args[0] === "config") return "https";
-    const endpoint = args[args.indexOf("--method") + 2]!;
-    const method = args[args.indexOf("--method") + 1];
-
-    if (endpoint === "user") return JSON.stringify(account);
+    if (endpoint === "user") return Response.json(account);
 
     if (endpoint === "projects/9")
-      return JSON.stringify({
+      return Response.json({
         id: 9,
         path_with_namespace: "team/repo",
         http_url_to_repo: "https://gitlab.test/team/repo.git",
         ssh_url_to_repo: "git@gitlab.test:team/repo.git",
       });
 
-    if (method === "POST") {
+    if (request.method === "POST") {
       posts++;
 
-      if (uncertain) throw new GitLabRequestError();
+      if (uncertain) return new Response(null, { status: 500 });
+      const { body } = await request.json();
 
-      if (JSON.parse(options.input!).body === "fail")
-        throw new GitLabRequestError(403);
+      if (body === "fail") return new Response(null, { status: 403 });
 
-      return JSON.stringify({
+      return Response.json({
         id: "posted",
-        notes: [note(100 + posts, JSON.parse(options.input!).body)],
+        notes: [note(100 + posts, body)],
       });
     }
 
-    if (method === "PUT") {
+    if (request.method === "PUT") {
       resolutions++;
 
-      return JSON.stringify({ id: "thread", notes: [note(1, "remote")] });
+      return Response.json({ id: "thread", notes: [note(1, "remote")] });
     }
 
     if (endpoint.includes("/discussions"))
-      return JSON.stringify([{ id: "thread", notes: [note(1, "remote")] }]);
+      return Response.json([{ id: "thread", notes: [note(1, "remote")] }]);
 
-    return JSON.stringify({
+    return Response.json({
       iid: 1,
       project_id: 9,
       title: "MR title",
       diff_refs: { base_sha: base, start_sha: base, head_sha: head },
     });
-  };
+  });
 
   const local = openLocalReviewStore(path.join(root, "review.sqlite"), {
-    gitlab: { run, cloneRoot: path.join(root, "clones") },
+    gitlab: { cloneRoot: path.join(root, "clones") },
     manageWorkspaces: false,
   });
 
@@ -247,7 +239,7 @@ it("creates an isolated MR once, retains comments on partial posting and refuses
     rmSync(checkout, { recursive: true });
 
     const reopened = openLocalReviewStore(path.join(root, "review.sqlite"), {
-      gitlab: { run, cloneRoot: path.join(root, "new-clone-root") },
+      gitlab: { cloneRoot: path.join(root, "new-clone-root") },
       manageWorkspaces: false,
     });
 

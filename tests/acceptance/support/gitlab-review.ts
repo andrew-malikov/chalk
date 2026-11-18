@@ -7,11 +7,6 @@ import path from "node:path";
 import type { CommentsState } from "@chalk/review-contracts";
 import { type Page, expect } from "@playwright/test";
 
-import {
-  GitLabRequestError,
-  type GitLabRun,
-  runGitLabCommand,
-} from "../../../packages/review/src/node/review-api/gitlab";
 import { openLocalReviewStore } from "../../../packages/review/src/node/review-api/local-data";
 import { createReviewApi } from "../../../packages/server/src/review-api/http";
 
@@ -69,35 +64,21 @@ export class GitLabReview {
     };
   }
 
-  private readonly run: GitLabRun = async (file, args, options) => {
-    if (file === "git") {
-      const local = [...args];
+  private readonly originalFetch = globalThis.fetch;
+  private readonly originalGitConfig = process.env.GIT_CONFIG_GLOBAL;
 
-      if (args[0] === "clone") local[local.length - 2] = this.origin;
-
-      if (args[0] === "fetch") {
-        local[local.length - 2] = this.origin;
-
-        if (local.at(-1)?.startsWith("refs/merge-requests/"))
-          local[local.length - 1] = this.head;
-      }
-
-      return runGitLabCommand(file, local, options);
-    }
-
+  private readonly fetch = async (request: Request) => {
     try {
-      if (file !== "glab") throw new Error(`Unexpected executable: ${file}`);
-
-      if (args[0] === "config") return "https";
-      expect(args.slice(0, 3)).toEqual(["api", "--hostname", "gitlab.test"]);
-      const method = args[4];
-      const endpoint = args[5];
+      const url = new URL(request.url);
+      expect(url.origin).toBe("https://gitlab.test");
+      const method = request.method;
+      const endpoint = url.pathname.replace("/api/v4/", "");
 
       if (method === "GET" && endpoint === "user")
-        return JSON.stringify(this.account);
+        return Response.json(this.account);
 
       if (method === "GET" && endpoint === "projects/9")
-        return JSON.stringify({
+        return Response.json({
           id: 9,
           path_with_namespace: "team/repo",
           http_url_to_repo: "https://gitlab.test/team/repo.git",
@@ -109,9 +90,9 @@ export class GitLabReview {
         [
           "projects/team%2Frepo/merge_requests/1",
           "projects/9/merge_requests/1",
-        ].includes(endpoint!)
+        ].includes(endpoint)
       )
-        return JSON.stringify({
+        return Response.json({
           iid: 1,
           project_id: 9,
           title: "Feedback review",
@@ -123,32 +104,34 @@ export class GitLabReview {
         });
       const discussions = "projects/9/merge_requests/1/discussions";
 
-      if (method === "GET" && endpoint === `${discussions}?per_page=100&page=1`)
-        return JSON.stringify([
+      if (method === "GET" && endpoint === discussions)
+        return Response.json([
           { id: "thread", notes: [this.note(1, "Existing discussion")] },
         ]);
 
       if (
         method === "POST" &&
-        [discussions, `${discussions}/thread/notes`].includes(endpoint!)
+        [discussions, `${discussions}/thread/notes`].includes(endpoint)
       ) {
-        const input = JSON.parse(options.input!);
-        this.attempts.push(input.body);
+        const { body } = await request.json();
+        this.attempts.push(body);
 
         if (this.uncertainNextPost) {
           this.uncertainNextPost = false;
-          throw new GitLabRequestError();
+
+          return new Response(null, { status: 500 });
         }
 
-        if (this.rejectOnce === input.body) {
+        if (this.rejectOnce === body) {
           this.rejectOnce = undefined;
-          throw new GitLabRequestError(403);
+
+          return new Response(null, { status: 403 });
         }
 
-        this.received.push(input.body);
-        const note = this.note(100 + this.received.length, input.body);
+        this.received.push(body);
+        const note = this.note(100 + this.received.length, body);
 
-        return JSON.stringify(
+        return Response.json(
           endpoint === discussions
             ? { id: `posted-${note.id}`, notes: [note] }
             : note,
@@ -157,27 +140,34 @@ export class GitLabReview {
 
       throw new Error(`Unexpected GitLab request: ${method} ${endpoint}`);
     } catch (error) {
-      if (!(error instanceof GitLabRequestError))
-        this.errors.push(String(error));
-      throw error;
+      this.errors.push(String(error));
+
+      return new Response(null, { status: 404 });
     }
   };
 
   private openStorage() {
     return openLocalReviewStore(this.database, {
       manageWorkspaces: false,
-      gitlab: {
-        run: (...args) => this.run(...args),
-        cloneRoot: path.join(this.directory, "clones"),
-      },
+      gitlab: { cloneRoot: path.join(this.directory, "clones") },
     });
   }
 
   async setup() {
+    globalThis.fetch = ((request: Request) =>
+      this.fetch(request)) as typeof fetch;
     mkdirSync(this.origin);
     this.git("init", "-q", "-b", "main");
     this.git("config", "user.name", "Acceptance Test");
     this.git("config", "user.email", "acceptance@example.invalid");
+    // The MR ref follows main, and GitLab's clone URL resolves to origin.
+    this.git("symbolic-ref", "refs/merge-requests/1/head", "refs/heads/main");
+    const gitConfig = path.join(this.directory, "gitconfig");
+    writeFileSync(
+      gitConfig,
+      `[url "${this.origin}"]\n\tinsteadOf = https://gitlab.test/team/repo.git\n`,
+    );
+    process.env.GIT_CONFIG_GLOBAL = gitConfig;
     writeFileSync(
       path.join(this.origin, "code.ts"),
       "// before\nexport const value = 1;\n// after\n",
@@ -376,6 +366,10 @@ export class GitLabReview {
 
       expect(this.errors).toEqual([]);
     } finally {
+      globalThis.fetch = this.originalFetch;
+      if (this.originalGitConfig === undefined)
+        delete process.env.GIT_CONFIG_GLOBAL;
+      else process.env.GIT_CONFIG_GLOBAL = this.originalGitConfig;
       await this.page.unrouteAll({ behavior: "wait" });
       await this.local.data.close();
       await this.local.store.close();

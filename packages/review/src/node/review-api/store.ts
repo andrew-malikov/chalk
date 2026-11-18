@@ -97,7 +97,7 @@ export const commandSchema = z.strictObject({
       mergeRequestUrl: mergeRequestUrlSchema
         .optional()
         .describe(
-          "GitLab MR URL; uses an independent managed clone and reopens the same MR review. Requires glab and Git authentication.",
+          "GitLab MR URL; uses an independent managed clone and reopens the same MR review. Requires a GitLab token for the host in Desktop Settings.",
         ),
       /** The one scratchpad: no target, no pins; every reference names its own. */
       kind: z.literal("scratchpad").optional(),

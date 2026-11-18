@@ -37,10 +37,7 @@ import {
   reviewInstanceDiscoveryPath,
   reviewLegacyDiscoveryPath,
 } from "@review/node/storage/chalk-paths";
-import {
-  readScratchpadEnabled,
-  writeScratchpadEnabled,
-} from "@review/node/storage/review-preferences";
+import { readScratchpadEnabled } from "@review/node/storage/review-preferences";
 import { createTutorialService } from "@review/node/tutorial-service";
 import type { Hono } from "hono";
 import { z } from "zod";
@@ -182,22 +179,6 @@ export function createGlobalReviewServer(
   app.get("/preferences/scratchpad", () =>
     serverJson(200, { enabled: scratchpadEnabled }),
   );
-  app.put("/preferences/scratchpad", async (context) => {
-    const request = z
-      .object({ enabled: z.boolean() })
-      .safeParse(await readBoundedRequestJson(context.req.raw));
-
-    if (!request.success)
-      throw new ReviewServerError("enabled must be a boolean.", 400);
-
-    scratchpadEnabled = await writeScratchpadEnabled(request.data.enabled);
-
-    // Home watches the catalog; the pad appears or goes without a store write.
-    if (scratchpadEnabled) await reviewStore.ensureScratchpad();
-    reviewStore.invalidateCatalog();
-
-    return serverJson(200, { enabled: scratchpadEnabled });
-  });
   app.post("/app/focus", async () => {
     const result = await relay.dispatch({
       name: "focusWindow",

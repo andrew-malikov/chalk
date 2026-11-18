@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GitLabClient, mergeRequestAddress, remapLineRange } from "./gitlab.js";
 
 describe("GitLab boundary", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   it("preserves nested projects and explicit self-hosted ports", () => {
     expect(
       mergeRequestAddress(
@@ -28,8 +30,8 @@ describe("GitLab boundary", () => {
   });
 
   it("imports actual comments and substantive bots but omits system activity", async () => {
-    const client = new GitLabClient("gitlab.acme.test", async () =>
-      JSON.stringify([
+    vi.stubGlobal("fetch", async () =>
+      Response.json([
         {
           id: "thread",
           notes: [
@@ -54,28 +56,14 @@ describe("GitLab boundary", () => {
       ]),
     );
 
-    const discussions = await client.discussions(14, 12);
+    const discussions = await new GitLabClient("gitlab.acme.test").discussions(
+      14,
+      12,
+    );
     expect(discussions[0]?.comments.map((note) => note.body)).toEqual([
       "Cancellation needs a guard",
     ]);
     expect(discussions[0]?.comments[0]?.author.bot).toBe(true);
-  });
-
-  it("explicitly addresses the selected host and encoded endpoint", async () => {
-    const calls: string[][] = [];
-
-    const client = new GitLabClient(
-      "gitlab.acme.test:8443",
-      async (_file, args) => {
-        calls.push(args);
-
-        return JSON.stringify({ id: 7, username: "andrew", name: "Andrew" });
-      },
-    );
-
-    expect((await client.account()).username).toBe("andrew");
-    expect(calls[0]).toContain("gitlab.acme.test:8443");
-    expect(calls[0]).toContain("user");
   });
 });
 
