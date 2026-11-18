@@ -544,12 +544,6 @@ export interface ReviewCanvasSettingsContent {
   setSoftwareMapEnabled(enabled: boolean): Promise<boolean>;
   structuralDiffEnabled: boolean;
   setStructuralDiffEnabled(enabled: boolean): Promise<boolean>;
-  // Not a workbench setting: the review server reads it, so it lives in the
-  // server preferences file. Off by default. Turning it on shows the pad and
-  // tells connected agents over MCP that they can draw on it; turning it off
-  // hides the pad.
-  scratchpadEnabled: boolean;
-  setScratchpadEnabled(enabled: boolean): Promise<boolean>;
   // Shared CLI configuration, read when its disclosure opens.
   diffrConfig: ReviewDiffrConfigActions;
   reloadWindow(): Promise<void>;
@@ -1133,10 +1127,8 @@ const revealArgsSchema = z
     }
   });
 
-/** The one scratchpad's fixed review id. */
-export const SCRATCHPAD_REVIEW_ID = "scratchpad";
-
-const apiReviewIdSchema = z.union([z.uuid(), z.literal(SCRATCHPAD_REVIEW_ID)]);
+// A scratchpad made before its removal keeps its id and opens as a document.
+const apiReviewIdSchema = z.union([z.uuid(), z.literal("scratchpad")]);
 
 export const ReviewVerbRequestSchema = z.discriminatedUnion("name", [
   z.strictObject({

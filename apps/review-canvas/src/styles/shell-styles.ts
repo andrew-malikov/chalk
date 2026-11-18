@@ -55,7 +55,6 @@ export const shellStyles = {
   // useAnchoredPopover.
   topbarPopover:
     "tw:[&:is(.canvas-topbar-actions:is(*)_*)]:fixed tw:[&:is(.canvas-topbar-actions:is(*)_*)]:top-[calc(anchor(bottom)_+_4px)] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:right-[anchor(right)] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:bottom-[auto] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:left-[auto] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:m-0 tw:[&:is(.canvas-topbar-actions:is(*)_*)]:max-w-[calc(100vw_-_16px)] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:[position-try-fallbacks:flip-inline,_flip-block] tw:[&:is(.canvas-topbar-actions:is(*)_*)]:[position-visibility:anchors-visible]",
-  // The scratchpad has no source tree or pins to set apart, so no rule.
   topbarContext:
     "tw:flex tw:flex-[0_0_auto] tw:min-w-0 tw:items-center tw:mr-[auto] tw:[&:empty::before]:hidden tw:[&::before]:[content:''] tw:[&::before]:flex-[0_0_1px] tw:[&::before]:h-[20px] tw:[&::before]:m-[0_14px_0_16px] tw:[&::before]:bg-[color:var(--chrome-border)]",
   actionsDivider:

@@ -37,7 +37,6 @@ import {
   reviewInstanceDiscoveryPath,
   reviewLegacyDiscoveryPath,
 } from "@review/node/storage/chalk-paths";
-import { readScratchpadEnabled } from "@review/node/storage/review-preferences";
 import { createTutorialService } from "@review/node/tutorial-service";
 import type { Hono } from "hono";
 import { z } from "zod";
@@ -117,10 +116,6 @@ export function createGlobalReviewServer(
   const cliPackageRoot = input.cliPackageRoot ?? input.packageRoot;
   const cliPath = path.join(cliPackageRoot, "dist", "cli.js");
 
-  // The scratchpad preference, read once at listen and kept current by the
-  // settings endpoint below: this server is the only writer while it runs.
-  let scratchpadEnabled = false;
-
   const discovery: ReviewDesktopDiscovery = {
     version: REVIEW_DESKTOP_DISCOVERY_VERSION,
     instanceId,
@@ -158,7 +153,6 @@ export function createGlobalReviewServer(
       input.reviewData,
       callbacks.open,
       callbacks.capabilities,
-      () => scratchpadEnabled,
       () => {
         const { key, channel, checkout, appVersion, cliVersion, instanceId } =
           discovery;
@@ -175,9 +169,6 @@ export function createGlobalReviewServer(
         };
       },
     ),
-  );
-  app.get("/preferences/scratchpad", () =>
-    serverJson(200, { enabled: scratchpadEnabled }),
   );
   app.post("/app/focus", async () => {
     const result = await relay.dispatch({
@@ -307,7 +298,6 @@ export function createGlobalReviewServer(
     },
     listen: async () => {
       await migrateDiffrConfig();
-      scratchpadEnabled = await readScratchpadEnabled();
       httpServer = Bun.serve({
         hostname: "127.0.0.1",
         port: input.port,

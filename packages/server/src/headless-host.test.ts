@@ -171,7 +171,6 @@ it("shares review identity, resources, sessions and live changes with Desktop in
   let reviewStream: ReturnType<ReviewApiClient["watch"]> | undefined;
 
   try {
-    // The scratchpad is off by default, so there is nothing to list yet.
     expect((await catalog.next()).value).toEqual([]);
 
     const registered = await server.client.post<{ id: string }>(
@@ -262,9 +261,7 @@ it("shares review identity, resources, sessions and live changes with Desktop in
     await desktop.post(`/${created.reviewId}/open`, {});
     expect(opened).toEqual([created.reviewId]);
     expect(
-      (await desktop.read<Snapshot[]>(""))
-        .map((item) => item.reviewId)
-        .filter((id) => id !== "scratchpad"),
+      (await desktop.read<Snapshot[]>("")).map((item) => item.reviewId),
     ).toEqual([created.reviewId]);
     await server.client.post(`/${created.reviewId}/activity/end`, {
       leaseId,
@@ -596,53 +593,6 @@ it("reports attached Desktops and sends each the reviews to open", async () => {
     .poll(() => server.client.read("/capabilities"))
     .toMatchObject({ desktopAvailable: false });
 });
-
-it.each([false, true])(
-  "never makes, lists or offers the scratchpad, with a Desktop attached: %s",
-  async (attached) => {
-    await writeFile(
-      path.join(root, "preferences.json"),
-      JSON.stringify({ scratchpadEnabled: true }),
-    );
-    const server = await start();
-    const desktop = attached ? await attachDesktop(server.discovery) : null;
-
-    try {
-      expect(await server.client.read("/capabilities")).toMatchObject({
-        desktopAvailable: attached,
-        scratchpadEnabled: false,
-      });
-      expect(await server.client.read("")).toEqual([]);
-      // The offer is a pointer to the scratchpad topic.
-      const offer = 'topic:"scratchpad"';
-
-      expect(
-        (await server.client.read<{ description: string }[]>("/authoring"))
-          .map((tool) => tool.description)
-          .join("\n"),
-      ).not.toContain(offer);
-      expect(await server.client.read("/instructions")).not.toContain(offer);
-      expect(
-        await server.client.read("/instructions?topic=scratchpad"),
-      ).toMatch(/turned off/);
-    } finally {
-      desktop?.detach();
-    }
-
-    await server.stop();
-
-    const local = await openReviewProfile(server.stateDir, {
-      manageWorkspaces: false,
-    });
-
-    try {
-      expect(local.store.list()).toEqual([]);
-    } finally {
-      await local.data.close();
-      await local.store.close();
-    }
-  },
-);
 
 /** A registered repository with an uncommitted change, reviewed as a worktree and as commits. */
 async function reviewsOfBothKinds(client: ReviewApiClient) {

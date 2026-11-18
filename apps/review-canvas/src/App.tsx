@@ -255,9 +255,6 @@ function ReviewLayoutContent({
 }): ReactElement {
   const session = useReviewSession();
   const review = useReview();
-  // The scratchpad is a document and nothing else: no source tree to browse,
-  // nothing to dismiss.
-  const scratchpad = session.review?.kind === "scratchpad";
   const panelActor = useReviewPanelActor();
   useSuppressPanelMotionOnCanvasResume(appRef);
   const activePanel = useReviewPanel((state) => state.context.active);
@@ -381,10 +378,7 @@ function ReviewLayoutContent({
   const actionsMenu = (
     <ReviewActionsMenu
       chalkId={document.key}
-      settleable={
-        !scratchpad && !review.historicalRevision && !review.submissionOutcome
-      }
-      deletable={!scratchpad}
+      settleable={!review.historicalRevision && !review.submissionOutcome}
       onDelete={chrome?.deleteReview}
       overlay={chrome?.overlay}
     />
@@ -426,7 +420,6 @@ function ReviewLayoutContent({
         >
           {view === "review" ? (
             <ReviewSurfaceLabel
-              label={scratchpad ? "Scratchpad" : "Chalk"}
               hasContent={document.empty === false}
               active={activeView === "review"}
             />
@@ -551,7 +544,6 @@ function ReviewLayoutContent({
                 document={document}
                 articleRef={articleRef}
                 active={activeView === "review"}
-                scratchpad={scratchpad}
                 peekOpen={rightPanelOpen}
               />
               {softwareMapEnabled && activeView === "map" && (

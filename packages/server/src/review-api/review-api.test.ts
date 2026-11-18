@@ -21,7 +21,6 @@ import { LocalReviewData } from "@review/node/review-api/local-data";
 import {
   type ReviewProviders,
   ReviewStore,
-  SCRATCHPAD_ID,
   inspectSnapshot,
 } from "@review/node/review-api/store.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -1145,100 +1144,6 @@ describe("snapshot authoring", () => {
     ).rejects.toThrow(/base-side endpoint needs base pins/);
   });
 
-  it("keeps one scratchpad: made on demand, drawn on at explicit pins only, outside the review lifecycle", async () => {
-    await store.ensureScratchpad();
-    await store.ensureScratchpad();
-    const pad = store.read(SCRATCHPAD_ID);
-    expect(pad).toMatchObject({ kind: "scratchpad", title: "Scratchpad" });
-    expect(pad.pins).toBeUndefined();
-    expect(pad.target).toBeUndefined();
-    expect(store.list()).toMatchObject([
-      { reviewId: SCRATCHPAD_ID, kind: "scratchpad" },
-    ]);
-    await expect(
-      store.execute(
-        request({ type: "create", title: "Another", kind: "scratchpad" }),
-      ),
-    ).rejects.toMatchObject({ status: 409 });
-
-    // Nothing to inherit: a reference must name its own pins.
-    await expect(
-      edit(SCRATCHPAD_ID, {
-        type: "insert",
-        content: { type: "code_peek", source: selectSource(source) },
-      }),
-    ).rejects.toThrow(/document has no pins/);
-    const own = { repositoryId: "repo-b", head: "b".repeat(40) };
-    await edit(SCRATCHPAD_ID, {
-      type: "insert",
-      content: {
-        type: "code_peek",
-        source: { ...selectSource(source), pins: own },
-      },
-    });
-    await edit(SCRATCHPAD_ID, {
-      type: "insert",
-      content: {
-        type: "markdown",
-        markdown: "[store](review-source:head/src/store.ts#L1)",
-        pins: own,
-      },
-    });
-
-    const refused = [
-      { type: "delete", reviewId: SCRATCHPAD_ID },
-      { type: "attention", reviewId: SCRATCHPAD_ID, action: "view" },
-      { type: "rename", reviewId: SCRATCHPAD_ID, title: "Notes" },
-      { type: "repin", reviewId: SCRATCHPAD_ID, pins },
-      {
-        type: "set_target",
-        reviewId: SCRATCHPAD_ID,
-        target: { kind: "commits", repositoryId: "repo", head: "h" },
-      },
-    ];
-
-    for (const operation of refused)
-      await expect(store.execute(request(operation))).rejects.toMatchObject({
-        status: 409,
-      });
-    expect(store.read(SCRATCHPAD_ID).version).toBe(2);
-    await store.execute(
-      request({ type: "restore", reviewId: SCRATCHPAD_ID, version: 1 }),
-    );
-    expect(store.read(SCRATCHPAD_ID).document).toHaveLength(1);
-  });
-
-  it("logs the scratchpad newest first while a review keeps appending", async () => {
-    await store.ensureScratchpad();
-    const note = (markdown: string) => ({ type: "markdown", markdown });
-
-    const order = (reviewId: string) =>
-      store
-        .read(reviewId)
-        .document.map((block) => "markdown" in block && block.markdown);
-
-    const first = await edit(SCRATCHPAD_ID, {
-      type: "insert",
-      content: note("first"),
-    });
-
-    await edit(SCRATCHPAD_ID, { type: "insert", content: note("second") });
-    expect(order(SCRATCHPAD_ID)).toEqual(["second", "first"]);
-
-    // An explicit anchor still wins: the block lands after it, not on top.
-    await edit(SCRATCHPAD_ID, {
-      type: "insert",
-      content: note("after first"),
-      afterId: first.targetId,
-    });
-    expect(order(SCRATCHPAD_ID)).toEqual(["second", "first", "after first"]);
-
-    const { reviewId } = await create();
-    await edit(reviewId, { type: "insert", content: note("first") });
-    await edit(reviewId, { type: "insert", content: note("second") });
-    expect(order(reviewId)).toEqual(["first", "second"]);
-  });
-
   it("serializes edits through async validation and preserves different-field patches", async () => {
     const { reviewId } = await create();
 
@@ -1327,12 +1232,6 @@ it("serves the experiment through the real desktop HTTP server and existing auth
   );
 
   const relay = new GlobalReviewDesktopVerbRelay();
-
-  // The scratchpad preference is off by default; this host has it on.
-  writeFileSync(
-    path.join(directory, "preferences.json"),
-    JSON.stringify({ scratchpadEnabled: true }),
-  );
 
   const server = createGlobalReviewServer({
     appPid: process.pid,
@@ -1429,17 +1328,7 @@ it("serves the experiment through the real desktop HTTP server and existing auth
 
     relay.close();
 
-    // Listing through the interactive host, with the preference on, also
-    // makes the one scratchpad.
-    const listed = await client.read<{ reviewId: string; kind?: string }[]>("");
-
-    const reviewsOnly = (entries: { kind?: string }[]) =>
-      entries.filter((entry) => entry.kind !== "scratchpad");
-
-    expect(reviewsOnly(listed)).toMatchObject([{ reviewId }]);
-    expect(listed).toContainEqual(
-      expect.objectContaining({ reviewId: SCRATCHPAD_ID, kind: "scratchpad" }),
-    );
+    expect(await client.read("")).toMatchObject([{ reviewId }]);
     await expect(
       client.post("/commands", {
         commandId: randomUUID(),
@@ -1463,11 +1352,11 @@ it("serves the experiment through the real desktop HTTP server and existing auth
     ).rejects.toThrow(/start.line/);
     const abort = new AbortController();
     const catalog = client.watch(null, abort.signal);
-    expect(reviewsOnly((await catalog.next()).value)).toMatchObject([
+    expect((await catalog.next()).value).toMatchObject([
       { reviewId, dismissedAt: null },
     ]);
     await post({ type: "attention", reviewId, action: "dismiss" });
-    expect(reviewsOnly((await catalog.next()).value)).toMatchObject([
+    expect((await catalog.next()).value).toMatchObject([
       { reviewId, dismissedAt: expect.any(String) },
     ]);
     await catalog.return(undefined);

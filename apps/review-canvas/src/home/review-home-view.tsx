@@ -18,7 +18,6 @@ import {
   ArrowDownUp,
   Ellipsis,
   ListFilter,
-  Pencil,
   Search,
   Trash2,
   X,
@@ -191,25 +190,13 @@ export function ReviewHome({
 
   const needle = query.trim();
 
-  // The one scratchpad is the last group on Home, outside the workspaces,
-  // their chronological order and their lifecycle. The filter still finds it.
-  const scratchpad = reviews.find((review) => review.kind === "scratchpad");
-
-  const listed = useMemo(
-    () => reviews.filter((review) => review.kind !== "scratchpad"),
-    [reviews],
-  );
-
-  const scratchpadShown =
-    scratchpad !== undefined && matchesQuery(scratchpad, needle);
-
   const found = useMemo(
     () =>
-      listed.filter(
+      reviews.filter(
         (review) =>
           !deletions.has(review.reviewId) && matchesQuery(review, needle),
       ),
-    [listed, needle, deletions],
+    [reviews, needle, deletions],
   );
 
   /* Dismissed leaves the main list entirely: it is the one group you asked to
@@ -225,7 +212,7 @@ export function ReviewHome({
  */
   if (
     !onboardingDismissed &&
-    listed.length === 0 &&
+    reviews.length === 0 &&
     deletions.size === 0 &&
     !deleteError
   ) {
@@ -254,7 +241,7 @@ export function ReviewHome({
           {/* Keyed off the active list, not the whole result: a query that hits
               only dismissed reviews empties the main area, and the collapsed
               Dismissed count alone does not explain why. */}
-          {needle && active.length === 0 && !scratchpadShown ? (
+          {needle && active.length === 0 ? (
             <EmptyState
               message={
                 dismissed.length > 0
@@ -265,9 +252,6 @@ export function ReviewHome({
           ) : null}
           <SearchQueryContext.Provider value={needle}>
             <AttentionActionsContext.Provider value={actions}>
-              {scratchpadShown ? (
-                <ScratchpadGroup review={scratchpad} onOpen={onOpen} />
-              ) : null}
               {active.length > 0 ? (
                 <ReviewTable reviews={active} onOpen={onOpen} />
               ) : null}
@@ -727,64 +711,6 @@ function formatCreatedTime(value: string | undefined): string {
 }
 
 /**
- * The scratchpad's own group, last on Home: a header in the workspace
- * header's grammar, then one card in the review card's grammar. No status,
- * workspace or dismissal, since it has none.
- */
-function ScratchpadGroup({
-  review,
-  onOpen,
-}: {
-  review: ReviewApiSummary;
-  onOpen(review: ReviewApiSummary): void;
-}) {
-  const contents = review.contents;
-
-  return (
-    <section className={styles.scratchpad} aria-label="Scratchpad">
-      <div className={styles.cards}>
-        <div className={styles.cardShell}>
-          <ButtonPrimitive
-            variant="ghost"
-            size="xs"
-            type="button"
-            className={cn(
-              "tw:h-auto tw:whitespace-normal tw:font-normal",
-              styles.card,
-            )}
-            onClick={() => onOpen(review)}
-          >
-            <span className={styles.cardMain}>
-              <span className={cn(styles.title, styles.cardTitle)}>
-                <PencilIcon />
-                <MatchedText text={reviewTitle(review)} />
-              </span>
-              <span className={styles.cardMeta}>
-                {contents ? (
-                  <>
-                    <span>{countLabel(contents.blocks, "block")}</span>
-                    <span className={styles.cardMetaNext}>
-                      {countLabel(contents.diagrams, "diagram")}
-                    </span>
-                  </>
-                ) : null}
-                <span className={cn(contents && styles.cardMetaNext)}>
-                  updated {formatRelativeTime(reviewUpdatedAt(review))}
-                </span>
-              </span>
-            </span>
-          </ButtonPrimitive>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PencilIcon() {
-  return <Pencil className={styles.scratchpadGlyph} aria-hidden="true" />;
-}
-
-/**
  * The one action an active review offers. One click: dismissal is reversible,
  * so it needs no arming step. It stays enabled for unavailable reviews so a
  * dead review can still leave the list.
@@ -1006,25 +932,9 @@ const styles = {
   // dimmer than the words around it, which is the opposite of a highlight.
   // Inherit the weight too, so marking a run does not reflow its line.
   mark: "tw:p-[0_1px] tw:rounded-[6px] tw:bg-[color:color-mix(in_srgb,_var(--accent)_30%,_var(--transparent))] tw:text-[color:inherit] tw:font-[number:inherit]",
-  // The scratchpad's group sits first, above the sessions table.
-  scratchpad: "tw:pt-[14px] tw:mb-[16px]",
-  cards:
-    "tw:grid tw:grid-cols-[minmax(0,_336px)] tw:[grid-auto-rows:1fr] tw:gap-[18px] tw:[justify-content:start] tw:mt-[24px]",
-  cardShell: "tw:relative tw:min-w-0",
-  card: "tw:flex tw:flex-col tw:justify-between tw:gap-[12px] tw:w-full tw:min-w-0 tw:h-full tw:min-h-[128px] tw:p-[16px_16px_14px] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:[&:focus-visible]:border-[color:var(--accent)] tw:[&:hover:not(:disabled)]:border-[color:var(--rule-soft)] tw:rounded-[10px] tw:text-[color:inherit] tw:bg-[color:var(--surface)] tw:text-left tw:[transition:border-color_120ms_ease,_box-shadow_120ms_ease] tw:[&:focus-visible]:[box-shadow:0_0_0_3px_var(--marker-tint)] tw:[&:focus-visible]:[outline:none] tw:[&:disabled]:[cursor:not-allowed] tw:[&:disabled]:opacity-[0.5]",
-  cardMain: "tw:flex tw:flex-col tw:gap-[7px] tw:min-w-0",
   title:
     "tw:min-w-0 tw:overflow-hidden tw:text-[color:var(--ink)] tw:font-[family-name:var(--font-sans)] tw:text-[length:17px] tw:font-medium tw:leading-[22px] tw:text-ellipsis tw:whitespace-nowrap",
-  cardTitle:
-    "tw:inline-flex tw:items-center tw:gap-[8px] tw:whitespace-normal tw:[-webkit-box-orient:vertical] tw:[-webkit-line-clamp:2]",
   tableTitle: "tw:block tw:w-full",
-  cardMeta:
-    "tw:flex tw:flex-wrap tw:items-baseline tw:gap-x-[10px] tw:gap-y-[3px] tw:text-[color:var(--review-home-meta)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:font-normal tw:leading-[normal]",
-  // Meta lines are one sentence of facts joined by a middle dot.
-  cardMetaNext:
-    'tw:[&::before]:[content:"·_"] tw:[&::before]:text-[color:var(--ink-faint)] tw:[&::before]:whitespace-pre',
-  scratchpadGlyph:
-    "tw:size-[14px] tw:fill-[none] tw:stroke-[var(--ink-faint)] tw:stroke-[1.2] tw:[stroke-linecap:round] tw:[stroke-linejoin:round]",
   // Dismissed reviews sit below the active list, collapsed.
   dismissed: "tw:flex tw:flex-col tw:gap-[10px] tw:mt-[26px]",
   dismissedToggle:

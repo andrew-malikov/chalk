@@ -24,13 +24,11 @@ export function ChalkPage({
   document,
   articleRef,
   active,
-  scratchpad,
   peekOpen,
 }: {
   document: RenderedReviewDocument;
   articleRef: RefObject<HTMLElement | null>;
   active: boolean;
-  scratchpad: boolean;
   peekOpen: boolean;
 }): ReactElement {
   const session = useReviewSession();
@@ -90,7 +88,6 @@ export function ChalkPage({
             documentMarker,
             peekOpen && documentStyles.articlePeekOpen,
           )}
-          data-kind={scratchpad ? "scratchpad" : undefined}
         >
           <ReviewDocumentBoundary
             key={documentRevision}

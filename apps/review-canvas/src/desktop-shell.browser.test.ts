@@ -42,6 +42,8 @@ it("keeps the desktop review area inside the window", async () => {
             openSource: async () => {},
             openExternal: async () => {},
             focusWindow: async () => {},
+            hasGitLabToken: async () => false,
+            saveGitLabToken: async () => {},
           },
           send: { diagnostic: () => {} },
         },

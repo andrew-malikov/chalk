@@ -8,7 +8,6 @@ import {
   type GitLabIdentity,
   type GitLabState,
   type ReviewApiSummary,
-  SCRATCHPAD_REVIEW_ID,
 } from "@chalk/review-contracts";
 import {
   type Lens,
@@ -35,7 +34,6 @@ import {
   editSchema,
   elements,
   explicitPins,
-  isUnit,
   pinsSchema,
   resourceReferences,
   reviewTargetSchema,
@@ -62,22 +60,6 @@ import { mergeRequestUrlSchema } from "./gitlab.js";
 
 const reviewId = z.string().min(1);
 
-/** There is one scratchpad. Its id is fixed so a skill can name it. */
-export const SCRATCHPAD_ID = SCRATCHPAD_REVIEW_ID;
-
-const DIAGRAM_TYPES = new Set([
-  "sequence",
-  "flow_diagram",
-  "call_stack_diff",
-  "database_lens",
-  "software_map",
-]);
-
-export const SCRATCHPAD_TITLE = "Scratchpad";
-
-/** The create command that makes it, with one id so a repeat is a receipt. */
-const SCRATCHPAD_COMMAND_ID = "5c7a7c6e-0000-4000-8000-5c7a7c6e0000";
-
 export const commandSchema = z.strictObject({
   commandId: z.uuid(),
   leaseId: z.uuid().optional(),
@@ -99,8 +81,6 @@ export const commandSchema = z.strictObject({
         .describe(
           "GitLab MR URL; uses an independent managed clone and reopens the same MR review. Requires a GitLab token for the host in Desktop Settings.",
         ),
-      /** The one scratchpad: no target, no pins; every reference names its own. */
-      kind: z.literal("scratchpad").optional(),
     }),
     z.strictObject({
       type: z.literal("set_target"),
@@ -144,8 +124,6 @@ export interface Snapshot {
   reviewId: string;
   version: number;
   title: string;
-  /** Absent for a review. The scratchpad has no pins, target or lifecycle. */
-  kind?: "scratchpad";
   /** The default pins for references that name none. A document whose
    * references all carry their own pins has neither pins nor target. */
   pins?: Pins;
@@ -856,9 +834,6 @@ export class ReviewStore {
           working: this.activity.isWorking(summary.reviewId),
         };
 
-        if (summary.kind === "scratchpad")
-          listed.contents = this.scratchpadContents();
-
         return listed;
       });
 
@@ -893,35 +868,6 @@ export class ReviewStore {
     }));
   }
 
-  /** What the pad holds, for its Home card: blocks, and the diagrams among them. */
-  private scratchpadContents(): NonNullable<ReviewApiSummary["contents"]> {
-    const blocks = elements(this.read(SCRATCHPAD_ID).document).filter(
-      (element) => !isUnit(element),
-    );
-
-    return {
-      blocks: blocks.length,
-      diagrams: blocks.filter((block) => DIAGRAM_TYPES.has(block.type)).length,
-    };
-  }
-  /** The one scratchpad, made on first use. The fixed command id makes a
-   * repeat, even from another host on the same home, find its receipt. */
-  async ensureScratchpad(): Promise<void> {
-    if (this.has(SCRATCHPAD_ID)) return;
-
-    try {
-      await this.execute({
-        commandId: SCRATCHPAD_COMMAND_ID,
-        operation: {
-          type: "create",
-          title: SCRATCHPAD_TITLE,
-          kind: "scratchpad",
-        },
-      });
-    } catch (error) {
-      if (!this.has(SCRATCHPAD_ID)) throw error;
-    }
-  }
   history(id: string) {
     return this.db
       .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
@@ -958,12 +904,10 @@ export class ReviewStore {
     if (
       command.operation.type === "create" &&
       command.operation.mergeRequestUrl &&
-      (command.operation.pins ||
-        command.operation.target ||
-        command.operation.kind)
+      (command.operation.pins || command.operation.target)
     )
       throw new ReviewInputError(
-        "mergeRequestUrl cannot be combined with local source or scratchpad.",
+        "mergeRequestUrl cannot be combined with local source.",
       );
 
     const mergeRequest =
@@ -1011,28 +955,7 @@ export class ReviewStore {
         this.activity.assertWrite(op.reviewId, command.leaseId, scopeOf(op));
       }
 
-      // The scratchpad is edited and restored like a review, and nothing else.
-      if (
-        op.type !== "create" &&
-        op.type !== "edit" &&
-        op.type !== "lens_edit" &&
-        op.type !== "restore" &&
-        this.read(op.reviewId).kind === "scratchpad"
-      )
-        throw new ReviewInputError(
-          "The scratchpad has no lifecycle, title or pins of its own.",
-          409,
-        );
-
-      if (op.type === "create" && op.kind === "scratchpad") {
-        if (op.pins || op.target)
-          throw new ReviewInputError(
-            "A scratchpad has no target or pins of its own.",
-          );
-
-        if (this.has(SCRATCHPAD_ID))
-          throw new ReviewInputError("The scratchpad already exists.", 409);
-      } else if (op.type === "create") {
+      if (op.type === "create") {
         if (op.pins && op.target)
           throw new ReviewInputError(
             "Supply exactly one of target or legacy pins.",
@@ -1178,12 +1101,7 @@ export class ReviewStore {
         return result;
       }
 
-      const id =
-        op.type !== "create"
-          ? op.reviewId
-          : op.kind === "scratchpad"
-            ? SCRATCHPAD_ID
-            : randomUUID();
+      const id = op.type !== "create" ? op.reviewId : randomUUID();
 
       const previous = op.type === "create" ? undefined : this.read(id);
 
@@ -1269,12 +1187,6 @@ export class ReviewStore {
           delete snapshot.lastEdit;
           break;
         case "lens_edit": {
-          if (snapshot.kind === "scratchpad")
-            throw new ReviewInputError(
-              "The scratchpad has no changes of its own to lens.",
-              409,
-            );
-
           const lenses = snapshot.lenses ?? [];
           const lens = applyLensEdit(lenses, op.edit, () => `lens-${++nextId}`);
 
@@ -1300,8 +1212,6 @@ export class ReviewStore {
             snapshot.document,
             op.edit,
             (prefix) => `${prefix}-${++nextId}`,
-            // The scratchpad is a running log: the newest thought goes on top.
-            { placement: snapshot.kind === "scratchpad" ? "first" : "last" },
           );
 
           snapshot.lastEdit = summarizeEdit(
@@ -1644,7 +1554,6 @@ function createdSnapshot(
   id: string,
   op: {
     title?: string;
-    kind?: "scratchpad";
     pins?: z.infer<typeof pinsSchema>;
   },
   resolved: { target: ReviewTarget; pins: Pins } | undefined,
@@ -1660,7 +1569,6 @@ function createdSnapshot(
       reviewId: id,
       version: 0,
       title,
-      kind: op.kind,
       document: [],
       createdAt: "",
     };

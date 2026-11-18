@@ -3,7 +3,6 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { ReviewApiClient } from "@chalk/review-contracts";
-import { authoringTools } from "@review/node/review-api/authoring-tools.js";
 import {
   INSTRUCTION_TOPICS,
   instructionsQuerySchema,
@@ -13,11 +12,6 @@ import { ReviewStore } from "@review/node/review-api/store.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createReviewApi } from "./http.js";
-
-const live = {
-  desktopAvailable: true,
-  scratchpadEnabled: true,
-};
 
 describe("renderInstructions", () => {
   let root: string;
@@ -29,7 +23,6 @@ describe("renderInstructions", () => {
       Object.entries({
         authoring: "AUTHORING_WORKFLOW",
         "file-lenses": "LENS_GUIDANCE",
-        scratchpad: "SCRATCHPAD_GUIDANCE",
       }).map(([name, content]) =>
         writeFile(path.join(root, "instructions", `${name}.md`), content),
       ),
@@ -42,7 +35,7 @@ describe("renderInstructions", () => {
 
   it("loads every packaged topic as standalone guidance", async () => {
     for (const topic of INSTRUCTION_TOPICS) {
-      const guidance = await renderInstructions(topic, live);
+      const guidance = await renderInstructions(topic);
 
       expect(guidance.trim().length).toBeGreaterThan(0);
       expect(guidance.trimStart().startsWith("---")).toBe(false);
@@ -52,34 +45,9 @@ describe("renderInstructions", () => {
     }
   });
 
-  it("advertises the scratchpad only when Desktop has it enabled", async () => {
-    expect(await renderInstructions("authoring", live, root)).toContain(
-      'topic:"scratchpad"',
-    );
-
-    for (const context of [
-      { ...live, scratchpadEnabled: false },
-      { ...live, desktopAvailable: false },
-    ]) {
-      expect(
-        await renderInstructions("authoring", context, root),
-      ).not.toContain('topic:"scratchpad"');
-    }
-
-    expect(
-      await renderInstructions(
-        "scratchpad",
-        { ...live, scratchpadEnabled: false },
-        root,
-      ),
-    ).not.toContain("SCRATCHPAD_GUIDANCE");
-  });
-
   it("serves other fixed topics without Desktop", async () => {
-    const context = { ...live, desktopAvailable: false };
-
     for (const [topic, marker] of [["file-lenses", "LENS_GUIDANCE"]] as const) {
-      expect(await renderInstructions(topic, context, root)).toBe(marker);
+      expect(await renderInstructions(topic, root)).toBe(marker);
     }
   });
 
@@ -110,7 +78,7 @@ describe("review_get_instructions", () => {
     stores.length = 0;
   });
 
-  const api = (desktopAvailable = false, scratchpadEnabled = false) => {
+  const api = (desktopAvailable = false) => {
     const store = new ReviewStore(":memory:", {
       validatePins: async () => {},
       validateSource: async () => {},
@@ -126,7 +94,6 @@ describe("review_get_instructions", () => {
         ? async () => ({ softwareMapEnabled: false })
         : undefined,
       () => ({ desktopAvailable, softwareMapEnabled: false }),
-      () => scratchpadEnabled,
     );
 
     const client = new ReviewApiClient(
@@ -140,50 +107,17 @@ describe("review_get_instructions", () => {
     return { app, client };
   };
 
-  it("offers the tool and exposes the scratchpad prompt only when Desktop has it enabled", async () => {
-    const tool = authoringTools().find(
-      (entry) => entry.name === "review_get_instructions",
-    );
-
-    expect(tool).toMatchObject({ method: "GET", path: "/instructions" });
-    expect(tool?.description).not.toContain('topic:"scratchpad"');
-
-    for (const [desktopAvailable, scratchpadEnabled, expected] of [
-      [true, true, true],
-      [false, true, false],
-      [true, false, false],
-    ] as const) {
-      const { client } = api(desktopAvailable, scratchpadEnabled);
-
-      const catalog =
-        await client.read<ReturnType<typeof authoringTools>>("/authoring");
-
-      const tool = catalog.find(
-        (entry) => entry.name === "review_get_instructions",
-      );
-
-      expect(tool).toBeDefined();
-      expect(tool!.description.includes('topic:"scratchpad"')).toBe(expected);
-    }
-  });
-
   it("serves the workflow and rejects invalid or extra query fields with 400", async () => {
     const { app, client } = api();
 
     const guidance = await client.read("/instructions");
 
     expect(guidance).toBe(
-      await renderInstructions("authoring", {
-        desktopAvailable: false,
-        scratchpadEnabled: false,
-      }),
+      await renderInstructions("authoring"),
     );
     expect(guidance).toBe(await client.read("/instructions?topic=authoring"));
     expect(await client.read("/instructions?topic=file-lenses")).toBe(
-      await renderInstructions("file-lenses", {
-        desktopAvailable: false,
-        scratchpadEnabled: false,
-      }),
+      await renderInstructions("file-lenses"),
     );
 
     for (const query of [
@@ -210,26 +144,14 @@ describe("review_get_instructions", () => {
         async () => {
           throw new Error("renderer unavailable");
         },
-        () => true,
       );
 
-      const response = await app.request("/authoring");
-      expect(response.status).toBe(200);
-      expect(
-        (await response.json()).find(
-          (tool: ReturnType<typeof authoringTools>[number]) =>
-            tool.name === "review_get_instructions",
-        ).description,
-      ).toContain('topic:"scratchpad"');
+      expect((await app.request("/authoring")).status).toBe(200);
 
-      for (const topic of ["authoring", "scratchpad"]) {
+      for (const topic of INSTRUCTION_TOPICS) {
         const instructions = await app.request(`/instructions?topic=${topic}`);
         expect(instructions.status).toBe(200);
       }
-
-      expect(
-        await (await app.request("/instructions?topic=scratchpad")).json(),
-      ).toContain("# Scratchpad");
     } finally {
       store.close();
     }

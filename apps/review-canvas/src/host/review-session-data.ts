@@ -1,6 +1,4 @@
 export interface ReviewSessionData {
-  /** Absent for a review. The scratchpad hides review-only chrome. */
-  kind?: "scratchpad";
   /** Absent for a document whose references all carry their own pins. */
   pins?: { base: string; head: string; worktreeRevision?: string };
   /** Changes whenever the review's comments do. */

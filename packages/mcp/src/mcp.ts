@@ -25,16 +25,9 @@ import { RECOVERY } from "./recovery.js";
 const RELOAD_TOOLS =
   "Chalk is running now, but this session listed Chalk's tools before it started, so you may see only session_get_instructions. Before authoring, reload the `chalk` MCP server's tools (reconnect it in your agent, or start a new agent session). If you can already see tools such as session_create, carry on.";
 
-function mcpAuthoringGuidance(context: {
-  scratchpadAvailable: boolean;
-}): string {
+function mcpAuthoringGuidance(): string {
   return [
     "Chalk explains code in documents the user reads in Chalk Desktop. Call session_get_instructions before creating or editing a Chalk and follow it. Read session_capabilities before authoring; session_create opens the new review in Desktop when it is available, so call session_open only for an existing review, and generate software maps only when softwareMapEnabled is true. When the user asks for a Chalk or to use Chalk (for example to review a branch, a change or a GitLab merge request, or to explain a system in Chalk), author a Chalk with the default topic.",
-    ...(context.scratchpadAvailable
-      ? [
-          'When the user asks in conversation to be shown how code works or wants a diagram, without asking for a Chalk, call session_capabilities; if it reports scratchpadEnabled and desktopAvailable, draw on the Chalk scratchpad rather than answering only in chat, starting with session_get_instructions({topic:"scratchpad"}).',
-        ]
-      : []),
     "Never read or write Chalk files or SQL.",
   ].join(" ");
 }
@@ -49,7 +42,7 @@ export async function serveReviewMcp(
   offlineStatus?: (problem: string) => Promise<JsonValue>,
 ) {
   const instructionsTool = {
-    ...authoringTools(false).find(
+    ...authoringTools().find(
       (tool) => tool.name === "review_get_instructions",
     )!,
     name: "session_get_instructions",
@@ -116,7 +109,7 @@ export async function serveReviewMcp(
           // guidance on the discovery tool instead, including before Desktop starts.
           description:
             name === instructionsTool.name
-              ? `${mcpAuthoringGuidance({ scratchpadAvailable: true })}\n\n${description}`
+              ? `${mcpAuthoringGuidance()}\n\n${description}`
               : description,
           inputSchema,
         }),

@@ -126,9 +126,7 @@ export function relayReviewCallbacks(
 
       return z.object({ softwareMapEnabled: z.boolean() }).parse(result.result);
     },
-    async capabilities(): Promise<
-      Omit<AuthoringCapabilities, "scratchpadEnabled">
-    > {
+    async capabilities(): Promise<AuthoringCapabilities> {
       if (!relay.attached)
         return { desktopAvailable: false, softwareMapEnabled };
 

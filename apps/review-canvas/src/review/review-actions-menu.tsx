@@ -23,14 +23,12 @@ import { useReviewActions } from "./review-context";
 export function ReviewActionsMenu({
   chalkId,
   settleable,
-  deletable,
   onDelete,
   overlay,
 }: {
   chalkId: string;
   /** Whether the review can still be settled (or the tutorial closed). */
   settleable: boolean;
-  deletable: boolean;
   onDelete?: () => Promise<void>;
   /** Where the menu renders when a host's chrome holds the trigger. */
   overlay?: HTMLElement;
@@ -98,7 +96,7 @@ export function ReviewActionsMenu({
                 Settle review
               </DropdownMenuItem>
             ))}
-          {deletable && onDelete && !tutorial && (
+          {onDelete && !tutorial && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem

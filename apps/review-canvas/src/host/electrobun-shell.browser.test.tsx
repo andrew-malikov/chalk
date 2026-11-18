@@ -179,6 +179,8 @@ async function setup(
       focusWindow: vi.fn<AppRPCClient["request"]["focusWindow"]>(
         async () => {},
       ),
+      hasGitLabToken: async () => false,
+      saveGitLabToken: async () => {},
     },
     send: { diagnostic: vi.fn<AppRPCClient["send"]["diagnostic"]>() },
   };

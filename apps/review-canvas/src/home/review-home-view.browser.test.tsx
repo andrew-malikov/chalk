@@ -155,51 +155,6 @@ describe("ReviewHome", () => {
     expect(onOpen).toHaveBeenCalledWith(reviews[0]);
   });
 
-  it("puts the scratchpad first, above the reviews and out of their workspaces", async () => {
-    const {
-      pins: _pins,
-      repositoryPath: _path,
-      ...base
-    } = summary({
-      reviewId: "scratchpad",
-      title: "Scratchpad",
-      repositoryName: "",
-    });
-
-    const pad: ReviewApiSummary = {
-      ...base,
-      kind: "scratchpad",
-      contents: { blocks: 6, diagrams: 2 },
-    };
-
-    const review = summary({ reviewId: uuid(1), title: "A review" });
-    const onOpen = vi.fn<(review: ReviewApiSummary) => void>();
-    await act(async () =>
-      renderWithHost(<ReviewHome reviews={[review, pad]} onOpen={onOpen} />),
-    );
-
-    const labels = Array.from(container.querySelectorAll("button")).map(
-      (button) => button.textContent ?? "",
-    );
-
-    const padIndex = labels.findIndex((text) => text.includes("Scratchpad"));
-    expect(padIndex).toBeGreaterThanOrEqual(0);
-    expect(padIndex).toBeLessThan(
-      labels.findIndex((text) => text.includes("A review")),
-    );
-    expect(container.querySelectorAll("table")).toHaveLength(1);
-    expect(container.textContent).not.toContain("Settle Scratchpad");
-    expect(container.textContent).toContain("6 blocks");
-    expect(container.textContent).toContain("2 diagrams");
-
-    const button = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent?.includes("Scratchpad"),
-    )!;
-
-    await act(async () => button.click());
-    expect(onOpen).toHaveBeenCalledWith(pad);
-  });
-
   it("opens API reviews grouped by repository without needing a checkout path", async () => {
     const { repositoryPath: _, ...review } = summary({ title: "API review" });
     const item = { ...review, repositoryName: "Review repository" };

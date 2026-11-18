@@ -150,12 +150,9 @@ export function AuthoringActivityBadge({
 export function ReviewSurfaceLabel({
   hasContent,
   active,
-  label = "Chalk",
 }: {
   hasContent: boolean;
   active: boolean;
-  /** The tab's word; the scratchpad names itself. */
-  label?: string;
 }) {
   const activity = useContext(AuthoringActivityContext);
   const version = useContext(DisplayedReviewVersionContext) ?? null;
@@ -184,7 +181,7 @@ export function ReviewSurfaceLabel({
       )}
       data-working={live || undefined}
     >
-      {label}
+      Chalk
       {unread && <span className={styles.unread} aria-hidden="true" />}
     </span>
   );

@@ -77,10 +77,6 @@ export function SettingsPage({
 
   const structuralDiffEnabled = settings.structuralDiffEnabled;
 
-  const [scratchpadEnabled, setScratchpadEnabled] = useState(
-    settings.scratchpadEnabled,
-  );
-
   const [installStatus, setInstallStatus] = useState<
     ReviewCliInstallStatus | undefined
   >(settings.install?.status);
@@ -288,25 +284,6 @@ export function SettingsPage({
                       "software-map",
                       () => settings.setSoftwareMapEnabled(enabled),
                       setSoftwareMapEnabled,
-                    );
-                  }}
-                />
-              </div>
-            </Row>
-            <Row
-              label="Scratchpad"
-              description="Show the experimental scratchpad on Home. Agents draw on it through Chalk's MCP tools."
-            >
-              <div className={styles.toggle}>
-                <Switch
-                  aria-label="Scratchpad"
-                  checked={scratchpadEnabled}
-                  disabled={busy !== null}
-                  onCheckedChange={(enabled) => {
-                    void run(
-                      "scratchpad",
-                      () => settings.setScratchpadEnabled(enabled),
-                      setScratchpadEnabled,
                     );
                   }}
                 />

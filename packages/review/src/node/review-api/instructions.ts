@@ -4,26 +4,13 @@ import path from "node:path";
 import { findPackageRoot } from "@review/node/package-paths.js";
 import { z } from "zod";
 
-export const INSTRUCTION_TOPICS = [
-  "authoring",
-  "file-lenses",
-  "scratchpad",
-] as const;
+export const INSTRUCTION_TOPICS = ["authoring", "file-lenses"] as const;
 
 export type InstructionTopic = (typeof INSTRUCTION_TOPICS)[number];
 
 export const instructionsQuerySchema = z.strictObject({
   topic: z.enum(INSTRUCTION_TOPICS).default("authoring"),
 });
-
-export interface InstructionContext {
-  desktopAvailable: boolean;
-  scratchpadEnabled: boolean;
-}
-
-export function scratchpadAvailable(context: InstructionContext): boolean {
-  return context.desktopAvailable && context.scratchpadEnabled;
-}
 
 const cache = new Map<string, Promise<string>>();
 
@@ -42,27 +29,9 @@ function read(root: string, name: string): Promise<string> {
   return content;
 }
 
-export async function renderInstructions(
+export function renderInstructions(
   topic: InstructionTopic,
-  context: InstructionContext,
   root = findPackageRoot(),
 ): Promise<string> {
-  if (topic === "scratchpad" && !scratchpadAvailable(context)) {
-    return "The Chalk scratchpad is turned off or Chalk Desktop is not running. Answer in chat; the scratchpad can be turned on in Chalk Desktop Settings.";
-  }
-
-  if (topic !== "authoring") return read(root, topic);
-
-  const more = [
-    ...(scratchpadAvailable(context)
-      ? [
-          '- Explaining code visually outside a review: `session_get_instructions({topic:"scratchpad"})`',
-        ]
-      : []),
-  ];
-
-  return [
-    await read(root, "authoring"),
-    ...(more.length ? [`## More guidance\n\n${more.join("\n")}`] : []),
-  ].join("\n\n");
+  return read(root, topic);
 }

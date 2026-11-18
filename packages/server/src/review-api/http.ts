@@ -27,7 +27,6 @@ import { documentText } from "@review/node/review-api/document-text.js";
 import {
   instructionsQuerySchema,
   renderInstructions,
-  scratchpadAvailable,
 } from "@review/node/review-api/instructions.js";
 import type { LocalReviewData } from "@review/node/review-api/local-data.js";
 import {
@@ -45,23 +44,17 @@ import {
 } from "@review/node/review-api/review-progress.js";
 import {
   type ReviewStore,
-  SCRATCHPAD_ID,
   type Snapshot,
   commandSchema,
   inspectSnapshot,
 } from "@review/node/review-api/store.js";
-import { type Context, Hono, type MiddlewareHandler } from "hono";
+import { type Context, Hono } from "hono";
 import { z } from "zod";
 
 export interface AuthoringCapabilities {
   desktopAvailable: boolean;
   softwareMapEnabled: boolean;
-  /** Off, the host neither makes nor lists the scratchpad, and refuses its id. */
-  scratchpadEnabled: boolean;
 }
-
-const SCRATCHPAD_DISABLED =
-  "The scratchpad is off. Turn it on in Chalk Desktop Settings.";
 
 /** A gateway forwarding from another machine; it gets no local paths. */
 const remoteCaller = (context: Context) =>
@@ -76,14 +69,11 @@ export function createReviewApi(
     title: string;
   }) => Promise<{ softwareMapEnabled: boolean }>,
   capabilities: () =>
-    | Omit<AuthoringCapabilities, "scratchpadEnabled">
-    | Promise<Omit<AuthoringCapabilities, "scratchpadEnabled">> = () => ({
+    | AuthoringCapabilities
+    | Promise<AuthoringCapabilities> = () => ({
     desktopAvailable: Boolean(open),
     softwareMapEnabled: false,
   }),
-  // Synchronous because the catalog is read inside watch callbacks. The host
-  // keeps it current from its preferences file.
-  scratchpadEnabled: () => boolean = () => false,
   /** Which server this is, for chalk_status. */
   status: () => JsonObject = () => ({}),
 ) {
@@ -127,65 +117,22 @@ export function createReviewApi(
       await next();
     });
 
-  // The host that can show the scratchpad keeps it: Desktop, while the
-  // preference is on. Headless servers never make one, and a pad made earlier
-  // stays in the store while it is off.
-  const ensureScratchpad = async (id?: string) => {
-    if (open && scratchpadEnabled() && (!id || id === SCRATCHPAD_ID))
-      await store.ensureScratchpad();
-  };
-
-  const refuseDisabledScratchpad = (id?: string) => {
-    if (id === SCRATCHPAD_ID && !scratchpadEnabled())
-      throw new ReviewInputError(SCRATCHPAD_DISABLED, 409);
-  };
-
-  const reviewGuard: MiddlewareHandler = async (context, next) => {
-    refuseDisabledScratchpad(context.req.param("id"));
-    await ensureScratchpad(context.req.param("id"));
-
-    return next();
-  };
-
-  app.use("/:id", reviewGuard);
-  app.use("/:id/*", reviewGuard);
-
   const readReview = (id: string, version?: number): Snapshot =>
     store.read(id, version);
 
-  const catalog = (mode: "structural" | "textual" = "structural") => {
-    const local = store.list(mode);
+  const catalog = (mode: "structural" | "textual" = "structural") =>
+    store.list(mode);
 
-    return scratchpadEnabled()
-      ? local
-      : local.filter((summary) => summary.kind !== "scratchpad");
-  };
+  app.get("/", async (context) =>
+    context.json(catalog(coverageModeSchema.parse(context.req.query("mode")))),
+  );
 
-  app.get("/", async (context) => {
-    await ensureScratchpad();
-
-    return context.json(
-      catalog(coverageModeSchema.parse(context.req.query("mode"))),
-    );
-  });
-
-  // Server-owned state only: asking the Desktop canvas would let a stalled
-  // renderer block tool listing and the first instructions call.
-  const instructionContext = async () => ({
-    desktopAvailable: Boolean(open),
-    scratchpadEnabled: scratchpadEnabled(),
-  });
-
-  app.get("/authoring", async (context) => {
-    const instructions = await instructionContext();
-
-    return context.json(authoringTools(scratchpadAvailable(instructions)));
-  });
+  app.get("/authoring", async (context) => context.json(authoringTools()));
   app.get("/instructions", async (context) => {
     const { topic } = instructionsQuerySchema.parse(context.req.query());
 
     return context.json(
-      await renderInstructions(topic, await instructionContext()),
+      await renderInstructions(topic),
     );
   });
 
@@ -417,10 +364,7 @@ export function createReviewApi(
   );
 
   app.get("/capabilities", async (context) =>
-    context.json({
-      ...(await capabilities()),
-      scratchpadEnabled: scratchpadEnabled(),
-    }),
+    context.json(await capabilities()),
   );
 
   app.get("/:id/activity", (context) => {
@@ -547,8 +491,6 @@ export function createReviewApi(
         () => {},
       );
     }
-
-    await ensureScratchpad();
 
     return watch(
       () => catalog(coverageModeSchema.parse(context.req.query("mode"))),
@@ -1177,18 +1119,6 @@ export function createReviewApi(
     );
 
     const input = commandSchema.parse(request);
-
-    const reviewId =
-      "reviewId" in input.operation ? input.operation.reviewId : undefined;
-
-    refuseDisabledScratchpad(reviewId);
-    await ensureScratchpad(reviewId);
-
-    if (
-      input.operation.type === "create" &&
-      input.operation.kind === "scratchpad"
-    )
-      refuseDisabledScratchpad(SCRATCHPAD_ID);
 
     const result = await store.execute(input);
 

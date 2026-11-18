@@ -59,7 +59,7 @@ export function CommentsProvider({ children }: { children: ReactNode }) {
   const panels = useOptionalReviewPanelActor();
   const sessionRef = useRef(session);
   sessionRef.current = session;
-  const enabled = !!session.review && session.review.kind !== "scratchpad";
+  const enabled = !!session.review;
 
   const editable = enabled && session.review?.historicalRevision === null;
 

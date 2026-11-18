@@ -94,8 +94,6 @@ async function serve(input: HeadlessServerInput) {
     local.data,
     callbacks.open,
     callbacks.capabilities,
-    // The scratchpad is the laptop's alone, even with a Desktop attached.
-    () => false,
     () => ({ key: "headless", home: input.stateDir }),
   );
 

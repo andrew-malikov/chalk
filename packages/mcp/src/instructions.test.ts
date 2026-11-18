@@ -97,7 +97,6 @@ describe("chalk mcp instructions", () => {
       ).toEqual(["session_get_instructions", "chalk_status"]);
       const guidance = list.result.tools[0].description;
       expect(guidance).toContain("session_get_instructions");
-      expect(guidance).toContain('topic:"scratchpad"');
 
       const down = await mcp.request(3, "tools/call", {
         name: "session_get_instructions",
@@ -205,7 +204,7 @@ describe("chalk mcp instructions", () => {
     }
   });
 
-  it("uses the live scratchpad catalog description and preserves tool errors", async () => {
+  it("preserves tool errors", async () => {
     const store = new ReviewStore(":memory:", {
       validatePins: async () => {},
       validateSource: async () => {},
@@ -217,7 +216,6 @@ describe("chalk mcp instructions", () => {
       undefined,
       async () => ({ softwareMapEnabled: false }),
       () => ({ desktopAvailable: true, softwareMapEnabled: false }),
-      () => true,
     );
 
     let failInstruction = false;
@@ -241,9 +239,6 @@ describe("chalk mcp instructions", () => {
 
     try {
       await mcp.request(1, "initialize", initialize);
-
-      const list = await mcp.request(2, "tools/list", {});
-      expect(list.result.tools[0].description).toContain('topic:"scratchpad"');
 
       const invalid = await mcp.request(3, "tools/call", {
         name: "session_get_instructions",
