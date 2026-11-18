@@ -27,11 +27,7 @@ let healthyId: string;
 beforeEach(async () => {
   directory = mkdtempSync(path.join(tmpdir(), "review-read-"));
   validateResource.mockClear();
-  store = new ReviewStore(path.join(directory, "reviews.db"), {
-    validatePins: async () => {},
-    validateSource: async () => {},
-    validateResource,
-  });
+  store = openStore();
 
   oldId = await savedReview("Healthy");
   healthyId = await savedReview("Healthy");
@@ -42,59 +38,51 @@ afterEach(async () => {
   rmSync(directory, { recursive: true, force: true });
 });
 
-it.each([undefined, 0])(
-  "rejects retired quotes when reading version %s without touching resources",
-  (version) => {
-    const db = new Database(path.join(directory, "reviews.db"));
+it("lists a review that no longer parses as incompatible, skips it when refreshing, and still deletes it", async () => {
+  await store.close();
 
-    const row = db
-      .query<{ snapshot: string }, [string]>(
-        "SELECT snapshot FROM versions WHERE review_id=?",
-      )
-      .get(oldId)!;
+  const db = new Database(path.join(directory, "reviews.db"));
 
-    const snapshot = JSON.parse(row.snapshot);
-    snapshot.document = [
-      {
-        type: "trace_quote",
-        id: "block-1",
-        traceId: "old",
-        eventId: "event",
-        text: "Old quote",
-      },
-    ];
-    db.query("UPDATE versions SET snapshot=? WHERE review_id=?").run(
-      JSON.stringify(snapshot),
-      oldId,
-    );
-    db.close();
-    expect(() => store.read(oldId, version)).toThrow(
-      /agent traces.*no longer supported/i,
-    );
-    expect(store.read(healthyId).document[0]).toMatchObject({
-      markdown: "Healthy",
-    });
-    expect(store.list()).toHaveLength(2);
-    expect(validateResource).not.toHaveBeenCalled();
-  },
-);
+  const row = db
+    .query<{ snapshot: string }, [string]>(
+      "SELECT snapshot FROM versions WHERE review_id=?",
+    )
+    .get(oldId)!;
 
-it.each([
-  "[quote](review-trace:old#event)",
-  "[quote][old]\n\n[old]: review-trace:old#event",
-])("rejects active retired Markdown links: %s", async (markdown) => {
-  await expect(savedReview(markdown)).rejects.toThrow(
-    /agent traces.*no longer supported/i,
+  const snapshot = JSON.parse(row.snapshot);
+  snapshot.document = [{ type: "retired_block", id: "block-1" }];
+  db.query("UPDATE versions SET snapshot=? WHERE review_id=?").run(
+    JSON.stringify(snapshot),
+    oldId,
   );
+  db.close();
+  store = openStore();
+
+  expect(
+    store.list().map((review) => [review.reviewId, review.incompatible]),
+  ).toEqual([
+    [oldId, true],
+    [healthyId, undefined],
+  ]);
+  expect(validateResource).not.toHaveBeenCalled();
+  await expect(store.refreshWorktrees()).resolves.toBeUndefined();
+
+  await store.execute({
+    commandId: randomUUID(),
+    operation: { type: "delete", reviewId: oldId },
+  });
+  expect(store.list().map((review) => review.reviewId)).toEqual([healthyId]);
 });
 
-it("accepts retired-scheme text in code literals and ordinary quotations", async () => {
-  const reviewId = await savedReview(
-    "> A quotation\n\n`review-trace:old#event`\n\n```\n[quote](review-trace:old#event)\n```",
-  );
-
-  expect(store.read(reviewId).document).toHaveLength(1);
-});
+function openStore() {
+  return new ReviewStore(path.join(directory, "reviews.db"), {
+    validatePins: async () => {},
+    validateSource: async () => {},
+    validateResource,
+    // Present so refreshWorktrees walks the catalog, as it does on every server GET.
+    resolveTarget: async (target) => ({ target, pins }),
+  });
+}
 
 async function savedReview(markdown: string): Promise<string> {
   const created = await store.execute(

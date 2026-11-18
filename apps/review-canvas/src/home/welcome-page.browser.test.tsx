@@ -122,7 +122,7 @@ describe("WelcomePage", () => {
     expect(stepState(1)).toBe("todo");
     expect(buttons("Install chalk in PATH")).toHaveLength(1);
 
-    for (const index of [1, 2, 3]) {
+    for (const index of [1, 2]) {
       const header = step(index)?.querySelector("button") as HTMLButtonElement;
       expect(header.disabled).toBe(true);
       await act(async () => header.click());

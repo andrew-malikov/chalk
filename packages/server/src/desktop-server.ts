@@ -9,7 +9,6 @@ import {
   type JsonValue,
   REVIEW_DESKTOP_DISCOVERY_VERSION,
   type ReviewDesktopDiscovery,
-  type ReviewTutorialOpenResponse,
   isJsonObject,
   reviewDiffrSummarizerInputSchema,
 } from "@chalk/review-contracts";
@@ -19,7 +18,6 @@ import {
   relayReviewCallbacks,
   serverJson,
 } from "@chalk/server/review-server-core";
-import { tutorialAssetsRoot } from "@chalk/tutorial/asset-paths";
 import { type ReviewInstanceIdentity } from "@review/node/desktop-discovery";
 import {
   migrateDiffrConfig,
@@ -37,7 +35,6 @@ import {
   reviewInstanceDiscoveryPath,
   reviewLegacyDiscoveryPath,
 } from "@review/node/storage/chalk-paths";
-import { createTutorialService } from "@review/node/tutorial-service";
 import type { Hono } from "hono";
 import { z } from "zod";
 
@@ -47,8 +44,6 @@ import {
 } from "./global-verb-relay";
 import { type ReviewHonoEnv, readBoundedRequestJson } from "./hono-http";
 import { ReviewServerError } from "./http-json";
-
-const TUTORIAL_LIFECYCLE_LOCK_KEY = "tutorial-lifecycle";
 
 export interface GlobalReviewServerInput {
   /** The desktop host owns this shared database and closes it after the server. */
@@ -103,14 +98,6 @@ export function createGlobalReviewServer(
     input.relay ?? new GlobalReviewDesktopVerbRelay({ maxClients: 1 });
 
   const reviewStore = input.reviewStore;
-
-  const reviewLocks = new Map<string, Promise<void>>();
-
-  const tutorial = createTutorialService({
-    assetsRoot: tutorialAssetsRoot(),
-    store: reviewStore,
-    data: input.reviewData,
-  });
 
   let closing = false;
   const cliPackageRoot = input.cliPackageRoot ?? input.packageRoot;
@@ -178,31 +165,6 @@ export function createGlobalReviewServer(
 
     return serverJson(result.ok ? 200 : 409, result);
   });
-  app.get("/tutorial/status", async () =>
-    serverJson(200, await tutorial.status()),
-  );
-  app.post("/tutorial/prepare", async () => {
-    const prepared = await withReviewLock(
-      TUTORIAL_LIFECYCLE_LOCK_KEY,
-      prepareTutorialLocked,
-    );
-
-    return serverJson(200, {
-      ok: true,
-      reviewUuid: prepared.reviewId,
-    });
-  });
-  app.post("/tutorial/open", async () => {
-    return serverJson(
-      200,
-      await withReviewLock(TUTORIAL_LIFECYCLE_LOCK_KEY, openTutorialLocked),
-    );
-  });
-  app.delete("/tutorial", async () => {
-    await withReviewLock(TUTORIAL_LIFECYCLE_LOCK_KEY, deleteTutorialLocked);
-
-    return serverJson(200, { ok: true });
-  });
   app.get("/diffr-config", async () =>
     serverJson(200, await readDiffrConfig()),
   );
@@ -248,48 +210,6 @@ export function createGlobalReviewServer(
   input.mountDesktopRoutes?.(app, discovery);
 
   let httpServer: Bun.Server<undefined> | undefined;
-
-  async function prepareTutorialLocked() {
-    return tutorial.prepare();
-  }
-
-  async function openTutorialLocked(): Promise<ReviewTutorialOpenResponse> {
-    const snapshot = await prepareTutorialLocked();
-
-    return {
-      kind: "api",
-      reviewUuid: snapshot.reviewId,
-      title: snapshot.title,
-    };
-  }
-
-  async function deleteTutorialLocked(): Promise<void> {
-    await tutorial.cleanup();
-  }
-
-  async function withReviewLock<T>(
-    reviewUuid: string,
-    operation: () => Promise<T>,
-  ): Promise<T> {
-    const previous = reviewLocks.get(reviewUuid) ?? Promise.resolve();
-    let release: () => void = () => {};
-
-    const current = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-
-    const chain = previous.then(() => current);
-    reviewLocks.set(reviewUuid, chain);
-    await previous;
-
-    try {
-      return await operation();
-    } finally {
-      release();
-
-      if (reviewLocks.get(reviewUuid) === chain) reviewLocks.delete(reviewUuid);
-    }
-  }
 
   return {
     discovery,

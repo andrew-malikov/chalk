@@ -10,7 +10,6 @@ import { useAnchoredPopover } from "@canvas/lib/use-anchored-popover";
 import { cn } from "@canvas/lib/utils";
 import { topbarActionsMarker } from "@canvas/styles/markers";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import { useTutorial } from "@canvas/tutorial/tutorial-context";
 import { copyText } from "@canvas/ui/copy-text";
 import { CheckIcon, CopyIcon } from "@canvas/ui/icons";
 import { surfaceStyles } from "@canvas/ui/surface";
@@ -27,14 +26,13 @@ export function ReviewActionsMenu({
   overlay,
 }: {
   chalkId: string;
-  /** Whether the review can still be settled (or the tutorial closed). */
+  /** Whether the review can still be settled. */
   settleable: boolean;
   onDelete?: () => Promise<void>;
   /** Where the menu renders when a host's chrome holds the trigger. */
   overlay?: HTMLElement;
 }): ReactElement {
   const { dismissReview } = useReviewActions();
-  const tutorial = useTutorial();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const control = useRef<HTMLDivElement>(null);
@@ -82,21 +80,13 @@ export function ReviewActionsMenu({
             <CopyIcon />
             Copy Chalk ID
           </DropdownMenuItem>
-          {/* The tutorial is not in the review store, so there is no list to
-              leave: closing the tab is the whole action. */}
-          {settleable &&
-            (tutorial ? (
-              <DropdownMenuItem onSelect={tutorial.close}>
-                <Archive aria-hidden="true" />
-                Close tutorial
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onSelect={() => void settle()}>
-                <CheckIcon />
-                Settle review
-              </DropdownMenuItem>
-            ))}
-          {onDelete && !tutorial && (
+          {settleable && (
+            <DropdownMenuItem onSelect={() => void settle()}>
+              <CheckIcon />
+              Settle review
+            </DropdownMenuItem>
+          )}
+          {onDelete && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem

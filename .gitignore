@@ -1,8 +1,6 @@
 # Node
 node_modules/
 dist/
-packages/tutorial/assets/.bundle/
-packages/tutorial/assets/git-stub/
 *.tsbuildinfo
 
 # OS
@@ -87,11 +85,9 @@ backend.hcl
 artifacts/devbox/
 scripts/acceptance/evidence/
 
-packages/tutorial/assets/pins.json
 packages/review/bin/
 packages/cli/instructions/
 packages/cli/THIRD_PARTY_NOTICES.md
-packages/server/assets/
 packages/server/bin/
 
 # Electrobun generated SDK and native bundles

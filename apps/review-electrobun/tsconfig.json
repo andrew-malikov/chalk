@@ -11,8 +11,6 @@
       "electrobun/main": ["./.hutch/devkit/api/sdks/main/index.ts"],
       "electrobun/view": ["./.hutch/devkit/api/browser/index.ts"],
       "@chalk/server/*": ["../../packages/server/src/*"],
-      "@chalk/tutorial/assets/*": ["../../packages/tutorial/assets/*"],
-      "@chalk/tutorial/*": ["../../packages/tutorial/src/*"],
       "@chalk/mcp/*": ["../../packages/mcp/src/*"],
       "@chalk/*": ["../../packages/*/src"],
       "@review/*": ["../../packages/review/src/*"],

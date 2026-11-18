@@ -2,12 +2,6 @@ import { fileURLToPath } from "node:url";
 
 // Mirrors the `@review/*` and `@canvas/*` paths in tsconfig.base.json.
 export const sourceAliases = {
-  "@chalk/tutorial/assets": fileURLToPath(
-    new URL("../packages/tutorial/assets", import.meta.url),
-  ),
-  "@chalk/tutorial": fileURLToPath(
-    new URL("../packages/tutorial/src", import.meta.url),
-  ),
   "@chalk/server": fileURLToPath(
     new URL("../packages/server/src", import.meta.url),
   ),

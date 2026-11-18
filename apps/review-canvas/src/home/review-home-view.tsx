@@ -50,7 +50,6 @@ interface ReviewHomeProps {
   install?: ReviewCanvasInstallContent;
   setupActions?: ReviewCanvasSetupActions;
   onboarding?: ReviewCanvasOnboarding;
-  onOpenTutorial?(): void;
 }
 
 interface ReviewAttentionActions {
@@ -103,7 +102,6 @@ export function ReviewHome({
   install,
   setupActions,
   onboarding,
-  onOpenTutorial,
 }: ReviewHomeProps) {
   const ui = useContext(CanvasUiContext);
   const deleting = useRef(new Set<string>());
@@ -222,7 +220,6 @@ export function ReviewHome({
         install={install}
         setupActions={setupActions}
         onboarding={onboarding}
-        onOpenTutorial={onOpenTutorial}
       />
     );
   }

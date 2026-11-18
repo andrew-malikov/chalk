@@ -6,7 +6,6 @@ import {
   flowNodeSchema,
 } from "@review/blocks/flow_diagram.js";
 import { type Block, blockSchema } from "@review/blocks/index.js";
-import { assertNoRetiredTraceLinks } from "@review/blocks/markdown.js";
 import { type Step, stepSchema } from "@review/blocks/sequence.js";
 import {
   type LensSource,
@@ -23,10 +22,7 @@ import {
 import { z } from "zod";
 
 import type { Lens } from "./diff-lenses.js";
-import {
-  ReviewInputError,
-  UnsupportedReviewContentError,
-} from "./input-error.js";
+import { ReviewInputError } from "./input-error.js";
 
 export { ReviewInputError } from "./input-error.js";
 
@@ -139,38 +135,6 @@ const unitTypes = new Set(["step", "flow_node", "flow_edge"]);
 
 export const isUnit = (element: Element): element is Unit =>
   unitTypes.has(element.type);
-
-const retiredContentNodeSchema = z.looseObject({
-  type: z.string().optional(),
-  name: z.string().optional(),
-  component: z.string().optional(),
-  markdown: z.string().optional(),
-});
-
-/** Reject retired content before migration or resource resolution. */
-// oxlint-disable-next-line anti-slop/no-unknown-parameters -- Stored/legacy JSON boundary: inspect retired identities before the supported schema can reject them generically.
-export function assertNoRetiredTraceContent(value: unknown): void {
-  if (Array.isArray(value)) {
-    value.forEach(assertNoRetiredTraceContent);
-
-    return;
-  }
-
-  const parsed = retiredContentNodeSchema.safeParse(value);
-
-  if (!parsed.success) return;
-  const node = parsed.data;
-
-  if (
-    node.type === "trace_quote" ||
-    node.component === "TraceQuote" ||
-    (node.type === "component" && node.name === "TraceQuote")
-  )
-    throw new UnsupportedReviewContentError();
-
-  if (node.markdown !== undefined) assertNoRetiredTraceLinks(node.markdown);
-  Object.values(node).forEach(assertNoRetiredTraceContent);
-}
 
 export function resourceReference(
   block: Block,

@@ -31,20 +31,6 @@ for (const name of ["instructions", "THIRD_PARTY_NOTICES.md"]) {
   );
 }
 
-// pins.json is generated and git-ignored, so a fresh checkout lacks it.
-execFileSync(process.execPath, ["run", "ensure:assets"], {
-  cwd: path.join(app, "../../packages/tutorial"),
-  stdio: "inherit",
-});
-
-cpSync(
-  path.join(app, "../../packages/tutorial/assets"),
-  path.join(runtime, "assets"),
-  {
-    recursive: true,
-  },
-);
-
 cpSync(path.join(app, "package.json"), path.join(runtime, "package.json"));
 
 // npm installs no diffr on unsupported platforms, such as musl Linux.

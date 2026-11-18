@@ -3,22 +3,10 @@ import {
   fixtureReviewBridge,
   settled,
 } from "@canvas/test/fixture-review-bridge";
-import {
-  type JsonValue,
-  type ReviewCanvasTutorialBridge,
-  parseJsonText,
-} from "@chalk/review-contracts";
-import tutorialDocument from "@chalk/tutorial/assets/document.json";
-import tutorialModel from "@chalk/tutorial/assets/software-map.json";
-import {
-  assignFreshIds,
-  documentSchema,
-  elements,
-  isUnit,
-} from "@review/documents/document";
+import { type JsonValue, parseJsonText } from "@chalk/review-contracts";
+import { documentSchema, elements, isUnit } from "@review/documents/document";
 import { selectionKey } from "@review/documents/lens-selection";
 import { FIXTURE_IMAGE_ID, FIXTURE_MAP_ID } from "@review/fixtures/blocks/ids";
-import { mapInputSchema } from "@review/node/review-api/map-input";
 import type { ReviewProgress } from "@review/node/review-api/review-progress";
 import type { Snapshot } from "@review/node/review-api/store";
 import { defineSoftwareMap } from "@review/software-map/software-map-model";
@@ -142,9 +130,6 @@ const rendered: Record<
     !has(c, ".software-map-code-status"),
   section: (c) =>
     has(c, "button[aria-expanded='true']") && text(c).includes("Hello."),
-  tutorial: (c) =>
-    text(c).includes("Representative authoring conversation") &&
-    text(c).includes("Explain this change."),
   callout: (c) =>
     c.querySelector("blockquote[data-tone='warning'] strong")?.textContent ===
       "Note" && text(c).includes("Careful."),
@@ -160,8 +145,6 @@ afterEach(async () => {
 async function mountFixture(
   kind: Kind,
   options: { document?: Snapshot["document"] } = {},
-  tutorial?: ReviewCanvasTutorialBridge,
-  shippedTutorial = false,
   hostStyle?: string,
 ) {
   const snapshot: Snapshot = {
@@ -175,19 +158,9 @@ async function mountFixture(
       base: "base",
       head: "head",
     },
-    document: shippedTutorial
-      ? documentSchema.parse(tutorialDocument.document)
-      : (options.document ?? fixtures.get(kind)!),
-    origin: shippedTutorial ? { tutorial: true } : undefined,
+    document: options.document ?? fixtures.get(kind)!,
     createdAt: "2026-09-16T00:00:00.000Z",
   };
-
-  if (shippedTutorial) {
-    let nextId = 0;
-
-    for (const block of snapshot.document)
-      assignFreshIds(block, (prefix) => `${prefix}-${++nextId}`);
-  }
 
   const image = { bytes: png, type: "image/png" };
 
@@ -195,23 +168,7 @@ async function mountFixture(
     snapshot,
     progress: fixtureProgress,
     resources: { [FIXTURE_IMAGE_ID]: image },
-    maps: {
-      [FIXTURE_MAP_ID]: savedMap,
-      ...Object.fromEntries(
-        (["base", "head"] as const).map((side) => [
-          `tutorial-map-${side}`,
-          parseJsonText(
-            JSON.stringify({
-              ...defineSoftwareMap(mapInputSchema.parse(tutorialModel)),
-              side,
-              commit: side,
-              countsByElementPath: {},
-              unmappedByElementPath: {},
-            }),
-          ),
-        ]),
-      ),
-    },
+    maps: { [FIXTURE_MAP_ID]: savedMap },
   });
 
   const request = vi.spyOn(bridge, "request");
@@ -222,22 +179,6 @@ async function mountFixture(
   await act(async () => {
     canvas = mount(container, {
       kind: "api",
-      tutorial:
-        tutorial ??
-        (kind === "tutorial"
-          ? {
-              content: {
-                reviewUuid: snapshot.reviewId,
-                progress: { version: 1, checked: [], dismissed: false },
-                keymap: "none",
-              },
-              setStep() {},
-              dismiss() {},
-              reopen() {},
-              async selectKeymap() {},
-              close() {},
-            }
-          : undefined),
       softwareMapEnabled: true,
       reviewId: snapshot.reviewId,
       version: 0,
@@ -363,44 +304,6 @@ describe("block components", () => {
       }
     },
   );
-
-  it("keeps shipped tutorial view buttons interactive in the JSON canvas", async () => {
-    const selectKeymap = vi.fn<ReviewCanvasTutorialBridge["selectKeymap"]>(
-      async () => {},
-    );
-
-    const tutorial: ReviewCanvasTutorialBridge = {
-      content: {
-        reviewUuid: "fixture-tutorial",
-        progress: { version: 1, checked: [], dismissed: true },
-        keymap: "none",
-      },
-      setStep() {},
-      dismiss() {},
-      reopen() {},
-      selectKeymap,
-      close() {},
-    };
-
-    const { container } = await mountFixture("tutorial", {}, tutorial, true);
-    expect(
-      await settled(() =>
-        text(container).includes("Representative authoring conversation"),
-      ),
-    ).toBe(true);
-
-    const commits = container.querySelector<HTMLButtonElement>(
-      '[data-tutorial-view="commits"]',
-    )!;
-
-    expect(commits).not.toBeNull();
-    await act(async () => commits.click());
-    expect(
-      container
-        .querySelector('[aria-label="Commits"]')
-        ?.getAttribute("aria-pressed"),
-    ).toBe("true");
-  });
 
   it.each(["sequence", "database_lens", "software_map"] as const)(
     "keeps %s interactions without offering Copy ref",
@@ -532,67 +435,6 @@ describe("BlockErrorBoundary", () => {
   });
 });
 
-describe("tutorial guide placement", () => {
-  it("keeps the guide inside the host when status rows sit above the document", async () => {
-    const tutorial: ReviewCanvasTutorialBridge = {
-      content: {
-        reviewUuid: "fixture-tutorial",
-        progress: { version: 1, checked: [], dismissed: false },
-        keymap: "none",
-      },
-      setStep() {},
-      dismiss() {},
-      reopen() {},
-      async selectKeymap() {},
-      close() {},
-    };
-
-    const { container } = await mountFixture(
-      "tutorial",
-      {},
-      tutorial,
-      true,
-      "position: relative; height: 700px; overflow: hidden;",
-    );
-
-    expect(
-      await settled(() => has(container, 'aside[aria-label="Tutorial guide"]')),
-    ).toBe(true);
-
-    const contentsElement = container.querySelector("#review-toc")!;
-    const appElement = container.querySelector(".review-app")!;
-
-    const contentsOffset =
-      contentsElement.getBoundingClientRect().top -
-      appElement.getBoundingClientRect().top;
-
-    const statusRow = document.createElement("p");
-    statusRow.setAttribute("role", "status");
-    statusRow.textContent = "Refresh failed; showing the last saved review.";
-    statusRow.style.minHeight = "200px";
-    container.querySelector("[data-review-api]")!.prepend(statusRow);
-
-    const host = container.getBoundingClientRect();
-    const app = container.querySelector(".review-app")!.getBoundingClientRect();
-    const status = statusRow.getBoundingClientRect();
-
-    const contents = container
-      .querySelector("#review-toc")!
-      .getBoundingClientRect();
-
-    const guide = container
-      .querySelector('aside[aria-label="Tutorial guide"]')!
-      .getBoundingClientRect();
-
-    expect(app.bottom).toBeLessThanOrEqual(host.bottom);
-    expect(app.top).toBeGreaterThanOrEqual(status.bottom);
-    expect(contents.top).toBeGreaterThanOrEqual(app.top);
-    expect(contents.top - app.top).toBeCloseTo(contentsOffset);
-    expect(guide.top).toBeGreaterThanOrEqual(host.top);
-    expect(guide.bottom).toBeLessThanOrEqual(host.bottom);
-  });
-});
-
 it("opens a flow node in a full-screen tour", async () => {
   const { container } = await mountFixture("flow_diagram");
   await settled(() => container.querySelector(".lens-flow-node"));
@@ -637,8 +479,6 @@ it("grows a tall, wide sequence diagram to its height instead of scrolling it ve
         },
       ]),
     },
-    undefined,
-    false,
     "position: relative; height: 700px; overflow: hidden",
   );
 

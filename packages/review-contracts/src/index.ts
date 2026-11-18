@@ -34,8 +34,6 @@ import {
   ReviewFileContentRequestSchema,
   type ReviewFileContentResponse,
   ReviewFileContentResponseSchema,
-  type ReviewTutorialOpenResponse,
-  ReviewTutorialOpenResponseSchema,
   type ReviewVerbRequest,
   ReviewVerbRequestSchema,
   type ReviewVerbResponse,
@@ -70,12 +68,6 @@ export function parseReviewCliInstallApplyResponse(
   value: JsonValue,
 ): ReviewCliInstallApplyResponse {
   return parseZod(ReviewCliInstallApplyResponseSchema, value);
-}
-
-export function parseReviewTutorialOpenResponse(
-  value: JsonValue,
-): ReviewTutorialOpenResponse {
-  return parseZod(ReviewTutorialOpenResponseSchema, value);
 }
 
 export function parseReviewDesktopVerbFrame(

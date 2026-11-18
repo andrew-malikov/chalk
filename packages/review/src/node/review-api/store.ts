@@ -27,7 +27,6 @@ import {
   type WrittenComponent,
   anchorPins,
   applyEdit,
-  assertNoRetiredTraceContent,
   assignFreshIds,
   checkReferences,
   documentSchema,
@@ -114,8 +113,6 @@ export const commandSchema = z.strictObject({
 /** Source identity displayed in the review header and Home, alongside immutable pins. */
 export interface SnapshotOrigin {
   gitlab?: GitLabIdentity;
-  /** Managed tutorial; readable by ID but excluded from the user catalog. */
-  tutorial?: boolean;
   branch?: string;
   baseRef?: string;
 }
@@ -199,6 +196,7 @@ export class ReviewStore {
   private pending: Promise<unknown> = Promise.resolve();
   private closing = false;
   private readonly liveSources = new Map<string, Snapshot>();
+  private readonly incompatibleVersions = new Map<string, boolean>();
   private refreshTimer?: ReturnType<typeof setInterval>;
   private refreshSubscribers = 0;
 
@@ -270,6 +268,8 @@ export class ReviewStore {
 
     const run = this.pending.then(async () => {
       for (const summary of this.list()) {
+        if (summary.incompatible) continue;
+
         const snapshot = this.read(summary.reviewId, summary.version);
 
         try {
@@ -675,6 +675,17 @@ export class ReviewStore {
     )
       throw new ReviewInputError("Review not found.", 404);
   }
+  private currentVersion(id: string) {
+    const row = this.db
+      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
+        "SELECT version FROM reviews WHERE id=?",
+      )
+      .get(id);
+
+    if (!row) throw new ReviewInputError("Review not found.", 404);
+
+    return Number(row.version);
+  }
   read(id: string, version?: number): Snapshot {
     const row =
       version === undefined
@@ -693,7 +704,6 @@ export class ReviewStore {
 
     // SAFETY: snapshot metadata was validated on write; its document is revalidated below.
     const snapshot = JSON.parse(String(row.snapshot)) as Snapshot;
-    assertNoRetiredTraceContent(snapshot.document);
 
     const { document, lenses } = liftFileLenses(
       migrateStoredDocument(snapshot.document),
@@ -715,7 +725,6 @@ export class ReviewStore {
     const live = version === undefined ? this.liveSources.get(id) : undefined;
 
     if (live?.version === snapshot.version) {
-      assertNoRetiredTraceContent(live.document);
       checkReferences(documentSchema.parse(live.document));
 
       return structuredClone(live);
@@ -744,16 +753,6 @@ export class ReviewStore {
     }
   }
 
-  /** Managed records are discoverable even if their preparation stamp was lost. */
-  tutorialIds(): string[] {
-    return this.db
-      .query<Record<string, SQLQueryBindings>, SQLQueryBindings[]>(
-        `SELECT reviews.id FROM reviews JOIN versions ON versions.review_id=reviews.id AND versions.version=reviews.version WHERE json_extract(versions.snapshot,'$.origin.tutorial') = 1`,
-      )
-      .all()
-      .map((row) => String(row.id));
-  }
-
   list(mode: "structural" | "textual" = "structural"): ReviewApiSummary[] {
     return this.summaries(mode);
   }
@@ -777,8 +776,7 @@ export class ReviewStore {
         JOIN versions ON versions.review_id=reviews.id AND versions.version=reviews.version
         LEFT JOIN review_attention ON review_attention.review_id=reviews.id
         LEFT JOIN repositories ON repositories.id=json_extract(versions.snapshot,'$.pins.repositoryId')
-        WHERE COALESCE(json_extract(versions.snapshot,'$.origin.tutorial'), 0) = 0
-        ${id === undefined ? "" : "AND reviews.id=?"}
+        ${id === undefined ? "" : "WHERE reviews.id=?"}
         ORDER BY reviews.rowid`,
       )
       .all(...(id === undefined ? [] : [id]))
@@ -832,12 +830,35 @@ export class ReviewStore {
           viewedAt: row.viewed_at ? String(row.viewed_at) : null,
           dismissedAt: row.dismissed_at ? String(row.dismissed_at) : null,
           working: this.activity.isWorking(summary.reviewId),
+          ...(this.isIncompatible(summary.reviewId, summary.version) && {
+            incompatible: true,
+          }),
         };
 
         return listed;
       });
 
     return this.withDiffStats(reviews, mode);
+  }
+
+  /** Stored versions never change, so each is checked against the current schema once. */
+  private isIncompatible(id: string, version: number) {
+    const key = `${id}@${version}`;
+    let incompatible = this.incompatibleVersions.get(key);
+
+    if (incompatible === undefined) {
+      try {
+        this.read(id, version);
+        incompatible = false;
+      } catch {
+        // Any failure counts: one unreadable review must not break the whole catalog.
+        incompatible = true;
+      }
+
+      this.incompatibleVersions.set(key, incompatible);
+    }
+
+    return incompatible;
   }
 
   /** Summaries use the same persisted, mode-specific counts. */
@@ -1025,7 +1046,8 @@ export class ReviewStore {
       if (op.type === "delete") {
         const result: Result = {
           reviewId: op.reviewId,
-          version: this.read(op.reviewId).version,
+          // Not read(): an incompatible document must stay deletable.
+          version: this.currentVersion(op.reviewId),
           deleted: true,
         };
 

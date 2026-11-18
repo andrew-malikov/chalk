@@ -15,7 +15,6 @@ import {
   createReviewSession,
   useReviewSession,
 } from "@canvas/host/review-session";
-import { TutorialProvider } from "@canvas/tutorial/tutorial-context";
 import {
   type ReviewCanvasChrome,
   type ReviewCanvasContent,
@@ -345,10 +344,6 @@ export function ApiCanvas({
     if (data) content.bridge.ready();
   }, [Boolean(data), content.bridge]);
 
-  useEffect(() => {
-    if (data) content.setTutorial?.(data.snapshot.origin?.tutorial === true);
-  }, [data?.snapshot.origin?.tutorial, content.setTutorial]);
-
   // Loads are near-instant, so stay blank until there is data or an error.
   // Both branches root the same query provider, so its cache outlives a load.
   if (!data)
@@ -398,7 +393,7 @@ export function ApiCanvas({
               coverageRevision={coverageRevision}
               structuralDiffEnabled={false}
             >
-              <TutorialProvider tutorial={content.tutorial}>
+              <>
                 {error && (
                   <p className={styles.error} role="status">
                     {error}
@@ -436,7 +431,7 @@ export function ApiCanvas({
                     </DrawQueueProvider>
                   </DrawQueueProvider>
                 </AuthoringActivityContext.Provider>
-              </TutorialProvider>
+              </>
             </ReviewLensesProvider>
           </DocumentData.Provider>
         </ReviewPanelProvider>

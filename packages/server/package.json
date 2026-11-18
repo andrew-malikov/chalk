@@ -10,9 +10,8 @@
     "./*": "./src/*.ts"
   },
   "scripts": {
-    "prebuild": "bun run --cwd ../.. build:workspace-deps && bun run --filter @chalk/tutorial ensure:assets",
+    "prebuild": "bun run --cwd ../.. build:workspace-deps",
     "build": "bun --bun run tsdown",
-    "pretest": "bun run --filter @chalk/tutorial ensure:assets",
     "test": "bunx --bun --no-install vp test run --config vitest.config.ts",
     "test:integration:diffr": "bun run --cwd ../.. build:workspace-deps && bunx --bun --no-install vp test run --config vitest.integration.config.ts",
     "typecheck": "bun --bun run tsc --noEmit -p ."
@@ -21,7 +20,6 @@
     "@chalk/json": "workspace:*",
     "@chalk/review": "workspace:*",
     "@chalk/review-contracts": "workspace:*",
-    "@chalk/tutorial": "workspace:*",
     "@dev.fast/diffr": "0.1.23",
     "hono": "4.13.16",
     "pino": "10.4.0",

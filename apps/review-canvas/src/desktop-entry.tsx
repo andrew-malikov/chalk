@@ -78,7 +78,6 @@ function ReviewCanvas({
         setupActions={content.setupActions}
         onClose={content.close}
         onboarding={content.onboarding}
-        onOpenTutorial={content.openTutorial}
       />
     );
   }
@@ -123,7 +122,6 @@ function Home({
       install={content.install}
       setupActions={content.setupActions}
       onboarding={content.onboarding}
-      onOpenTutorial={content.openTutorial}
     />
   );
 }

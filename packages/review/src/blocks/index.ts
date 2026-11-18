@@ -13,7 +13,6 @@ import { markdown } from "./markdown.js";
 import { type SectionBlock, section } from "./section.js";
 import { sequence } from "./sequence.js";
 import { software_map } from "./software_map.js";
-import { type TutorialBlock, tutorial } from "./tutorial.js";
 
 /** Leaf kinds share one discriminated union so unknown types read as they always have. */
 export const leafSchema = z.discriminatedUnion("type", [
@@ -31,7 +30,7 @@ export const leafSchema = z.discriminatedUnion("type", [
 
 export type LeafBlock = z.infer<typeof leafSchema>;
 
-export type Block = LeafBlock | SectionBlock | CalloutBlock | TutorialBlock;
+export type Block = LeafBlock | SectionBlock | CalloutBlock;
 
 export type BlockType = Block["type"];
 
@@ -53,11 +52,10 @@ export const blocks = {
   flow_diagram,
   section,
   callout,
-  tutorial,
 } satisfies Definitions;
 
 export const blockSchema: z.ZodType<Block> = z.lazy(() =>
-  z.union([leafSchema, section.schema, callout.schema, tutorial.schema]),
+  z.union([leafSchema, section.schema, callout.schema]),
 );
 
 function checkBlock<K extends BlockType>(

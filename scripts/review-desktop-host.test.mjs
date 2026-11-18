@@ -10,7 +10,7 @@ import test from "node:test";
 const root = path.resolve(import.meta.dirname, "..");
 
 test(
-  "the built desktop host serves its packaged guidance, tutorial, and command setup",
+  "the built desktop host serves its packaged guidance and command setup",
   { timeout: 20_000 },
   async () => {
     execFileSync(process.execPath, ["scripts/build-host.mjs"], {
@@ -75,14 +75,6 @@ test(
 
       assert.equal(guidance.status, 200);
       assert.ok((await guidance.json()).length > 0);
-
-      const tutorial = await fetch(`${discovery.url}/tutorial/prepare`, {
-        method: "POST",
-        headers,
-      });
-
-      assert.equal(tutorial.status, 200);
-      assert.ok((await tutorial.json()).reviewUuid);
 
       const setup = await fetch(`${discovery.url}/install/status`, { headers });
       assert.equal(setup.status, 200);

@@ -13,7 +13,6 @@ import { cn } from "@canvas/lib/utils";
 import { controlStyles } from "@canvas/styles/controls-styles";
 import { chevronMarker } from "@canvas/styles/markers";
 import { shellStyles } from "@canvas/styles/shell-styles";
-import { useTutorialSection } from "@canvas/tutorial/tutorial-section-context";
 import { IconButton } from "@canvas/ui/button";
 import {
   CheckIcon,
@@ -211,14 +210,6 @@ export function ReviewSection({
   );
 
   const bodyRef = useRef<HTMLDivElement | null>(null);
-  const tutorialSection = useTutorialSection(title);
-
-  // The active tutorial chapter opens itself. Other chapters keep the
-  // reader's own collapse state.
-  useEffect(() => {
-    if (tutorialSection.state === "active") setCollapsed(false);
-  }, [setCollapsed, tutorialSection.state]);
-
   const toggleCollapsed = () => setCollapsed((current) => !current);
 
   // The table of contents (and anchor navigation) expands a collapsed
@@ -237,7 +228,7 @@ export function ReviewSection({
   }, []);
 
   // The classes are markers: find, the code view and the section ring look
-  // for a (collapsed) section, and the tutorial targets a section's body.
+  // for a (collapsed) section.
   return (
     <section
       className={cn(
@@ -249,7 +240,6 @@ export function ReviewSection({
         drawStyles.sectionRing,
       )}
       data-review-section={title}
-      data-tutorial-chapter-state={tutorialSection.state ?? undefined}
     >
       <div className={sectionStyles.header}>
         <IconButton
@@ -267,7 +257,6 @@ export function ReviewSection({
             data-review-copy-prose
             className={cn(
               sectionStyles.title,
-              tutorialSection.state === "active" && sectionStyles.titleActive,
               collapsed && sectionStyles.titleCollapsed,
               drawStyles.retitledHeading,
             )}
@@ -278,11 +267,6 @@ export function ReviewSection({
         {collapsed && summary && (
           <span className={sectionStyles.meta}>
             {reviewSectionSummaryLabel(summary)}
-          </span>
-        )}
-        {tutorialSection.state === "complete" && (
-          <span className={sectionStyles.complete}>
-            Complete <CheckIcon className={sectionStyles.completeIcon} />
           </span>
         )}
       </div>
@@ -905,17 +889,12 @@ const sectionStyles = {
   section: "tw:relative tw:w-full",
   header:
     "tw:relative tw:flex tw:items-baseline tw:gap-[12px] tw:w-[min(100%,_var(--review-prose-max-width))] tw:max-w-[calc(100cqi_-_2_*_var(--review-document-padding-inline))] tw:my-[40px_12px] tw:mx-[auto]",
-  // A finished tutorial chapter says so at the end of its heading row.
-  complete:
-    "tw:inline-flex tw:items-center tw:gap-[4px] tw:ml-[auto] tw:text-[color:var(--tutorial-ring)] tw:font-[family-name:var(--font-sans)] tw:text-[length:10px] tw:font-normal tw:leading-[16px]",
-  completeIcon: "tw:size-[12px]",
   // Expanded sections keep a faint chevron so "this collapses" is legible
   // without hovering the header first.
   toggle: "tw:absolute tw:top-[4px] tw:left-[-29px]",
   heading: "tw:min-w-0",
   title:
     "tw:[&:is(.canvas-document:is(*)_*)]:scroll-mt-[24px] tw:m-0 tw:[&:is(.canvas-document:is(*)_*)]:text-[color:var(--ink)] tw:[&:is(.canvas-document:is(*)_*)]:font-[family-name:var(--font-sans)] tw:[&:is(.canvas-document:is(*)_*)]:text-[length:26px] tw:[&:is(.canvas-document:is(*)_*)]:font-medium tw:[&:is(.canvas-document:is(*)_*)]:leading-[32px]",
-  titleActive: "tw:text-[color:var(--ink)]",
   titleCollapsed: "tw:text-[color:var(--ghost)]",
   meta: "tw:flex-[0_0_auto] tw:text-[color:var(--ink-faint)] tw:font-[family-name:var(--font-sans)] tw:text-[length:11px] tw:whitespace-nowrap",
 };

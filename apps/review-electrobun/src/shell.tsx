@@ -25,7 +25,6 @@ import {
 import {
   REVIEW_CANVAS_RESUME_EVENT,
   ReviewApiClient,
-  ReviewApiError,
   parseReviewCliInstallStatus,
   reviewSourceAnchor,
   reviewSourceComparison,
@@ -36,21 +35,21 @@ import type {
   ReviewCanvasContent,
   ReviewCanvasHandle,
   ReviewCanvasInstallContent,
-  ReviewCanvasTutorialBridge,
   ReviewCanvasUi,
   ReviewSourceView,
   ReviewVerbRequest,
   ReviewVerbResponse,
-  TutorialProgressV1,
 } from "@chalk/review-contracts";
 import { fuzzyMatches } from "@review/lib/fuzzy-match";
 import {
-  BookOpenIcon,
   ChevronDownIcon,
   FileTextIcon,
+  FileWarningIcon,
   SearchIcon,
   Settings2Icon,
   SquareArrowOutUpRightIcon,
+  SquareCheckIcon,
+  SquareIcon,
   TerminalIcon,
   XIcon,
 } from "lucide-react";
@@ -184,17 +183,26 @@ function Shell(
   const catalog = useRef<ReviewApiSummary[]>([]);
   const active = useRef<string | null>(null);
   const prefs = useRef(options.state.preferences);
-  const tutorialProgress = useRef(options.state.preferences.tutorialProgress);
   const listeners = useRef(new Set<() => void>());
   const [connected, setConnected] = useState(true);
   const connectedRef = useRef(true);
-  const tutorialIds = useRef(new Set<string>());
   const [loaded, setLoaded] = useState(false);
   const [install, setInstall] = useState<ReviewCanvasInstallContent>();
   const [error, setError] = useState<string>();
   const [settings, setSettings] = useState(false);
   const [setup, setSetup] = useState(false);
-  const [palette, setPalette] = useState(false);
+
+  // The palette swaps between its main page and the incompatible-review cleanup page.
+  const [palette, setPalette] = useState<"reviews" | "incompatible" | null>(
+    null,
+  );
+
+  const [search, setSearch] = useState("");
+
+  // Each page, and each reopening, starts with an empty search.
+  useEffect(() => setSearch(""), [palette]);
+
+  const [marked, setMarked] = useState<ReadonlySet<string>>(new Set());
   const media = useRef(matchMedia("(prefers-color-scheme: dark)"));
 
   const resources = useRef<{
@@ -294,12 +302,6 @@ function Shell(
     });
 
   const publish = () => {
-    for (const id of tutorialIds.current) {
-      const tab = tabs.current.get(id);
-
-      if (tab) tab.content = { ...tab.content, tutorial: tutorialBridge(id) };
-    }
-
     for (const listener of listeners.current) listener();
     render();
   };
@@ -308,51 +310,6 @@ function Shell(
     prefs.current = await options.rpc.request.setPreferences(patch);
 
     if (!abort.signal.aborted) publish();
-  }
-
-  function updateTutorial(progress: TutorialProgressV1) {
-    const previous = tutorialProgress.current;
-    tutorialProgress.current = progress;
-    publish();
-    void save({ tutorialProgress: progress }).catch((cause) => {
-      if (tutorialProgress.current === progress) {
-        tutorialProgress.current = previous;
-        publish();
-      }
-
-      fail(cause);
-    });
-  }
-
-  function tutorialBridge(id: string): ReviewCanvasTutorialBridge {
-    return {
-      content: {
-        reviewUuid: id,
-        progress: tutorialProgress.current,
-        keymap: prefs.current.keymap,
-      },
-      setStep: (step, checked) => {
-        const progress = tutorialProgress.current;
-        const steps = new Set(progress.checked);
-
-        if (checked) steps.add(step);
-        else steps.delete(step);
-        updateTutorial({ ...progress, checked: [...steps] });
-      },
-      dismiss: () =>
-        updateTutorial({ ...tutorialProgress.current, dismissed: true }),
-      reopen: () =>
-        updateTutorial({ ...tutorialProgress.current, dismissed: false }),
-      selectKeymap: async (keymap) => {
-        try {
-          await save({ keymap });
-          tutorialBridge(id).setStep("chooseKeymap", true);
-        } catch (cause) {
-          fail(cause);
-        }
-      },
-      close: () => close(id),
-    };
   }
 
   if (!uiRef.current)
@@ -413,7 +370,6 @@ function Shell(
 
   function close(id: string) {
     tabs.current.delete(id);
-    tutorialIds.current.delete(id);
 
     if (active.current === id) {
       active.current = [...tabs.current.keys()].at(-1) ?? null;
@@ -461,9 +417,6 @@ function Shell(
 
     tab.content = {
       kind: "api",
-      tutorial: tutorialIds.current.has(tab.id)
-        ? tutorialBridge(tab.id)
-        : undefined,
       reviewId: tab.id,
       softwareMapEnabled: true,
       structuralDiffEnabled: false,
@@ -503,14 +456,18 @@ function Shell(
   }
 
   async function open(id: string, title?: string, makeActive = true) {
+    if (catalog.current.find((item) => item.reviewId === id)?.incompatible)
+      throw new Error(
+        "This review was saved in an older format. Delete it from Incompatible reviews.",
+      );
+
     if (!tabs.current.has(id)) {
       const summary =
         catalog.current.find((item) => item.reviewId === id) ??
-        (await api.read<Pick<ReviewApiSummary, "title" | "version" | "origin">>(
+        (await api.read<Pick<ReviewApiSummary, "title" | "version">>(
           `/${encodeURIComponent(id)}?full=true`,
         ));
 
-      if (summary.origin?.tutorial) tutorialIds.current.add(id);
       add({
         reviewId: id,
         title: title ?? summary.title,
@@ -615,7 +572,7 @@ function Shell(
       if (command === "closeTab") {
         setSettings(false);
         setSetup(false);
-        setPalette(false);
+        setPalette(null);
       }
 
       return;
@@ -623,7 +580,7 @@ function Shell(
 
     switch (command) {
       case "commandPalette":
-        setPalette(true);
+        setPalette("reviews");
         break;
       case "settings":
         setSettings(true);
@@ -634,7 +591,7 @@ function Shell(
       case "find":
         // In-review find is disabled until it works; ⌘F only searches reviews from Home.
         if (active.current) break;
-        setPalette(true);
+        setPalette("reviews");
         break;
     }
   }
@@ -691,35 +648,16 @@ function Shell(
         for (const id of prefs.current.reviewIds) {
           const summary = summaries.find((item) => item.reviewId === id);
 
-          if (summary) add(summary);
-          else {
-            try {
-              const snapshot = await api.read<
-                Pick<ReviewApiSummary, "title" | "version" | "origin">
-              >(`/${encodeURIComponent(id)}?full=true`, abort.signal);
-
-              if (snapshot.origin?.tutorial) {
-                tutorialIds.current.add(id);
-
-                if (!abort.signal.aborted)
-                  add({
-                    reviewId: id,
-                    title: snapshot.title,
-                    version: snapshot.version,
-                  });
-              }
-            } catch (cause) {
-              if (!(cause instanceof ReviewApiError && cause.status === 404))
-                throw cause;
-            }
-          }
+          if (summary && !summary.incompatible) add(summary);
         }
 
         if (abort.signal.aborted) return;
         active.current = tabs.current.has(prefs.current.activeReviewId ?? "")
           ? prefs.current.activeReviewId
           : ([...tabs.current.keys()].at(-1) ??
-            summaries.find((review) => !review.dismissedAt)?.reviewId ??
+            summaries.find(
+              (review) => !review.dismissedAt && !review.incompatible,
+            )?.reviewId ??
             null);
 
         const initial = summaries.find(
@@ -735,7 +673,7 @@ function Shell(
         for (const [id] of tabs.current) {
           const summary = summaries.find((item) => item.reviewId === id);
 
-          if (!summary && !tutorialIds.current.has(id)) close(id);
+          if (!summary) close(id);
           // Settling puts a review away; the palette's Settled group restores it.
           else if (
             summary?.dismissedAt &&
@@ -837,21 +775,6 @@ function Shell(
     };
   }, []);
 
-  async function openTutorial() {
-    requireConnected();
-
-    const response = await request(
-      options.state.discovery.url + "/tutorial/prepare",
-      { method: "POST" },
-    );
-
-    if (!response.ok) throw new Error("Cannot prepare the tutorial.");
-    const result = await response.json();
-    tutorialIds.current.add(result.reviewUuid);
-    updateTutorial({ ...tutorialProgress.current, dismissed: false });
-    await open(result.reviewUuid, "Tutorial");
-  }
-
   function openInMenu(anchor: HTMLElement) {
     ui.showMenu({
       anchor,
@@ -877,22 +800,16 @@ function Shell(
       review.title ||
       "Untitled review",
     repository: review.repositoryName,
-    dismissed: !!review.dismissedAt,
+    group: review.incompatible
+      ? "incompatible"
+      : review.dismissedAt
+        ? "settled"
+        : "open",
   }));
 
-  for (const tab of tabs.current.values()) {
-    if (!reviews.some((review) => review.id === tab.id))
-      reviews.push({
-        id: tab.id,
-        title: tab.title,
-        repository: "Tutorial",
-        dismissed: false,
-      });
-  }
-
-  const reviewItems = (dismissed: boolean) =>
+  const reviewItems = (group: (typeof reviews)[number]["group"]) =>
     reviews
-      .filter((review) => review.dismissed === dismissed)
+      .filter((review) => review.group === group)
       .map((review) => (
         <CommandItem
           key={review.id}
@@ -900,9 +817,9 @@ function Shell(
           keywords={[review.title, review.repository]}
           disabled={!connected}
           onSelect={() => {
-            setPalette(false);
+            setPalette(null);
             void (async () => {
-              if (review.dismissed)
+              if (group === "settled")
                 await command({
                   type: "attention",
                   reviewId: review.id,
@@ -921,6 +838,28 @@ function Shell(
           </span>
         </CommandItem>
       ));
+
+  const openItems = reviewItems("open");
+  const settledItems = reviewItems("settled");
+
+  const incompatible = reviews.filter(
+    (review) => review.group === "incompatible",
+  );
+
+  async function deleteMarked() {
+    const ids = incompatible
+      .filter((review) => marked.has(review.id))
+      .map((review) => review.id);
+
+    setPalette(null);
+
+    if (
+      await ui.confirmDelete?.(
+        ids.length === 1 ? "1 review" : `${ids.length} reviews`,
+      )
+    )
+      for (const reviewId of ids) await command({ type: "delete", reviewId });
+  }
 
   const resolvedTheme = theme();
   const themeClass = reviewCanvasThemeClass(resolvedTheme);
@@ -959,7 +898,7 @@ function Shell(
             className="tw:min-w-0 tw:flex-1 tw:justify-start tw:rounded-r-none tw:font-normal tw:text-muted-foreground"
             aria-label="Search reviews"
             title="Search reviews (⇧⇧)"
-            onClick={() => setPalette(true)}
+            onClick={() => setPalette("reviews")}
           >
             <SearchIcon aria-hidden="true" />
             {currentTab && (
@@ -1069,9 +1008,9 @@ function Shell(
               <p>
                 {reviews.length
                   ? "Press Shift twice to search your reviews."
-                  : "Publish a review from your agent, or open the tutorial to get started."}
+                  : "Publish a review from your agent to get started."}
               </p>
-              <Button variant="outline" onClick={() => setPalette(true)}>
+              <Button variant="outline" onClick={() => setPalette("reviews")}>
                 Browse reviews
               </Button>
             </div>
@@ -1121,10 +1060,6 @@ function Shell(
                     await current.apply({ shim: true });
                   },
                 },
-                openTutorial: () => {
-                  setSetup(false);
-                  void openTutorial().catch(fail);
-                },
               }}
             />
           </DialogContent>
@@ -1134,51 +1069,113 @@ function Shell(
         container={shellElement.current}
         title="Command palette"
         description="Search reviews and run Chalk commands."
-        open={palette}
-        onOpenChange={setPalette}
+        open={palette !== null}
+        onOpenChange={(open) => setPalette(open ? "reviews" : null)}
         filter={(_value, search, keywords = []) =>
           fuzzyMatches(search, ...keywords) ? 1 : 0
         }
       >
-        <CommandInput placeholder="Search reviews…" />
-        <CommandList>
-          <CommandEmpty>
-            {loaded ? "No matching reviews." : "Loading reviews…"}
-          </CommandEmpty>
-          <CommandGroup heading="Reviews">{reviewItems(false)}</CommandGroup>
-          <CommandGroup heading="Settled">{reviewItems(true)}</CommandGroup>
-          <CommandGroup heading="Chalk">
-            <CommandItem
-              keywords={["Tutorial"]}
-              disabled={!connected}
-              onSelect={() => {
-                setPalette(false);
-                void openTutorial().catch(fail);
-              }}
-            >
-              <BookOpenIcon aria-hidden="true" /> Tutorial
-            </CommandItem>
-            <CommandItem
-              keywords={["Command setup"]}
-              disabled={!connected}
-              onSelect={() => {
-                setPalette(false);
-                setSetup(true);
-              }}
-            >
-              <TerminalIcon aria-hidden="true" /> Command setup
-            </CommandItem>
-            <CommandItem
-              keywords={["Settings"]}
-              onSelect={() => {
-                setPalette(false);
-                setSettings(true);
-              }}
-            >
-              <Settings2Icon aria-hidden="true" /> Settings
-            </CommandItem>
-          </CommandGroup>
-        </CommandList>
+        <CommandInput
+          placeholder={
+            palette === "incompatible"
+              ? "Search incompatible reviews…"
+              : "Search reviews…"
+          }
+          value={search}
+          onValueChange={setSearch}
+        />
+        {palette === "incompatible" ? (
+          <CommandList>
+            <CommandEmpty>No matching reviews.</CommandEmpty>
+            <CommandGroup heading="Saved in an older format">
+              {incompatible.map((review) => (
+                <CommandItem
+                  key={review.id}
+                  value={review.id}
+                  keywords={[review.title, review.repository]}
+                  aria-checked={marked.has(review.id)}
+                  onSelect={() =>
+                    setMarked((current) => {
+                      const next = new Set(current);
+
+                      if (!next.delete(review.id)) next.add(review.id);
+
+                      return next;
+                    })
+                  }
+                >
+                  {marked.has(review.id) ? (
+                    <SquareCheckIcon aria-hidden="true" />
+                  ) : (
+                    <SquareIcon aria-hidden="true" />
+                  )}
+                  <span className="review-shell-review-label tw:flex tw:min-w-0 tw:flex-col tw:gap-1 tw:text-left tw:text-xs tw:[&_span]:truncate">
+                    <span title={review.title}>{review.title}</span>
+                    <span className="review-shell-review-repository tw:text-[11px] tw:text-[var(--ink-faint)]">
+                      {review.repository}
+                    </span>
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandGroup heading="Chalk">
+              <CommandItem
+                keywords={["Delete selected"]}
+                disabled={!connected || marked.size === 0}
+                onSelect={() => void deleteMarked().catch(fail)}
+              >
+                <FileWarningIcon aria-hidden="true" /> Delete selected
+                {marked.size > 0 && ` (${marked.size})`}
+              </CommandItem>
+            </CommandGroup>
+          </CommandList>
+        ) : (
+          <CommandList>
+            <CommandEmpty>
+              {loaded ? "No matching reviews." : "Loading reviews…"}
+            </CommandEmpty>
+            {/* cmdk shows an empty group's heading, so skip groups with no reviews. */}
+            {openItems.length > 0 && (
+              <CommandGroup heading="Reviews">{openItems}</CommandGroup>
+            )}
+            {settledItems.length > 0 && (
+              <CommandGroup heading="Settled">{settledItems}</CommandGroup>
+            )}
+            <CommandGroup heading="Chalk">
+              <CommandItem
+                keywords={["Command setup"]}
+                disabled={!connected}
+                onSelect={() => {
+                  setPalette(null);
+                  setSetup(true);
+                }}
+              >
+                <TerminalIcon aria-hidden="true" /> Command setup
+              </CommandItem>
+              <CommandItem
+                keywords={["Settings"]}
+                onSelect={() => {
+                  setPalette(null);
+                  setSettings(true);
+                }}
+              >
+                <Settings2Icon aria-hidden="true" /> Settings
+              </CommandItem>
+              {incompatible.length > 0 && (
+                <CommandItem
+                  keywords={["Incompatible reviews"]}
+                  onSelect={() => {
+                    setMarked(new Set());
+                    setPalette("incompatible");
+                  }}
+                >
+                  <FileWarningIcon aria-hidden="true" /> Incompatible reviews (
+                  {incompatible.length})
+                </CommandItem>
+              )}
+            </CommandGroup>
+          </CommandList>
+        )}
       </CommandDialog>
       {settings && (
         <SettingsDialog
@@ -1187,7 +1184,9 @@ function Shell(
           save={(patch) => {
             void save(patch).catch(fail);
           }}
-          hasGitLabToken={(host) => options.rpc.request.hasGitLabToken({ host })}
+          hasGitLabToken={(host) =>
+            options.rpc.request.hasGitLabToken({ host })
+          }
           saveGitLabToken={(host, token) =>
             options.rpc.request.saveGitLabToken({ host, token })
           }
@@ -1220,10 +1219,12 @@ function SettingsDialog({
 
   const [gitlabHost, setGitlabHost] = useState("gitlab.com");
   const [gitlabSaved, setGitlabSaved] = useState(false);
+  const [replacingToken, setReplacingToken] = useState(false);
 
   useEffect(() => {
     let current = true;
     setGitlabSaved(false);
+    setReplacingToken(false);
     hasGitLabToken(gitlabHost).then((saved) => {
       if (current) setGitlabSaved(saved);
     }, fail);
@@ -1242,6 +1243,7 @@ function SettingsDialog({
     >
       <DialogContent
         container={container}
+        aria-describedby={undefined}
         className="review-shell-settings tw:max-w-[min(420px,calc(100%-32px))] tw:font-[family-name:var(--chrome-font)] tw:text-sm"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
@@ -1253,66 +1255,81 @@ function SettingsDialog({
       >
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
-          <DialogDescription>Make Chalk feel at home.</DialogDescription>
         </DialogHeader>
-        <div className="review-shell-settings-fields tw:grid tw:gap-4 tw:py-3 tw:[&_label]:flex tw:[&_label]:items-center tw:[&_label]:justify-between tw:[&_label]:gap-4 tw:[&_select]:min-w-[132px]">
-          <label htmlFor="shell-appearance">
-            <span>Appearance</span>
-            <NativeSelect
-              id="shell-appearance"
-              aria-label="Appearance"
-              value={preferences.theme}
-              onChange={(event) => {
-                // SAFETY: the options below contain only supported themes.
-                save({
-                  theme: event.target.value as ShellPreferences["theme"],
-                });
-              }}
-            >
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </NativeSelect>
-          </label>
-          <label htmlFor="shell-debug-logging">
-            <span>Debug logging</span>
-            <Switch
-              id="shell-debug-logging"
-              checked={preferences.debugLogging}
-              onCheckedChange={(debugLogging) => save({ debugLogging })}
-            />
-          </label>
-          <label htmlFor="shell-gitlab-host">
-            <span>GitLab host</span>
-            <Input
-              id="shell-gitlab-host"
-              className="tw:max-w-[200px]"
-              value={gitlabHost}
-              onChange={(event) => setGitlabHost(event.target.value.trim())}
-            />
-          </label>
-          <label htmlFor="shell-gitlab-token">
-            <span>GitLab token</span>
-            <Input
-              id="shell-gitlab-token"
-              key={gitlabHost}
-              className="tw:max-w-[200px]"
-              type="password"
-              autoComplete="off"
-              placeholder={gitlabSaved ? "••••••••••••" : "Paste a token"}
-              onBlur={(event) => {
-                const input = event.target;
-                const token = input.value.trim();
+        <div className="review-shell-settings-fields tw:grid tw:gap-6 tw:py-3 tw:[&_section]:grid tw:[&_section]:gap-4 tw:[&_h3]:text-xs tw:[&_h3]:font-medium tw:[&_h3]:text-muted-foreground tw:[&_label]:flex tw:[&_label]:items-center tw:[&_label]:justify-between tw:[&_label]:gap-4 tw:[&_select]:min-w-[132px]">
+          <section>
+            <h3>General</h3>
+            <label htmlFor="shell-appearance">
+              <span>Appearance</span>
+              <NativeSelect
+                id="shell-appearance"
+                aria-label="Appearance"
+                value={preferences.theme}
+                onChange={(event) => {
+                  // SAFETY: the options below contain only supported themes.
+                  save({
+                    theme: event.target.value as ShellPreferences["theme"],
+                  });
+                }}
+              >
+                <option value="system">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </NativeSelect>
+            </label>
+            <label htmlFor="shell-debug-logging">
+              <span>Debug logging</span>
+              <Switch
+                id="shell-debug-logging"
+                checked={preferences.debugLogging}
+                onCheckedChange={(debugLogging) => save({ debugLogging })}
+              />
+            </label>
+          </section>
+          <section>
+            <h3>GitLab</h3>
+            <label htmlFor="shell-gitlab-host">
+              <span>Host</span>
+              <Input
+                id="shell-gitlab-host"
+                className="tw:max-w-[200px]"
+                value={gitlabHost}
+                onChange={(event) => setGitlabHost(event.target.value.trim())}
+              />
+            </label>
+            <label htmlFor="shell-gitlab-token">
+              <span>Token</span>
+              {/* A saved token stays locked until the user explicitly asks to replace it. */}
+              {gitlabSaved && !replacingToken ? (
+                <Button
+                  variant="outline"
+                  onClick={() => setReplacingToken(true)}
+                >
+                  Replace saved token
+                </Button>
+              ) : (
+                <Input
+                  id="shell-gitlab-token"
+                  key={gitlabHost}
+                  className="tw:max-w-[200px]"
+                  type="password"
+                  autoComplete="off"
+                  autoFocus={replacingToken}
+                  placeholder="Paste a token"
+                  onBlur={(event) => {
+                    const token = event.target.value.trim();
 
-                // Blank keeps the saved token.
-                if (!token || !gitlabHost) return;
-                saveGitLabToken(gitlabHost, token).then(() => {
-                  input.value = "";
-                  setGitlabSaved(true);
-                }, fail);
-              }}
-            />
-          </label>
+                    // Blank keeps the saved token.
+                    if (!token || !gitlabHost) return setReplacingToken(false);
+                    saveGitLabToken(gitlabHost, token).then(() => {
+                      setGitlabSaved(true);
+                      setReplacingToken(false);
+                    }, fail);
+                  }}
+                />
+              )}
+            </label>
+          </section>
         </div>
         <DialogFooter>
           <Button onClick={close}>Done</Button>

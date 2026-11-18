@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { cp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -59,13 +59,6 @@ export default defineConfig({
         dirty: buildChanges === null ? null : buildChanges.length > 0,
         builtAt: new Date().toISOString(),
       }) + "\n",
-    );
-
-    await rm(resolve(packageRoot, "assets"), { recursive: true, force: true });
-    await cp(
-      resolve(packageRoot, "../tutorial/assets"),
-      resolve(packageRoot, "assets"),
-      { recursive: true },
     );
 
     await cp(

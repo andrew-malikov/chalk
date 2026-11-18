@@ -3,10 +3,7 @@ import type {
   ReviewDiffLayout,
   ReviewInlineEditorRange,
 } from "@chalk/review-contracts";
-import {
-  REVIEW_KEYMAP_CHOICES,
-  REVIEW_TUTORIAL_STEP_IDS,
-} from "@chalk/review-contracts";
+import { REVIEW_KEYMAP_CHOICES } from "@chalk/review-contracts";
 import { z } from "zod";
 
 export const preferencesSchema = z.strictObject({
@@ -24,13 +21,6 @@ export const preferencesSchema = z.strictObject({
   keymap: z.enum(REVIEW_KEYMAP_CHOICES).default("none"),
   // Every Chalk process reads this from preferences.json; see log.ts.
   debugLogging: z.boolean().default(false),
-  tutorialProgress: z
-    .strictObject({
-      version: z.literal(1),
-      checked: z.array(z.enum(REVIEW_TUTORIAL_STEP_IDS)),
-      dismissed: z.boolean(),
-    })
-    .default(() => ({ version: 1 as const, checked: [], dismissed: false })),
 });
 
 export type ShellPreferences = z.infer<typeof preferencesSchema>;
@@ -44,7 +34,6 @@ export const defaultPreferences: ShellPreferences = {
   activeReviewId: null,
   keymap: "none",
   debugLogging: false,
-  tutorialProgress: { version: 1, checked: [], dismissed: false },
 };
 
 export type HostState =

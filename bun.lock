@@ -22,7 +22,6 @@
       "dependencies": {
         "@chalk/review": "workspace:*",
         "@chalk/review-contracts": "workspace:*",
-        "@chalk/tutorial": "workspace:*",
         "@mr_mint/elkjs-libavoid": "0.5.0",
         "@pierre/diffs": "1.6.4",
         "@pierre/trees": "1.0.0-beta.6",
@@ -224,7 +223,6 @@
         "@chalk/json": "workspace:*",
         "@chalk/review": "workspace:*",
         "@chalk/review-contracts": "workspace:*",
-        "@chalk/tutorial": "workspace:*",
         "@dev.fast/diffr": "0.1.23",
         "hono": "4.13.16",
         "pino": "10.4.0",
@@ -237,20 +235,6 @@
         "typescript": "6.0.3",
         "vite-plus": "1.5.0",
         "vitest": "5.1.0",
-      },
-    },
-    "packages/tutorial": {
-      "name": "@chalk/tutorial",
-      "version": "0.0.0",
-      "dependencies": {
-        "zod": "catalog:",
-      },
-      "devDependencies": {
-        "@chalk/review": "workspace:*",
-        "@chalk/review-contracts": "workspace:*",
-        "@chalk/server": "workspace:*",
-        "@types/node": "24.12.2",
-        "typescript": "6.0.3",
       },
     },
   },
@@ -313,8 +297,6 @@
     "@chalk/review-electrobun": ["@chalk/review-electrobun@workspace:apps/review-electrobun"],
 
     "@chalk/server": ["@chalk/server@workspace:packages/server"],
-
-    "@chalk/tutorial": ["@chalk/tutorial@workspace:packages/tutorial"],
 
     "@colors/colors": ["@colors/colors@1.5.0", "", {}, "sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ=="],
 
@@ -1899,8 +1881,6 @@
     "@chalk/review-electrobun/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
     "@chalk/server/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
-
-    "@chalk/tutorial/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
     "@cucumber/gherkin-utils/@cucumber/gherkin": ["@cucumber/gherkin@38.0.0", "", { "dependencies": { "@cucumber/messages": ">=31.0.0 <33" } }, "sha512-duEXK+KDfQUzu3vsSzXjkxQ2tirF5PRsc1Xrts6THKHJO6mjw4RjM8RV+vliuDasmhhrmdLcOcM7d9nurNTJKw=="],
 

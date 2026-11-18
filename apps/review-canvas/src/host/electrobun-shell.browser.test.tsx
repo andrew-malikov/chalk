@@ -4,12 +4,10 @@ import {
   fixtureReviewBridge,
   libavoidWasmUrl,
 } from "@canvas/test/fixture-review-bridge";
-import {
-  type ReviewCliInstallStatus,
-  type ReviewDesktopVerbFrame,
-  parseJsonText,
+import type {
+  ReviewCliInstallStatus,
+  ReviewDesktopVerbFrame,
 } from "@chalk/review-contracts";
-import { defineSoftwareMap } from "@review/software-map/software-map-model";
 // oxlint-disable no-restricted-imports -- Integration test imports the native app adapter alongside the canvas.
 import { createCanvasUi } from "@shell/canvas-ui";
 import { defaultPreferences } from "@shell/rpc";
@@ -81,39 +79,6 @@ fixtures.set(
   }),
 );
 
-const tutorial = "44444444-4444-4444-8444-444444444444";
-
-fixtures.set(
-  tutorial,
-  fixtureReviewBridge({
-    snapshot: {
-      reviewId: tutorial,
-      title: "Hidden tutorial",
-      version: 0,
-      createdAt: "2026-10-04T00:00:00.000Z",
-      origin: { tutorial: true },
-      document: [
-        { id: "tour", type: "markdown", markdown: "Managed tutorial document" },
-        { id: "tutorial-map", type: "software_map", mapVersionId: c },
-        { id: "tutorial-keys", type: "tutorial", kind: "keymap" },
-      ],
-    },
-    maps: {
-      [c]: parseJsonText(
-        JSON.stringify({
-          ...defineSoftwareMap({
-            systems: { sample: { label: "Sample service" } },
-          }),
-          side: "head",
-          commit: "head",
-          countsByElementPath: {},
-          unmappedByElementPath: {},
-        }),
-      ),
-    },
-  }),
-);
-
 let catalogUpdates: Array<() => void> = [];
 
 let closeControl: () => void;
@@ -137,6 +102,7 @@ let installRequests: Array<{ token: string | null; body: unknown }> = [];
 let catalogValues: Array<
   Omit<(typeof summaries)[number], "dismissedAt"> & {
     dismissedAt: string | null;
+    incompatible?: boolean;
   }
 > = [];
 
@@ -153,7 +119,7 @@ async function setup(
   activeReviewId: string | null = null,
   emptyCatalog = false,
   installFailures = 0,
-  tutorialReviewId = a,
+  incompatible: string[] = [],
 ) {
   activeStreams = 0;
   controlResults = [];
@@ -161,7 +127,12 @@ async function setup(
   catalogUpdates = [];
   healthFailures = 0;
   controlAttachments = 0;
-  catalogValues = emptyCatalog ? [] : [...summaries];
+  catalogValues = emptyCatalog
+    ? []
+    : summaries.map((item) => ({
+        ...item,
+        incompatible: incompatible.includes(item.reviewId) || undefined,
+      }));
   commands = [];
   let commandInstalled = false;
   let preferences = { ...defaultPreferences, reviewIds, activeReviewId };
@@ -380,9 +351,6 @@ async function setup(
       return new Response(stream);
     }
 
-    if (url.pathname === "/tutorial/prepare")
-      return Response.json({ ok: true, reviewUuid: tutorialReviewId });
-
     if (url.pathname === "/reviews-api/commands") {
       commands.push(JSON.parse(String(init?.body)).operation);
 
@@ -428,14 +396,14 @@ const openReviews = () =>
     section.getAttribute("aria-label"),
   );
 
-async function choose(label: string) {
-  await act(async () => mounted!.command("commandPalette"));
-
-  const item = [...container.querySelectorAll<HTMLElement>("[cmdk-item]")].find(
-    (item) => item.textContent?.includes(label),
+const paletteItem = (label: string) =>
+  [...container.querySelectorAll<HTMLElement>("[cmdk-item]")].find((item) =>
+    item.textContent?.includes(label),
   )!;
 
-  await act(async () => item.click());
+async function choose(label: string) {
+  await act(async () => mounted!.command("commandPalette"));
+  await act(async () => paletteItem(label).click());
 }
 
 const button = (label: string) =>
@@ -476,6 +444,21 @@ test("settling the shown review moves on to the next and the palette restores it
     action: "restore",
   });
   await expect.poll(activeReview).toBe("Alpha");
+});
+
+test("launch skips a broken review, and its own palette page deletes it", async () => {
+  await setup([a, b], b, false, 0, [b]);
+  await expect.poll(activeReview).toBe("Alpha");
+  expect(openReviews()).toEqual(["Alpha"]);
+  await choose("Incompatible reviews");
+  await act(async () => paletteItem("Beta").click());
+  await act(async () => paletteItem("Delete selected").click());
+  await act(async () =>
+    page.getByRole("button", { name: "Delete", exact: true }).click(),
+  );
+  await vi.waitFor(() =>
+    expect(commands).toContainEqual({ type: "delete", reviewId: b }),
+  );
 });
 
 test("restores catalog reviews and drops missing review IDs", async () => {
@@ -653,7 +636,6 @@ test("non-review canvas disposes its explicit theme subscription", async () => {
         openReview() {},
         deleteReview: async () => {},
         dismissReview: async () => {},
-        openTutorial: async () => {},
       },
       ui,
     );
@@ -703,7 +685,7 @@ test("delete confirmation settles on cancel, approval and owner disposal", async
   expect(container.querySelector('[role="alertdialog"]')).toBeNull();
 });
 
-test("command setup installs the command and unlocks agent setup and the tutorial", async () => {
+test("command setup installs the command and unlocks agent setup", async () => {
   await setup([], null, true);
   await choose("Command setup");
   await vi.waitFor(() =>
@@ -714,18 +696,6 @@ test("command setup installs the command and unlocks agent setup and the tutoria
     expect(container.textContent).toContain("Connect Claude"),
   );
   expect(installRequests).toEqual([{ token: "test", body: { shim: true } }]);
-
-  const tour = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Expand Take the tour"]',
-  );
-
-  expect(tour?.disabled).toBe(false);
-  await act(async () => tour!.click());
-  await act(async () => button("Open the tutorial").click());
-  await vi.waitFor(() =>
-    expect(container.textContent).toContain("Alpha document"),
-  );
-  expect(container.querySelector('[role="dialog"]')).toBeNull();
 });
 
 test("failed command installation stays on setup and can be retried", async () => {
@@ -750,94 +720,6 @@ test("failed command installation stays on setup and can be retried", async () =
   expect(container.textContent).not.toContain(
     "Cannot write the chalk command.",
   );
-});
-
-test("the tutorial has a guide, and finishes with its progress saved", async () => {
-  const rpc = await setup([], null, true, 0, tutorial);
-  await choose("Tutorial");
-  await vi.waitFor(() =>
-    expect(
-      container.querySelector('[aria-label="Tutorial guide"]'),
-    ).not.toBeNull(),
-  );
-
-  await act(async () =>
-    container
-      .querySelector<HTMLButtonElement>('[aria-label="Hide tutorial"]')!
-      .click(),
-  );
-  await vi.waitFor(() =>
-    expect(container.querySelector('[aria-label="Tutorial guide"]')).toBeNull(),
-  );
-  await act(async () =>
-    container
-      .querySelector<HTMLButtonElement>('[aria-label="Show tutorial"]')!
-      .click(),
-  );
-  await vi.waitFor(() =>
-    expect(
-      container.querySelector('[aria-label="Tutorial guide"]'),
-    ).not.toBeNull(),
-  );
-
-  const keymap = [
-    ...container.querySelectorAll('[aria-label="Keybindings"] button'),
-  ].find((button) => button.textContent === "Vim") as HTMLButtonElement;
-
-  expect(keymap.disabled).toBe(false);
-  await act(async () => keymap.click());
-  await vi.waitFor(() =>
-    expect(
-      container
-        .querySelector('[aria-label="Tutorial guide"]')
-        ?.getAttribute("data-tutorial-step"),
-    ).toBe("showHover"),
-  );
-  expect(rpc.request.setPreferences).toHaveBeenCalledWith({ keymap: "vim" });
-
-  const guideButton = (label: string) =>
-    [
-      ...container.querySelectorAll<HTMLButtonElement>(
-        '[aria-label="Tutorial guide"] button',
-      ),
-    ].find((button) => button.textContent === label);
-
-  while (guideButton("Next")) {
-    const before = container
-      .querySelector('[aria-label="Tutorial guide"]')!
-      .getAttribute("data-tutorial-step");
-
-    await act(async () => guideButton("Next")!.click());
-    await vi.waitFor(() =>
-      expect(
-        container
-          .querySelector('[aria-label="Tutorial guide"]')
-          ?.getAttribute("data-tutorial-step"),
-      ).not.toBe(before),
-    );
-  }
-
-  await act(async () => guideButton("Finish tour")!.click());
-  await vi.waitFor(() =>
-    expect(openReviews()).not.toContain("Hidden tutorial"),
-  );
-  expect(rpc.request.setPreferences).toHaveBeenCalledWith(
-    expect.objectContaining({
-      tutorialProgress: expect.objectContaining({
-        checked: expect.arrayContaining(["getHelp"]),
-      }),
-    }),
-  );
-});
-
-test("the palette tutorial opens through the sidecar without CLI installation", async () => {
-  await setup([b], b);
-  await expect.poll(activeReview).toBe("Beta");
-  await choose("Tutorial");
-  await vi.waitFor(() =>
-    expect(container.textContent).toContain("Alpha document"),
-  );
-  expect(activeReview()).toBe("Alpha");
 });
 
 test("agent open acknowledgment returns the server's desktop settings", async () => {
@@ -910,37 +792,6 @@ test("ordinary external links reach the native opener while internal anchors sta
     ),
   );
   expect(rpc.request.openExternal).toHaveBeenCalledTimes(1);
-});
-
-test("restores a managed tutorial absent from the catalog and keeps it through refresh", async () => {
-  await setup([tutorial, "deleted-review"], tutorial);
-  await vi.waitFor(() =>
-    expect(container.textContent).toContain("Managed tutorial document"),
-  );
-  expect(activeReview()).toBe("Hidden tutorial");
-  await act(async () => catalogUpdates.forEach((push) => push()));
-  await vi.waitFor(() => expect(openReviews()).toContain("Hidden tutorial"));
-  expect(openReviews()).not.toContain("deleted-review");
-});
-
-test("incoming tutorial survives the next catalog snapshot", async () => {
-  await setup();
-  await vi.waitFor(() => expect(activeStreams).toBe(2));
-  await act(async () =>
-    controlFrame({
-      event: "desktop-verb",
-      id: "11111111-1111-4111-8111-111111111117",
-      request: {
-        name: "openApiReview",
-        args: { reviewId: tutorial, title: "Hidden tutorial" },
-      },
-    }),
-  );
-  await vi.waitFor(() => expect(controlResults).toHaveLength(1));
-  await act(async () => catalogUpdates.forEach((push) => push()));
-  await vi.waitFor(() =>
-    expect(container.textContent).toContain("Managed tutorial document"),
-  );
 });
 
 test("transient health loss disables the shell and retries the live control connection", async () => {

@@ -727,7 +727,7 @@ export class LocalReviewData {
     );
 
     // Registration may follow replacement of a managed repository at the same
-    // path (for example resetting the tutorial). Reopen its Git reader too.
+    // path. Reopen its Git reader too.
     await this.closeReader(repository.id);
     this.repositories.delete(repository.id);
 

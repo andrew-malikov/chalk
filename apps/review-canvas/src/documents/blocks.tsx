@@ -8,12 +8,6 @@ import { drawStyles } from "@canvas/drawing/draw-styles";
 import { cn } from "@canvas/lib/utils";
 import { AnchorLink, ReviewSection } from "@canvas/review/review-components";
 import { SoftwareMap } from "@canvas/software-map/SoftwareMap";
-import { TutorialAuthoringConversation } from "@canvas/tutorial/tutorial-authoring-conversation";
-import {
-  TutorialFeature,
-  TutorialViewButton,
-} from "@canvas/tutorial/tutorial-dynamic-content";
-import { TutorialKeymapPicker } from "@canvas/tutorial/tutorial-keymap-picker";
 import { type Block, type BlockType } from "@review/documents/document";
 import {
   Component,
@@ -203,37 +197,7 @@ function SoftwareMapBlock({ node, data }: BlockProps<"software_map">) {
 type Components = { [K in BlockType]: BlockComponent<K> };
 
 /** Every block kind's component, keyed by type. A kind without a component is a compile error. */
-function TutorialBlock({ node, children }: BlockProps<"tutorial">) {
-  switch (node.kind) {
-    case "keymap":
-      return (
-        <div className={cn(documentStyles.column, drawStyles.blockChild)}>
-          <TutorialKeymapPicker />
-        </div>
-      );
-    case "conversation":
-      return (
-        <div className={cn(documentStyles.column, drawStyles.blockChild)}>
-          <TutorialAuthoringConversation conversation={node.conversation} />
-        </div>
-      );
-    case "view":
-      return (
-        <div className={cn(documentStyles.column, drawStyles.blockChild)}>
-          <TutorialViewButton view={node.view}>{node.label}</TutorialViewButton>
-        </div>
-      );
-    case "feature":
-      return (
-        <TutorialFeature feature={node.feature}>
-          {children(node.children)}
-        </TutorialFeature>
-      );
-  }
-}
-
 export const blockComponents = {
-  tutorial: TutorialBlock,
   markdown: MarkdownBlock,
   code: CodeBlock,
   divider: DividerBlock,

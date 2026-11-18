@@ -8,7 +8,7 @@ export default {
   },
   build: {
     mainProcess: "cottontail",
-    cottontail: { entrypoint: "src/main.ts" },
+    cottontail: { entrypoint: "src/main.ts", capabilities: ["secrets"] },
     copy: {
       "dist/index.html": "views/mainview/index.html",
       "dist/assets": "views/mainview/assets",

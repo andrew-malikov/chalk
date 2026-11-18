@@ -389,24 +389,3 @@
     background-position: -100% 0;
   }
 }
-
-@keyframes tutorial-experience-target-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 4px var(--tutorial-ring-glow);
-  }
-  50% {
-    box-shadow: 0 0 0 8px
-      color-mix(in srgb, var(--tutorial-ring-glow) 45%, transparent);
-  }
-}
-
-@keyframes tutorial-experience-link-pulse {
-  0%,
-  100% {
-    background-color: var(--tutorial-ring-glow);
-  }
-  50% {
-    background-color: color-mix(in srgb, var(--tutorial-ring) 22%, transparent);
-  }
-}

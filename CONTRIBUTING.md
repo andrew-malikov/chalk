@@ -60,7 +60,6 @@ Chalk is split into application hosts and shared packages.
 | `packages/cli/` | Command parsing, terminal selection, and CLI output |
 | `packages/mcp/` | MCP transport and tools that call the server |
 | `packages/review-contracts/` | Process contracts, HTTP client, and event streams |
-| `packages/tutorial/` | Tutorial assets, their generation, and runtime asset paths |
 | `packages/local-vcs/` | Local version-control operations |
 | `packages/json/` | JSON decoding and value helpers |
 | `packages/agent-plugins/` | Integrations for supported coding agents |

@@ -82,7 +82,6 @@ import {
 } from "./styles/markers";
 import { shellStyles } from "./styles/shell-styles";
 import { themeStyles } from "./styles/theme-styles";
-import { TutorialExperienceProvider } from "./tutorial/tutorial-experience";
 import { MarkerUnderline } from "./ui/icons";
 
 const DEFAULT_SIDE_PEEK_WIDTH = 560;
@@ -524,10 +523,7 @@ function ReviewLayoutContent({
               (banner ? shellStyles.diffShellBanner : shellStyles.diffShell),
           )}
         >
-          <TutorialExperienceProvider
-            shellRef={shellRef}
-            scrollRegionRef={scrollRegionRef}
-          >
+          <>
             {activeView !== "diff" && topbar}
             {banner}
             <div ref={setPageOverlay} className="tw:contents" />
@@ -560,7 +556,7 @@ function ReviewLayoutContent({
               )}
               <DiffPage active={activeView === "diff"} />
             </section>
-          </TutorialExperienceProvider>
+          </>
         </main>
         {rightPanelOpen && (
           <div

@@ -23,7 +23,6 @@ export interface ReviewApiSummary {
   /** Import and managed-document metadata retained on full snapshots. */
   origin?: {
     gitlab?: GitLabIdentity;
-    tutorial?: boolean;
     branch?: string;
     baseRef?: string;
     revision?: string;
@@ -41,6 +40,8 @@ export interface ReviewApiSummary {
   dismissedAt: string | null;
   /** An agent holds a live lease. */
   working?: boolean;
+  /** The stored document no longer fits the current schema; it can only be deleted. */
+  incompatible?: boolean;
 }
 
 export interface ReviewSourceEntry {

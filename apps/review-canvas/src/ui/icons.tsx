@@ -3,7 +3,6 @@ import type { ClassValue } from "clsx";
 import {
   ArrowBigUp,
   ArrowUp,
-  BookOpen,
   Bug,
   Check,
   ChevronDown,
@@ -67,16 +66,6 @@ export function BugIcon({ className }: IconProps = {}): ReactElement {
 export function ContentsIcon({ className }: IconProps = {}): ReactElement {
   return (
     <List
-      aria-hidden="true"
-      focusable="false"
-      className={cn(styles.icon, className)}
-    />
-  );
-}
-
-export function TutorialIcon({ className }: IconProps = {}): ReactElement {
-  return (
-    <BookOpen
       aria-hidden="true"
       focusable="false"
       className={cn(styles.icon, className)}

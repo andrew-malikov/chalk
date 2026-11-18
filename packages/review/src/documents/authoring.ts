@@ -4,14 +4,8 @@ import {
   sequenceSchema,
 } from "@review/documents/document";
 import { diffSelectionSchema } from "@review/documents/lens-selection";
-import { tutorialAuthoringConversationSchema } from "@review/documents/tutorial-conversation";
 import type { SoftwareDataStoreFieldSchema } from "@review/software-map/software-map-model";
 import { z } from "zod";
-
-export {
-  tutorialAuthoringConversationSchema,
-  type TutorialAuthoringConversation,
-} from "@review/documents/tutorial-conversation";
 
 const nonEmptyStringSchema = z
   .string()
@@ -99,15 +93,6 @@ export const reviewComponentDataSchemas = {
     title: sequenceSchema.shape.title,
     actors: sequenceSchema.shape.actors,
     steps: sequenceSchema.shape.steps,
-  }),
-
-  TutorialAuthoringConversation: z.strictObject({
-    conversation: tutorialAuthoringConversationSchema,
-  }),
-  TutorialFeature: z.strictObject({ feature: z.literal("softwareMap") }),
-  TutorialKeymapPicker: z.strictObject({}),
-  TutorialViewButton: z.strictObject({
-    view: z.enum(["review", "commits", "diff", "map"]),
   }),
 };
 
