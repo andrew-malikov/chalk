@@ -376,21 +376,10 @@ describe("review view state", () => {
     ).toBe(null);
   });
 
-  it("persists only resumable panel modes", () => {
+  it("persists an open fullscreen tour", () => {
     const session = testReviewSession();
     const actor = createReviewPanelActor();
     renderViewState({ session, actor });
-
-    act(() =>
-      actor.send({
-        type: "openPeek",
-        panel: {
-          kind: "peek",
-          content: { kind: "inline-code", text: "start();" },
-        },
-      }),
-    );
-    expect(readPersistedReviewViewState(session.config)).toEqual({});
 
     act(() =>
       actor.send({
@@ -437,7 +426,6 @@ describe("review view state", () => {
     });
     renderViewState({ session: legacySession, actor: legacyStore });
 
-    expect(legacyStore.getSnapshot().context.active).toBeNull();
     expect(readPersistedReviewViewState(legacySession.config).panel).toBe(
       undefined,
     );

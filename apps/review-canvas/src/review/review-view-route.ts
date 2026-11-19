@@ -26,7 +26,3 @@ export function reviewViewLabel(view: ReviewView): string {
 
   return "Chalk";
 }
-
-export function shouldCloseSidePeekForReviewView(view: ReviewView): boolean {
-  return view !== "review";
-}

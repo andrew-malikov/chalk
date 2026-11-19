@@ -14,11 +14,7 @@ import {
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  GuidedTourPanel,
-  ReviewPanelFrame,
-  ReviewPanelHost,
-} from "./review-components";
+import { GuidedTourPanel, ReviewPanelFrame } from "./review-components";
 import { ReviewProvider } from "./review-context";
 import {
   ReviewPanelProvider,
@@ -103,45 +99,6 @@ describe("Review panel host", () => {
     ).toBe(500);
   });
 
-  it("replaces the active panel when a document peek opens", async () => {
-    const addEventListener = vi.spyOn(document, "addEventListener");
-    const container = document.createElement("div");
-    document.body.append(container);
-    root = createRoot(container);
-
-    await act(async () => {
-      renderWithSession(
-        <ReviewDebugSettingsProvider>
-          <ReviewProvider>
-            <ReviewPanelProvider>
-              <OpenReplacingPanel />
-              <ReviewPanelHost />
-            </ReviewPanelProvider>
-          </ReviewProvider>
-        </ReviewDebugSettingsProvider>,
-      );
-      await Promise.resolve();
-    });
-
-    expect(container.querySelectorAll(".side-panel")).toHaveLength(1);
-    expect(container.querySelectorAll(panelBodySelector)).toHaveLength(1);
-    expect(container.querySelectorAll('[role="separator"]')).toHaveLength(1);
-    expect(container.textContent).not.toContain("Earlier detail");
-    expect(container.textContent).toContain("Startup detail");
-    expect(
-      addEventListener.mock.calls.filter(([type]) => type === "keydown"),
-    ).toHaveLength(1);
-
-    await act(async () => {
-      container
-        .querySelector<HTMLButtonElement>('[aria-label="Close side peek"]')!
-        .click();
-    });
-
-    expect(container.querySelectorAll(".side-panel")).toHaveLength(0);
-    expect(container.querySelectorAll(panelBodySelector)).toHaveLength(0);
-  });
-
   it("marks a restored panel so its entrance motion can be suppressed", async () => {
     const container = document.createElement("div");
     document.body.append(container);
@@ -152,8 +109,8 @@ describe("Review panel host", () => {
         <ReviewDebugSettingsProvider>
           <ReviewProvider>
             <ReviewPanelProvider>
-              <RestorePeekPanel />
-              <ReviewPanelHost />
+              <SuppressMotion />
+              <MotionPanel />
             </ReviewPanelProvider>
           </ReviewProvider>
         </ReviewDebugSettingsProvider>,
@@ -177,9 +134,8 @@ describe("Review panel host", () => {
         <ReviewDebugSettingsProvider>
           <ReviewProvider>
             <ReviewPanelProvider>
-              <OpenPeekPanel />
               <ResumeMotionListener />
-              <ReviewPanelHost />
+              <MotionPanel />
             </ReviewPanelProvider>
           </ReviewProvider>
         </ReviewDebugSettingsProvider>,
@@ -402,52 +358,17 @@ describe("Guided tour panel", () => {
   });
 });
 
-function OpenReplacingPanel() {
-  const actor = useReviewPanelActor();
-  useEffect(() => {
-    actor.send({
-      type: "openPeek",
-      panel: {
-        kind: "peek",
-        anchor: { id: "earlier", title: "Earlier detail" } as AnchorRef,
-        content: { kind: "inline-code", text: "earlier();" },
-      },
-    });
-    actor.send({
-      type: "openPeek",
-      panel: {
-        kind: "peek",
-        anchor: { id: "startup", title: "Startup detail" } as AnchorRef,
-        content: { kind: "inline-code", text: "start();" },
-      },
-    });
-  }, [actor]);
-
-  return null;
-}
-
-const peekFixture = {
-  kind: "peek",
-  anchor: { id: "startup", title: "Startup detail" } as AnchorRef,
-  content: { kind: "inline-code", text: "start();" },
-} as const;
-
-function OpenPeekPanel() {
-  const actor = useReviewPanelActor();
-  useEffect(
-    () => actor.send({ type: "openPeek", panel: peekFixture }),
-    [actor],
+function MotionPanel() {
+  return (
+    <ReviewPanelFrame title="Startup" onClose={() => {}} closeLabel="Close">
+      start();
+    </ReviewPanelFrame>
   );
-
-  return null;
 }
 
-function RestorePeekPanel() {
+function SuppressMotion() {
   const actor = useReviewPanelActor();
-  useEffect(() => {
-    actor.send({ type: "openPeek", panel: peekFixture });
-    actor.send({ type: "suppressMotion" });
-  }, [actor]);
+  useEffect(() => actor.send({ type: "suppressMotion" }), [actor]);
 
   return null;
 }

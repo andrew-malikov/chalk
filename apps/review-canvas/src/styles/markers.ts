@@ -40,9 +40,6 @@ export const documentMarker = "canvas-document";
 /** A Markdown block; paragraph and list styles hold inside it. */
 export const proseMarker = "canvas-prose";
 
-/** The side panel host; the panel takes its one grid cell. */
-export const detailHostMarker = "canvas-detail-host";
-
 /** The diff workspace; the courier takes its button focus ring inside it. */
 export const diffWorkspaceMarker = "canvas-diff-workspace";
 

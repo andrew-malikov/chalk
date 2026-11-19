@@ -1,15 +1,4 @@
 export const shellStyles = {
-  // Narrow layouts dock the panel to the bottom half of the canvas as a
-  // sheet, so the peek column collapses.
-  appPeekOpen:
-    "tw:grid-cols-[minmax(0,_1fr)_10px_var(--side-peek-width,_560px)] tw:[@container_review-canvas_(max-width:_929px)]:grid-cols-[minmax(0,_1fr)_0_0] tw:[@container_review-canvas_(max-width:_929px)]:[@media_(max-width:_720px)]:grid-cols-[minmax(0,_1fr)] tw:[@media_(max-width:_720px)]:grid-cols-[minmax(0,_1fr)]",
-  // Lit on the separator itself: a condition on the root would restyle the
-  // whole canvas as a drag starts and ends.
-  peekResizerActive: "tw:[&::before]:bg-[color:var(--ink-faint)]",
-  // No inherited cursor or user-select here, for the same reason; the
-  // separator's pointer capture keeps its cursor and blocks selection.
-  appResizing: "tw:[transition:none]",
-  appRestoredPanel: "tw:[transition:none]",
   apiCanvas: "tw:flex tw:flex-col tw:h-full tw:min-h-0",
   documentShell:
     "tw:relative tw:grid tw:grid-cols-[minmax(0,_1fr)] tw:grid-rows-[auto_minmax(0,_1fr)] tw:min-w-0 tw:h-full tw:overflow-hidden tw:[container:review-content_/_inline-size]",
@@ -18,21 +7,13 @@ export const shellStyles = {
   diffApp: "tw:grid-rows-[auto_minmax(0,_1fr)]",
   diffShell: "tw:grid-rows-[minmax(0,_1fr)]",
   diffShellBanner: "tw:grid-rows-[auto_minmax(0,_1fr)]",
-  // The host's own box lives in the collapsed third grid column on narrow
-  // layouts; dissolving it lets the sheet position against the app instead
-  // of a 0-width, overflow-hidden ancestor.
-  detailHost:
-    "tw:relative tw:grid tw:[@container_review-canvas_(max-width:_929px)]:[display:contents] tw:[@media_(max-width:_720px)]:[display:contents] tw:min-w-0 tw:h-full tw:overflow-hidden",
   // The vertical divider between a pane and its side panel.
   resizer:
-    "tw:relative tw:[@container_review-canvas_(max-width:_929px)]:[&:is(.canvas-app[data-peek-open]_*)]:hidden tw:[@media_(max-width:_720px)]:[&:is(.canvas-app[data-peek-open]_*)]:hidden tw:w-[10px] tw:min-w-[10px] tw:z-[1] tw:[cursor:col-resize] tw:bg-[color:var(--transparent)] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[touch-action:none] tw:[&:focus-visible]:[outline:1px_solid_var(--rule-soft)] tw:[&:focus-visible]:outline-offset-[-1px] tw:[&::before]:absolute tw:[&::before]:top-0 tw:[&::before]:bottom-0 tw:[&::before]:left-[50%] tw:[&::before]:w-[1px] tw:[&:hover::before]:w-[3px] tw:[&:focus-visible::before]:w-[3px] tw:[&:active::before]:w-[3px] tw:[&::before]:bg-[color:var(--rule)] tw:[&:hover::before]:bg-[color:var(--ink-faint)] tw:[&:focus-visible::before]:bg-[color:var(--ink-faint)] tw:[&:active::before]:bg-[color:var(--ink-faint)] tw:[&::before]:[transform:translateX(-50%)] tw:[&::before]:[transition-property:width,_background-color] tw:[&::before]:[transition-duration:120ms] tw:[&::before]:[transition-delay:0s] tw:[&:hover::before]:[transition-delay:120ms] tw:[&::before]:[content:'']",
+    "tw:relative tw:w-[10px] tw:min-w-[10px] tw:z-[1] tw:[cursor:col-resize] tw:bg-[color:var(--transparent)] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:[touch-action:none] tw:[&:focus-visible]:[outline:1px_solid_var(--rule-soft)] tw:[&:focus-visible]:outline-offset-[-1px] tw:[&::before]:absolute tw:[&::before]:top-0 tw:[&::before]:bottom-0 tw:[&::before]:left-[50%] tw:[&::before]:w-[1px] tw:[&:hover::before]:w-[3px] tw:[&:focus-visible::before]:w-[3px] tw:[&:active::before]:w-[3px] tw:[&::before]:bg-[color:var(--rule)] tw:[&:hover::before]:bg-[color:var(--ink-faint)] tw:[&:focus-visible::before]:bg-[color:var(--ink-faint)] tw:[&:active::before]:bg-[color:var(--ink-faint)] tw:[&::before]:[transform:translateX(-50%)] tw:[&::before]:[transition-property:width,_background-color] tw:[&::before]:[transition-duration:120ms] tw:[&::before]:[transition-delay:0s] tw:[&:hover::before]:[transition-delay:120ms] tw:[&::before]:[content:'']",
   // Rule flush left; grabs rightward over the panel's padding, never the
   // scrollbar.
   resizerGrabPanel:
     "tw:[&::before]:left-0 tw:[&::before]:[transform:none] tw:[&::after]:absolute tw:[&::after]:top-0 tw:[&::after]:bottom-0 tw:[&::after]:left-0 tw:[&::after]:right-[-8px] tw:[&::after]:[content:'']",
-  // The column continues the panel and its header.
-  peekResizer:
-    "tw:h-full tw:border-[color:var(--transparent)] tw:[background-image:linear-gradient(var(--surface)_calc(var(--review-header-height)_-_1px),_var(--rule)_0_var(--review-header-height),_var(--transparent)_0)]",
   // Horizontal twin of the divider for the narrow-layout bottom sheet: it
   // drags the sheet height. Hidden on wide layouts, where the vertical
   // divider owns resizing.

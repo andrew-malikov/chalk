@@ -1,9 +1,6 @@
 import { ReviewDocumentBoundary } from "@canvas/documents/review-document-boundary";
 import { ReviewSessionProvider } from "@canvas/host/review-session";
-import { cn } from "@canvas/lib/utils";
 import { ReviewDebugSettingsProvider } from "@canvas/settings/debug-settings";
-import { detailHostMarker } from "@canvas/styles/markers";
-import { shellStyles } from "@canvas/styles/shell-styles";
 import { testReviewSession } from "@canvas/test/review-session-test-utils";
 import type { PeekableAnchorRef } from "@review/documents/authoring";
 import { selectSource } from "@review/documents/lens-selection";
@@ -11,13 +8,13 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AnchorLink, ReviewPanelHost } from "./review-components";
+import { AnchorLink } from "./review-components";
 import { ReviewProvider } from "./review-context";
 import { ReviewPanelProvider } from "./review-panel";
 
 const roots: Array<ReturnType<typeof createRoot>> = [];
 
-describe("side-peek validation boundary", () => {
+describe("AnchorLink", () => {
   beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     vi.stubGlobal(
@@ -43,7 +40,7 @@ describe("side-peek validation boundary", () => {
     vi.restoreAllMocks();
   });
 
-  it("opens a source anchor CodePeek outside the document provider", async () => {
+  it("opens its CodePeek in a popover outside the document provider", async () => {
     const session = testReviewSession();
 
     const anchor: PeekableAnchorRef = {
@@ -72,9 +69,6 @@ describe("side-peek validation boundary", () => {
                 <ReviewDocumentBoundary revision="valid" onError={() => {}}>
                   <AnchorLink anchor={anchor}>Startup</AnchorLink>
                 </ReviewDocumentBoundary>
-                <div className={cn(shellStyles.detailHost, detailHostMarker)}>
-                  <ReviewPanelHost />
-                </div>
               </ReviewPanelProvider>
             </ReviewProvider>
           </ReviewDebugSettingsProvider>
@@ -97,7 +91,9 @@ describe("side-peek validation boundary", () => {
     });
 
     expect(container.querySelector('[role="alert"]')).toBeNull();
-    expect(container.querySelector(".side-panel section")).not.toBeNull();
+    expect(
+      document.querySelector("[data-radix-popper-content-wrapper] .code-peek"),
+    ).not.toBeNull();
 
     const codePeekFetches = vi
       .mocked(fetch)

@@ -1,11 +1,12 @@
 import "prosekit/basic/style.css";
 import { MarkdownContent } from "@canvas/documents/agent-markdown";
 import { cn } from "@canvas/lib/utils";
-import { Button, IconButton } from "@canvas/ui/button";
+import { IconButton } from "@canvas/ui/button";
 import { useMachine } from "@xstate/react";
 import {
   BoldIcon,
   CodeIcon,
+  EyeIcon,
   HeadingIcon,
   ItalicIcon,
   LinkIcon,
@@ -44,7 +45,7 @@ import {
   wrap,
 } from "./markdown-edits";
 
-/** First component on XState; the Write/Preview tab is its only local state. */
+/** First component on XState; write vs. preview is its only local state. */
 const commentEditorMachine = setup({
   types: {
     // SAFETY: XState reads `types` only for type inference; it is never used at runtime.
@@ -158,7 +159,7 @@ const toolbar: {
   },
 ];
 
-/** GitLab Markdown comment editor: Write edits the raw Markdown, Preview renders it. */
+/** GitLab Markdown comment editor: writing edits the raw Markdown, preview renders it. */
 export function CommentEditor({
   value,
   onChange,
@@ -168,6 +169,7 @@ export function CommentEditor({
   placeholder,
   labelledBy,
   tabsContainer,
+  toolbarContainer,
   inline,
 }: {
   /** Followed when it changes elsewhere, e.g. the same draft open in two places. */
@@ -179,6 +181,7 @@ export function CommentEditor({
   placeholder: string;
   labelledBy: string;
   tabsContainer?: HTMLElement | null;
+  toolbarContainer?: HTMLElement | null;
   inline?: boolean;
 }) {
   const [editor] = useState(() =>
@@ -255,21 +258,37 @@ export function CommentEditor({
   );
 
   const tabs = (
-    <div className="tw:flex tw:gap-0.5">
-      {(["write", "preview"] as const).map((tab) => (
-        <Button
-          key={tab}
-          variant="ghost"
-          aria-pressed={snapshot.matches(tab)}
-          className={
-            snapshot.matches(tab)
-              ? "tw:bg-[var(--chrome-hover-bg)] tw:text-[var(--ink)]"
-              : "tw:text-[var(--ink-faint)]"
-          }
-          onClick={() => send({ type: tab })}
+    <IconButton
+      aria-label="Preview"
+      title="Preview"
+      aria-pressed={previewing}
+      className={
+        previewing && "tw:bg-[var(--chrome-hover-bg)] tw:text-[var(--ink)]"
+      }
+      onClick={() => send({ type: previewing ? "write" : "preview" })}
+    >
+      <EyeIcon />
+    </IconButton>
+  );
+
+  const formatting = (
+    <div
+      role="toolbar"
+      aria-label="Formatting"
+      className="tw:flex tw:flex-wrap tw:gap-0.5"
+    >
+      {toolbar.map(({ label, icon: Icon, edit }) => (
+        <IconButton
+          key={label}
+          aria-label={label}
+          title={label}
+          disabled={disabled || previewing}
+          // Keep the editor's selection while clicking.
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => format(editor, edit)}
         >
-          {tab === "write" ? "Write" : "Preview"}
-        </Button>
+          <Icon />
+        </IconButton>
       ))}
     </div>
   );
@@ -278,30 +297,14 @@ export function CommentEditor({
     <ProseKit editor={editor}>
       {/* Bleeds through the card padding; its background sets it apart, and the card shows focus. */}
       <div className="tw:-mx-3 tw:flex tw:min-w-0 tw:flex-col tw:bg-[var(--bg)]">
-        <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-1 tw:px-2 tw:py-1">
-          {tabsContainer ? createPortal(tabs, tabsContainer) : tabs}
-          {!previewing && (
-            <div
-              role="toolbar"
-              aria-label="Formatting"
-              className="tw:flex tw:flex-wrap tw:gap-0.5"
-            >
-              {toolbar.map(({ label, icon: Icon, edit }) => (
-                <IconButton
-                  key={label}
-                  aria-label={label}
-                  title={label}
-                  disabled={disabled}
-                  // Keep the editor's selection while clicking.
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => format(editor, edit)}
-                >
-                  <Icon />
-                </IconButton>
-              ))}
-            </div>
-          )}
-        </div>
+        {tabsContainer && createPortal(tabs, tabsContainer)}
+        {toolbarContainer && createPortal(formatting, toolbarContainer)}
+        {(!tabsContainer || !toolbarContainer) && (
+          <div className="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-1 tw:px-2 tw:py-1">
+            {!tabsContainer && tabs}
+            {!toolbarContainer && formatting}
+          </div>
+        )}
         <div
           ref={editor.mount}
           role="textbox"

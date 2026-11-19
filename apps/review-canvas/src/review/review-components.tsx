@@ -1,4 +1,9 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@canvas/components/ui/popover";
 import { CodePeekCard } from "@canvas/diff/CodePeek";
 import { AuthoredCodeSurface } from "@canvas/documents/authored-code-surface";
 import { documentStyles } from "@canvas/documents/document-styles";
@@ -22,7 +27,6 @@ import {
 } from "@canvas/ui/icons";
 import { textStyles } from "@canvas/ui/text";
 import type { ReviewComponentProps } from "@review/documents/authoring";
-import type { ClassValue } from "clsx";
 import type {
   CSSProperties,
   ComponentPropsWithoutRef,
@@ -33,11 +37,7 @@ import type {
 import { useEffect, useRef, useState } from "react";
 
 import { useReviewActions } from "./review-context";
-import {
-  useOptionalReviewPanelActor,
-  useReviewPanel,
-  useReviewPanelActor,
-} from "./review-panel";
+import { useReviewPanel } from "./review-panel";
 import type {
   GuidedTour,
   GuidedTourStop,
@@ -52,11 +52,8 @@ import { panelStyles, tourStyles } from "./side-panel-styles";
 const TOUR_ACTIVE_TOP_SLACK_PX = 18;
 
 /**
- * Shared shell for everything that docks into the right panel slot: side
- * peeks, commit diffs, and guided tours. Provides the uniform header (kicker,
- * title, close button), closes on Escape, and slides in with
- * the same animation everywhere. The panel occupies a grid column, so the
- * document reflows next to it instead of being overlaid.
+ * The guided tour's shell beside its diagram stage. Provides the uniform
+ * header (kicker, title, close button), closes on Escape, and slides in.
  */
 export function ReviewPanelFrame({
   label,
@@ -307,93 +304,67 @@ function reviewSectionSummaryLabel(summary: ReviewSectionSummary): string {
   return parts.join(" · ");
 }
 
-interface ProsePeekAnchorProps {
-  href: string;
-  isOpen: boolean;
-  onOpen: (text: string) => void;
-  onAlreadyOpen?: () => void;
-  className?: ClassValue;
-  anchorId?: string;
-  inertFallback?: ReactNode;
-  children: ReactNode;
-}
-
-/**
- * Shared prose side-peek anchor primitive for source links.
- * Renders an inline anchor with open-state styling and visibility retention.
- */
-export function ProsePeekAnchor({
-  href,
-  isOpen,
-  onOpen,
-  onAlreadyOpen,
-  className,
-  anchorId,
-  inertFallback,
-  children,
-}: ProsePeekAnchorProps) {
-  const panelActor = useOptionalReviewPanelActor();
-
-  if (!panelActor && inertFallback !== undefined) {
-    return <>{inertFallback}</>;
-  }
-
-  return (
-    <a
-      href={href}
-      className={cn(documentStyles.link, className)}
-      data-review-anchor-id={anchorId}
-      data-review-anchor-open={isOpen ? "true" : undefined}
-      onClick={(event) => {
-        event.preventDefault();
-
-        if (isOpen && onAlreadyOpen) {
-          onAlreadyOpen();
-
-          return;
-        }
-
-        onOpen(event.currentTarget.textContent?.trim() ?? "");
-        keepAnchorLinkVisible(event.currentTarget);
-      }}
-    >
-      {children}
-    </a>
-  );
-}
-
+/** A prose source link: its code opens in a popover beside the text. */
 export function AnchorLink({
   anchor,
   children,
 }: ReviewComponentProps<"AnchorLink"> & { children?: ReactNode }) {
-  const panelActor = useReviewPanelActor();
-
-  const peekOpen = useReviewPanel(
-    (state) =>
-      state.context.active?.kind === "peek" &&
-      state.context.active.anchor?.id === anchor.id,
-  );
+  const { softwareMapEnabled, openSoftwareMapElement } = useReviewActions();
+  const [open, setOpen] = useState(false);
+  const linkRef = useRef<HTMLAnchorElement | null>(null);
 
   return (
-    <ProsePeekAnchor
-      href={`#review-anchor-${anchor.id}`}
-      anchorId={anchor.id}
-      isOpen={peekOpen}
-      onOpen={(text) => {
-        panelActor.send({
-          type: "openPeek",
-          panel: {
-            kind: "peek",
-            anchor: { ...anchor, title: text || anchor.title },
-            content: { kind: "source", source: anchor.peek },
-          },
-        });
-      }}
-    >
-      {children}
-    </ProsePeekAnchor>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <a
+          ref={linkRef}
+          href={`#review-anchor-${anchor.id}`}
+          className={documentStyles.link}
+          data-review-anchor-id={anchor.id}
+          data-review-anchor-open={open ? "true" : undefined}
+          onClick={(event) => {
+            event.preventDefault();
+            setOpen((current) => !current);
+          }}
+        >
+          {children}
+        </a>
+      </PopoverAnchor>
+      <PopoverContent
+        align="start"
+        aria-label={anchor.title}
+        className={sourcePopoverClass}
+        // The link toggles the popover itself.
+        onInteractOutside={(event) => {
+          if (
+            event.target instanceof Node &&
+            linkRef.current?.contains(event.target)
+          )
+            event.preventDefault();
+        }}
+      >
+        {softwareMapEnabled && anchor.softwareMapPath ? (
+          <div className={panelStyles.peekActions}>
+            <IconButton
+              size="large"
+              onClick={() => {
+                openSoftwareMapElement(anchor.softwareMapPath!);
+                setOpen(false);
+              }}
+              aria-label={`Show ${anchor.title} in software map`}
+            >
+              <MapPinIcon className={controlStyles.inertIcon} />
+            </IconButton>
+          </div>
+        ) : null}
+        <CodePeekCard source={anchor.peek} heightMode="content" />
+      </PopoverContent>
+    </Popover>
   );
 }
+
+const sourcePopoverClass =
+  "tw:w-[min(720px,calc(100vw-24px))] tw:max-h-[min(640px,var(--radix-popover-content-available-height))] tw:overflow-x-hidden tw:overflow-y-auto tw:overscroll-contain tw:p-[8px]";
 
 export function a({
   href,
@@ -408,106 +379,6 @@ export function a({
     <a href={href} target={target} rel={rel} {...props} {...linkProps}>
       {children}
     </a>
-  );
-}
-
-/**
- * Opening the side panel narrows the document column and reflows the prose,
- * which can push the clicked anchor link out of the viewport. Once the panel
- * has slid in, scroll the link back into view if the reflow moved it away.
- */
-function keepAnchorLinkVisible(link: HTMLElement) {
-  window.setTimeout(() => {
-    const rect = link.getBoundingClientRect();
-
-    const visible =
-      rect.top >= 0 &&
-      rect.bottom <= window.innerHeight &&
-      rect.left >= 0 &&
-      rect.right <= window.innerWidth;
-
-    if (!visible) {
-      link.scrollIntoView({ block: "center", behavior: "instant" });
-    }
-  }, 240);
-}
-
-/** The only top-level renderer for Review's side peek. */
-export function ReviewPanelHost() {
-  const activePanel = useReviewPanel((state) => state.context.active);
-  const panelActor = useReviewPanelActor();
-
-  return (
-    <>
-      {activePanel ? (
-        <ReviewPeekPanel
-          anchor={activePanel.anchor}
-          content={activePanel.content}
-          onClose={() => panelActor.send({ type: "close" })}
-        />
-      ) : null}
-    </>
-  );
-}
-
-function ReviewPeekPanel({
-  anchor,
-  content,
-  onClose,
-}: {
-  anchor?: PeekAnchor;
-  content: ReviewPeekContent;
-  onClose: () => void;
-}) {
-  if (!anchor) return null;
-
-  return (
-    <CodeReviewPeekPanel anchor={anchor} content={content} onClose={onClose} />
-  );
-}
-
-function CodeReviewPeekPanel({
-  anchor,
-  content,
-  onClose,
-}: {
-  anchor: PeekAnchor;
-  content: Extract<
-    ReviewPeekContent,
-    { kind: "source" | "inline-code" | "explanation" }
-  >;
-  onClose: () => void;
-}) {
-  const { softwareMapEnabled, openSoftwareMapElement } = useReviewActions();
-
-  return (
-    <ReviewPanelFrame
-      label="Peek"
-      title={anchor.title}
-      onClose={onClose}
-      closeLabel="Close side peek"
-    >
-      <div className={panelStyles.peekBody}>
-        {softwareMapEnabled && anchor.softwareMapPath ? (
-          <div className={panelStyles.peekActions}>
-            <IconButton
-              size="large"
-              onClick={() => {
-                openSoftwareMapElement(anchor.softwareMapPath!);
-                onClose();
-              }}
-              aria-label={`Show ${anchor.title} in software map`}
-            >
-              <MapPinIcon className={controlStyles.inertIcon} />
-            </IconButton>
-          </div>
-        ) : null}
-
-        <div className={panelStyles.peekContent}>
-          <ReviewPeekContentView anchor={anchor} content={content} />
-        </div>
-      </div>
-    </ReviewPanelFrame>
   );
 }
 

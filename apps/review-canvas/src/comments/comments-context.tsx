@@ -144,10 +144,7 @@ export function CommentsProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("beforeunload", beforeUnload);
   }, [actor]);
 
-  const show = () => {
-    panels?.send({ type: "close" });
-    setOpen(true);
-  };
+  const show = () => setOpen(true);
 
   const value: CommentsContextValue = {
     state,
@@ -165,12 +162,7 @@ export function CommentsProvider({ children }: { children: ReactNode }) {
     collapsePanel: (id, value) =>
       setPanelCollapsed((current) => ({ ...current, [id]: value })),
     reveal,
-    toggle: () => {
-      const panelState = panels?.getSnapshot().context;
-
-      if (open && !panelState?.active) setOpen(false);
-      else show();
-    },
+    toggle: () => setOpen((current) => !current),
     edit: (id, text) => actor.send({ type: "edit", id, text }),
     compose: (target, placement = "panel") => {
       const event = {

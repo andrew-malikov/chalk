@@ -1,5 +1,4 @@
 import type { ReviewCommitSummary } from "@chalk/review-contracts";
-import type { AnchorRef } from "@review/documents/authoring";
 import { describe, expect, it } from "vitest";
 import { createActor } from "xstate";
 
@@ -7,21 +6,10 @@ import {
   type ReviewNavigationRestore,
   createReviewPanelMachine,
 } from "./review-panel-machine";
-import type { ReviewPeekContent } from "./review-panel-model";
 
 function createReviewPanelActor(restore?: ReviewNavigationRestore) {
   return createActor(createReviewPanelMachine(restore)).start();
 }
-
-const anchor = {
-  id: "startup",
-  title: "Startup",
-} as AnchorRef;
-
-const content: ReviewPeekContent = {
-  kind: "inline-code",
-  text: "start();",
-};
 
 const commit = {
   commit: "abc123",
@@ -44,13 +32,9 @@ describe("Review navigation", () => {
   });
 
   it.each(["commits", "diff", "map"] as const)(
-    "falls back from an unavailable %s without closing a peek or tour",
+    "falls back from an unavailable %s without closing a tour",
     (view) => {
       const actor = createReviewPanelActor({ availableViews: ["review"] });
-      actor.send({
-        type: "openPeek",
-        panel: { kind: "peek", anchor, content },
-      });
       actor.send({
         type: "openOverlayTour",
         tour: { tourId: "flow", kind: "sequence" },
@@ -61,7 +45,6 @@ describe("Review navigation", () => {
       expect(actor.getSnapshot()).toMatchObject({
         value: "review",
         context: {
-          active: { kind: "peek" },
           overlayTour: { tourId: "flow", anchor: "first" },
         },
       });
@@ -70,7 +53,6 @@ describe("Review navigation", () => {
 
   it("scopes a commit diff until the reader leaves the diff", () => {
     const actor = createReviewPanelActor();
-    actor.send({ type: "openPeek", panel: { kind: "peek", anchor, content } });
 
     actor.send({
       type: "openCommitDiff",
@@ -80,31 +62,12 @@ describe("Review navigation", () => {
       value: "diff",
       context: {
         diffScope: { commit, file: "src/start.ts" },
-        active: null,
       },
     });
 
     actor.send({ type: "showView", view: "commits" });
     actor.send({ type: "showView", view: "diff" });
     expect(actor.getSnapshot().context.diffScope).toBeNull();
-  });
-
-  it("keeps a peek open beside a diff a lens opened", () => {
-    const actor = createReviewPanelActor();
-    actor.send({ type: "openCommitDiff", scope: { commit } });
-    actor.send({ type: "showView", view: "review" });
-    actor.send({ type: "openPeek", panel: { kind: "peek", anchor, content } });
-
-    const lens = { id: "api", version: 3, mode: "structural" } as const;
-    actor.send({ type: "selectLens", lens });
-    expect(actor.getSnapshot()).toMatchObject({
-      value: "diff",
-      context: {
-        diffScope: null,
-        lens,
-        active: { kind: "peek" },
-      },
-    });
   });
 
   it("resumes on the chalk when the stored view is not offered", () => {
@@ -129,14 +92,12 @@ describe("Review navigation", () => {
 
   it("opens the map on a focused element once", () => {
     const actor = createReviewPanelActor();
-    actor.send({ type: "openPeek", panel: { kind: "peek", anchor, content } });
 
     actor.send({ type: "focusMapElement", elementPath: "review.app" });
     const focus = actor.getSnapshot().context.mapFocus!;
     expect(actor.getSnapshot()).toMatchObject({
       value: "map",
       context: {
-        active: null,
         mapFocus: { elementPath: "review.app", pending: true },
       },
     });

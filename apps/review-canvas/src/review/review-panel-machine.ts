@@ -5,12 +5,9 @@ import {
 } from "@chalk/review-contracts";
 import { type ActorRefFrom, type SnapshotFrom, assign, setup } from "xstate";
 
-import type { PeekPanel, ReviewPanelMotion } from "./review-panel-model";
-import { shouldCloseSidePeekForReviewView } from "./review-view-route";
+import type { ReviewPanelMotion } from "./review-panel-model";
 
 export interface ReviewPanelState {
-  /** The peek in the side panel. */
-  active: PeekPanel | null;
   motion: ReviewPanelMotion;
 }
 
@@ -71,8 +68,6 @@ type ReviewPanelContext = ReviewPanelState &
 
 export type ReviewPanelEvent =
   | { type: "suppressMotion" }
-  | { type: "openPeek"; panel: PeekPanel }
-  | { type: "close" }
   | { type: "showView"; view: ReviewView }
   | { type: "openCommitDiff"; scope: ReviewDiffScope }
   | { type: "selectLens"; lens: ReviewLensSelection }
@@ -119,7 +114,6 @@ export function createReviewPanelMachine({
     id: "reviewPanel",
     initial: initialView,
     context: {
-      active: null,
       motion: "live",
       availableViews,
       diffScope: initialView === "diff" ? diffScope : null,
@@ -153,13 +147,6 @@ export function createReviewPanelMachine({
     },
     on: {
       suppressMotion: { actions: assign({ motion: "restored" }) },
-      openPeek: {
-        actions: assign(({ event }) => ({
-          active: event.panel,
-          motion: "live",
-        })),
-      },
-      close: { actions: assign({ active: null, motion: "live" }) },
       showView: [
         {
           guard: ({ event }) => event.view === "commits",
@@ -194,8 +181,6 @@ export function createReviewPanelMachine({
         target: ".diff",
         actions: assign(({ context, event }) => ({
           ...viewTransition(context, "diff"),
-          active: context.active,
-          motion: context.motion,
           lens: event.lens,
           diffScope: null,
         })),
@@ -226,6 +211,7 @@ export function createReviewPanelMachine({
       },
       openOverlayTour: {
         actions: assign(({ context, event }) => ({
+          motion: "live",
           overlayTour: {
             ...event.tour,
             anchor: event.anchor,
@@ -269,10 +255,5 @@ function viewTransition(
         mapFocus: { ...state.mapFocus, pending: false },
       }),
     ...(view !== "review" && state.overlayTour && { overlayTour: null }),
-    ...(shouldCloseSidePeekForReviewView(view) &&
-      state.active && {
-        active: null,
-        motion: "live",
-      }),
   };
 }

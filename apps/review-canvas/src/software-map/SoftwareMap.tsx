@@ -2699,7 +2699,7 @@ const styles = {
   title: "tw:m-0 tw:text-[length:13px] tw:font-semibold",
   actions: "tw:flex tw:flex-[0_0_auto] tw:items-center tw:min-w-0 tw:gap-[4px]",
   floatingActions:
-    "tw:absolute tw:top-[10px] tw:right-[10px] tw:z-[20] tw:flex tw:[&:is(.canvas-app[data-peek-open]_*)]:hidden tw:gap-[8px] tw:p-[2px] tw:rounded-[8px]",
+    "tw:absolute tw:top-[10px] tw:right-[10px] tw:z-[20] tw:flex tw:gap-[8px] tw:p-[2px] tw:rounded-[8px]",
   refreshing: "tw:text-[color:var(--accent)]",
   // Shows while the pointer is over the map.
   expandButton:
@@ -2718,8 +2718,7 @@ const styles = {
     "tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:absolute tw:top-[14px] tw:left-[14px] tw:z-[8] tw:w-max tw:max-w-[min(420px,_calc(100%_-_28px))] tw:m-0 tw:p-[8px_10px] tw:rounded-[8px] tw:bg-[color:var(--transparent)] tw:[box-shadow:none] tw:text-[color:var(--ink-muted)] tw:text-[length:12px] tw:leading-[17px]",
   statusError:
     "tw:border-[color:var(--diff-removed)] tw:bg-[color:var(--diff-removed-bg)] tw:text-[color:var(--diff-removed)]",
-  inspectorResizer:
-    "tw:z-[8] tw:min-h-0 tw:[@media_(max-width:_900px)]:hidden tw:[@container_review-canvas_(max-width:_929px)]:[&:is(.canvas-app[data-peek-open]_*)]:hidden tw:[@media_(max-width:_720px)]:[&:is(.canvas-app[data-peek-open]_*)]:hidden",
+  inspectorResizer: "tw:z-[8] tw:min-h-0 tw:[@media_(max-width:_900px)]:hidden",
   inspectorBackdrop:
     "tw:hidden tw:[@media_(max-width:_720px)]:block tw:[@media_(max-width:_720px)]:absolute tw:[@media_(max-width:_720px)]:inset-0 tw:[@media_(max-width:_720px)]:z-[48] tw:[@media_(max-width:_720px)]:p-0 tw:[@media_(max-width:_720px)]:border-[0] tw:[@media_(max-width:_720px)]:border-none tw:[@media_(max-width:_720px)]:border-[color:currentcolor] tw:[@media_(max-width:_720px)]:bg-[color:var(--backdrop)]",
   inspector:

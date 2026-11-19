@@ -14,7 +14,6 @@ import {
 } from "@review/software-map/software-map-topology-diff";
 import { Archive } from "lucide-react";
 import {
-  type CSSProperties,
   type ComponentType,
   type ReactElement,
   type RefObject,
@@ -45,7 +44,6 @@ import {
 } from "./review/authoring-activity";
 import { MissingCheckoutBanner } from "./review/missing-checkout-banner";
 import { ReviewActionsMenu } from "./review/review-actions-menu";
-import { ReviewPanelHost } from "./review/review-components";
 import {
   ReviewProvider,
   type ReviewSubmissionOutcome,
@@ -66,7 +64,6 @@ import {
   reviewViewLabel,
 } from "./review/review-view-route";
 import { useReviewViewStateSync } from "./review/review-view-state";
-import { useRightPanelResize } from "./review/side-panel-resizer";
 import {
   ReviewDebugSettingsProvider,
   useReviewDebugSettings,
@@ -75,7 +72,6 @@ import type { NormalizedSoftwareModel } from "./software-map/model";
 import { controlStyles } from "./styles/controls-styles";
 import {
   appMarker,
-  detailHostMarker,
   segmentMarker,
   topbarActionsMarker,
   topbarTabsMarker,
@@ -83,14 +79,6 @@ import {
 import { shellStyles } from "./styles/shell-styles";
 import { themeStyles } from "./styles/theme-styles";
 import { MarkerUnderline } from "./ui/icons";
-
-const DEFAULT_SIDE_PEEK_WIDTH = 560;
-
-const MIN_SIDE_PEEK_WIDTH = 360;
-
-const MAX_SIDE_PEEK_WIDTH = 920;
-
-const MIN_DOCUMENT_WIDTH = 560;
 
 export function App({
   document,
@@ -256,8 +244,6 @@ function ReviewLayoutContent({
   const review = useReview();
   const panelActor = useReviewPanelActor();
   useSuppressPanelMotionOnCanvasResume(appRef);
-  const activePanel = useReviewPanel((state) => state.context.active);
-  const panelMotion = useReviewPanel((state) => state.context.motion);
   const activeView = useReviewPanel((state) => state.value);
   const diffScope = useReviewPanel((state) => state.context.diffScope);
 
@@ -280,21 +266,6 @@ function ReviewLayoutContent({
     }),
     [toolbarStart, toolbarEnd, pageOverlay],
   );
-
-  const rightPanelOpen = activePanel !== null;
-
-  const sidePeekResize = useRightPanelResize({
-    stateKey: "side-peek-width",
-    defaultWidth: DEFAULT_SIDE_PEEK_WIDTH,
-    minWidth: MIN_SIDE_PEEK_WIDTH,
-    maxWidth: MAX_SIDE_PEEK_WIDTH,
-    maxContainerFraction: 0.5,
-    minMainWidth: MIN_DOCUMENT_WIDTH,
-    separatorWidth: 10,
-    label: "Resize side peek",
-    containerRef: appRef,
-    active: rightPanelOpen,
-  });
 
   useDocumentEmbedScroll(scrollRegionRef);
   useReviewViewStateSync({ scrollRegionRef, panelActor });
@@ -359,14 +330,6 @@ function ReviewLayoutContent({
         panelActor.send({ type: "showView", view: event.view });
     });
   }, [panelActor, session.surface]);
-
-  // SAFETY: `--side-peek-width` is a CSS custom property, which React forwards
-  // to style.setProperty; the CSSProperties typings only omit custom names.
-  const appStyle = rightPanelOpen
-    ? ({
-        "--side-peek-width": `${sidePeekResize.width}px`,
-      } as CSSProperties)
-    : undefined;
 
   const appClassName = [
     "review-app",
@@ -501,12 +464,7 @@ function ReviewLayoutContent({
           themeStyles.app,
           activeView === "diff" && shellStyles.diffApp,
           debugSettings.theme === "light" && themeStyles.light,
-          rightPanelOpen && shellStyles.appPeekOpen,
-          sidePeekResize.isResizing && shellStyles.appResizing,
-          panelMotion === "restored" && shellStyles.appRestoredPanel,
         )}
-        style={appStyle}
-        data-peek-open={rightPanelOpen || undefined}
         data-view={activeView}
         data-document-header={document.header || undefined}
         data-database-lens={document.databaseLens || undefined}
@@ -540,7 +498,6 @@ function ReviewLayoutContent({
                 document={document}
                 articleRef={articleRef}
                 active={activeView === "review"}
-                peekOpen={rightPanelOpen}
               />
               {softwareMapEnabled && activeView === "map" && (
                 <MapPage
@@ -548,7 +505,6 @@ function ReviewLayoutContent({
                   repoSoftwareMap={repoSoftwareMap}
                   baseSoftwareMap={baseSoftwareMap}
                   softwareMapTopologyDiff={softwareMapTopologyDiff}
-                  showFloatingActions={!rightPanelOpen}
                 />
               )}
               {activeView === "commits" && (
@@ -558,20 +514,6 @@ function ReviewLayoutContent({
             </section>
           </>
         </main>
-        {rightPanelOpen && (
-          <div
-            className={cn(
-              shellStyles.resizer,
-              activeView !== "diff" && shellStyles.peekResizer,
-              shellStyles.resizerGrabPanel,
-              sidePeekResize.isResizing && shellStyles.peekResizerActive,
-            )}
-            {...sidePeekResize.separatorProps}
-          />
-        )}
-        <div className={cn(shellStyles.detailHost, detailHostMarker)}>
-          <ReviewPanelHost />
-        </div>
       </div>
     </PageSlotsContext.Provider>
   );

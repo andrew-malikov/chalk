@@ -29,10 +29,4 @@ export interface GuidedTour {
   stops: GuidedTourStop[];
 }
 
-export interface PeekPanel {
-  kind: "peek";
-  anchor?: PeekAnchor;
-  content: ReviewPeekContent;
-}
-
 export type ReviewPanelMotion = "live" | "restored";

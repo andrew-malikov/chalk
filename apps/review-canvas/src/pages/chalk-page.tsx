@@ -24,12 +24,10 @@ export function ChalkPage({
   document,
   articleRef,
   active,
-  peekOpen,
 }: {
   document: RenderedReviewDocument;
   articleRef: RefObject<HTMLElement | null>;
   active: boolean;
-  peekOpen: boolean;
 }): ReactElement {
   const session = useReviewSession();
   const panelActor = useReviewPanelActor();
@@ -86,7 +84,6 @@ export function ChalkPage({
             "review-document",
             documentStyles.article,
             documentMarker,
-            peekOpen && documentStyles.articlePeekOpen,
           )}
         >
           <ReviewDocumentBoundary

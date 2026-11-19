@@ -7,7 +7,7 @@ import { defineSoftwareModel } from "./software-map/model";
 import { selectActiveSoftwareMapModel } from "./software-map/software-map-selection";
 
 describe("review app software map selection", () => {
-  it("selects the model that contains a side-peek map focus target", () => {
+  it("selects the model that contains a map focus target", () => {
     const repoModel = defineSoftwareModel({
       systems: {
         repo: { label: "Repo map" },

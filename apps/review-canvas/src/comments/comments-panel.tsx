@@ -640,6 +640,8 @@ function DraftEditor({
   const [tabsContainer, setTabsContainer] = useState<HTMLDivElement | null>(
     null,
   );
+  const [toolbarContainer, setToolbarContainer] =
+    useState<HTMLDivElement | null>(null);
 
   // The popover folds code drafts until one is being written.
   const collapsed = inline
@@ -653,6 +655,8 @@ function DraftEditor({
   const locked = !["saved", "failed"].includes(draft.status);
   const target = editor?.target ?? draft.target;
   const gitlab = comments.state?.gitlab;
+  // A reply sits under its thread, so the toolbar takes the label's place while open.
+  const toolbarInHeader = target.kind === "reply" && !collapsed;
   useEffect(() => {
     if (!inline && !collapsed && comments.selected === draft.id)
       ref.current?.scrollIntoView?.({ block: "nearest" });
@@ -708,9 +712,18 @@ function DraftEditor({
       )}
     >
       <div className="tw:flex tw:items-center tw:gap-2">
-        <span className="tw:min-w-0 tw:wrap-anywhere" id={labelId}>
-          {targetLabel(editor?.target ?? draft.target)}
+        <span
+          className={cn(
+            "tw:min-w-0 tw:wrap-anywhere",
+            toolbarInHeader && "tw:sr-only",
+          )}
+          id={labelId}
+        >
+          {targetLabel(target)}
         </span>
+        {toolbarInHeader && (
+          <div ref={setToolbarContainer} className="tw:-ms-1.5 tw:min-w-0" />
+        )}
         {draft.author === "agent" && <Chip className="tw:me-auto">Agent</Chip>}
         <div
           ref={setTabsContainer}
@@ -763,6 +776,7 @@ function DraftEditor({
           placeholder="Write your comment…"
           labelledBy={labelId}
           tabsContainer={tabsContainer}
+          toolbarContainer={toolbarInHeader ? toolbarContainer : null}
           inline={inline}
         />
         {(editor?.error || draft.error) && (

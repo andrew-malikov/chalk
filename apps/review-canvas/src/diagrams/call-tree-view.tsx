@@ -1,5 +1,11 @@
 import { Button as ButtonPrimitive } from "@canvas/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@canvas/components/ui/dialog";
 import { DiagramHeader } from "@canvas/diagrams/diagram-header";
+import { CodePeekCard } from "@canvas/diff/CodePeek";
 import {
   compactDiffCount as compact,
   diffCountStyles,
@@ -7,7 +13,6 @@ import {
 import { drawStyles } from "@canvas/drawing/draw-styles";
 import { cn } from "@canvas/lib/utils";
 import { useReviewLenses } from "@canvas/review/review-lenses";
-import { useReviewPanelActor } from "@canvas/review/review-panel";
 import { callEdgeMarker } from "@canvas/styles/markers";
 import { CheckIcon } from "@canvas/ui/icons";
 import type { CallStackDiffBlock } from "@review/blocks/call_stack_diff";
@@ -221,9 +226,13 @@ function TreeConnectors({
   );
 }
 
-/** Document host: the same tree, with source peeks instead of diff navigation. */
+/** Document host: the same tree, opening sources in a modal instead of
+ * navigating the diff. */
 export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
-  const panelActor = useReviewPanelActor();
+  const [peek, setPeek] = useState<{
+    title: string;
+    source: DiffSelection;
+  } | null>(null);
 
   return (
     <figure
@@ -233,30 +242,30 @@ export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
       <DiagramHeader kind="Call tree" title={block.title ?? "Call tree"} />
       <CallTree
         block={block}
-        onReveal={(source, sectionId, anchorId) => {
+        onReveal={(source, sectionId) => {
           const stop = callTreeStops(block).find(
             (stop) => stop.id === sectionId,
           )!;
 
-          panelActor.send({
-            type: "openPeek",
-            panel: {
-              kind: "peek",
-              anchor: {
-                id: anchorId ?? sectionId!,
-                title: stop.label,
-                peek: source,
-              },
-              content: { kind: "source", source },
-            },
-          });
+          setPeek({ title: stop.label, source });
         }}
       />
+      <Dialog
+        open={peek !== null}
+        onOpenChange={(open) => open || setPeek(null)}
+      >
+        <DialogContent className={styles.dialog} aria-describedby={undefined}>
+          <DialogTitle>{peek?.title}</DialogTitle>
+          {peek && <CodePeekCard source={peek.source} heightMode="content" />}
+        </DialogContent>
+      </Dialog>
     </figure>
   );
 }
 
 const styles = {
+  dialog:
+    "tw:sm:max-w-[min(960px,calc(100%-2rem))] tw:max-h-[85vh] tw:overflow-y-auto tw:overscroll-contain",
   figure:
     "tw:m-[14px_0] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[10px] tw:overflow-hidden tw:bg-[color:var(--surface)]",
   tree: "tw:min-w-full tw:w-full tw:p-[6px_0_12px]",

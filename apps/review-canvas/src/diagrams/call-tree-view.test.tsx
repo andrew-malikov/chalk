@@ -1,18 +1,13 @@
 // @vitest-environment jsdom
 
 import {
-  ReviewPanelProvider,
-  useReviewPanel,
-} from "@canvas/review/review-panel";
-import type { ReviewPanelSnapshot } from "@canvas/review/review-panel-machine";
-import {
   reviewSessionElement,
   testReviewSession,
 } from "@canvas/test/review-session-test-utils";
 import type { Frame } from "@review/documents/document";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { DocumentCallTree } from "./call-tree-view";
 
@@ -46,21 +41,10 @@ afterEach(async () => {
 });
 
 describe("DocumentCallTree", () => {
-  it("opens a removed frame on the base side from the shared tree", async () => {
+  it("opens a frame's source in a modal", async () => {
     (
       globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
     ).IS_REACT_ACT_ENVIRONMENT = true;
-
-    const opened =
-      vi.fn<(active: ReviewPanelSnapshot["context"]["active"]) => void>();
-
-    function PanelSpy() {
-      const active = useReviewPanel((state) => state.context.active);
-
-      if (active) opened(active);
-
-      return null;
-    }
 
     const container = document.createElement("div");
     document.body.append(container);
@@ -70,41 +54,38 @@ describe("DocumentCallTree", () => {
       root!.render(
         reviewSessionElement(
           testReviewSession(),
-          <ReviewPanelProvider>
-            <PanelSpy />
-            <DocumentCallTree
-              block={{
-                type: "call_stack_diff",
-                id: "checkout",
-                title: "Checkout",
-                base: [
-                  frame("reconcile"),
-                  {
-                    ...frame("auth", "base"),
-                    contextSources: [
-                      {
-                        file: "context.ts",
-                        start: { side: "head", line: 1 },
-                        end: { side: "head", line: 2 },
-                      },
-                    ],
-                    callSite: {
-                      file: "caller.ts",
-                      start: { side: "base", line: 12 },
-                      end: { side: "base", line: 12 },
+          <DocumentCallTree
+            block={{
+              type: "call_stack_diff",
+              id: "checkout",
+              title: "Checkout",
+              base: [
+                frame("reconcile"),
+                {
+                  ...frame("auth", "base"),
+                  contextSources: [
+                    {
+                      file: "context.ts",
+                      start: { side: "head", line: 1 },
+                      end: { side: "head", line: 2 },
                     },
+                  ],
+                  callSite: {
+                    file: "caller.ts",
+                    start: { side: "base", line: 12 },
+                    end: { side: "base", line: 12 },
                   },
-                ],
-                head: [
-                  frame("reconcile"),
-                  frame("enqueue", "head", {
-                    kind: "queue",
-                    reason: "via the workqueue",
-                  }),
-                ],
-              }}
-            />
-          </ReviewPanelProvider>,
+                },
+              ],
+              head: [
+                frame("reconcile"),
+                frame("enqueue", "head", {
+                  kind: "queue",
+                  reason: "via the workqueue",
+                }),
+              ],
+            }}
+          />,
         ),
       );
     });
@@ -117,41 +98,9 @@ describe("DocumentCallTree", () => {
       removed.click();
     });
 
-    expect(opened).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        kind: "peek",
-        anchor: expect.objectContaining({ id: "auth", title: "Frame auth" }),
-        content: {
-          kind: "source",
-          source: {
-            file: "src/auth.ts",
-            start: { side: "base", line: 4 },
-            end: { side: "base", line: 9 },
-          },
-        },
-      }),
-    );
+    const dialog = document.querySelector('[role="dialog"]');
 
-    const edge = container.querySelector(
-      '[aria-label="Go to call site of Frame auth"]',
-    )!;
-
-    await act(async () => {
-      edge.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
-      );
-    });
-    expect(opened).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        content: {
-          kind: "source",
-          source: {
-            file: "caller.ts",
-            start: { side: "base", line: 12 },
-            end: { side: "base", line: 12 },
-          },
-        },
-      }),
-    );
+    expect(dialog?.textContent).toContain("Frame auth");
+    expect(dialog?.querySelector(".code-peek")).not.toBeNull();
   });
 });

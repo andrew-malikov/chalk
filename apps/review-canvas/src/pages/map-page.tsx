@@ -31,13 +31,11 @@ export function MapPage({
   repoSoftwareMap,
   baseSoftwareMap,
   softwareMapTopologyDiff,
-  showFloatingActions,
 }: {
   softwareModels: NormalizedSoftwareModel[];
   repoSoftwareMap: NormalizedSoftwareModel | null;
   baseSoftwareMap: NormalizedSoftwareModel | null;
   softwareMapTopologyDiff: SoftwareMapTopologyDiff | null;
-  showFloatingActions: boolean;
 }): ReactElement {
   const session = useReviewSession();
   const review = useReview();
@@ -84,7 +82,6 @@ export function MapPage({
           }
           height="100%"
           showChrome={false}
-          showFloatingActions={showFloatingActions}
           variant="view"
         />
         <MapSettingsControl />

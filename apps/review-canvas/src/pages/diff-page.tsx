@@ -34,13 +34,12 @@ import { PageToolbar, usePageSlots } from "./page-slots";
 export function DiffPage({ active }: { active: boolean }): ReactElement {
   const panelActor = useReviewPanelActor();
   const diffScope = useReviewPanel((state) => state.context.diffScope);
-  const activePanel = useReviewPanel((state) => state.context.active);
   const comments = useComments();
   const lenses = useReviewLenses();
   const slots = usePageSlots();
   const commentsTooltip = useTooltip("Comments");
 
-  const commentsShown = !!comments?.open && activePanel === null;
+  const commentsShown = !!comments?.open;
 
   // The full diff stays mounted while another view shows, at the width it
   // had when it was hidden: following the column through a side peek's
