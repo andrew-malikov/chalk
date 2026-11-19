@@ -124,7 +124,7 @@ export function CallTree({
                     title={`Remaining +${stats.remaining.additions} −${stats.remaining.deletions} · Total +${stats.total.additions} −${stats.total.deletions}`}
                   >
                     {stats.state === "viewed" ? (
-                      <span aria-label="Viewed">
+                      <span aria-label="Viewed" className="tw:flex">
                         <CheckIcon />
                       </span>
                     ) : stats.state === "folded" ? (
@@ -255,7 +255,9 @@ export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
         onOpenChange={(open) => open || setPeek(null)}
       >
         <DialogContent className={styles.dialog} aria-describedby={undefined}>
-          <DialogTitle>{peek?.title}</DialogTitle>
+          <DialogTitle className={styles.dialogTitle}>
+            {peek?.title}
+          </DialogTitle>
           {peek && <CodePeekCard source={peek.source} heightMode="content" />}
         </DialogContent>
       </Dialog>
@@ -265,14 +267,15 @@ export function DocumentCallTree({ block }: { block: CallStackDiffBlock }) {
 
 const styles = {
   dialog:
-    "tw:sm:max-w-[min(960px,calc(100%-2rem))] tw:max-h-[85vh] tw:overflow-y-auto tw:overscroll-contain",
+    "tw:sm:max-w-[min(960px,calc(100%-2rem))] tw:max-h-[85vh] tw:overflow-y-auto tw:overscroll-contain tw:p-0 tw:gap-0 tw:[&_.code-peek]:my-0 tw:[&_.code-peek>*]:border-x-0 tw:[&_.code-peek>*]:border-b-0 tw:[&_.code-peek>*]:rounded-none",
+  dialogTitle: "tw:p-[16px_48px_16px_16px]",
   figure:
     "tw:m-[14px_0] tw:border-[1px] tw:border-solid tw:border-[color:var(--rule)] tw:rounded-[10px] tw:overflow-hidden tw:bg-[color:var(--surface)]",
   tree: "tw:min-w-full tw:w-full tw:p-[6px_0_12px]",
   // A hovered or focused call-site edge paints over the rows below it.
   entry:
     "tw:relative tw:[&:has(.canvas-call-edge:hover)]:z-[1] tw:[&:has(.canvas-call-edge:focus-visible)]:z-[1]",
-  row: "tw:relative tw:flex tw:items-center tw:w-full tw:h-[26px] tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:p-[0_12px_0_14px] tw:bg-[color:transparent] tw:[&:hover:not(:disabled)]:bg-[color:color-mix(in_srgb,_var(--ink)_3%,_transparent)] tw:font-[family-name:var(--font-mono)] tw:text-[length:12px] tw:font-normal tw:leading-[26px] tw:text-left tw:whitespace-nowrap",
+  row: "tw:relative tw:flex tw:items-center tw:w-full tw:h-[26px] tw:rounded-none tw:border-[0] tw:border-none tw:border-[color:currentcolor] tw:p-[0_12px_0_14px] tw:bg-[color:transparent] tw:[&:hover:not(:disabled)]:bg-[color:color-mix(in_srgb,_var(--ink)_3%,_transparent)] tw:font-[family-name:var(--font-mono)] tw:text-[length:12px] tw:font-normal tw:leading-[26px] tw:text-left tw:whitespace-nowrap",
   rowCurrent: "tw:bg-[color:var(--marker-tint)] tw:font-semibold",
   name: "tw:flex-[0_1_auto] tw:min-w-[32px] tw:overflow-hidden tw:text-ellipsis",
   added: "tw:text-[color:var(--change-added)]",
@@ -280,7 +283,7 @@ const styles = {
     "tw:text-[color:var(--change-removed)] tw:[text-decoration-line:line-through] tw:[text-decoration-color:color-mix(in_srgb,_var(--change-removed)_50%,_transparent)]",
   modified: "tw:text-[color:var(--change-modified)]",
   stats:
-    "tw:inline-flex tw:gap-[5px] tw:tabular-nums tw:shrink-0 tw:ml-[auto] tw:pl-[12px] tw:text-[length:10px]",
+    "tw:inline-flex tw:items-center tw:gap-[5px] tw:tabular-nums tw:shrink-0 tw:ml-[auto] tw:pl-[12px] tw:text-[length:10px]",
   connectors:
     "tw:shrink-0 tw:self-stretch tw:absolute tw:left-[14px] tw:top-0 tw:z-[1] tw:pointer-events-none tw:overflow-visible",
   path: "tw:stroke-[var(--rule-soft)] tw:fill-[none] tw:stroke-[1]",

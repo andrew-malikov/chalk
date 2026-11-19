@@ -364,7 +364,7 @@ export function AnchorLink({
 }
 
 const sourcePopoverClass =
-  "tw:w-[min(720px,calc(100vw-24px))] tw:max-h-[min(640px,var(--radix-popover-content-available-height))] tw:overflow-x-hidden tw:overflow-y-auto tw:overscroll-contain tw:p-[8px]";
+  "tw:w-[min(720px,calc(100vw-24px))] tw:max-h-[min(640px,var(--radix-popover-content-available-height))] tw:overflow-x-hidden tw:overflow-y-auto tw:overscroll-contain tw:p-0 tw:border-0 tw:rounded-[8px] tw:bg-transparent tw:[&_.code-peek]:my-0";
 
 export function a({
   href,

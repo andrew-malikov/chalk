@@ -296,7 +296,7 @@ export function CommentEditor({
   return (
     <ProseKit editor={editor}>
       {/* Bleeds through the card padding; its background sets it apart, and the card shows focus. */}
-      <div className="tw:-mx-3 tw:flex tw:min-w-0 tw:flex-col tw:bg-[var(--bg)]">
+      <div className="tw:-mx-3 tw:flex tw:min-w-0 tw:flex-col tw:bg-[var(--control-bg)]">
         {tabsContainer && createPortal(tabs, tabsContainer)}
         {toolbarContainer && createPortal(formatting, toolbarContainer)}
         {(!tabsContainer || !toolbarContainer) && (
@@ -314,7 +314,13 @@ export function CommentEditor({
           className={cn(box, previewing && "tw:hidden")}
         />
         {previewing && (
-          <div className={box}>
+          // Rendered blocks carry outer margins the raw text lacks; trimmed so the text holds still.
+          <div
+            className={cn(
+              box,
+              "tw:[&>:first-child]:mt-0 tw:[&>:last-child]:mb-0",
+            )}
+          >
             {value.trim() ? (
               <MarkdownContent source={value} />
             ) : (
