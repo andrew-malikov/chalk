@@ -47,7 +47,6 @@ jobs:
       - name: Test headless server
         timeout-minutes: 5
         run: |
-          bun run --filter @chalk/tutorial ensure:assets
           bun run --filter @chalk/server test -- --project shared-module-graph src/headless-host.test.ts
       - name: Test CLI
         timeout-minutes: 5
