@@ -881,7 +881,7 @@ it("centers a collapsed draft title, agent badge and toggle on the same row", as
   }
 });
 
-it("folds code threads and drafts in the popover, leaving general ones open", async () => {
+it("folds code threads, long general threads and drafts in the popover, leaving short general ones open", async () => {
   const refs = {
     baseSha: "a".repeat(40),
     startSha: "a".repeat(40),
@@ -935,6 +935,12 @@ it("folds code threads and drafts in the popover, leaving general ones open", as
           comments: [note(1, "General thread"), note(2, "General reply")],
         },
         {
+          id: "long",
+          resolvable: true,
+          resolved: false,
+          comments: [note(5, "Long thread"), note(6, "x".repeat(256))],
+        },
+        {
           id: "code",
           resolvable: true,
           resolved: false,
@@ -968,6 +974,8 @@ it("folds code threads and drafts in the popover, leaving general ones open", as
     await vi.waitFor(() =>
       expect(container.textContent).toContain("General reply"),
     );
+    expect(container.textContent).toContain("Long thread");
+    expect(container.textContent).not.toContain("x".repeat(256));
     expect(container.textContent).toContain("Code thread");
     expect(container.textContent).not.toContain("Code reply");
     const draft = [...container.querySelectorAll('[role="textbox"]')].find(
@@ -980,9 +988,11 @@ it("folds code threads and drafts in the popover, leaving general ones open", as
         '[aria-label="Expand discussion"]',
       );
 
-    // The draft's toggle comes first, then the thread's.
+    // The draft's toggle comes first, then the threads'.
     await userEvent.click(expand()[0]!);
     expect(draft.getBoundingClientRect().height).toBeGreaterThan(0);
+    await userEvent.click(expand()[0]!);
+    expect(container.textContent).toContain("x".repeat(256));
     await userEvent.click(expand()[0]!);
     expect(container.textContent).toContain("Code reply");
   } finally {

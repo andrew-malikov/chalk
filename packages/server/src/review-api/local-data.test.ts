@@ -961,8 +961,8 @@ it("gives a remote caller a fixed issue when a commit review's checkout fails", 
 
   // A file where the managed checkouts directory belongs fails acquisition
   // with an error that quotes the path.
-  mkdirSync(path.join(repository, ".git", "dev-fast"), { recursive: true });
-  writeFileSync(path.join(repository, ".git", "dev-fast", "reviews"), "");
+  mkdirSync(path.join(repository, ".git", "chalk"), { recursive: true });
+  writeFileSync(path.join(repository, ".git", "chalk", "reviews"), "");
   await local.data.languageEnvironment(local.store.read(reviewId), "head");
   await local.data.workspaces.idle();
   const app = createReviewApi(local.store, local.data);

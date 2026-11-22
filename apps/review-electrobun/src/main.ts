@@ -28,13 +28,9 @@ import { desktopEnvironment, startServer } from "./server-host";
 
 const checkout = process.env.CHALK_CHECKOUT;
 
-// Keep the existing dev profile so the rename preserves reviews and
-// preferences; installed builds use the CLI's default home so it finds them.
+// Share the CLI's home so it finds this app; instance keys keep builds apart.
 const profile = path.resolve(
-  process.env.CHALK_HOME ??
-    (checkout
-      ? path.join(homedir(), ".dev-fast/review-electrobun")
-      : path.join(homedir(), ".chalk")),
+  process.env.CHALK_HOME ?? path.join(homedir(), ".chalk"),
 );
 
 const key = checkout

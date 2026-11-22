@@ -30,7 +30,7 @@ import {
   writeNoteSync,
 } from "./notes";
 
-const MAP_REF = "refs/notes/dev-fast/software-map";
+const MAP_REF = "refs/notes/chalk/software-map";
 
 function run(cwd: string, command: string, args: string[]): string {
   return execFileSync(command, args, {
@@ -583,7 +583,7 @@ describe("notes config and rewrite handling", () => {
       "notes.rewriteRef",
     ]).split("\n");
 
-    expect(rewriteRefs).toEqual(["refs/notes/dev-fast/*"]);
+    expect(rewriteRefs).toEqual(["refs/notes/chalk/*"]);
     expect(git(rootPath, ["config", "notes.rewriteMode"])).toBe("overwrite");
 
     const fetchSpecs = git(rootPath, [
@@ -592,7 +592,7 @@ describe("notes config and rewrite handling", () => {
       "remote.origin.fetch",
     ])
       .split("\n")
-      .filter((line) => line.includes("dev-fast"));
+      .filter((line) => line.includes("refs/notes/chalk"));
 
     expect(fetchSpecs).toEqual([CHALK_NOTES_FETCH_REFSPEC]);
   });
@@ -613,7 +613,7 @@ describe("notes config and rewrite handling", () => {
       "remote.origin.fetch",
     ])
       .split("\n")
-      .filter((line) => line.includes("dev-fast"));
+      .filter((line) => line.includes("refs/notes/chalk"));
 
     expect(disabledSpecs).toEqual([]);
     // The rewrite config still installs (it is not fetch-related).
@@ -630,7 +630,7 @@ describe("notes config and rewrite handling", () => {
       "remote.origin.fetch",
     ])
       .split("\n")
-      .filter((line) => line.includes("dev-fast"));
+      .filter((line) => line.includes("refs/notes/chalk"));
 
     expect(enabledSpecs).toEqual([CHALK_NOTES_FETCH_REFSPEC]);
   });
@@ -651,12 +651,12 @@ describe("notes config and rewrite handling", () => {
     expect(
       git(rootPath, ["config", "--get-all", "remote.fork.fetch"])
         .split("\n")
-        .filter((line) => line.includes("dev-fast")),
+        .filter((line) => line.includes("refs/notes/chalk")),
     ).toEqual([CHALK_NOTES_FETCH_REFSPEC]);
     expect(
       git(rootPath, ["config", "--get-all", "remote.origin.fetch"])
         .split("\n")
-        .filter((line) => line.includes("dev-fast")),
+        .filter((line) => line.includes("refs/notes/chalk")),
     ).toEqual([]);
   });
 
@@ -722,7 +722,7 @@ describe("notes sharing", () => {
 
     const pushed = await pushNotes({
       rootPath: publisher,
-      refs: [MAP_REF, "refs/notes/dev-fast/unannotated"],
+      refs: [MAP_REF, "refs/notes/chalk/unannotated"],
     });
 
     expect(pushed.ok).toBe(true);
