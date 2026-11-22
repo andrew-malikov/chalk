@@ -33,6 +33,8 @@ const DIFF_PREFERENCE_KEYS = {
   layout: "diffLayout",
   mode: "diffMode",
   wrap: "diffWrap",
+  codeTheme: "codeTheme",
+  codeSize: "codeSize",
 } as const satisfies Record<
   keyof ReviewDiffPreferences,
   keyof ShellPreferences
@@ -229,9 +231,16 @@ export function createCanvasBridge(
   const listeners = new Set<(event: ReviewSurfaceEvent) => void>();
 
   function diffPreferences(): ReviewDiffPreferences {
-    const { diffLayout, diffMode, diffWrap } = preferences.current();
+    const { diffLayout, diffMode, diffWrap, codeTheme, codeSize } =
+      preferences.current();
 
-    return { layout: diffLayout, mode: diffMode, wrap: diffWrap };
+    return {
+      layout: diffLayout,
+      mode: diffMode,
+      wrap: diffWrap,
+      codeTheme,
+      codeSize,
+    };
   }
 
   function watch<T>(read: () => T, listener: (value: T) => void) {

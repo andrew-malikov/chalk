@@ -16,12 +16,12 @@ import {
   DialogTitle,
 } from "@canvas/components/ui/dialog";
 import { Input } from "@canvas/components/ui/input";
-import { NativeSelect } from "@canvas/components/ui/native-select";
 import { Switch } from "@canvas/components/ui/switch";
 import {
   mountReviewCanvas,
   reviewCanvasThemeClass,
 } from "@canvas/desktop-entry";
+import { codeThemeMode } from "@canvas/diff/code-appearance";
 import {
   REVIEW_CANVAS_RESUME_EVENT,
   ReviewApiClient,
@@ -37,6 +37,7 @@ import type {
   ReviewCanvasInstallContent,
   ReviewCanvasUi,
   ReviewSourceView,
+  ReviewTheme,
   ReviewVerbRequest,
   ReviewVerbResponse,
 } from "@chalk/review-contracts";
@@ -63,6 +64,7 @@ import {
 } from "react";
 import { createRoot } from "react-dom/client";
 
+import { AppearanceSettings, applyFonts } from "./appearance-settings";
 import {
   connectControl,
   createAuthenticatedRequest,
@@ -292,12 +294,14 @@ function Shell(
     return content;
   }
 
+  // A code theme with one variant decides the mode; the user's choice is kept for later.
   const theme = () =>
-    prefs.current.theme === "system"
+    codeThemeMode(prefs.current.codeTheme) ??
+    (prefs.current.theme === "system"
       ? media.current.matches
         ? "dark"
         : "light"
-      : prefs.current.theme;
+      : prefs.current.theme);
 
   const notify = (message: { kind: "success" | "error"; text: string }) => {
     if (!abort.signal.aborted) setError(message.text);
@@ -895,6 +899,17 @@ function Shell(
 
   const resolvedTheme = theme();
   const themeClass = reviewCanvasThemeClass(resolvedTheme);
+  const { uiFont, codeFont, codeLigatures } = prefs.current;
+
+  useLayoutEffect(
+    () =>
+      applyFonts(document.documentElement, {
+        uiFont,
+        codeFont,
+        codeLigatures,
+      }),
+    [uiFont, codeFont, codeLigatures],
+  );
   const currentTab = tabs.current.get(active.current ?? "");
 
   const currentReview = catalog.current.find(
@@ -1240,6 +1255,7 @@ function Shell(
         <SettingsDialog
           container={shellElement.current}
           preferences={prefs.current}
+          mode={resolvedTheme}
           save={(patch) => {
             void save(patch).catch(fail);
           }}
@@ -1260,6 +1276,7 @@ function Shell(
 function SettingsDialog({
   container,
   preferences,
+  mode,
   save,
   hasGitLabToken,
   saveGitLabToken,
@@ -1268,6 +1285,7 @@ function SettingsDialog({
 }: {
   container: HTMLElement | null;
   preferences: ShellPreferences;
+  mode: ReviewTheme;
   save: (patch: Partial<ShellPreferences>) => void;
   hasGitLabToken: (host: string) => Promise<boolean>;
   saveGitLabToken: (host: string, token: string) => Promise<void>;
@@ -1303,7 +1321,7 @@ function SettingsDialog({
       <DialogContent
         container={container}
         aria-describedby={undefined}
-        className="review-shell-settings tw:max-w-[min(420px,calc(100%-32px))] tw:font-[family-name:var(--chrome-font)] tw:text-sm"
+        className="review-shell-settings tw:max-w-[min(600px,calc(100%-32px))] tw:max-h-[calc(100%-32px)] tw:overflow-y-auto tw:font-[family-name:var(--chrome-font)] tw:text-sm"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           const previous = previousFocus.current;
@@ -1316,26 +1334,14 @@ function SettingsDialog({
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
         <div className="review-shell-settings-fields tw:grid tw:gap-6 tw:py-3 tw:[&_section]:grid tw:[&_section]:gap-4 tw:[&_h3]:text-xs tw:[&_h3]:font-medium tw:[&_h3]:text-muted-foreground tw:[&_label]:flex tw:[&_label]:items-center tw:[&_label]:justify-between tw:[&_label]:gap-4 tw:[&_select]:min-w-[132px]">
+          <AppearanceSettings
+            preferences={preferences}
+            mode={mode}
+            container={container}
+            save={save}
+          />
           <section>
             <h3>General</h3>
-            <label htmlFor="shell-appearance">
-              <span>Appearance</span>
-              <NativeSelect
-                id="shell-appearance"
-                aria-label="Appearance"
-                value={preferences.theme}
-                onChange={(event) => {
-                  // SAFETY: the options below contain only supported themes.
-                  save({
-                    theme: event.target.value as ShellPreferences["theme"],
-                  });
-                }}
-              >
-                <option value="system">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </NativeSelect>
-            </label>
             <label htmlFor="shell-debug-logging">
               <span>Debug logging</span>
               <Switch

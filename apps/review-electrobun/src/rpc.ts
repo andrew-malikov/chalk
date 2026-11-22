@@ -3,7 +3,10 @@ import type {
   ReviewDiffLayout,
   ReviewInlineEditorRange,
 } from "@chalk/review-contracts";
-import { REVIEW_KEYMAP_CHOICES } from "@chalk/review-contracts";
+import {
+  REVIEW_CODE_SIZES,
+  REVIEW_KEYMAP_CHOICES,
+} from "@chalk/review-contracts";
 import { z } from "zod";
 
 export const preferencesSchema = z.strictObject({
@@ -19,6 +22,12 @@ export const preferencesSchema = z.strictObject({
   reviewIds: z.array(z.string().min(1)),
   activeReviewId: z.string().min(1).nullable(),
   keymap: z.enum(REVIEW_KEYMAP_CHOICES).default("none"),
+  // Font families; null keeps the bundled Fira Sans and Monaspice Argon.
+  uiFont: z.string().min(1).nullable().default(null),
+  codeFont: z.string().min(1).nullable().default(null),
+  codeSize: z.literal(REVIEW_CODE_SIZES).default(12),
+  codeLigatures: z.boolean().default(false),
+  codeTheme: z.string().min(1).default("pierre"),
   // Every Chalk process reads this from preferences.json; see log.ts.
   debugLogging: z.boolean().default(false),
 });
@@ -33,6 +42,11 @@ export const defaultPreferences: ShellPreferences = {
   reviewIds: [],
   activeReviewId: null,
   keymap: "none",
+  uiFont: null,
+  codeFont: null,
+  codeSize: 12,
+  codeLigatures: false,
+  codeTheme: "pierre",
   debugLogging: false,
 };
 

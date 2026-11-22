@@ -49,6 +49,7 @@ import { createPortal } from "react-dom";
 import { z } from "zod";
 
 import { ChangedFilesTree } from "./changed-files-tree";
+import { diffsAppearance } from "./code-appearance";
 import { useDiffPreference } from "./diff-settings";
 import {
   type PierreComparisonEntry,
@@ -84,6 +85,18 @@ export function useReviewTheme() {
       [session.bridge],
     ),
     () => session.theme(),
+  );
+}
+
+/** Pierre options for the app mode and the chosen code theme and size. */
+export function useDiffsAppearance() {
+  const theme = useReviewTheme();
+  const [codeTheme] = useDiffPreference("codeTheme");
+  const [codeSize] = useDiffPreference("codeSize");
+
+  return useMemo(
+    () => diffsAppearance(theme, codeTheme, codeSize),
+    [theme, codeTheme, codeSize],
   );
 }
 
@@ -295,6 +308,8 @@ function Comparison({
   const [layout] = useDiffPreference("layout");
 
   const theme = useReviewTheme();
+
+  const appearance = useDiffsAppearance();
 
   const annotations: (DiffLineAnnotation<CommentAnnotation> & {
     file: string;
@@ -758,13 +773,12 @@ function Comparison({
     () => ({
       diffStyle: layout,
       hunkSeparators: "line-info" as const,
-      theme: theme === "light" ? "pierre-light" : "pierre-dark",
-      themeType: theme === "light" ? ("light" as const) : ("dark" as const),
+      ...appearance.options,
+      itemMetrics: { lineHeight: appearance.lineHeight },
       preferredHighlighter: "shiki-js" as const,
       overflow: wrap ? ("wrap" as const) : ("scroll" as const),
       stickyHeaders: true,
-      unsafeCSS:
-        ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}:is([data-line-annotation],[data-gutter-buffer=annotation]){--diffs-annotation-bg:var(--diffs-bg)}[data-diffs-header]{cursor:pointer}[data-diffs-header]:hover{background-color:var(--diffs-bg-context)}",
+      unsafeCSS: `${appearance.options.unsafeCSS}:is([data-line-annotation],[data-gutter-buffer=annotation]){--diffs-annotation-bg:var(--diffs-bg)}[data-diffs-header]{cursor:pointer}[data-diffs-header]:hover{background-color:var(--diffs-bg-context)}`,
       onPostRender: restore,
       loadDiffFiles:
         committed && !structural
@@ -783,7 +797,7 @@ function Comparison({
     }),
     [
       layout,
-      theme,
+      appearance,
       wrap,
       session.fetchUrl,
       committed,

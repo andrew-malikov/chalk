@@ -17,8 +17,13 @@
   --marker-glow: rgba(212, 212, 212, 0.3);
   --board-grid: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><circle cx='1' cy='1' r='0.8' fill='%23292929'/></svg>");
   --review-header-height: 35px;
-  --font-sans: "Fira Sans", "Helvetica Neue", sans-serif;
-  --font-mono: "MonaspiceAr Nerd Font Mono", ui-monospace, monospace;
+  /* --ui-font and --code-font are the user's choices, set by the desktop shell;
+     the bundled faces stay as the fallback when a chosen font goes missing. */
+  --font-sans:
+    var(--ui-font, "Fira Sans"), "Fira Sans", "Helvetica Neue", sans-serif;
+  --font-mono:
+    var(--code-font, "MonaspiceAr Nerd Font Mono"),
+    "MonaspiceAr Nerd Font Mono", ui-monospace, monospace;
   --font-display: var(--font-sans);
   --transparent: transparent;
   /* Ground bridge. Same principle as the --chrome-* tokens on .review-app: the

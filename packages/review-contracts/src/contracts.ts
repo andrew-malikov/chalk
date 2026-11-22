@@ -307,10 +307,17 @@ export interface ReviewTooltipOptions {
   detail?: string;
 }
 
+export const REVIEW_CODE_SIZES = [12, 13, 14] as const;
+
+export type ReviewCodeSize = (typeof REVIEW_CODE_SIZES)[number];
+
 export interface ReviewDiffPreferences {
   layout: ReviewDiffLayout;
   mode: "text" | "structural";
   wrap: boolean;
+  // Optional so hosts without appearance settings keep Pierre at 12px.
+  codeTheme?: string;
+  codeSize?: ReviewCodeSize;
 }
 
 export interface ReviewCanvasBridge {

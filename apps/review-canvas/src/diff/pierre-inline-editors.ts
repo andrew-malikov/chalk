@@ -9,6 +9,7 @@ import type {
 } from "@chalk/review-contracts";
 import { FileDiff, type FileDiffMetadata } from "@pierre/diffs";
 
+import { diffsAppearance } from "./code-appearance";
 import {
   type PierreSnippetMatch,
   createPierreSnippet,
@@ -273,11 +274,15 @@ function mount(
       requestAnimationFrame(updateHeight);
       decorate();
     },
-    unsafeCSS: `:host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}::highlight(${highlightName}){background:var(--review-find-match-background)}::highlight(${activeHighlightName}){background:var(--review-find-match-active-background)}`,
   });
 
   function refreshOptions() {
-    const theme = session.bridge.currentTheme();
+    const appearance = diffsAppearance(
+      session.bridge.currentTheme(),
+      session.bridge.diffPreference("codeTheme"),
+      session.bridge.diffPreference("codeSize"),
+    );
+
     instance.setOptions({
       ...instance.options,
       diffStyle:
@@ -289,14 +294,18 @@ function mount(
           ))
           ? "unified"
           : session.bridge.diffPreference("layout"),
-      theme: theme === "light" ? "pierre-light" : "pierre-dark",
-      themeType: theme,
+      ...appearance.options,
+      unsafeCSS: `${appearance.options.unsafeCSS}::highlight(${highlightName}){background:var(--review-find-match-background)}::highlight(${activeHighlightName}){background:var(--review-find-match-active-background)}`,
     });
 
     if (diff) instance.render({ fileDiff: diff, containerWrapper: body });
   }
 
   const themeSubscription = session.bridge.onDidChangeTheme(refreshOptions);
+
+  const appearanceSubscriptions = (["codeTheme", "codeSize"] as const).map(
+    (key) => session.bridge.onDidChangeDiffPreference(key, refreshOptions),
+  );
 
   const layoutSubscription = session.bridge.onDidChangeDiffPreference(
     "layout",
@@ -451,6 +460,9 @@ function mount(
       disposed = true;
       themeSubscription.dispose();
       layoutSubscription.dispose();
+
+      for (const subscription of appearanceSubscriptions)
+        subscription.dispose();
       resize.disconnect();
       spec.container.removeEventListener("focusin", focus);
       highlights?.delete(highlightName);

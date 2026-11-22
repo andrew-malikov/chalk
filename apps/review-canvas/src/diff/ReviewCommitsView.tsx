@@ -24,7 +24,7 @@ import { DiffCount } from "./diff-count";
 import { useDiffPreference } from "./diff-settings";
 import { FileMark } from "./file-mark";
 import { loadPierreComparison, loadPierreFile } from "./pierre-comparison";
-import { useReviewTheme } from "./PierreDiffView";
+import { useDiffsAppearance } from "./PierreDiffView";
 
 type OpenCommitDiff = (commit: ReviewCommitSummary, file?: string) => void;
 
@@ -248,7 +248,7 @@ function CommitFileDiff({
   file: ReviewDiffFileWire;
 }) {
   const session = useReviewSession();
-  const theme = useReviewTheme();
+  const appearance = useDiffsAppearance();
   const [layout] = useDiffPreference("layout");
   const [wrap] = useDiffPreference("wrap");
 
@@ -297,13 +297,10 @@ function CommitFileDiff({
       options={{
         diffStyle: layout,
         hunkSeparators: "line-info",
-        theme: theme === "light" ? "pierre-light" : "pierre-dark",
-        themeType: theme,
+        ...appearance.options,
         preferredHighlighter: "shiki-js",
         overflow: wrap ? "wrap" : "scroll",
         disableFileHeader: true,
-        unsafeCSS:
-          ":host{--diffs-font-family:var(--font-mono,monospace);--diffs-font-size:12px;--diffs-line-height:20px;--diffs-bg:var(--surface);--diffs-fg:var(--ink)}",
         loadDiffFiles: (diff) =>
           loadPierreFile(
             diff,
