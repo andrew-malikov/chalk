@@ -133,9 +133,15 @@ function mount(
     spec.onDidNavigate?.();
     spec.onDidOpen?.();
   });
+  // The reader folds code they have read; the header stays to reopen it.
+  const fold = document.createElement("button");
+  fold.type = "button";
+  fold.style.cssText =
+    "width:20px;background:none;border:0;color:var(--ink-muted);cursor:pointer;font:inherit;";
+  fold.addEventListener("click", () => setCollapsed(!collapsed));
   const counts = document.createElement("span");
   const progressLabel = document.createElement("span");
-  header.append(open, counts, progressLabel);
+  header.append(open, counts, progressLabel, fold);
   const body = document.createElement("div");
   body.style.cssText = `overflow:auto;scrollbar-width:thin;${spec.heightMode === "capped" ? "max-height:360px;" : ""}`;
   body.tabIndex = 0;
@@ -156,6 +162,15 @@ function mount(
   const activeHighlightName = `${highlightName}-active`;
   const highlights = document.defaultView?.CSS.highlights;
 
+  function setCollapsed(value: boolean) {
+    collapsed = value;
+    body.hidden = value;
+    fold.textContent = value ? "▸" : "▾";
+    fold.setAttribute("aria-expanded", String(!value));
+    fold.setAttribute("aria-label", value ? "Expand code" : "Collapse code");
+    updateHeight();
+  }
+
   function updateHeight() {
     if (disposed) return;
     const next = 40 + (collapsed ? 0 : body.getBoundingClientRect().height);
@@ -166,6 +181,7 @@ function mount(
     for (const listener of heightListeners) listener(height);
   }
 
+  setCollapsed(false);
   const resize = new ResizeObserver(() => requestAnimationFrame(updateHeight));
   resize.observe(body);
 
@@ -379,11 +395,7 @@ function mount(
     setActive(active: boolean) {
       spec.container.dataset.reviewInlineEditorActive = String(active);
     },
-    setCollapsed(value: boolean) {
-      collapsed = value;
-      body.hidden = value;
-      updateHeight();
-    },
+    setCollapsed,
     setProgress,
     onDidChangeHeight(listener: (height: number) => void) {
       heightListeners.add(listener);

@@ -78,3 +78,44 @@ it.each([
     expect(body.scrollTop).toBeGreaterThan(0);
   },
 );
+
+it("lets the reader fold the code and reopen it from the header", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+
+  const session = testReviewSession(
+    {},
+    {
+      request: async (source) =>
+        Response.json(
+          new URL(source).pathname.endsWith("/diff")
+            ? [{ path: "source.ts", status: "modified" }]
+            : { text: "const value = 1;\n" },
+        ),
+    },
+  );
+
+  editor = createPierreInlineEditors(session).create({
+    container,
+    path: "source.ts",
+    title: "source.ts",
+    side: "head",
+    ranges: [{ startLine: 1, endLine: 1 }],
+    heightMode: "capped",
+    active: false,
+  });
+
+  const fold = container.querySelector<HTMLButtonElement>(
+    'button[aria-label="Collapse code"]',
+  )!;
+
+  const body = container.querySelector<HTMLDivElement>("div[aria-label]")!;
+
+  fold.click();
+  expect(body.hidden).toBe(true);
+  expect(fold.getAttribute("aria-expanded")).toBe("false");
+
+  fold.click();
+  expect(body.hidden).toBe(false);
+  container.remove();
+});
