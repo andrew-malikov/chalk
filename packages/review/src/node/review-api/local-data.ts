@@ -104,6 +104,12 @@ export const uploadSchema = z.discriminatedUnion("kind", [
 const unavailableCheckout = () =>
   new ReviewInputError("The selected local checkout is unavailable.", 404);
 
+const WORKTREE_WATCH_RETRY_MS = 10_000;
+
+type WorktreeInspection = Awaited<ReturnType<typeof inspectWorktree>> & {
+  forks: Map<string, Promise<{ ref: string; commit: string }>>;
+};
+
 /** File reads cannot name the root or a directory; tree reads can. */
 function checkRelativePath(file: string) {
   inputError(() => checkSourcePath(file));
@@ -520,40 +526,58 @@ export class LocalReviewData {
     {
       epoch: number;
       inspectedEpoch: number;
-      watchers: FSWatcher[];
-      healthy: boolean;
-      inspection?: Awaited<ReturnType<typeof inspectWorktree>>;
-      /** Fork points by base ref, valid for the inspected epoch. */
-      forks: Map<string, Promise<{ ref: string; commit: string }>>;
+      roots: Promise<Set<string>>;
+      watchers: Map<string, FSWatcher>;
+      retryWatchAt: number;
+      inspection?: WorktreeInspection;
+      inspecting?: Promise<WorktreeInspection>;
     }
   >();
 
   private forgetWorktree(repositoryId: string) {
     const entry = this.worktrees.get(repositoryId);
 
-    if (entry) for (const watcher of entry.watchers) watcher.close();
+    if (entry) for (const watcher of entry.watchers.values()) watcher.close();
     this.worktrees.delete(repositoryId);
   }
 
   private async worktreeState(repositoryId: string, vcs: LocalVcs) {
+    if (this.closed) throw unavailableCheckout();
+
     let entry = this.worktrees.get(repositoryId);
 
     if (!entry) {
+      const root = vcs.rootPath;
+
       entry = {
         epoch: 0,
         inspectedEpoch: -1,
-        watchers: [],
-        healthy: true,
-        forks: new Map(),
+        roots: gitCommonDir(root).then(
+          (common) => new Set(common ? [root, common] : [root]),
+        ),
+        watchers: new Map(),
+        retryWatchAt: 0,
       };
       this.worktrees.set(repositoryId, entry);
-      const state = entry;
-      const roots = new Set([vcs.rootPath]);
-      const common = await gitCommonDir(vcs.rootPath);
+    }
 
-      if (common) roots.add(common);
+    const state = entry;
+    const roots = await state.roots;
 
+    if (this.closed || this.worktrees.get(repositoryId) !== state)
+      throw unavailableCheckout();
+
+    if (state.inspecting) return state.inspecting;
+
+    const now = Date.now();
+
+    const rewatch =
+      state.watchers.size < roots.size && now >= state.retryWatchAt;
+
+    if (rewatch) {
       for (const root of roots) {
+        if (state.watchers.has(root)) continue;
+
         try {
           const watcher = (this.options.watch ?? watch)(
             root,
@@ -564,34 +588,40 @@ export class LocalReviewData {
           );
 
           watcher.on("error", () => {
+            if (state.watchers.get(root) !== watcher) return;
+
+            state.watchers.delete(root);
             state.epoch++;
-            state.inspectedEpoch = -1;
-            state.healthy = false;
             watcher.close();
           });
           watcher.unref();
-          state.watchers.push(watcher);
+          state.watchers.set(root, watcher);
         } catch {
-          state.healthy = false;
+          // The next read after the polling interval retries this root.
         }
       }
+
+      state.retryWatchAt =
+        state.watchers.size < roots.size ? now + WORKTREE_WATCH_RETRY_MS : 0;
     }
 
-    if (
-      entry.inspection &&
-      entry.inspectedEpoch === entry.epoch &&
-      entry.healthy &&
-      entry.watchers.length
-    )
-      return { ...entry.inspection, forks: entry.forks };
+    if (!rewatch && state.inspection && state.inspectedEpoch === state.epoch)
+      return state.inspection;
 
-    const epoch = entry.epoch;
-    const inspected = await inspectWorktree(repositoryId, vcs);
-    entry.inspection = inspected;
-    entry.inspectedEpoch = epoch;
-    entry.forks = new Map();
+    // Inspect after subscribing to pick up edits missed during the outage.
+    const epoch = state.epoch;
+    state.inspecting = inspectWorktree(repositoryId, vcs)
+      .then((inspection) => {
+        state.inspectedEpoch = epoch;
+        state.inspection = { ...inspection, forks: new Map() };
 
-    return { ...inspected, forks: entry.forks };
+        return state.inspection;
+      })
+      .finally(() => {
+        state.inspecting = undefined;
+      });
+
+    return state.inspecting;
   }
 
   async close(): Promise<void> {
@@ -603,9 +633,8 @@ export class LocalReviewData {
     this.closed = true;
     await this.workspaceManager?.close();
 
-    for (const entry of this.worktrees.values())
-      for (const watcher of entry.watchers) watcher.close();
-    this.worktrees.clear();
+    for (const repositoryId of this.worktrees.keys())
+      this.forgetWorktree(repositoryId);
     const readers = [...this.readers.values()];
 
     this.readers.clear();

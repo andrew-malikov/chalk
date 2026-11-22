@@ -23,7 +23,7 @@
     "@chalk/json": "workspace:*",
     "@chalk/local-vcs": "^0.1.0",
     "@chalk/review-contracts": "workspace:*",
-    "@dev.fast/diffr": "0.1.23",
+    "@dev.fast/diffr": "0.1.24",
     "@gitbeaker/rest": "44.0.3",
     "@img/sharp-wasm32": "0.35.5",
     "fuzzysort": "4.0.2",

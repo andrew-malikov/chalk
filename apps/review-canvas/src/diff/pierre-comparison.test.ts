@@ -93,6 +93,47 @@ describe("Pierre comparison loading", () => {
     expect(entries.every((entry) => entry.diff === undefined)).toBe(true);
   });
 
+  it("publishes the first file immediately and batches the next completions", async ({
+    onTestFinished,
+  }) => {
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+
+    const { promise: response, resolve } = Promise.withResolvers<Response>();
+    const onUpdate = vi.fn<(entries: PierreComparisonEntry[]) => void>();
+
+    const loading = loadPierreComparison({
+      files: [
+        { ...file, path: "a.bin", binary: true },
+        { ...file, path: "b.bin", binary: true },
+        { ...file, path: "c.bin", binary: true },
+        file,
+      ],
+      url: "http://localhost/reviews-api/review/diff",
+      signal: new AbortController().signal,
+      request: () => response,
+      onUpdate,
+    });
+
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(
+      onUpdate.mock.calls[0]![0].filter((entry) => entry.notice),
+    ).toHaveLength(1);
+
+    vi.runOnlyPendingTimers();
+    expect(onUpdate).toHaveBeenCalledTimes(2);
+    expect(
+      onUpdate.mock.calls[1]![0].filter((entry) => entry.notice),
+    ).toHaveLength(3);
+
+    resolve(new Response(patch));
+    expect((await loading).at(-1)?.diff?.name).toBe(file.path);
+    vi.runOnlyPendingTimers();
+    expect(onUpdate).toHaveBeenCalledTimes(2);
+  });
+
   it("does not publish a superseded comparison after an abort", async () => {
     const abort = new AbortController();
     const onUpdate = vi.fn();

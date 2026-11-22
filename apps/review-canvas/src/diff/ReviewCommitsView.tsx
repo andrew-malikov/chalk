@@ -269,7 +269,6 @@ function CommitFileDiff({
           url,
           signal,
           request: session.fetchUrl,
-          onUpdate: () => {},
         })
       )[0]!,
     staleTime: Infinity,

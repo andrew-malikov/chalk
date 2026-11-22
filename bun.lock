@@ -123,7 +123,7 @@
         "@chalk/review": "workspace:*",
         "@chalk/review-contracts": "workspace:*",
         "@chalk/server": "workspace:*",
-        "@dev.fast/diffr": "0.1.23",
+        "@dev.fast/diffr": "0.1.24",
         "@types/node": "24.12.2",
         "isomorphic-git": "1.44.11",
         "micromark-extension-math": "3.1.0",
@@ -182,7 +182,7 @@
         "@chalk/json": "workspace:*",
         "@chalk/local-vcs": "^0.1.0",
         "@chalk/review-contracts": "workspace:*",
-        "@dev.fast/diffr": "0.1.23",
+        "@dev.fast/diffr": "0.1.24",
         "@gitbeaker/rest": "44.0.3",
         "@img/sharp-wasm32": "0.35.5",
         "fuzzysort": "4.0.2",
@@ -207,7 +207,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@chalk/json": "workspace:*",
-        "@dev.fast/diffr": "0.1.23",
+        "@dev.fast/diffr": "0.1.24",
         "eventsource-parser": "3.1.1",
         "zod": "catalog:",
       },
@@ -223,7 +223,7 @@
         "@chalk/json": "workspace:*",
         "@chalk/review": "workspace:*",
         "@chalk/review-contracts": "workspace:*",
-        "@dev.fast/diffr": "0.1.23",
+        "@dev.fast/diffr": "0.1.24",
         "hono": "4.13.16",
         "pino": "10.4.0",
         "zod": "catalog:",
@@ -330,17 +330,17 @@
 
     "@cucumber/tag-expressions": ["@cucumber/tag-expressions@9.1.0", "", {}, "sha512-bvHjcRFZ+J1TqIa9eFNO1wGHqwx4V9ZKV3hYgkuK/VahHx73uiP4rKV3JVrvWSMrwrFvJG6C8aEwnCWSvbyFdQ=="],
 
-    "@dev.fast/diffr": ["@dev.fast/diffr@0.1.23", "", { "optionalDependencies": { "@dev.fast/diffr-darwin-arm64": "0.1.23", "@dev.fast/diffr-darwin-x64": "0.1.23", "@dev.fast/diffr-linux-arm64": "0.1.23", "@dev.fast/diffr-linux-x64": "0.1.23", "@dev.fast/diffr-win32-x64": "0.1.23" }, "peerDependencies": { "zod": "^4.0.0" } }, "sha512-+NNA8HjT+/GgSX8Oruh0jtMDI1QFykxp3+W1I9uv437GuWSFzeBXAABt6nm+ANyJF5hKi9ohP9MP6dQMeAbdIA=="],
+    "@dev.fast/diffr": ["@dev.fast/diffr@0.1.24", "", { "optionalDependencies": { "@dev.fast/diffr-darwin-arm64": "0.1.24", "@dev.fast/diffr-darwin-x64": "0.1.24", "@dev.fast/diffr-linux-arm64": "0.1.24", "@dev.fast/diffr-linux-x64": "0.1.24", "@dev.fast/diffr-win32-x64": "0.1.24" }, "peerDependencies": { "zod": "^4.0.0" } }, "sha512-LnIjkyrhzdmLQnzHy5Qo0HQgIzFMqGVvB94uvPmMAjjQR3xaLnZ2eh/zr5M54vv9xGkJhaViR3TmbDJAqwRPDA=="],
 
-    "@dev.fast/diffr-darwin-arm64": ["@dev.fast/diffr-darwin-arm64@0.1.23", "", { "os": "darwin", "cpu": "arm64" }, "sha512-8FsULvNGYfR+557p2g4PDcEBPBcXY9Pg4OVVNTd7lvaRH69gtW4Ugg6/flTq7r6IDfd8AEbR0eTuYtiuOrOMJg=="],
+    "@dev.fast/diffr-darwin-arm64": ["@dev.fast/diffr-darwin-arm64@0.1.24", "", { "os": "darwin", "cpu": "arm64" }, "sha512-dqL0pCZLJLlY+ExbKG34uoM5nFwvBRLdw8Lk6nXqhv4rpRvOJfgqEq9nnySnyMRvTWZszrqMW3fNRKqCM4sg6g=="],
 
-    "@dev.fast/diffr-darwin-x64": ["@dev.fast/diffr-darwin-x64@0.1.23", "", { "os": "darwin", "cpu": "x64" }, "sha512-lwGakKv3OqMOZx2BxHeizChqCcVFQBWAtyBxPVIRa6gDgmln6F+6omqZ5//1STVH14VbiTmDaULUAKiB5Ry2Aw=="],
+    "@dev.fast/diffr-darwin-x64": ["@dev.fast/diffr-darwin-x64@0.1.24", "", { "os": "darwin", "cpu": "x64" }, "sha512-ctjG4RPfYzyaqq531GSuttZ6sPqG960/dYYmDzmsTZR9MlmoXNbSNsAOgYQtUog0BJ4iXtJNRT8WzJBFzDS9+w=="],
 
-    "@dev.fast/diffr-linux-arm64": ["@dev.fast/diffr-linux-arm64@0.1.23", "", { "os": "linux", "cpu": "arm64" }, "sha512-E+aA4gGqy7NFzMdFV7i2IagvKHyF3c5m06UioHM0lALXrv+ilbeiVJCFSYh1k43oR+rsI6Wxn7BhCFQRXPRcig=="],
+    "@dev.fast/diffr-linux-arm64": ["@dev.fast/diffr-linux-arm64@0.1.24", "", { "os": "linux", "cpu": "arm64" }, "sha512-dvR08qZudn5loW5wHpZCseiXMWP8aLrrSNgKsLte1b6udNlrx8QA8NCle+pwEonwGq/lS2NVNJNo4Mi5N5XjmA=="],
 
-    "@dev.fast/diffr-linux-x64": ["@dev.fast/diffr-linux-x64@0.1.23", "", { "os": "linux", "cpu": "x64" }, "sha512-LNGRY6yu7J0j6G1Q++yc9dncB2fa9Xur4yNTSb2cXkdM4lf6mISye/zF66mhMWoLIyBuJ14uyA6sYV8L4JxBCw=="],
+    "@dev.fast/diffr-linux-x64": ["@dev.fast/diffr-linux-x64@0.1.24", "", { "os": "linux", "cpu": "x64" }, "sha512-Jcg+vzBalTVxKxpncFcHEa2BdfK0D3iVU253T8tH2MCog0YJW3iVeJ2y/4HvMGtaVUaTSdC31MVcnL1qXXSy6w=="],
 
-    "@dev.fast/diffr-win32-x64": ["@dev.fast/diffr-win32-x64@0.1.23", "", { "os": "win32", "cpu": "x64" }, "sha512-RpuPDxkLjZvti6o5SSsvDe3lf0cfMwAYl+r02IISgW4JdEBF2daemPr4MhobrgEcjSSvJq39YwOj0tVN7T63WA=="],
+    "@dev.fast/diffr-win32-x64": ["@dev.fast/diffr-win32-x64@0.1.24", "", { "os": "win32", "cpu": "x64" }, "sha512-Uo3J3wcDrNWOjNNvEDL5MtSZkLCLZDvk4gsMIdKJAA2NyKlmsMLN+ouuiB3FbLQJl404hrE8yglm1S5XfEkVWg=="],
 
     "@emnapi/runtime": ["@emnapi/runtime@1.11.3", "", { "dependencies": { "tslib": "2.8.1" } }, "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA=="],
 

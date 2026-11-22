@@ -17,6 +17,8 @@ export interface PierreComparisonEntry {
 
 type Request = (url: string | URL, init?: RequestInit) => Promise<Response>;
 
+const PROGRESS_INTERVAL_MS = 16;
+
 export async function loadPierreComparison({
   files,
   url,
@@ -31,15 +33,32 @@ export async function loadPierreComparison({
   signal: AbortSignal;
   request: Request;
   preferredFile?(): string | undefined;
-  onUpdate(entries: PierreComparisonEntry[]): void;
+  /** Progress snapshots. The complete entries are returned by the promise. */
+  onUpdate?(entries: PierreComparisonEntry[]): void;
   structural?: boolean;
 }): Promise<PierreComparisonEntry[]> {
   const entries = files.map((file): PierreComparisonEntry => ({ file }));
   const queue = entries.map((entry, index) => ({ entry, index }));
+  let published = false;
+  let progressTimer: ReturnType<typeof setTimeout> | undefined;
+
   const publish = () => {
     signal.throwIfAborted();
-    onUpdate([...entries]);
+
+    if (!onUpdate) return;
+
+    if (!published) {
+      published = true;
+      onUpdate([...entries]);
+    } else {
+      progressTimer ??= setTimeout(() => {
+        progressTimer = undefined;
+
+        if (!signal.aborted) onUpdate([...entries]);
+      }, PROGRESS_INTERVAL_MS);
+    }
   };
+
   async function worker() {
     while (queue.length > 0) {
       signal.throwIfAborted();
@@ -104,8 +123,17 @@ export async function loadPierreComparison({
       publish();
     }
   }
-  await Promise.all(Array.from({ length: Math.min(2, queue.length) }, worker));
-  return entries;
+
+  try {
+    await Promise.all(
+      Array.from({ length: Math.min(2, queue.length) }, worker),
+    );
+    signal.throwIfAborted();
+
+    return entries;
+  } finally {
+    clearTimeout(progressTimer);
+  }
 }
 
 /** Only use for immutable comparisons: a worktree generation does not freeze bytes. */

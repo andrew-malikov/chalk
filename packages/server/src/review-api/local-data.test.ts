@@ -3146,12 +3146,20 @@ it("does not report clean tracked symlinks and submodules as modified", async ()
   });
 });
 
-it("continues capturing after watchers fail and stop emitting changes", async () => {
+it("bounds worktree polling after watcher failure and resumes watching", async ({
+  onTestFinished,
+}) => {
   await local.data.close();
   await local.store.close();
+  const clock = vi.spyOn(Date, "now");
+  onTestFinished(() => clock.mockRestore());
+  let unavailable = false;
   const watchers: FSWatcher[] = [];
   local = openLocalReviewStore(database, {
     watch: ((...args: Parameters<typeof watch>) => {
+      if (unavailable)
+        throw Object.assign(new Error("Watch limit"), { code: "ENOSPC" });
+
       const watcher = watch(...args);
       watchers.push(watcher);
 
@@ -3171,25 +3179,42 @@ it("continues capturing after watchers fail and stop emitting changes", async ()
     }),
   );
 
+  const revision = () =>
+    local.store.read(created.reviewId).pins!.worktreeRevision;
+
+  const initial = revision();
+  unavailable = true;
+
   for (const watcher of watchers)
     watcher.emit(
       "error",
       Object.assign(new Error("Watch limit"), { code: "ENOSPC" }),
     );
 
-  for (const value of ["first change\n", "second change\n"]) {
-    writeFileSync(path.join(repository, "example.ts"), value);
+  const file = path.join(repository, "example.ts");
+  writeFileSync(file, "changed during the outage\n");
+  await local.store.refreshWorktrees();
+  const duringOutage = revision();
+  expect(duringOutage).not.toBe(initial);
+
+  writeFileSync(file, "changed again during the outage\n");
+  recordSpawns();
+  await local.store.refreshWorktrees();
+  await local.store.refreshWorktrees();
+  expect(spawns).toEqual([]);
+  expect(revision()).toBe(duringOutage);
+
+  unavailable = false;
+  clock.mockReturnValue(Date.now() + 10_000);
+  await local.store.refreshWorktrees();
+  const recovered = revision();
+  expect(recovered).not.toBe(duringOutage);
+
+  writeFileSync(file, "changed after recovery\n");
+  await vi.waitFor(async () => {
     await local.store.refreshWorktrees();
-    expect(
-      (
-        await local.data.file(
-          local.store.read(created.reviewId).pins!,
-          "head",
-          "example.ts",
-        )
-      ).text,
-    ).toBe(value);
-  }
+    expect(revision()).not.toBe(recovered);
+  });
 });
 
 it("keeps live language identity across edits but replaces it with a checkout at the same path", async () => {
