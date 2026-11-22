@@ -456,11 +456,14 @@ function Discussion({
   }, [comments.selected, discussion.id, inline]);
 
   // Inline threads render only when expanded; collapsed ones become line chips.
-  // The popover folds code threads too, leaving general ones open.
+  // The popover folds code threads too, leaving short general ones open.
   const collapsed =
     !inline &&
     (comments.panelCollapsed[discussion.id] ??
-      ((discussion.resolved || !!discussion.position) && !replying));
+      ((discussion.resolved ||
+        !!discussion.position ||
+        discussion.comments.reduce((n, c) => n + c.body.length, 0) > 256) &&
+        !replying));
 
   const collapse = inline ? comments.collapse : comments.collapsePanel;
 

@@ -560,12 +560,12 @@ async function jjWorkingCopyCommitIds(rootPath: string): Promise<string[]> {
 // Sharing
 // ---------------------------------------------------------------------------
 
-export const CHALK_NOTES_GLOB = "refs/notes/dev-fast/*";
+export const CHALK_NOTES_GLOB = "refs/notes/chalk/*";
 
-export const CHALK_REMOTE_NOTES_PREFIX = "refs/notes/dev-fast/remote/";
+export const CHALK_REMOTE_NOTES_PREFIX = "refs/notes/chalk/remote/";
 
 export const CHALK_NOTES_FETCH_REFSPEC =
-  "+refs/notes/dev-fast/*:refs/notes/dev-fast/remote/*";
+  "+refs/notes/chalk/*:refs/notes/chalk/remote/*";
 
 export const CHALK_NOTES_REMOTE_CONFIG = "chalk.notesRemote";
 
@@ -611,7 +611,7 @@ export function notesRemoteSync(
 
 /** Local notes ref → the remote/* namespace it fetches into. */
 export function remoteNotesRef(localRef: string): string {
-  return localRef.replace("refs/notes/dev-fast/", CHALK_REMOTE_NOTES_PREFIX);
+  return localRef.replace("refs/notes/chalk/", CHALK_REMOTE_NOTES_PREFIX);
 }
 
 /**
@@ -1094,7 +1094,7 @@ export function notesLockPathForTests(gitDir: string): string {
 }
 
 function notesLockPath(gitDir: string): string {
-  const dir = path.join(gitDir, "dev-fast");
+  const dir = path.join(gitDir, "chalk");
   fs.mkdirSync(dir, { recursive: true });
 
   return path.join(dir, "notes.lock");

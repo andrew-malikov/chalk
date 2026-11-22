@@ -209,7 +209,7 @@ export async function removeReviewManagedCheckouts(
 // Resolve a pinned ref to a commit. Prefer the jj-first local-vcs
 // resolution (worktree-aware for HEAD/@ and branch names); fall back to git
 // against the shared git dir for refs only the backing store knows, like the
-// pinned refs/dev-fast/reviews/pr-N/head in a non-colocated jj workspace.
+// pinned refs/chalk/reviews/pr-N/head in a non-colocated jj workspace.
 async function resolveReviewPinnedCommit(
   rootPath: string,
   ref: string,

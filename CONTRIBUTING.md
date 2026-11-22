@@ -42,7 +42,7 @@ bun install
 bun dev
 ```
 
-The desktop uses `~/.dev-fast/review-electrobun` by default. To use an existing
+The desktop uses `~/.chalk-dev` by default. To use an existing
 profile, set `CHALK_HOME` when starting it. Run `chalk instances` to
 see running apps and `chalk instances use <key>` to select one for the
 CLI and your agent. Reconnect the MCP server after switching.

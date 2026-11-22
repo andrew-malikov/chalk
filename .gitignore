@@ -25,7 +25,6 @@ Thumbs.db
 .wrangler/
 **/.wrangler/
 apps/ci/.wrangler-jaeger.jsonc
-.dev-fast/
 
 # Logs
 *.log

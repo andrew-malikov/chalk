@@ -43,7 +43,7 @@ describe("ensureReviewPinnedCheckout", () => {
       ),
     );
     expect(checkoutPath).toContain(
-      path.join(repo.commonDir, "dev-fast", "reviews", TEST_REVIEW_UUID),
+      path.join(repo.commonDir, "chalk", "reviews", TEST_REVIEW_UUID),
     );
     expect(
       readFileSync(path.join(checkoutPath ?? "", "README.md"), "utf8"),

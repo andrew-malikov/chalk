@@ -7,7 +7,7 @@ This page describes local product data and the optional hosted trace store.
 
 Chalk stores authored chalks in `~/.chalk/review-api.db` and desktop
 discovery under `~/.chalk/review-desktop/`. Development builds of the
-desktop use `~/.dev-fast/review-electrobun` instead; `CHALK_HOME`
+desktop use `~/.chalk-dev` instead; `CHALK_HOME`
 selects another profile.
 
 The canvas talks to Chalk's local server. Chalk does not collect or
