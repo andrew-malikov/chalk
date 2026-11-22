@@ -157,6 +157,7 @@ export function readReviewNavigationRestore(
   config: ReviewClientConfig,
   canvas: {
     softwareMapEnabled: boolean;
+    hasDocument: boolean;
     hasChangeRange: boolean;
     version: number;
     lensMode: ReviewLensSelection["mode"];
@@ -182,6 +183,7 @@ export function readReviewNavigationRestore(
   return {
     view: stored.activeView ?? "review",
     availableViews: offeredReviewViews({
+      hasDocument: canvas.hasDocument,
       hasChangeRange: canvas.hasChangeRange,
       softwareMapEnabled: canvas.softwareMapEnabled,
     }),

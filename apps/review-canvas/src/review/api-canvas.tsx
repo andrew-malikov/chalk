@@ -377,6 +377,7 @@ export function ApiCanvas({
             readReviewNavigationRestore(session.config, {
               softwareMapEnabled:
                 content.softwareMapEnabled === true && data.maps.size > 0,
+              hasDocument: data.snapshot.document.length > 0,
               hasChangeRange:
                 (data.snapshot.pins?.base ?? "") !==
                 (data.snapshot.pins?.head ?? ""),

@@ -45,6 +45,7 @@ import {
   ChevronDownIcon,
   FileTextIcon,
   FileWarningIcon,
+  GitMergeIcon,
   SearchIcon,
   Settings2Icon,
   SquareArrowOutUpRightIcon,
@@ -198,6 +199,13 @@ function Shell(
   );
 
   const [search, setSearch] = useState("");
+  const [importing, setImporting] = useState(false);
+
+  // Accepts a URL copied from any MR tab (/diffs, #note_1); the server validates the rest.
+  const mergeRequestUrl =
+    /^(https:\/\/\S+?\/-\/merge_requests\/[1-9]\d*)(?:[/?#]\S*)?$/.exec(
+      search.trim(),
+    )?.[1];
 
   // Each page, and each reopening, starts with an empty search.
   useEffect(() => setSearch(""), [palette]);
@@ -454,6 +462,30 @@ function Shell(
       operation,
     });
   }
+
+  // The server returns the MR's existing review, or imports it without a Chalk page or lenses.
+  async function openMergeRequest(url: string) {
+    requireConnected();
+
+    const reviewId =
+      mergeRequestReview(url)?.reviewId ??
+      (
+        await api.post<{ reviewId: string }>("/commands", {
+          commandId: crypto.randomUUID(),
+          operation: { type: "create", mergeRequestUrl: url },
+        })
+      ).reviewId;
+
+    if (catalog.current.find((item) => item.reviewId === reviewId)?.dismissedAt)
+      await command({ type: "attention", reviewId, action: "restore" });
+    await open(reviewId);
+  }
+
+  // shortcut: matches the imported URL only, so a moved project reads as new; the server still reuses its review.
+  const mergeRequestReview = (url: string) =>
+    catalog.current.find(
+      (review) => review.origin?.gitlab?.url === new URL(url).href,
+    );
 
   async function open(id: string, title?: string, makeActive = true) {
     if (catalog.current.find((item) => item.reviewId === id)?.incompatible)
@@ -1079,7 +1111,7 @@ function Shell(
           placeholder={
             palette === "incompatible"
               ? "Search incompatible reviews…"
-              : "Search reviews…"
+              : "Search reviews or paste an MR link…"
           }
           value={search}
           onValueChange={setSearch}
@@ -1134,6 +1166,33 @@ function Shell(
             <CommandEmpty>
               {loaded ? "No matching reviews." : "Loading reviews…"}
             </CommandEmpty>
+            {mergeRequestUrl && (
+              <CommandGroup heading="GitLab">
+                <CommandItem
+                  value={mergeRequestUrl}
+                  keywords={[search]}
+                  disabled={!connected || importing}
+                  onSelect={() => {
+                    setImporting(true);
+                    void openMergeRequest(mergeRequestUrl)
+                      .catch(fail)
+                      .finally(() => {
+                        setImporting(false);
+                        setPalette(null);
+                      });
+                  }}
+                >
+                  <GitMergeIcon aria-hidden="true" />
+                  {mergeRequestReview(mergeRequestUrl)
+                    ? importing
+                      ? "Opening review…"
+                      : "Open review"
+                    : importing
+                      ? "Creating review…"
+                      : "Create review"}
+                </CommandItem>
+              </CommandGroup>
+            )}
             {/* cmdk shows an empty group's heading, so skip groups with no reviews. */}
             {openItems.length > 0 && (
               <CommandGroup heading="Reviews">{openItems}</CommandGroup>

@@ -46,7 +46,7 @@ export interface OverlayTour {
 /** Which canvas view is showing and what it is scoped to. */
 export interface ReviewNavigationState {
   view: ReviewView;
-  /** Views the canvas offers; navigation to any other lands on "review". */
+  /** Views the canvas offers; navigation to any other lands on the Chalk page, else the Diff. */
   availableViews: readonly ReviewView[];
   diffScope: ReviewDiffScope | null;
 
@@ -96,8 +96,12 @@ const panelSetup = setup({
     ),
   },
   guards: {
-    viewUnavailable: ({ context }, { view }: { view: ReviewView }) =>
-      !context.availableViews.includes(view),
+    fallsBack: (
+      { context },
+      { from, to }: { from: ReviewView; to: ReviewView },
+    ) =>
+      !context.availableViews.includes(from) &&
+      fallbackView(context.availableViews) === to,
   },
 });
 
@@ -108,7 +112,9 @@ export function createReviewPanelMachine({
   lens = null,
   overlayTour = null,
 }: ReviewNavigationRestore = {}) {
-  const initialView = availableViews.includes(view) ? view : "review";
+  const initialView = availableViews.includes(view)
+    ? view
+    : fallbackView(availableViews);
 
   return panelSetup.createMachine({
     id: "reviewPanel",
@@ -122,28 +128,10 @@ export function createReviewPanelMachine({
       overlayTour: initialView === "review" ? overlayTour : null,
     },
     states: {
-      review: {},
-      commits: {
-        always: {
-          guard: { type: "viewUnavailable", params: { view: "commits" } },
-          target: "review",
-          actions: { type: "navigate", params: { view: "review" } },
-        },
-      },
-      diff: {
-        always: {
-          guard: { type: "viewUnavailable", params: { view: "diff" } },
-          target: "review",
-          actions: { type: "navigate", params: { view: "review" } },
-        },
-      },
-      map: {
-        always: {
-          guard: { type: "viewUnavailable", params: { view: "map" } },
-          target: "review",
-          actions: { type: "navigate", params: { view: "review" } },
-        },
-      },
+      review: { always: fallback("review") },
+      commits: { always: fallback("commits") },
+      diff: { always: fallback("diff") },
+      map: { always: fallback("map") },
     },
     on: {
       suppressMotion: { actions: assign({ motion: "restored" }) },
@@ -242,11 +230,33 @@ export type ReviewPanelActor = ActorRefFrom<
 
 export type ReviewPanelSnapshot = SnapshotFrom<ReviewPanelActor>;
 
+// The Chalk page leads; a review without one opens on its Diff.
+function fallbackView(views: readonly ReviewView[]): ReviewView {
+  return (
+    (["review", "diff"] as const).find((view) => views.includes(view)) ??
+    views[0] ??
+    "review"
+  );
+}
+
+/** Leaves an unavailable view for the fallback view. */
+function fallback(from: ReviewView) {
+  return reviewViewSchema.options
+    .filter((to) => to !== from)
+    .map((to) => ({
+      guard: { type: "fallsBack" as const, params: { from, to } },
+      target: to,
+      actions: { type: "navigate" as const, params: { view: to } },
+    }));
+}
+
 function viewTransition(
   state: ReviewPanelContext,
   requested: ReviewView,
 ): Partial<ReviewPanelContext> {
-  const view = state.availableViews.includes(requested) ? requested : "review";
+  const view = state.availableViews.includes(requested)
+    ? requested
+    : fallbackView(state.availableViews);
 
   return {
     ...(view !== "diff" && { diffScope: null }),

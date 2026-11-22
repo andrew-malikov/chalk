@@ -495,6 +495,7 @@ describe("review view state", () => {
 
 const canvas = {
   softwareMapEnabled: true,
+  hasDocument: true,
   hasChangeRange: true,
   version: 1,
   lensMode: "structural",

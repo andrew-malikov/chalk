@@ -16,6 +16,7 @@ import { diffWorkspaceMarker, lensToggleMarker } from "@canvas/styles/markers";
 import { Button } from "@canvas/ui/button";
 import { textStyles } from "@canvas/ui/text";
 import type { ReviewCommitScope } from "@chalk/review-contracts";
+import { UNCATEGORIZED_LENS_ID } from "@review/documents/diff-lenses";
 import {
   type CoverageProgress,
   coverageProgress,
@@ -241,7 +242,9 @@ export function ReviewDiffView({
         open={navigationOpen === "lenses" && !!toolbarSlot}
         onOpenChange={openNavigation("lenses")}
       >
+        {/* Without authored lenses the list holds only "Uncategorized", the whole diff. */}
         {toolbarSlot &&
+          lenses?.lenses.some((item) => item.id !== UNCATEGORIZED_LENS_ID) &&
           createPortal(
             <PopoverTrigger asChild>
               <Button

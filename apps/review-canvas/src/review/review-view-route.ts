@@ -4,14 +4,17 @@ export type { ReviewView } from "@chalk/review-contracts";
 
 /** The views a canvas offers, in switcher order. */
 export function offeredReviewViews({
+  hasDocument,
   hasChangeRange,
   softwareMapEnabled,
 }: {
+  hasDocument: boolean;
   hasChangeRange: boolean;
   softwareMapEnabled: boolean;
 }): readonly ReviewView[] {
   return [
-    "review",
+    // A bare MR import has no Chalk page until an agent writes one.
+    ...(hasDocument || !hasChangeRange ? (["review"] as const) : []),
     ...(hasChangeRange ? (["commits", "diff"] as const) : []),
     ...(softwareMapEnabled ? (["map"] as const) : []),
   ];

@@ -309,10 +309,11 @@ function ReviewLayoutContent({
   const reviewViews = useMemo(
     () =>
       offeredReviewViews({
+        hasDocument: !document.empty,
         hasChangeRange,
         softwareMapEnabled,
       }),
-    [hasChangeRange, softwareMapEnabled],
+    [document.empty, hasChangeRange, softwareMapEnabled],
   );
 
   useLayoutEffect(() => {

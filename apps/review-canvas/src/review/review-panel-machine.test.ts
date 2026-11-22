@@ -90,6 +90,24 @@ describe("Review navigation", () => {
     });
   });
 
+  it("opens the diff of a review without a chalk, until one is written", () => {
+    const actor = createReviewPanelActor({
+      availableViews: ["commits", "diff"],
+    });
+
+    expect(actor.getSnapshot().value).toBe("diff");
+
+    actor.send({ type: "showView", view: "review" });
+    expect(actor.getSnapshot().value).toBe("diff");
+
+    actor.send({ type: "setAvailableViews", views: ["review", "diff"] });
+    actor.send({ type: "showView", view: "review" });
+    expect(actor.getSnapshot().value).toBe("review");
+
+    actor.send({ type: "setAvailableViews", views: ["commits", "diff"] });
+    expect(actor.getSnapshot().value).toBe("diff");
+  });
+
   it("opens the map on a focused element once", () => {
     const actor = createReviewPanelActor();
 
